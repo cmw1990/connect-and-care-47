@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/card";
 
 const Auth = () => {
-  const [email, setEmail] = useState("");
+  const [identifier, setIdentifier] = useState(""); // This can be either email or username
   const [password, setPassword] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -51,29 +51,38 @@ const Auth = () => {
 
     try {
       if (isSignUp) {
-        const { error } = await supabase.auth.signUp({
-          email,
+        // For sign up, we'll use the identifier as both username and email if it's not an email
+        const isEmail = identifier.includes('@');
+        const signUpData = {
+          email: isEmail ? identifier : `${identifier}@make-life-easier.today`,
           password,
           options: {
             data: {
               first_name: firstName,
               last_name: lastName,
+              username: !isEmail ? identifier : undefined,
             },
           },
-        });
+        };
+
+        const { error } = await supabase.auth.signUp(signUpData);
         if (error) throw error;
+        
         toast({
           title: "Success!",
           description: "Account created successfully. You can now sign in.",
         });
         setIsSignUp(false);
       } else {
-        const { error } = await supabase.auth.signInWithPassword({
-          email,
+        // For sign in, try to determine if the identifier is an email or username
+        const isEmail = identifier.includes('@');
+        const signInData = {
+          email: isEmail ? identifier : `${identifier}@make-life-easier.today`,
           password,
-        });
+        };
+
+        const { error } = await supabase.auth.signInWithPassword(signInData);
         if (error) throw error;
-        // No need to navigate here as the onAuthStateChange will handle it
       }
     } catch (error: any) {
       toast({
@@ -94,7 +103,7 @@ const Auth = () => {
           <CardDescription>
             {isSignUp
               ? "Sign up to start managing care coordination"
-              : "Sign in to your account"}
+              : "Sign in with your email or username"}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -124,12 +133,13 @@ const Auth = () => {
               </>
             )}
             <div className="space-y-2">
-              <label htmlFor="email">Email</label>
+              <label htmlFor="identifier">Email or Username</label>
               <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                id="identifier"
+                type="text"
+                value={identifier}
+                onChange={(e) => setIdentifier(e.target.value)}
+                placeholder="Enter your email or username"
                 required
               />
             </div>
