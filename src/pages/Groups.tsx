@@ -13,7 +13,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Plus, Users } from "lucide-react";
 
@@ -51,8 +51,25 @@ const Groups = () => {
 
     checkUser();
 
+    // Set up realtime subscription
+    const channel = supabase
+      .channel('schema-db-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'care_groups'
+        },
+        () => {
+          fetchGroups();
+        }
+      )
+      .subscribe();
+
     return () => {
       subscription.unsubscribe();
+      supabase.removeChannel(channel);
     };
   }, [navigate]);
 
@@ -121,7 +138,6 @@ const Groups = () => {
       setNewGroupName("");
       setNewGroupDescription("");
       setIsDialogOpen(false);
-      fetchGroups();
       
       toast({
         title: "Success",
