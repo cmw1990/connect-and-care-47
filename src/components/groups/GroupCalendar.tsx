@@ -1,7 +1,6 @@
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar } from "@/components/ui/calendar";
-import { Calendar as CalendarIcon, ChevronDown } from "lucide-react";
+import { Calendar as CalendarIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -11,7 +10,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { format, startOfWeek, endOfWeek, eachDayOfInterval } from "date-fns";
+import { format, startOfWeek, endOfWeek, eachDayOfInterval, addWeeks, subWeeks } from "date-fns";
+import { Button } from "@/components/ui/button";
 
 interface Task {
   id: string;
@@ -60,7 +60,6 @@ export const GroupCalendar = ({ groupId }: GroupCalendarProps) => {
     fetchTasks();
   }, [groupId]);
 
-  // Function to get tasks for a specific date
   const getTasksForDate = (date: Date) => {
     return tasks.filter((task) => {
       if (!task.due_date) return false;
@@ -85,6 +84,18 @@ export const GroupCalendar = ({ groupId }: GroupCalendarProps) => {
     setSelectedMonth(month);
   };
 
+  const handlePreviousWeek = () => {
+    const newDate = subWeeks(date, 1);
+    setDate(newDate);
+    setSelectedMonth(format(newDate, "MMMM yyyy"));
+  };
+
+  const handleNextWeek = () => {
+    const newDate = addWeeks(date, 1);
+    setDate(newDate);
+    setSelectedMonth(format(newDate, "MMMM yyyy"));
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -93,22 +104,30 @@ export const GroupCalendar = ({ groupId }: GroupCalendarProps) => {
             <CalendarIcon className="h-5 w-5" />
             Calendar
           </CardTitle>
-          <Select value={selectedMonth} onValueChange={handleMonthSelect}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Select month" />
-            </SelectTrigger>
-            <SelectContent>
-              {months.map((month) => (
-                <SelectItem key={month} value={month}>
-                  {month}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="icon" onClick={handlePreviousWeek}>
+              ←
+            </Button>
+            <Select value={selectedMonth} onValueChange={handleMonthSelect}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Select month" />
+              </SelectTrigger>
+              <SelectContent>
+                {months.map((month) => (
+                  <SelectItem key={month} value={month}>
+                    {month}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button variant="outline" size="icon" onClick={handleNextWeek}>
+              →
+            </Button>
+          </div>
         </div>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-7 gap-2 mb-4">
+        <div className="grid grid-cols-7 gap-2">
           {weekDays.map((day, index) => (
             <div
               key={index}
@@ -118,7 +137,7 @@ export const GroupCalendar = ({ groupId }: GroupCalendarProps) => {
                 {format(day, "EEE")}
               </div>
               <div className="text-lg">{format(day, "d")}</div>
-              <div className="mt-2 space-y-1">
+              <div className="mt-2 space-y-1 max-h-32 overflow-y-auto">
                 {getTasksForDate(day).map((task) => (
                   <div
                     key={task.id}
