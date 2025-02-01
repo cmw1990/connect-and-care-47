@@ -1,34 +1,8 @@
-import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
 import { ButtonPrimary } from "@/components/ui/button-primary";
 import { Navbar } from "@/components/navigation/navbar";
 import { CareComparisonDialog } from "@/components/comparison/CareComparisonDialog";
 
 const Index = () => {
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    const checkUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        navigate("/auth");
-      }
-    };
-
-    checkUser();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (!session) {
-        navigate("/auth");
-      }
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [navigate]);
-
   return (
     <div className="min-h-screen bg-gradient-to-b from-primary-100 to-white">
       <div className="sticky top-0 z-50">
