@@ -18,11 +18,13 @@ import { GroupsList } from "@/components/groups/GroupsList";
 import { CareComparisonDialog } from "@/components/comparison/CareComparisonDialog";
 import type { CareGroup } from "@/types/groups";
 import { supabase } from "@/integrations/supabase/client";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const Groups = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [groups, setGroups] = useState<CareGroup[]>([]);
+  const [myGroups, setMyGroups] = useState<CareGroup[]>([]);
   const [newGroupName, setNewGroupName] = useState("");
   const [newGroupDescription, setNewGroupDescription] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -32,7 +34,39 @@ const Groups = () => {
   const fetchGroups = useCallback(async () => {
     try {
       setIsLoading(true);
-      const { data: groupsData, error } = await supabase
+      
+      // Fetch all groups where user is a member
+      const { data: memberGroups, error: memberError } = await supabase
+        .from('care_groups')
+        .select(`
+          id,
+          name,
+          description,
+          created_at,
+          created_by,
+          care_group_members!care_group_members_group_id_fkey (
+            id,
+            role
+          )
+        `)
+        .eq('care_group_members.user_id', (await supabase.auth.getUser()).data.user?.id);
+
+      if (memberError) throw memberError;
+
+      // Format member groups
+      const formattedMemberGroups = memberGroups?.map(group => ({
+        id: group.id,
+        name: group.name,
+        description: group.description,
+        created_at: group.created_at,
+        member_count: group.care_group_members?.length || 0,
+        is_owner: group.created_by === (await supabase.auth.getUser()).data.user?.id
+      })) || [];
+
+      setMyGroups(formattedMemberGroups);
+
+      // Fetch all accessible groups
+      const { data: allGroups, error: allError } = await supabase
         .from('care_groups')
         .select(`
           id,
@@ -44,17 +78,17 @@ const Groups = () => {
           )
         `);
 
-      if (error) throw error;
+      if (allError) throw allError;
 
-      const formattedGroups: CareGroup[] = groupsData.map(group => ({
+      const formattedAllGroups = allGroups?.map(group => ({
         id: group.id,
         name: group.name,
         description: group.description,
         created_at: group.created_at,
         member_count: group.care_group_members?.length || 0
-      }));
+      })) || [];
 
-      setGroups(formattedGroups);
+      setGroups(formattedAllGroups);
     } catch (error) {
       console.error('Error fetching groups:', error);
       toast({
@@ -100,7 +134,8 @@ const Groups = () => {
           .from('care_groups')
           .insert({
             name: newGroupName.trim(),
-            description: newGroupDescription.trim()
+            description: newGroupDescription.trim(),
+            created_by: (await supabase.auth.getUser()).data.user?.id
           });
 
         if (error) throw error;
@@ -219,23 +254,51 @@ const Groups = () => {
           </Dialog>
         </div>
 
-        {isLoading ? (
-          <div className="flex justify-center items-center h-64">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-          </div>
-        ) : groups.length === 0 ? (
-          <div className="text-center py-12">
-            <Users className="mx-auto h-12 w-12 text-gray-400" />
-            <h3 className="mt-2 text-sm font-semibold text-gray-900">No groups yet</h3>
-            <p className="mt-1 text-sm text-gray-500">Get started by creating a new care group.</p>
-          </div>
-        ) : (
-          <GroupsList 
-            groups={groups} 
-            onDelete={handleDelete}
-            onEdit={handleEdit}
-          />
-        )}
+        <Tabs defaultValue="my-groups" className="w-full">
+          <TabsList className="mb-4">
+            <TabsTrigger value="my-groups">My Care Groups</TabsTrigger>
+            <TabsTrigger value="all-groups">All Groups</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="my-groups">
+            {isLoading ? (
+              <div className="flex justify-center items-center h-64">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+              </div>
+            ) : myGroups.length === 0 ? (
+              <div className="text-center py-12">
+                <Users className="mx-auto h-12 w-12 text-gray-400" />
+                <h3 className="mt-2 text-sm font-semibold text-gray-900">No groups yet</h3>
+                <p className="mt-1 text-sm text-gray-500">Get started by creating a new care group.</p>
+              </div>
+            ) : (
+              <GroupsList 
+                groups={myGroups}
+                onDelete={handleDelete}
+                onEdit={handleEdit}
+              />
+            )}
+          </TabsContent>
+          
+          <TabsContent value="all-groups">
+            {isLoading ? (
+              <div className="flex justify-center items-center h-64">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+              </div>
+            ) : groups.length === 0 ? (
+              <div className="text-center py-12">
+                <Users className="mx-auto h-12 w-12 text-gray-400" />
+                <h3 className="mt-2 text-sm font-semibold text-gray-900">No groups available</h3>
+                <p className="mt-1 text-sm text-gray-500">Create a new care group to get started.</p>
+              </div>
+            ) : (
+              <GroupsList 
+                groups={groups}
+                showActions={false}
+              />
+            )}
+          </TabsContent>
+        </Tabs>
       </main>
     </div>
   );
