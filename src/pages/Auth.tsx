@@ -12,6 +12,10 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
+// Configure WordPress API settings
+apiFetch.use(apiFetch.createRootURLMiddleware('https://make-life-easier.today/wp-json'));
+apiFetch.use(apiFetch.createNonceMiddleware('your-nonce')); // WordPress will handle this
+
 // Define types for WordPress API responses
 interface WPRegisterResponse {
   id: number;
@@ -38,6 +42,15 @@ const Auth = () => {
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    if (!navigator.onLine) {
+      toast({
+        title: "Error",
+        description: "Please check your internet connection and try again",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (password.length < 6) {
       toast({
         title: "Error",
@@ -97,9 +110,17 @@ const Auth = () => {
       }
     } catch (error: any) {
       console.error('Auth error:', error);
+      let errorMessage = "An error occurred during authentication";
+      
+      if (!navigator.onLine) {
+        errorMessage = "You are offline. Please check your internet connection.";
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+
       toast({
         title: "Error",
-        description: error.message || "An error occurred during authentication",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
