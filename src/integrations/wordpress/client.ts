@@ -3,9 +3,6 @@ import apiFetch from '@wordpress/api-fetch';
 // Configure the default WordPress API settings
 apiFetch.use(apiFetch.createRootURLMiddleware('https://make-life-easier.today/wp-json'));
 
-// Add JWT authentication middleware
-apiFetch.use(apiFetch.createNonceMiddleware('your_jwt_token')); // This will need to be updated with actual JWT
-
 // Create type definitions for WordPress responses
 export interface WPCareGroup {
   id: number;
@@ -24,9 +21,15 @@ export interface WPCareGroup {
 export const wpApi = {
   getCareGroups: async (): Promise<WPCareGroup[]> => {
     try {
+      console.log('Fetching care groups from WordPress...');
       const response = await apiFetch<WPCareGroup[]>({
         path: '/wp/v2/care-groups',
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
       });
+      console.log('Care groups response:', response);
       return response;
     } catch (error) {
       console.error('Error fetching care groups:', error);
@@ -36,6 +39,7 @@ export const wpApi = {
 
   createCareGroup: async (data: { title: string; content: string }): Promise<WPCareGroup> => {
     try {
+      console.log('Creating care group:', data);
       const response = await apiFetch<WPCareGroup>({
         path: '/wp/v2/care-groups',
         method: 'POST',
@@ -45,6 +49,7 @@ export const wpApi = {
           status: 'publish',
         },
       });
+      console.log('Create care group response:', response);
       return response;
     } catch (error) {
       console.error('Error creating care group:', error);
@@ -54,9 +59,11 @@ export const wpApi = {
 
   getGroupRelations: async (groupId: number): Promise<any> => {
     try {
+      console.log('Fetching group relations for ID:', groupId);
       const response = await apiFetch({
         path: `/jet-rel/57?post_id=${groupId}`,
       });
+      console.log('Group relations response:', response);
       return response;
     } catch (error) {
       console.error('Error fetching group relations:', error);
