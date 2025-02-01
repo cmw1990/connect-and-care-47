@@ -21,7 +21,7 @@ interface GroupMember {
   id: string;
   user_id: string;
   role: string;
-  profile: {
+  profiles: {
     first_name: string | null;
     last_name: string | null;
   } | null;
@@ -243,7 +243,7 @@ const GroupDetails = () => {
                       </div>
                       <div>
                         <p className="font-medium">
-                          {member.profile?.first_name} {member.profile?.last_name}
+                          {member.profiles?.first_name} {member.profiles?.last_name}
                         </p>
                         <p className="text-sm text-muted-foreground capitalize">
                           {member.role}
