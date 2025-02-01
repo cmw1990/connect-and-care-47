@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,6 +11,19 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+
+// Define types for WordPress API responses
+interface WPRegisterResponse {
+  id: number;
+  username: string;
+  email: string;
+}
+
+interface WPLoginResponse {
+  token: string;
+  user_email: string;
+  user_nicename: string;
+}
 
 const Auth = () => {
   const [identifier, setIdentifier] = useState("");
@@ -38,7 +51,7 @@ const Auth = () => {
 
     try {
       if (isSignUp) {
-        // Register new user
+        // Register new user with type assertion
         const response = await apiFetch({
           path: '/wp/v2/users/register',
           method: 'POST',
@@ -49,7 +62,7 @@ const Auth = () => {
             first_name: firstName,
             last_name: lastName
           }
-        });
+        }) as WPRegisterResponse;
 
         if (response.id) {
           toast({
@@ -59,7 +72,7 @@ const Auth = () => {
           setIsSignUp(false);
         }
       } else {
-        // Login existing user
+        // Login existing user with type assertion
         const response = await apiFetch({
           path: '/jwt-auth/v1/token',
           method: 'POST',
@@ -67,7 +80,7 @@ const Auth = () => {
             username: identifier,
             password,
           }
-        });
+        }) as WPLoginResponse;
 
         if (response.token) {
           // Store the token
