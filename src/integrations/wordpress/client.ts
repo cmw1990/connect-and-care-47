@@ -24,7 +24,7 @@ export interface WPCareGroup {
 export const wpApi = {
   getCareGroups: async (): Promise<WPCareGroup[]> => {
     try {
-      const response = await apiFetch({
+      const response = await apiFetch<WPCareGroup[]>({
         path: '/wp/v2/care-groups',
       });
       return response;
@@ -36,7 +36,7 @@ export const wpApi = {
 
   createCareGroup: async (data: { title: string; content: string }): Promise<WPCareGroup> => {
     try {
-      const response = await apiFetch({
+      const response = await apiFetch<WPCareGroup>({
         path: '/wp/v2/care-groups',
         method: 'POST',
         data: {
