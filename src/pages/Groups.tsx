@@ -37,20 +37,21 @@ const Groups = () => {
 
       const { data: groupsData, error: groupsError } = await supabase
         .from('care_groups')
-        .select('id, name, description, created_at');
+        .select(`
+          id,
+          name,
+          description,
+          created_at,
+          care_group_members (
+            count
+          )
+        `);
 
       if (groupsError) throw groupsError;
 
-      const { data: membersCount, error: membersError } = await supabase
-        .from('care_group_members')
-        .select('group_id, count', { count: 'exact' })
-        .group_by('group_id');
-
-      if (membersError) throw membersError;
-
       const groupsWithCount = groupsData.map(group => ({
         ...group,
-        member_count: membersCount.find(m => m.group_id === group.id)?.count || 0
+        member_count: group.care_group_members?.[0]?.count || 0
       }));
 
       setGroups(groupsWithCount);

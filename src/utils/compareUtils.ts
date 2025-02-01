@@ -1,8 +1,10 @@
+import { Json } from "@/integrations/supabase/types";
+
 export interface CareItem {
   id: string;
   name: string;
   description?: string | null;
-  ratings?: Record<string, any> | null;
+  ratings?: Json | null;
 }
 
 export const compareCareItems = (items: CareItem[]): Record<string, any> => {
@@ -11,8 +13,9 @@ export const compareCareItems = (items: CareItem[]): Record<string, any> => {
   }
 
   return items.reduce((acc, item) => {
-    const avgRating = item.ratings 
-      ? Object.values(item.ratings).reduce((sum: number, val: any) => sum + val, 0) / Object.keys(item.ratings).length 
+    const ratings = item.ratings as Record<string, number> || {};
+    const avgRating = Object.keys(ratings).length > 0
+      ? Object.values(ratings).reduce((sum, val) => sum + val, 0) / Object.keys(ratings).length 
       : 0;
 
     acc[item.id] = {
@@ -21,5 +24,5 @@ export const compareCareItems = (items: CareItem[]): Record<string, any> => {
       averageRating: avgRating,
     };
     return acc;
-  }, {});
+  }, {} as Record<string, any>);
 };
