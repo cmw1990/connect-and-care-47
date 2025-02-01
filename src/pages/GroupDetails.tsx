@@ -79,14 +79,21 @@ const GroupDetails = () => {
       if (membersError) throw membersError;
       setMembers(membersData);
 
-      // Fetch patient info
+      // Fetch patient info - using maybeSingle() instead of single()
       const { data: patientData, error: patientError } = await supabase
         .from('patient_info')
         .select('*')
         .eq('group_id', groupId)
-        .single();
+        .maybeSingle();
 
-      if (!patientError) {
+      if (patientError) {
+        console.error('Error fetching patient info:', patientError);
+        toast({
+          title: "Error",
+          description: "Failed to load patient information",
+          variant: "destructive",
+        });
+      } else {
         setPatientInfo(patientData);
       }
 

@@ -6,6 +6,11 @@ export interface CareGroup {
   member_count?: number;
   is_owner?: boolean;
   is_public?: boolean;
+  privacy_settings?: {
+    status?: string;
+    lastUpdated?: string;
+    visibility?: 'public' | 'private';
+  };
 }
 
 export interface GroupPrivacySettings {
