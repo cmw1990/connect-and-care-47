@@ -7,6 +7,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -265,6 +266,11 @@ const Groups = () => {
                 <DialogTitle>
                   {editingGroup ? 'Edit Care Group' : 'Create New Care Group'}
                 </DialogTitle>
+                <DialogDescription>
+                  {editingGroup 
+                    ? 'Update your care group details below.' 
+                    : 'Create a new care group to collaborate with others.'}
+                </DialogDescription>
               </DialogHeader>
               <div className="space-y-4">
                 <div>
