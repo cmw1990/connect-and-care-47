@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import apiFetch from '@wordpress/api-fetch';
+import { supabase } from "@/integrations/supabase/client";
 import {
   Card,
   CardContent,
@@ -12,27 +12,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
-// Configure WordPress API settings
-apiFetch.use(apiFetch.createRootURLMiddleware('https://make-life-easier.today'));
-apiFetch.use(apiFetch.createNonceMiddleware('your-nonce')); // WordPress will handle this
-
-// Define types for WordPress API responses
-interface WPRegisterResponse {
-  id: number;
-  username: string;
-  email: string;
-  message?: string;
-}
-
-interface WPLoginResponse {
-  jwt: string;  // Changed from token to jwt as per Simple JWT Login
-  user_email: string;
-  user_nicename: string;
-  message?: string;
-}
-
 const Auth = () => {
-  const [identifier, setIdentifier] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -66,74 +47,47 @@ const Auth = () => {
 
     try {
       if (isSignUp) {
-        // Register endpoint for Simple JWT Login
-        const response = await apiFetch({
-          path: '/simple-jwt-login/v1/users',
-          method: 'POST',
-          data: {
-            email: identifier,
-            password,
-            username: identifier.split('@')[0], // Create username from email
-            first_name: firstName,
-            last_name: lastName
-          }
-        }) as WPRegisterResponse;
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            data: {
+              first_name: firstName,
+              last_name: lastName,
+            },
+          },
+        });
 
-        if (response.id || response.message?.includes('success')) {
+        if (error) throw error;
+
+        if (data.user) {
           toast({
             title: "Success!",
-            description: "Account created successfully. Please sign in.",
+            description: "Account created successfully. Please check your email to verify your account.",
           });
           setIsSignUp(false);
         }
       } else {
-        // Login endpoint for Simple JWT Login
-        const response = await apiFetch({
-          path: '/simple-jwt-login/v1/auth',
-          method: 'POST',
-          data: {
-            email: identifier,
-            password,
-          }
-        }) as WPLoginResponse;
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
 
-        if (response.jwt) {
-          // Store the JWT token
-          localStorage.setItem('wp_token', response.jwt);
-          
-          // Configure future requests to use the JWT
-          apiFetch.use((options) => {
-            return Promise.resolve({
-              ...options,
-              headers: {
-                ...options.headers,
-                'Authorization': `Bearer ${response.jwt}`
-              }
-            });
-          });
-          
-          // Redirect to home
-          navigate("/");
-          
+        if (error) throw error;
+
+        if (data.user) {
           toast({
             title: "Success!",
             description: "Logged in successfully",
           });
+          navigate("/");
         }
       }
     } catch (error: any) {
       console.error('Auth error:', error);
-      let errorMessage = "An error occurred during authentication";
-      
-      if (!navigator.onLine) {
-        errorMessage = "You are offline. Please check your internet connection.";
-      } else if (error.message) {
-        errorMessage = error.message;
-      }
-
       toast({
         title: "Error",
-        description: errorMessage,
+        description: error.message || "An error occurred during authentication",
         variant: "destructive",
       });
     } finally {
@@ -149,7 +103,7 @@ const Auth = () => {
           <CardDescription>
             {isSignUp
               ? "Sign up to start managing care coordination"
-              : "Sign in with your email or username"}
+              : "Sign in with your email"}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -179,13 +133,13 @@ const Auth = () => {
               </>
             )}
             <div className="space-y-2">
-              <label htmlFor="identifier">Email or Username</label>
+              <label htmlFor="email">Email</label>
               <Input
-                id="identifier"
-                type="text"
-                value={identifier}
-                onChange={(e) => setIdentifier(e.target.value)}
-                placeholder="Enter your email or username"
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Enter your email"
                 required
               />
             </div>
