@@ -103,13 +103,13 @@ const Auth = () => {
           
           // Configure future requests to use the JWT
           apiFetch.use((options) => {
-            return {
+            return Promise.resolve({
               ...options,
               headers: {
                 ...options.headers,
                 'Authorization': `Bearer ${response.jwt}`
               }
-            };
+            });
           });
           
           // Redirect to home
