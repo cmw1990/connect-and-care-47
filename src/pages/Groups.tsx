@@ -36,22 +36,29 @@ const Groups = () => {
         return;
       }
 
+      // First, get all groups
       const { data: groupsData, error: groupsError } = await supabase
         .from('care_groups')
-        .select(`
-          id,
-          name,
-          description,
-          created_at,
-          care_group_members!care_group_members_group_id_fkey (count)
-        `);
+        .select('id, name, description, created_at');
 
       if (groupsError) throw groupsError;
 
-      const groupsWithCount = groupsData.map(group => ({
-        ...group,
-        member_count: group.care_group_members?.[0]?.count || 0
-      }));
+      // Then, for each group, get the member count
+      const groupsWithCount = await Promise.all(
+        groupsData.map(async (group) => {
+          const { count, error: countError } = await supabase
+            .from('care_group_members')
+            .select('*', { count: 'exact', head: true })
+            .eq('group_id', group.id);
+
+          if (countError) {
+            console.error('Error fetching count for group:', group.id, countError);
+            return { ...group, member_count: 0 };
+          }
+
+          return { ...group, member_count: count || 0 };
+        })
+      );
 
       setGroups(groupsWithCount);
     } catch (error) {
