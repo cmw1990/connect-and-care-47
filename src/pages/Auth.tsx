@@ -45,6 +45,16 @@ const Auth = () => {
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (password.length < 6) {
+      toast({
+        title: "Error",
+        description: "Password must be at least 6 characters long",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -52,7 +62,15 @@ const Auth = () => {
         const isEmail = identifier.includes('@');
         const email = isEmail ? identifier : `${identifier}@make-life-easier.today`;
         
-        console.log('Attempting signup with:', { email, firstName, lastName });
+        const { data: existingUser } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('id', email)
+          .single();
+
+        if (existingUser) {
+          throw new Error('User already exists. Please sign in instead.');
+        }
 
         const { data, error } = await supabase.auth.signUp({
           email,
@@ -71,51 +89,47 @@ const Auth = () => {
         if (data.user) {
           toast({
             title: "Success!",
-            description: "Account created successfully. You can now sign in.",
+            description: "Account created successfully. Please check your email for verification.",
           });
           setIsSignUp(false);
         }
       } else {
         const isEmail = identifier.includes('@');
-        const email = isEmail ? identifier : `${identifier}@make-life-easier.today`;
-
-        console.log('Attempting first login with:', { email });
+        let email = isEmail ? identifier : `${identifier}@make-life-easier.today`;
 
         try {
-          const { data, error } = await supabase.auth.signInWithPassword({
+          const { error } = await supabase.auth.signInWithPassword({
             email,
             password,
           });
 
-          if (!error && data.user) {
-            console.log('Login successful');
-            return; // Exit if login successful
-          }
-
-          // If first attempt fails and it's not an email, try direct login
-          if (!isEmail) {
-            console.log('First attempt failed, trying direct login with:', identifier);
-            const directLoginResult = await supabase.auth.signInWithPassword({
-              email: identifier,
-              password,
-            });
-
-            if (directLoginResult.error) {
-              throw directLoginResult.error;
+          if (error) {
+            // If first attempt fails and it's not an email, try direct login
+            if (!isEmail) {
+              const { error: directError } = await supabase.auth.signInWithPassword({
+                email: identifier,
+                password,
+              });
+              
+              if (directError) {
+                throw directError;
+              }
+            } else {
+              throw error;
             }
-          } else {
-            throw error;
           }
-        } catch (loginError: any) {
-          console.error('Login attempt failed:', loginError);
-          throw new Error(loginError.message || 'Invalid login credentials');
+        } catch (error: any) {
+          console.error('Login error:', error);
+          throw new Error(error.message || 'Invalid login credentials');
         }
       }
     } catch (error: any) {
       console.error('Auth error:', error);
       toast({
         title: "Error",
-        description: error.message || "An error occurred during authentication",
+        description: error.message === "Failed to fetch" 
+          ? "Network error. Please check your connection and try again."
+          : error.message || "An error occurred during authentication",
         variant: "destructive",
       });
     } finally {
@@ -179,6 +193,7 @@ const Auth = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
+                minLength={6}
               />
             </div>
             <Button type="submit" className="w-full" disabled={loading}>
