@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/card";
 
 // Configure WordPress API settings
-apiFetch.use(apiFetch.createRootURLMiddleware('https://make-life-easier.today/wp-json'));
+apiFetch.use(apiFetch.createRootURLMiddleware('https://make-life-easier.today'));
 apiFetch.use(apiFetch.createNonceMiddleware('your-nonce')); // WordPress will handle this
 
 // Define types for WordPress API responses
@@ -21,12 +21,14 @@ interface WPRegisterResponse {
   id: number;
   username: string;
   email: string;
+  message?: string;
 }
 
 interface WPLoginResponse {
-  token: string;
+  jwt: string;  // Changed from token to jwt as per Simple JWT Login
   user_email: string;
   user_nicename: string;
+  message?: string;
 }
 
 const Auth = () => {
@@ -64,20 +66,20 @@ const Auth = () => {
 
     try {
       if (isSignUp) {
-        // Register new user with type assertion
+        // Register endpoint for Simple JWT Login
         const response = await apiFetch({
-          path: '/wp/v2/users/register',
+          path: '/simple-jwt-login/v1/users',
           method: 'POST',
           data: {
-            username: identifier,
-            email: identifier.includes('@') ? identifier : `${identifier}@make-life-easier.today`,
+            email: identifier,
             password,
+            username: identifier.split('@')[0], // Create username from email
             first_name: firstName,
             last_name: lastName
           }
         }) as WPRegisterResponse;
 
-        if (response.id) {
+        if (response.id || response.message?.includes('success')) {
           toast({
             title: "Success!",
             description: "Account created successfully. Please sign in.",
@@ -85,19 +87,30 @@ const Auth = () => {
           setIsSignUp(false);
         }
       } else {
-        // Login existing user with type assertion
+        // Login endpoint for Simple JWT Login
         const response = await apiFetch({
-          path: '/jwt-auth/v1/token',
+          path: '/simple-jwt-login/v1/auth',
           method: 'POST',
           data: {
-            username: identifier,
+            email: identifier,
             password,
           }
         }) as WPLoginResponse;
 
-        if (response.token) {
-          // Store the token
-          localStorage.setItem('wp_token', response.token);
+        if (response.jwt) {
+          // Store the JWT token
+          localStorage.setItem('wp_token', response.jwt);
+          
+          // Configure future requests to use the JWT
+          apiFetch.use((options) => {
+            return {
+              ...options,
+              headers: {
+                ...options.headers,
+                'Authorization': `Bearer ${response.jwt}`
+              }
+            };
+          });
           
           // Redirect to home
           navigate("/");
