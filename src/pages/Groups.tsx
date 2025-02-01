@@ -30,25 +30,24 @@ const Groups = () => {
 
   const fetchGroups = useCallback(async () => {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
+      const { data: session } = await supabase.auth.getSession();
+      if (!session?.session) {
         navigate("/auth");
         return;
       }
 
-      // Fetch groups with a simpler query first
       const { data: groupsData, error: groupsError } = await supabase
         .from('care_groups')
-        .select(`
-          id,
-          name,
-          description,
-          created_at
-        `);
+        .select('*');
 
       if (groupsError) {
         console.error('Error fetching groups:', groupsError);
-        throw groupsError;
+        toast({
+          title: "Error",
+          description: "Failed to load care groups. Please try again.",
+          variant: "destructive",
+        });
+        return;
       }
 
       if (!groupsData) {
@@ -56,28 +55,18 @@ const Groups = () => {
         return;
       }
 
-      // Then get member counts in a separate query
+      // Get member counts for each group
       const groupsWithCount = await Promise.all(
         groupsData.map(async (group) => {
-          try {
-            const { count, error: countError } = await supabase
-              .from('care_group_members')
-              .select('*', { count: 'exact', head: true })
-              .eq('group_id', group.id);
+          const { count } = await supabase
+            .from('care_group_members')
+            .select('*', { count: 'exact', head: true })
+            .eq('group_id', group.id);
 
-            if (countError) {
-              console.error('Error fetching member count:', countError);
-              return { ...group, member_count: 0 };
-            }
-
-            return {
-              ...group,
-              member_count: count || 0
-            };
-          } catch (error) {
-            console.error('Error processing group:', error);
-            return { ...group, member_count: 0 };
-          }
+          return {
+            ...group,
+            member_count: count || 0
+          };
         })
       );
 
@@ -127,10 +116,6 @@ const Groups = () => {
       if (groupError) {
         console.error('Error creating group:', groupError);
         throw groupError;
-      }
-
-      if (!newGroup) {
-        throw new Error('No group data returned after creation');
       }
 
       // Add the creator as an admin member
