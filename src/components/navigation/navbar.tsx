@@ -4,7 +4,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
 
-export const Navbar = () => {
+interface NavbarProps {
+  children?: React.ReactNode;
+}
+
+export const Navbar = ({ children }: NavbarProps) => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -80,6 +84,7 @@ export const Navbar = () => {
             )}
           </div>
           <div className="flex items-center">
+            {children}
             {isAuthenticated ? (
               <div className="flex items-center space-x-4">
                 <span className="text-sm text-gray-600">
