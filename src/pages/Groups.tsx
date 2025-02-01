@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Navbar } from "@/components/navigation/navbar";
@@ -16,6 +16,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Plus, Users } from "lucide-react";
+import { CareComparison } from "@/components/comparison/CareComparison";
 
 interface CareGroup {
   id: string;
@@ -33,47 +34,7 @@ const Groups = () => {
   const [newGroupDescription, setNewGroupDescription] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  useEffect(() => {
-    const checkUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        navigate("/auth");
-        return;
-      }
-      fetchGroups();
-    };
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (!session) {
-        navigate("/auth");
-      }
-    });
-
-    checkUser();
-
-    // Set up realtime subscription
-    const channel = supabase
-      .channel('schema-db-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'care_groups'
-        },
-        () => {
-          fetchGroups();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      subscription.unsubscribe();
-      supabase.removeChannel(channel);
-    };
-  }, [navigate]);
-
-  const fetchGroups = async () => {
+  const fetchGroups = useCallback(async () => {
     try {
       const { data: groupsData, error: groupsError } = await supabase
         .from('care_groups')
@@ -101,9 +62,9 @@ const Groups = () => {
         variant: "destructive",
       });
     }
-  };
+  }, [toast]);
 
-  const createGroup = async () => {
+  const createGroup = useCallback(async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
@@ -122,7 +83,6 @@ const Groups = () => {
 
       if (error) throw error;
 
-      // Add the creator as an admin member
       const { error: memberError } = await supabase
         .from('care_group_members')
         .insert([
@@ -151,7 +111,46 @@ const Groups = () => {
         variant: "destructive",
       });
     }
-  };
+  }, [newGroupName, newGroupDescription, toast]);
+
+  useEffect(() => {
+    const checkUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        navigate("/auth");
+        return;
+      }
+      fetchGroups();
+    };
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!session) {
+        navigate("/auth");
+      }
+    });
+
+    checkUser();
+
+    const channel = supabase
+      .channel('schema-db-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'care_groups'
+        },
+        () => {
+          fetchGroups();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      subscription.unsubscribe();
+      supabase.removeChannel(channel);
+    };
+  }, [navigate, fetchGroups]);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-primary-100 to-white">
@@ -217,6 +216,11 @@ const Groups = () => {
               </CardContent>
             </Card>
           ))}
+        </div>
+
+        <div className="mt-12">
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">Care Comparison</h2>
+          <CareComparison />
         </div>
       </main>
     </div>

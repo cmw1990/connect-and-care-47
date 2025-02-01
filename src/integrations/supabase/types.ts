@@ -9,6 +9,42 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      care_facilities: {
+        Row: {
+          address: string | null
+          cost_range: Json | null
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          ratings: Json | null
+          services: Json | null
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          cost_range?: Json | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          ratings?: Json | null
+          services?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          cost_range?: Json | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          ratings?: Json | null
+          services?: Json | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       care_group_members: {
         Row: {
           created_at: string
@@ -85,6 +121,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      care_products: {
+        Row: {
+          category: string | null
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          price: number | null
+          ratings: Json | null
+          specifications: Json | null
+          updated_at: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          price?: number | null
+          ratings?: Json | null
+          specifications?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          price?: number | null
+          ratings?: Json | null
+          specifications?: Json | null
+          updated_at?: string
+        }
+        Relationships: []
       }
       profiles: {
         Row: {
