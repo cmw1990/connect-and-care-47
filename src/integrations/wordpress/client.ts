@@ -37,6 +37,24 @@ export const wpApi = {
     }
   },
 
+  getCareGroup: async (id: number): Promise<WPCareGroup> => {
+    try {
+      console.log('Fetching care group:', id);
+      const response = await apiFetch<WPCareGroup>({
+        path: `/wp/v2/care-groups/${id}`,
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      console.log('Care group response:', response);
+      return response;
+    } catch (error) {
+      console.error('Error fetching care group:', error);
+      throw error;
+    }
+  },
+
   createCareGroup: async (data: { title: string; content: string }): Promise<WPCareGroup> => {
     try {
       console.log('Creating care group:', data);
@@ -53,6 +71,38 @@ export const wpApi = {
       return response;
     } catch (error) {
       console.error('Error creating care group:', error);
+      throw error;
+    }
+  },
+
+  updateCareGroup: async (id: number, data: { title?: string; content?: string }): Promise<WPCareGroup> => {
+    try {
+      console.log('Updating care group:', id, data);
+      const response = await apiFetch<WPCareGroup>({
+        path: `/wp/v2/care-groups/${id}`,
+        method: 'POST',
+        data: {
+          ...data,
+        },
+      });
+      console.log('Update care group response:', response);
+      return response;
+    } catch (error) {
+      console.error('Error updating care group:', error);
+      throw error;
+    }
+  },
+
+  deleteCareGroup: async (id: number): Promise<void> => {
+    try {
+      console.log('Deleting care group:', id);
+      await apiFetch({
+        path: `/wp/v2/care-groups/${id}`,
+        method: 'DELETE',
+      });
+      console.log('Care group deleted successfully');
+    } catch (error) {
+      console.error('Error deleting care group:', error);
       throw error;
     }
   },

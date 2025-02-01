@@ -27,6 +27,7 @@ const Groups = () => {
   const [newGroupDescription, setNewGroupDescription] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [editingGroup, setEditingGroup] = useState<CareGroup | null>(null);
 
   // Convert WordPress groups to our app's format
   const convertWPGroupToAppFormat = (wpGroup: WPCareGroup): CareGroup => ({
@@ -55,7 +56,7 @@ const Groups = () => {
     }
   }, [toast]);
 
-  const createGroup = useCallback(async () => {
+  const handleSubmit = useCallback(async () => {
     if (!newGroupName.trim()) {
       toast({
         title: "Error",
@@ -67,31 +68,53 @@ const Groups = () => {
 
     try {
       setIsLoading(true);
-      const newGroup = await wpApi.createCareGroup({
-        title: newGroupName.trim(),
-        content: newGroupDescription.trim(),
-      });
+      if (editingGroup) {
+        await wpApi.updateCareGroup(Number(editingGroup.id), {
+          title: newGroupName.trim(),
+          content: newGroupDescription.trim(),
+        });
+        toast({
+          title: "Success",
+          description: "Care group updated successfully",
+        });
+      } else {
+        await wpApi.createCareGroup({
+          title: newGroupName.trim(),
+          content: newGroupDescription.trim(),
+        });
+        toast({
+          title: "Success",
+          description: "Care group created successfully",
+        });
+      }
 
       setNewGroupName("");
       setNewGroupDescription("");
       setIsDialogOpen(false);
+      setEditingGroup(null);
       await fetchGroups();
-      
-      toast({
-        title: "Success",
-        description: "Care group created successfully",
-      });
     } catch (error) {
-      console.error('Error in createGroup:', error);
+      console.error('Error in handleSubmit:', error);
       toast({
         title: "Error",
-        description: "Failed to create care group. Please try again.",
+        description: `Failed to ${editingGroup ? 'update' : 'create'} care group. Please try again.`,
         variant: "destructive",
       });
     } finally {
       setIsLoading(false);
     }
-  }, [newGroupName, newGroupDescription, toast, fetchGroups]);
+  }, [newGroupName, newGroupDescription, editingGroup, toast, fetchGroups]);
+
+  const handleEdit = (group: CareGroup) => {
+    setEditingGroup(group);
+    setNewGroupName(group.name);
+    setNewGroupDescription(group.description || '');
+    setIsDialogOpen(true);
+  };
+
+  const handleDelete = async (groupId: string) => {
+    await fetchGroups();
+  };
 
   useEffect(() => {
     fetchGroups();
@@ -106,7 +129,14 @@ const Groups = () => {
             <h1 className="text-3xl font-bold text-gray-900">Care Groups</h1>
             <CareComparisonDialog />
           </div>
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <Dialog open={isDialogOpen} onOpenChange={(open) => {
+            setIsDialogOpen(open);
+            if (!open) {
+              setEditingGroup(null);
+              setNewGroupName("");
+              setNewGroupDescription("");
+            }
+          }}>
             <DialogTrigger asChild>
               <Button>
                 <Plus className="mr-2 h-4 w-4" />
@@ -115,7 +145,9 @@ const Groups = () => {
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Create New Care Group</DialogTitle>
+                <DialogTitle>
+                  {editingGroup ? 'Edit Care Group' : 'Create New Care Group'}
+                </DialogTitle>
               </DialogHeader>
               <div className="space-y-4">
                 <div>
@@ -137,11 +169,11 @@ const Groups = () => {
                   />
                 </div>
                 <Button 
-                  onClick={createGroup} 
+                  onClick={handleSubmit} 
                   className="w-full"
                   disabled={isLoading}
                 >
-                  {isLoading ? "Creating..." : "Create Group"}
+                  {isLoading ? (editingGroup ? "Updating..." : "Creating...") : (editingGroup ? "Update Group" : "Create Group")}
                 </Button>
               </div>
             </DialogContent>
@@ -159,7 +191,11 @@ const Groups = () => {
             <p className="mt-1 text-sm text-gray-500">Get started by creating a new care group.</p>
           </div>
         ) : (
-          <GroupsList groups={groups} />
+          <GroupsList 
+            groups={groups} 
+            onDelete={handleDelete}
+            onEdit={handleEdit}
+          />
         )}
       </main>
     </div>
