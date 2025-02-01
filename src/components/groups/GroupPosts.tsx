@@ -1,7 +1,7 @@
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { MessageSquare, Plus } from "lucide-react";
+import { MessageSquare, Plus, Trash, Edit } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -31,6 +31,7 @@ interface GroupPostsProps {
 export const GroupPosts = ({ groupId }: GroupPostsProps) => {
   const [posts, setPosts] = React.useState<Post[]>([]);
   const [newPost, setNewPost] = React.useState("");
+  const [editingPost, setEditingPost] = React.useState<Post | null>(null);
   const [isLoading, setIsLoading] = React.useState(false);
   const { toast } = useToast();
 
@@ -93,6 +94,60 @@ export const GroupPosts = ({ groupId }: GroupPostsProps) => {
     }
   };
 
+  const handleUpdatePost = async () => {
+    if (!editingPost || !editingPost.content.trim()) return;
+
+    try {
+      setIsLoading(true);
+      const { error } = await supabase
+        .from("group_posts")
+        .update({ content: editingPost.content.trim() })
+        .eq("id", editingPost.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Post updated successfully",
+      });
+      setEditingPost(null);
+      await fetchPosts();
+    } catch (error) {
+      console.error("Error updating post:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update post",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDeletePost = async (postId: string) => {
+    try {
+      const { error } = await supabase
+        .from("group_posts")
+        .delete()
+        .eq("id", postId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Post deleted successfully",
+      });
+      await fetchPosts();
+    } catch (error) {
+      console.error("Error deleting post:", error);
+      toast({
+        title: "Error",
+        description: "Failed to delete post",
+        variant: "destructive",
+      });
+    }
+  };
+
   React.useEffect(() => {
     fetchPosts();
   }, [groupId]);
@@ -138,19 +193,62 @@ export const GroupPosts = ({ groupId }: GroupPostsProps) => {
       <CardContent>
         <div className="space-y-4">
           {posts.map((post) => (
-            <div
-              key={post.id}
-              className="p-4 rounded-lg border space-y-2"
-            >
+            <div key={post.id} className="p-4 rounded-lg border space-y-2">
               <div className="flex justify-between items-start">
                 <p className="text-sm font-medium">
                   {post.profiles?.first_name} {post.profiles?.last_name}
                 </p>
-                <span className="text-xs text-muted-foreground">
-                  {new Date(post.created_at).toLocaleDateString()}
-                </span>
+                <div className="flex items-center gap-2">
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setEditingPost(post)}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Edit Post</DialogTitle>
+                      </DialogHeader>
+                      <div className="space-y-4">
+                        <Textarea
+                          value={editingPost?.content}
+                          onChange={(e) =>
+                            setEditingPost(
+                              editingPost
+                                ? { ...editingPost, content: e.target.value }
+                                : null
+                            )
+                          }
+                          placeholder="What's on your mind?"
+                          rows={4}
+                        />
+                        <Button
+                          onClick={handleUpdatePost}
+                          className="w-full"
+                          disabled={isLoading}
+                        >
+                          {isLoading ? "Updating..." : "Update Post"}
+                        </Button>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => handleDeletePost(post.id)}
+                  >
+                    <Trash className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
               <p className="text-sm">{post.content}</p>
+              <span className="text-xs text-muted-foreground">
+                {new Date(post.created_at).toLocaleDateString()}
+              </span>
             </div>
           ))}
         </div>
