@@ -67,7 +67,7 @@ const Groups = () => {
         created_at: group.created_at,
         member_count: group.care_group_members?.length || 0,
         is_owner: group.created_by === user.id,
-        is_public: (group.privacy_settings as GroupPrivacySettings)?.visibility === 'public'
+        is_public: ((group.privacy_settings as unknown) as GroupPrivacySettings)?.visibility === 'public'
       })) || [];
 
       setMyGroups(formattedMemberGroups);
