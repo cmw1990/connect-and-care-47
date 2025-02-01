@@ -38,8 +38,15 @@ const Groups = () => {
       setIsLoading(true);
       
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('User not authenticated');
-      
+      if (!user) {
+        toast({
+          title: "Error",
+          description: "You must be logged in to view groups",
+          variant: "destructive",
+        });
+        return;
+      }
+
       // Fetch groups where user is a member
       const { data: memberGroups, error: memberError } = await supabase
         .from('care_groups')
@@ -210,6 +217,11 @@ const Groups = () => {
       if (error) throw error;
       
       await fetchGroups();
+      
+      toast({
+        title: "Success",
+        description: "Group deleted successfully",
+      });
     } catch (error) {
       console.error('Error deleting group:', error);
       toast({
