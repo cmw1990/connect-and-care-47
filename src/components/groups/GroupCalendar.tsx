@@ -1,9 +1,17 @@
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar } from "@/components/ui/calendar";
-import { Calendar as CalendarIcon } from "lucide-react";
+import { Calendar as CalendarIcon, ChevronDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { format, startOfWeek, endOfWeek, eachDayOfInterval } from "date-fns";
 
 interface Task {
   id: string;
@@ -17,9 +25,16 @@ interface GroupCalendarProps {
 }
 
 export const GroupCalendar = ({ groupId }: GroupCalendarProps) => {
-  const [date, setDate] = React.useState<Date | undefined>(new Date());
+  const [date, setDate] = React.useState<Date>(new Date());
   const [tasks, setTasks] = React.useState<Task[]>([]);
   const { toast } = useToast();
+  const [selectedMonth, setSelectedMonth] = React.useState<string>(
+    format(new Date(), "MMMM yyyy")
+  );
+
+  const weekStart = startOfWeek(date);
+  const weekEnd = endOfWeek(date);
+  const weekDays = eachDayOfInterval({ start: weekStart, end: weekEnd });
 
   const fetchTasks = async () => {
     try {
@@ -58,60 +73,68 @@ export const GroupCalendar = ({ groupId }: GroupCalendarProps) => {
     });
   };
 
-  // Function to modify day content
-  const modifyDay = (date: Date) => {
-    const dayTasks = getTasksForDate(date);
-    if (dayTasks.length > 0) {
-      return (
-        <div className="relative">
-          <div>{date.getDate()}</div>
-          <div className="absolute bottom-0 left-0 right-0 h-1 bg-primary rounded-full"></div>
-        </div>
-      );
-    }
-    return <div>{date.getDate()}</div>;
+  const months = Array.from({ length: 12 }, (_, i) => {
+    const date = new Date(2024, i, 1);
+    return format(date, "MMMM yyyy");
+  });
+
+  const handleMonthSelect = (month: string) => {
+    const [monthName, year] = month.split(" ");
+    const newDate = new Date(parseInt(year), months.indexOf(monthName), 1);
+    setDate(newDate);
+    setSelectedMonth(month);
   };
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <CalendarIcon className="h-5 w-5" />
-          Calendar
-        </CardTitle>
+        <div className="flex justify-between items-center">
+          <CardTitle className="flex items-center gap-2">
+            <CalendarIcon className="h-5 w-5" />
+            Calendar
+          </CardTitle>
+          <Select value={selectedMonth} onValueChange={handleMonthSelect}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Select month" />
+            </SelectTrigger>
+            <SelectContent>
+              {months.map((month) => (
+                <SelectItem key={month} value={month}>
+                  {month}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </CardHeader>
       <CardContent>
-        <Calendar
-          mode="single"
-          selected={date}
-          onSelect={setDate}
-          className="rounded-md border"
-          components={{
-            DayContent: ({ date }) => modifyDay(date),
-          }}
-        />
-        {date && (
-          <div className="mt-4 space-y-2">
-            <h3 className="font-medium">Tasks for {date.toLocaleDateString()}</h3>
-            {getTasksForDate(date).map((task) => (
-              <div
-                key={task.id}
-                className="p-2 rounded-lg border flex items-center justify-between"
-              >
-                <span className="text-sm">{task.title}</span>
-                <span
-                  className={`text-xs px-2 py-1 rounded-full ${
-                    task.status === "completed"
-                      ? "bg-green-100 text-green-700"
-                      : "bg-yellow-100 text-yellow-700"
-                  }`}
-                >
-                  {task.status}
-                </span>
+        <div className="grid grid-cols-7 gap-2 mb-4">
+          {weekDays.map((day, index) => (
+            <div
+              key={index}
+              className="text-center p-2 border rounded-lg"
+            >
+              <div className="text-sm font-medium mb-1">
+                {format(day, "EEE")}
               </div>
-            ))}
-          </div>
-        )}
+              <div className="text-lg">{format(day, "d")}</div>
+              <div className="mt-2 space-y-1">
+                {getTasksForDate(day).map((task) => (
+                  <div
+                    key={task.id}
+                    className={`text-xs p-1 rounded ${
+                      task.status === "completed"
+                        ? "bg-green-100 text-green-700"
+                        : "bg-yellow-100 text-yellow-700"
+                    }`}
+                  >
+                    {task.title}
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
       </CardContent>
     </Card>
   );

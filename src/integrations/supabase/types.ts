@@ -200,6 +200,47 @@ export type Database = {
           },
         ]
       }
+      patient_info: {
+        Row: {
+          basic_info: Json | null
+          care_tips: string[] | null
+          created_at: string
+          diseases: string[] | null
+          group_id: string | null
+          id: string
+          medicines: Json | null
+          updated_at: string
+        }
+        Insert: {
+          basic_info?: Json | null
+          care_tips?: string[] | null
+          created_at?: string
+          diseases?: string[] | null
+          group_id?: string | null
+          id?: string
+          medicines?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          basic_info?: Json | null
+          care_tips?: string[] | null
+          created_at?: string
+          diseases?: string[] | null
+          group_id?: string | null
+          id?: string
+          medicines?: Json | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "patient_info_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "care_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           availability_settings: Json | null
@@ -302,6 +343,51 @@ export type Database = {
           },
           {
             foreignKeyName: "tasks_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "care_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wishes: {
+        Row: {
+          content: string
+          created_at: string
+          created_by: string | null
+          group_id: string | null
+          id: string
+          status: string | null
+          updated_at: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          created_by?: string | null
+          group_id?: string | null
+          id?: string
+          status?: string | null
+          updated_at?: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          created_by?: string | null
+          group_id?: string | null
+          id?: string
+          status?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wishes_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wishes_group_id_fkey"
             columns: ["group_id"]
             isOneToOne: false
             referencedRelation: "care_groups"
