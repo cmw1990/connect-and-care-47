@@ -69,7 +69,7 @@ export const GroupCalendar = ({ groupId }: GroupCalendarProps) => {
         </div>
       );
     }
-    return date.getDate();
+    return <div>{date.getDate()}</div>;
   };
 
   return (
