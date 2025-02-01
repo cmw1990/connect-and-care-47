@@ -14,9 +14,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Plus } from "lucide-react";
-import { CareComparison } from "@/components/comparison/CareComparison";
+import { Plus, Users } from "lucide-react";
 import { GroupsList } from "@/components/groups/GroupsList";
+import { CareComparisonDialog } from "@/components/comparison/CareComparisonDialog";
 import type { CareGroup } from "@/types/groups";
 
 const Groups = () => {
@@ -26,7 +26,7 @@ const Groups = () => {
   const [newGroupName, setNewGroupName] = useState("");
   const [newGroupDescription, setNewGroupDescription] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   const fetchGroups = useCallback(async () => {
     try {
@@ -38,7 +38,17 @@ const Groups = () => {
 
       const { data: groupsData, error: groupsError } = await supabase
         .from('care_groups')
-        .select('*');
+        .select(`
+          id,
+          name,
+          description,
+          created_at,
+          care_group_members!inner (
+            user_id,
+            role
+          )
+        `)
+        .order('created_at', { ascending: false });
 
       if (groupsError) {
         console.error('Error fetching groups:', groupsError);
@@ -55,22 +65,16 @@ const Groups = () => {
         return;
       }
 
-      // Get member counts for each group
-      const groupsWithCount = await Promise.all(
-        groupsData.map(async (group) => {
-          const { count } = await supabase
-            .from('care_group_members')
-            .select('*', { count: 'exact', head: true })
-            .eq('group_id', group.id);
+      // Process groups to include member count
+      const processedGroups = groupsData.map(group => ({
+        id: group.id,
+        name: group.name,
+        description: group.description,
+        created_at: group.created_at,
+        member_count: group.care_group_members?.length || 0
+      }));
 
-          return {
-            ...group,
-            member_count: count || 0
-          };
-        })
-      );
-
-      setGroups(groupsWithCount);
+      setGroups(processedGroups);
     } catch (error) {
       console.error('Error in fetchGroups:', error);
       toast({
@@ -78,6 +82,8 @@ const Groups = () => {
         description: "Failed to load care groups. Please try again.",
         variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
     }
   }, [navigate, toast]);
 
@@ -183,7 +189,10 @@ const Groups = () => {
       <Navbar />
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Care Groups</h1>
+          <div className="flex items-center gap-4">
+            <h1 className="text-3xl font-bold text-gray-900">Care Groups</h1>
+            <CareComparisonDialog />
+          </div>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
               <Button>
@@ -226,12 +235,19 @@ const Groups = () => {
           </Dialog>
         </div>
 
-        <GroupsList groups={groups} />
-
-        <div className="mt-12">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">Care Comparison</h2>
-          <CareComparison />
-        </div>
+        {isLoading ? (
+          <div className="flex justify-center items-center h-64">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          </div>
+        ) : groups.length === 0 ? (
+          <div className="text-center py-12">
+            <Users className="mx-auto h-12 w-12 text-gray-400" />
+            <h3 className="mt-2 text-sm font-semibold text-gray-900">No groups yet</h3>
+            <p className="mt-1 text-sm text-gray-500">Get started by creating a new care group.</p>
+          </div>
+        ) : (
+          <GroupsList groups={groups} />
+        )}
       </main>
     </div>
   );

@@ -1,8 +1,7 @@
-import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Users } from "lucide-react";
+import { Users, ArrowRight } from "lucide-react";
 import type { CareGroup } from "@/types/groups";
 
 interface GroupsListProps {
@@ -18,7 +17,7 @@ export const GroupsList = ({ groups }: GroupsListProps) => {
         <Card key={group.id} className="hover:shadow-lg transition-shadow">
           <CardHeader>
             <CardTitle className="flex justify-between items-center">
-              <span>{group.name}</span>
+              <span className="truncate">{group.name}</span>
               <div className="flex items-center text-sm text-gray-500">
                 <Users className="h-4 w-4 mr-1" />
                 <span>{group.member_count}</span>
@@ -26,13 +25,14 @@ export const GroupsList = ({ groups }: GroupsListProps) => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-gray-600 mb-4">{group.description}</p>
+            <p className="text-gray-600 mb-4 line-clamp-2">{group.description}</p>
             <Button 
               variant="outline" 
-              className="w-full" 
+              className="w-full gap-2" 
               onClick={() => navigate(`/groups/${group.id}`)}
             >
               View Details
+              <ArrowRight className="h-4 w-4" />
             </Button>
           </CardContent>
         </Card>
