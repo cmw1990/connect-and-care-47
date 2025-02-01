@@ -1,6 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
 import { Navbar } from "@/components/navigation/navbar";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,6 +16,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Plus, Users } from "lucide-react";
 import { GroupsList } from "@/components/groups/GroupsList";
 import { CareComparisonDialog } from "@/components/comparison/CareComparisonDialog";
+import { wpApi, type WPCareGroup } from "@/integrations/wordpress/client";
 import type { CareGroup } from "@/types/groups";
 
 const Groups = () => {
@@ -28,55 +28,23 @@ const Groups = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Convert WordPress groups to our app's format
+  const convertWPGroupToAppFormat = (wpGroup: WPCareGroup): CareGroup => ({
+    id: wpGroup.id.toString(),
+    name: wpGroup.title.rendered,
+    description: wpGroup.content.rendered.replace(/<[^>]*>/g, ''),
+    created_at: new Date().toISOString(), // WP might provide this in the response
+    member_count: wpGroup.meta?.member_count || 0,
+  });
+
   const fetchGroups = useCallback(async () => {
     try {
-      const { data: session } = await supabase.auth.getSession();
-      if (!session?.session) {
-        navigate("/auth");
-        return;
-      }
-
-      const { data: groupsData, error: groupsError } = await supabase
-        .from('care_groups')
-        .select(`
-          id,
-          name,
-          description,
-          created_at,
-          care_group_members!inner (
-            user_id,
-            role
-          )
-        `)
-        .order('created_at', { ascending: false });
-
-      if (groupsError) {
-        console.error('Error fetching groups:', groupsError);
-        toast({
-          title: "Error",
-          description: "Failed to load care groups. Please try again.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      if (!groupsData) {
-        setGroups([]);
-        return;
-      }
-
-      // Process groups to include member count
-      const processedGroups = groupsData.map(group => ({
-        id: group.id,
-        name: group.name,
-        description: group.description,
-        created_at: group.created_at,
-        member_count: group.care_group_members?.length || 0
-      }));
-
-      setGroups(processedGroups);
+      setIsLoading(true);
+      const wpGroups = await wpApi.getCareGroups();
+      const formattedGroups = wpGroups.map(convertWPGroupToAppFormat);
+      setGroups(formattedGroups);
     } catch (error) {
-      console.error('Error in fetchGroups:', error);
+      console.error('Error fetching groups:', error);
       toast({
         title: "Error",
         description: "Failed to load care groups. Please try again.",
@@ -85,7 +53,7 @@ const Groups = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [navigate, toast]);
+  }, [toast]);
 
   const createGroup = useCallback(async () => {
     if (!newGroupName.trim()) {
@@ -99,46 +67,10 @@ const Groups = () => {
 
     try {
       setIsLoading(true);
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
-        navigate("/auth");
-        return;
-      }
-
-      // Create the group
-      const { data: newGroup, error: groupError } = await supabase
-        .from('care_groups')
-        .insert([
-          {
-            name: newGroupName.trim(),
-            description: newGroupDescription.trim(),
-            created_by: session.user.id,
-          }
-        ])
-        .select()
-        .single();
-
-      if (groupError) {
-        console.error('Error creating group:', groupError);
-        throw groupError;
-      }
-
-      // Add the creator as an admin member
-      const { error: memberError } = await supabase
-        .from('care_group_members')
-        .insert([
-          {
-            group_id: newGroup.id,
-            user_id: session.user.id,
-            role: 'admin'
-          }
-        ]);
-
-      if (memberError) {
-        console.error('Error adding member:', memberError);
-        throw memberError;
-      }
+      const newGroup = await wpApi.createCareGroup({
+        title: newGroupName.trim(),
+        content: newGroupDescription.trim(),
+      });
 
       setNewGroupName("");
       setNewGroupDescription("");
@@ -159,29 +91,10 @@ const Groups = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [newGroupName, newGroupDescription, navigate, toast, fetchGroups]);
+  }, [newGroupName, newGroupDescription, toast, fetchGroups]);
 
   useEffect(() => {
     fetchGroups();
-
-    const channel = supabase
-      .channel('schema-db-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'care_groups'
-        },
-        () => {
-          fetchGroups();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
   }, [fetchGroups]);
 
   return (
