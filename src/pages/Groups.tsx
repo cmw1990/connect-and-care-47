@@ -19,6 +19,7 @@ import { CareComparisonDialog } from "@/components/comparison/CareComparisonDial
 import type { CareGroup } from "@/types/groups";
 import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Switch } from "@/components/ui/switch";
 
 const Groups = () => {
   const navigate = useNavigate();
@@ -27,6 +28,7 @@ const Groups = () => {
   const [myGroups, setMyGroups] = useState<CareGroup[]>([]);
   const [newGroupName, setNewGroupName] = useState("");
   const [newGroupDescription, setNewGroupDescription] = useState("");
+  const [isPublic, setIsPublic] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [editingGroup, setEditingGroup] = useState<CareGroup | null>(null);
@@ -37,8 +39,12 @@ const Groups = () => {
       
       const { data: { user } } = await supabase.auth.getUser();
       const userId = user?.id;
+
+      if (!userId) {
+        throw new Error('User not authenticated');
+      }
       
-      // Fetch all groups where user is a member
+      // Fetch groups where user is a member
       const { data: memberGroups, error: memberError } = await supabase
         .from('care_groups')
         .select(`
@@ -47,7 +53,8 @@ const Groups = () => {
           description,
           created_at,
           created_by,
-          care_group_members!care_group_members_group_id_fkey (
+          privacy_settings,
+          care_group_members!inner (
             id,
             role
           )
@@ -63,35 +70,39 @@ const Groups = () => {
         description: group.description,
         created_at: group.created_at,
         member_count: group.care_group_members?.length || 0,
-        is_owner: group.created_by === userId
+        is_owner: group.created_by === userId,
+        is_public: group.privacy_settings?.visibility === 'public'
       })) || [];
 
       setMyGroups(formattedMemberGroups);
 
-      // Fetch all accessible groups
-      const { data: allGroups, error: allError } = await supabase
+      // Fetch all public groups
+      const { data: publicGroups, error: publicError } = await supabase
         .from('care_groups')
         .select(`
           id,
           name,
           description,
           created_at,
-          care_group_members!care_group_members_group_id_fkey (
+          privacy_settings,
+          care_group_members (
             id
           )
-        `);
+        `)
+        .eq('privacy_settings->>visibility', 'public');
 
-      if (allError) throw allError;
+      if (publicError) throw publicError;
 
-      const formattedAllGroups = allGroups?.map(group => ({
+      const formattedPublicGroups = publicGroups?.map(group => ({
         id: group.id,
         name: group.name,
         description: group.description,
         created_at: group.created_at,
-        member_count: group.care_group_members?.length || 0
+        member_count: group.care_group_members?.length || 0,
+        is_public: true
       })) || [];
 
-      setGroups(formattedAllGroups);
+      setGroups(formattedPublicGroups);
     } catch (error) {
       console.error('Error fetching groups:', error);
       toast({
@@ -117,12 +128,16 @@ const Groups = () => {
     try {
       setIsLoading(true);
       
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not authenticated');
+
       if (editingGroup) {
         const { error } = await supabase
           .from('care_groups')
           .update({
             name: newGroupName.trim(),
-            description: newGroupDescription.trim()
+            description: newGroupDescription.trim(),
+            privacy_settings: { visibility: isPublic ? 'public' : 'private' }
           })
           .eq('id', editingGroup.id);
 
@@ -133,15 +148,30 @@ const Groups = () => {
           description: "Care group updated successfully",
         });
       } else {
-        const { error } = await supabase
+        // Create new group
+        const { data: group, error: groupError } = await supabase
           .from('care_groups')
           .insert({
             name: newGroupName.trim(),
             description: newGroupDescription.trim(),
-            created_by: (await supabase.auth.getUser()).data.user?.id
+            created_by: user.id,
+            privacy_settings: { visibility: isPublic ? 'public' : 'private' }
+          })
+          .select()
+          .single();
+
+        if (groupError) throw groupError;
+
+        // Add creator as member with admin role
+        const { error: memberError } = await supabase
+          .from('care_group_members')
+          .insert({
+            group_id: group.id,
+            user_id: user.id,
+            role: 'admin'
           });
 
-        if (error) throw error;
+        if (memberError) throw memberError;
 
         toast({
           title: "Success",
@@ -151,6 +181,7 @@ const Groups = () => {
 
       setNewGroupName("");
       setNewGroupDescription("");
+      setIsPublic(false);
       setIsDialogOpen(false);
       setEditingGroup(null);
       await fetchGroups();
@@ -164,7 +195,7 @@ const Groups = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [newGroupName, newGroupDescription, editingGroup, toast, fetchGroups]);
+  }, [newGroupName, newGroupDescription, isPublic, editingGroup, toast, fetchGroups]);
 
   const handleEdit = (group: CareGroup) => {
     setEditingGroup(group);
@@ -212,6 +243,7 @@ const Groups = () => {
               setEditingGroup(null);
               setNewGroupName("");
               setNewGroupDescription("");
+              setIsPublic(false);
             }
           }}>
             <DialogTrigger asChild>
@@ -245,6 +277,14 @@ const Groups = () => {
                     placeholder="Enter group description"
                   />
                 </div>
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="public"
+                    checked={isPublic}
+                    onCheckedChange={setIsPublic}
+                  />
+                  <Label htmlFor="public">Make group public</Label>
+                </div>
                 <Button 
                   onClick={handleSubmit} 
                   className="w-full"
@@ -260,7 +300,7 @@ const Groups = () => {
         <Tabs defaultValue="my-groups" className="w-full">
           <TabsList className="mb-4">
             <TabsTrigger value="my-groups">My Care Groups</TabsTrigger>
-            <TabsTrigger value="all-groups">All Groups</TabsTrigger>
+            <TabsTrigger value="all-groups">Public Groups</TabsTrigger>
           </TabsList>
           
           <TabsContent value="my-groups">
@@ -291,8 +331,8 @@ const Groups = () => {
             ) : groups.length === 0 ? (
               <div className="text-center py-12">
                 <Users className="mx-auto h-12 w-12 text-gray-400" />
-                <h3 className="mt-2 text-sm font-semibold text-gray-900">No groups available</h3>
-                <p className="mt-1 text-sm text-gray-500">Create a new care group to get started.</p>
+                <h3 className="mt-2 text-sm font-semibold text-gray-900">No public groups available</h3>
+                <p className="mt-1 text-sm text-gray-500">Create a new public care group to get started.</p>
               </div>
             ) : (
               <GroupsList 
