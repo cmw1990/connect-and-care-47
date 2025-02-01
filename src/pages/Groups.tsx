@@ -35,6 +35,9 @@ const Groups = () => {
     try {
       setIsLoading(true);
       
+      const { data: { user } } = await supabase.auth.getUser();
+      const userId = user?.id;
+      
       // Fetch all groups where user is a member
       const { data: memberGroups, error: memberError } = await supabase
         .from('care_groups')
@@ -49,7 +52,7 @@ const Groups = () => {
             role
           )
         `)
-        .eq('care_group_members.user_id', (await supabase.auth.getUser()).data.user?.id);
+        .eq('care_group_members.user_id', userId);
 
       if (memberError) throw memberError;
 
@@ -60,7 +63,7 @@ const Groups = () => {
         description: group.description,
         created_at: group.created_at,
         member_count: group.care_group_members?.length || 0,
-        is_owner: group.created_by === (await supabase.auth.getUser()).data.user?.id
+        is_owner: group.created_by === userId
       })) || [];
 
       setMyGroups(formattedMemberGroups);
