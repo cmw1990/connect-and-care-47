@@ -36,28 +36,48 @@ const Groups = () => {
         return;
       }
 
-      // First, get all groups the user has access to
+      // Fetch groups with a simpler query first
       const { data: groupsData, error: groupsError } = await supabase
         .from('care_groups')
-        .select('*');
+        .select(`
+          id,
+          name,
+          description,
+          created_at
+        `);
 
       if (groupsError) {
         console.error('Error fetching groups:', groupsError);
         throw groupsError;
       }
 
-      // Then, for each group, get the member count
+      if (!groupsData) {
+        setGroups([]);
+        return;
+      }
+
+      // Then get member counts in a separate query
       const groupsWithCount = await Promise.all(
         groupsData.map(async (group) => {
-          const { count } = await supabase
-            .from('care_group_members')
-            .select('*', { count: 'exact', head: true })
-            .eq('group_id', group.id);
+          try {
+            const { count, error: countError } = await supabase
+              .from('care_group_members')
+              .select('*', { count: 'exact', head: true })
+              .eq('group_id', group.id);
 
-          return { 
-            ...group, 
-            member_count: count || 0 
-          };
+            if (countError) {
+              console.error('Error fetching member count:', countError);
+              return { ...group, member_count: 0 };
+            }
+
+            return {
+              ...group,
+              member_count: count || 0
+            };
+          } catch (error) {
+            console.error('Error processing group:', error);
+            return { ...group, member_count: 0 };
+          }
         })
       );
 
@@ -66,48 +86,68 @@ const Groups = () => {
       console.error('Error in fetchGroups:', error);
       toast({
         title: "Error",
-        description: "Failed to load care groups",
+        description: "Failed to load care groups. Please try again.",
         variant: "destructive",
       });
     }
   }, [navigate, toast]);
 
   const createGroup = useCallback(async () => {
+    if (!newGroupName.trim()) {
+      toast({
+        title: "Error",
+        description: "Group name is required",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       setIsLoading(true);
       const { data: { session } } = await supabase.auth.getSession();
+      
       if (!session) {
         navigate("/auth");
         return;
       }
 
       // Create the group
-      const { data: groupData, error: groupError } = await supabase
+      const { data: newGroup, error: groupError } = await supabase
         .from('care_groups')
         .insert([
           {
-            name: newGroupName,
-            description: newGroupDescription,
+            name: newGroupName.trim(),
+            description: newGroupDescription.trim(),
             created_by: session.user.id,
           }
         ])
         .select()
         .single();
 
-      if (groupError) throw groupError;
+      if (groupError) {
+        console.error('Error creating group:', groupError);
+        throw groupError;
+      }
+
+      if (!newGroup) {
+        throw new Error('No group data returned after creation');
+      }
 
       // Add the creator as an admin member
       const { error: memberError } = await supabase
         .from('care_group_members')
         .insert([
           {
-            group_id: groupData.id,
+            group_id: newGroup.id,
             user_id: session.user.id,
             role: 'admin'
           }
         ]);
 
-      if (memberError) throw memberError;
+      if (memberError) {
+        console.error('Error adding member:', memberError);
+        throw memberError;
+      }
 
       setNewGroupName("");
       setNewGroupDescription("");
@@ -122,7 +162,7 @@ const Groups = () => {
       console.error('Error in createGroup:', error);
       toast({
         title: "Error",
-        description: "Failed to create care group",
+        description: "Failed to create care group. Please try again.",
         variant: "destructive",
       });
     } finally {
