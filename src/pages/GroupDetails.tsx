@@ -19,6 +19,8 @@ import type { CareGroup } from "@/types/groups";
 import { GroupCalendar } from "@/components/groups/GroupCalendar";
 import { GroupPosts } from "@/components/groups/GroupPosts";
 import { GroupTasks } from "@/components/groups/GroupTasks";
+import { GroupStatusBar } from "@/components/groups/GroupStatusBar";
+import { PatientInfoCard } from "@/components/groups/PatientInfoCard";
 
 interface GroupMember {
   id: string;
@@ -36,6 +38,7 @@ const GroupDetails = () => {
   const { toast } = useToast();
   const [group, setGroup] = useState<CareGroup | null>(null);
   const [members, setMembers] = useState<GroupMember[]>([]);
+  const [patientInfo, setPatientInfo] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [newMemberEmail, setNewMemberEmail] = useState("");
   const [isAddingMember, setIsAddingMember] = useState(false);
@@ -75,6 +78,17 @@ const GroupDetails = () => {
 
       if (membersError) throw membersError;
       setMembers(membersData);
+
+      // Fetch patient info
+      const { data: patientData, error: patientError } = await supabase
+        .from('patient_info')
+        .select('*')
+        .eq('group_id', groupId)
+        .single();
+
+      if (!patientError) {
+        setPatientInfo(patientData);
+      }
 
     } catch (error) {
       console.error('Error fetching group details:', error);
@@ -175,100 +189,110 @@ const GroupDetails = () => {
     <div className="min-h-screen bg-gradient-to-b from-primary-100 to-white">
       <Navbar />
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left Column - Group Info and Members */}
-          <div className="space-y-6">
-            {/* Group Header */}
-            <Card>
-              <CardHeader>
-                <div className="flex justify-between items-start">
-                  <div>
-                    <CardTitle>{group.name}</CardTitle>
-                    <CardDescription>{group.description}</CardDescription>
-                  </div>
-                  <Button variant="outline" size="icon">
-                    <Settings className="h-4 w-4" />
-                  </Button>
-                </div>
-              </CardHeader>
-            </Card>
-
-            {/* Members Section */}
-            <Card>
-              <CardHeader>
-                <div className="flex justify-between items-center">
-                  <CardTitle className="flex items-center gap-2">
-                    <Users className="h-5 w-5" />
-                    Members ({members.length})
-                  </CardTitle>
-                  <Dialog>
-                    <DialogTrigger asChild>
-                      <Button>
-                        <UserPlus className="mr-2 h-4 w-4" />
-                        Add Member
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                      <DialogHeader>
-                        <DialogTitle>Add New Member</DialogTitle>
-                      </DialogHeader>
-                      <div className="space-y-4">
-                        <div>
-                          <Label htmlFor="email">Member Email</Label>
-                          <Input
-                            id="email"
-                            type="email"
-                            value={newMemberEmail}
-                            onChange={(e) => setNewMemberEmail(e.target.value)}
-                            placeholder="Enter member email"
-                          />
-                        </div>
-                        <Button 
-                          onClick={handleAddMember} 
-                          className="w-full"
-                          disabled={isAddingMember}
-                        >
-                          {isAddingMember ? "Adding..." : "Add Member"}
-                        </Button>
-                      </div>
-                    </DialogContent>
-                  </Dialog>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {members.map((member) => (
-                    <div
-                      key={member.id}
-                      className="flex items-center justify-between p-4 rounded-lg border"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                          <Users className="h-5 w-5 text-primary" />
-                        </div>
-                        <div>
-                          <p className="font-medium">
-                            {member.profiles?.first_name} {member.profiles?.last_name}
-                          </p>
-                          <p className="text-sm text-muted-foreground capitalize">
-                            {member.role}
-                          </p>
-                        </div>
-                      </div>
+        <div className="space-y-6">
+          <GroupStatusBar 
+            groupId={groupId} 
+            initialStatus={group.privacy_settings?.status || "normal"} 
+          />
+          
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Left Column - Group Info, Patient Info, and Members */}
+            <div className="space-y-6">
+              {/* Group Header */}
+              <Card>
+                <CardHeader>
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <CardTitle>{group.name}</CardTitle>
+                      <CardDescription>{group.description}</CardDescription>
                     </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+                    <Button variant="outline" size="icon">
+                      <Settings className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </CardHeader>
+              </Card>
 
-            {/* Calendar Section */}
-            <GroupCalendar groupId={groupId} />
-          </div>
+              {/* Patient Info */}
+              <PatientInfoCard groupId={groupId} patientInfo={patientInfo} />
 
-          {/* Right Column - Posts and Tasks */}
-          <div className="lg:col-span-2 space-y-6">
-            <GroupPosts groupId={groupId} />
-            <GroupTasks groupId={groupId} members={members} />
+              {/* Members Section */}
+              <Card>
+                <CardHeader>
+                  <div className="flex justify-between items-center">
+                    <CardTitle className="flex items-center gap-2">
+                      <Users className="h-5 w-5" />
+                      Members ({members.length})
+                    </CardTitle>
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button>
+                          <UserPlus className="mr-2 h-4 w-4" />
+                          Add Member
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>Add New Member</DialogTitle>
+                        </DialogHeader>
+                        <div className="space-y-4">
+                          <div>
+                            <Label htmlFor="email">Member Email</Label>
+                            <Input
+                              id="email"
+                              type="email"
+                              value={newMemberEmail}
+                              onChange={(e) => setNewMemberEmail(e.target.value)}
+                              placeholder="Enter member email"
+                            />
+                          </div>
+                          <Button 
+                            onClick={handleAddMember} 
+                            className="w-full"
+                            disabled={isAddingMember}
+                          >
+                            {isAddingMember ? "Adding..." : "Add Member"}
+                          </Button>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {members.map((member) => (
+                      <div
+                        key={member.id}
+                        className="flex items-center justify-between p-4 rounded-lg border"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                            <Users className="h-5 w-5 text-primary" />
+                          </div>
+                          <div>
+                            <p className="font-medium">
+                              {member.profiles?.first_name} {member.profiles?.last_name}
+                            </p>
+                            <p className="text-sm text-muted-foreground capitalize">
+                              {member.role}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Calendar Section */}
+              <GroupCalendar groupId={groupId} />
+            </div>
+
+            {/* Right Column - Posts and Tasks */}
+            <div className="lg:col-span-2 space-y-6">
+              <GroupPosts groupId={groupId} />
+              <GroupTasks groupId={groupId} members={members} />
+            </div>
           </div>
         </div>
       </main>
