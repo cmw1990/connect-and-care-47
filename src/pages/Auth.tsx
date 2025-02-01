@@ -51,10 +51,12 @@ const Auth = () => {
 
     try {
       if (isSignUp) {
-        // For sign up, we'll use the identifier as both username and email if it's not an email
+        // For sign up, we'll use the identifier as both username and email
         const isEmail = identifier.includes('@');
-        const signUpData = {
-          email: isEmail ? identifier : `${identifier}@make-life-easier.today`,
+        const email = isEmail ? identifier : `${identifier}@make-life-easier.today`;
+        
+        const { data, error } = await supabase.auth.signUp({
+          email,
           password,
           options: {
             data: {
@@ -63,28 +65,45 @@ const Auth = () => {
               username: !isEmail ? identifier : undefined,
             },
           },
-        };
+        });
 
-        const { error } = await supabase.auth.signUp(signUpData);
         if (error) throw error;
         
-        toast({
-          title: "Success!",
-          description: "Account created successfully. You can now sign in.",
-        });
-        setIsSignUp(false);
+        if (data.user) {
+          toast({
+            title: "Success!",
+            description: "Account created successfully. You can now sign in.",
+          });
+          setIsSignUp(false);
+        }
       } else {
-        // For sign in, try to determine if the identifier is an email or username
+        // For sign in, try both email and username formats
         const isEmail = identifier.includes('@');
-        const signInData = {
-          email: isEmail ? identifier : `${identifier}@make-life-easier.today`,
-          password,
-        };
+        const email = isEmail ? identifier : `${identifier}@make-life-easier.today`;
 
-        const { error } = await supabase.auth.signInWithPassword(signInData);
-        if (error) throw error;
+        console.log('Attempting login with:', { email, password }); // Debug log
+
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+
+        if (error) {
+          // If login fails with the email format, try direct email login
+          if (!isEmail) {
+            console.log('First attempt failed, trying direct identifier:', identifier); // Debug log
+            const directLoginResult = await supabase.auth.signInWithPassword({
+              email: identifier,
+              password,
+            });
+            if (directLoginResult.error) throw error;
+          } else {
+            throw error;
+          }
+        }
       }
     } catch (error: any) {
+      console.error('Auth error:', error); // Debug log
       toast({
         title: "Error",
         description: error.message,
