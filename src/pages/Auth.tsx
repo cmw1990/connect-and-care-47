@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/card";
 
 const Auth = () => {
-  const [identifier, setIdentifier] = useState(""); // This can be either email or username
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -23,7 +23,6 @@ const Auth = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Check if user is already logged in
     const checkUser = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
@@ -33,7 +32,6 @@ const Auth = () => {
     
     checkUser();
 
-    // Subscribe to auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (session) {
         navigate("/");
@@ -51,10 +49,11 @@ const Auth = () => {
 
     try {
       if (isSignUp) {
-        // For sign up, we'll use the identifier as both username and email
         const isEmail = identifier.includes('@');
         const email = isEmail ? identifier : `${identifier}@make-life-easier.today`;
         
+        console.log('Attempting signup with:', { email, firstName, lastName });
+
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
@@ -77,36 +76,46 @@ const Auth = () => {
           setIsSignUp(false);
         }
       } else {
-        // For sign in, try both email and username formats
         const isEmail = identifier.includes('@');
         const email = isEmail ? identifier : `${identifier}@make-life-easier.today`;
 
-        console.log('Attempting login with:', { email, password }); // Debug log
+        console.log('Attempting first login with:', { email });
 
-        const { data, error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
+        try {
+          const { data, error } = await supabase.auth.signInWithPassword({
+            email,
+            password,
+          });
 
-        if (error) {
-          // If login fails with the email format, try direct email login
+          if (!error && data.user) {
+            console.log('Login successful');
+            return; // Exit if login successful
+          }
+
+          // If first attempt fails and it's not an email, try direct login
           if (!isEmail) {
-            console.log('First attempt failed, trying direct identifier:', identifier); // Debug log
+            console.log('First attempt failed, trying direct login with:', identifier);
             const directLoginResult = await supabase.auth.signInWithPassword({
               email: identifier,
               password,
             });
-            if (directLoginResult.error) throw error;
+
+            if (directLoginResult.error) {
+              throw directLoginResult.error;
+            }
           } else {
             throw error;
           }
+        } catch (loginError: any) {
+          console.error('Login attempt failed:', loginError);
+          throw new Error(loginError.message || 'Invalid login credentials');
         }
       }
     } catch (error: any) {
-      console.error('Auth error:', error); // Debug log
+      console.error('Auth error:', error);
       toast({
         title: "Error",
-        description: error.message,
+        description: error.message || "An error occurred during authentication",
         variant: "destructive",
       });
     } finally {
