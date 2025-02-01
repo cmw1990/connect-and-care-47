@@ -17,7 +17,8 @@ interface Post {
   id: string;
   content: string;
   created_at: string;
-  author: {
+  created_by: string;
+  profiles: {
     first_name: string | null;
     last_name: string | null;
   } | null;
@@ -41,7 +42,8 @@ export const GroupPosts = ({ groupId }: GroupPostsProps) => {
           id,
           content,
           created_at,
-          profiles (
+          created_by,
+          profiles:created_by (
             first_name,
             last_name
           )
@@ -142,7 +144,7 @@ export const GroupPosts = ({ groupId }: GroupPostsProps) => {
             >
               <div className="flex justify-between items-start">
                 <p className="text-sm font-medium">
-                  {post.author?.first_name} {post.author?.last_name}
+                  {post.profiles?.first_name} {post.profiles?.last_name}
                 </p>
                 <span className="text-xs text-muted-foreground">
                   {new Date(post.created_at).toLocaleDateString()}

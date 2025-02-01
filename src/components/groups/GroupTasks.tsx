@@ -27,7 +27,7 @@ interface Task {
   status: string;
   priority: string;
   assigned_to: string | null;
-  profiles: {
+  assigned_user: {
     first_name: string | null;
     last_name: string | null;
   } | null;
@@ -64,7 +64,7 @@ export const GroupTasks = ({ groupId, members }: GroupTasksProps) => {
           status,
           priority,
           assigned_to,
-          profiles (
+          assigned_user:profiles!tasks_assigned_to_fkey (
             first_name,
             last_name
           )
@@ -251,10 +251,10 @@ export const GroupTasks = ({ groupId, members }: GroupTasksProps) => {
                   >
                     {task.title}
                   </p>
-                  {task.profiles && (
+                  {task.assigned_user && (
                     <p className="text-sm text-muted-foreground">
-                      Assigned to: {task.profiles.first_name}{" "}
-                      {task.profiles.last_name}
+                      Assigned to: {task.assigned_user.first_name}{" "}
+                      {task.assigned_user.last_name}
                     </p>
                   )}
                 </div>
