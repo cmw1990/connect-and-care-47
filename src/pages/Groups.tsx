@@ -16,7 +16,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Plus, Users } from "lucide-react";
 import { GroupsList } from "@/components/groups/GroupsList";
 import { CareComparisonDialog } from "@/components/comparison/CareComparisonDialog";
-import type { CareGroup } from "@/types/groups";
+import type { CareGroup, GroupPrivacySettings } from "@/types/groups";
 import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
@@ -38,11 +38,7 @@ const Groups = () => {
       setIsLoading(true);
       
       const { data: { user } } = await supabase.auth.getUser();
-      const userId = user?.id;
-
-      if (!userId) {
-        throw new Error('User not authenticated');
-      }
+      if (!user) throw new Error('User not authenticated');
       
       // Fetch groups where user is a member
       const { data: memberGroups, error: memberError } = await supabase
@@ -59,7 +55,7 @@ const Groups = () => {
             role
           )
         `)
-        .eq('care_group_members.user_id', userId);
+        .eq('care_group_members.user_id', user.id);
 
       if (memberError) throw memberError;
 
@@ -70,8 +66,8 @@ const Groups = () => {
         description: group.description,
         created_at: group.created_at,
         member_count: group.care_group_members?.length || 0,
-        is_owner: group.created_by === userId,
-        is_public: group.privacy_settings?.visibility === 'public'
+        is_owner: group.created_by === user.id,
+        is_public: (group.privacy_settings as GroupPrivacySettings)?.visibility === 'public'
       })) || [];
 
       setMyGroups(formattedMemberGroups);
@@ -332,7 +328,7 @@ const Groups = () => {
               <div className="text-center py-12">
                 <Users className="mx-auto h-12 w-12 text-gray-400" />
                 <h3 className="mt-2 text-sm font-semibold text-gray-900">No public groups available</h3>
-                <p className="mt-1 text-sm text-gray-500">Create a new public care group to get started.</p>
+                <p className="mt-1 text-sm text-gray-500">Create a new public group to get started.</p>
               </div>
             ) : (
               <GroupsList 

@@ -7,3 +7,7 @@ export interface CareGroup {
   is_owner?: boolean;
   is_public?: boolean;
 }
+
+export interface GroupPrivacySettings {
+  visibility: 'public' | 'private';
+}
