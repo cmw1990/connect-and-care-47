@@ -16,8 +16,8 @@ import { useToast } from "@/hooks/use-toast";
 import { Plus, Users } from "lucide-react";
 import { GroupsList } from "@/components/groups/GroupsList";
 import { CareComparisonDialog } from "@/components/comparison/CareComparisonDialog";
-import { wpApi, type WPCareGroup } from "@/integrations/wordpress/client";
 import type { CareGroup } from "@/types/groups";
+import { supabase } from "@/integrations/supabase/client";
 
 const Groups = () => {
   const navigate = useNavigate();
@@ -29,20 +29,31 @@ const Groups = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [editingGroup, setEditingGroup] = useState<CareGroup | null>(null);
 
-  // Convert WordPress groups to our app's format
-  const convertWPGroupToAppFormat = (wpGroup: WPCareGroup): CareGroup => ({
-    id: wpGroup.id.toString(),
-    name: wpGroup.title.rendered,
-    description: wpGroup.content.rendered.replace(/<[^>]*>/g, ''),
-    created_at: new Date().toISOString(), // WP might provide this in the response
-    member_count: wpGroup.meta?.member_count || 0,
-  });
-
   const fetchGroups = useCallback(async () => {
     try {
       setIsLoading(true);
-      const wpGroups = await wpApi.getCareGroups();
-      const formattedGroups = wpGroups.map(convertWPGroupToAppFormat);
+      const { data: groupsData, error } = await supabase
+        .from('care_groups')
+        .select(`
+          id,
+          name,
+          description,
+          created_at,
+          care_group_members!care_group_members_group_id_fkey (
+            id
+          )
+        `);
+
+      if (error) throw error;
+
+      const formattedGroups: CareGroup[] = groupsData.map(group => ({
+        id: group.id,
+        name: group.name,
+        description: group.description,
+        created_at: group.created_at,
+        member_count: group.care_group_members?.length || 0
+      }));
+
       setGroups(formattedGroups);
     } catch (error) {
       console.error('Error fetching groups:', error);
@@ -68,20 +79,32 @@ const Groups = () => {
 
     try {
       setIsLoading(true);
+      
       if (editingGroup) {
-        await wpApi.updateCareGroup(Number(editingGroup.id), {
-          title: newGroupName.trim(),
-          content: newGroupDescription.trim(),
-        });
+        const { error } = await supabase
+          .from('care_groups')
+          .update({
+            name: newGroupName.trim(),
+            description: newGroupDescription.trim()
+          })
+          .eq('id', editingGroup.id);
+
+        if (error) throw error;
+
         toast({
           title: "Success",
           description: "Care group updated successfully",
         });
       } else {
-        await wpApi.createCareGroup({
-          title: newGroupName.trim(),
-          content: newGroupDescription.trim(),
-        });
+        const { error } = await supabase
+          .from('care_groups')
+          .insert({
+            name: newGroupName.trim(),
+            description: newGroupDescription.trim()
+          });
+
+        if (error) throw error;
+
         toast({
           title: "Success",
           description: "Care group created successfully",
@@ -113,7 +136,23 @@ const Groups = () => {
   };
 
   const handleDelete = async (groupId: string) => {
-    await fetchGroups();
+    try {
+      const { error } = await supabase
+        .from('care_groups')
+        .delete()
+        .eq('id', groupId);
+
+      if (error) throw error;
+      
+      await fetchGroups();
+    } catch (error) {
+      console.error('Error deleting group:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete care group",
+        variant: "destructive",
+      });
+    }
   };
 
   useEffect(() => {

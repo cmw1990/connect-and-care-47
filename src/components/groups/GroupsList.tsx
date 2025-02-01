@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Users, ArrowRight, Trash2, Edit } from "lucide-react";
 import type { CareGroup } from "@/types/groups";
 import { useToast } from "@/hooks/use-toast";
-import { wpApi } from "@/integrations/wordpress/client";
 
 interface GroupsListProps {
   groups: CareGroup[];
@@ -20,13 +19,7 @@ export const GroupsList = ({ groups, onDelete, onEdit, showActions = true }: Gro
   const handleDelete = async (groupId: string) => {
     try {
       if (!onDelete) return;
-      
-      await wpApi.deleteCareGroup(Number(groupId));
       onDelete(groupId);
-      toast({
-        title: "Success",
-        description: "Care group deleted successfully",
-      });
     } catch (error) {
       console.error('Error deleting group:', error);
       toast({
