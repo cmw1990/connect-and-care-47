@@ -26,6 +26,7 @@ const Groups = () => {
   const [newGroupName, setNewGroupName] = useState("");
   const [newGroupDescription, setNewGroupDescription] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const fetchGroups = useCallback(async () => {
     try {
@@ -42,9 +43,7 @@ const Groups = () => {
           name,
           description,
           created_at,
-          care_group_members (
-            count
-          )
+          care_group_members!care_group_members_group_id_fkey (count)
         `);
 
       if (groupsError) throw groupsError;
@@ -67,10 +66,12 @@ const Groups = () => {
 
   const createGroup = useCallback(async () => {
     try {
+      setIsLoading(true);
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error('Not authenticated');
 
-      const { data, error } = await supabase
+      // First create the group
+      const { data: groupData, error: groupError } = await supabase
         .from('care_groups')
         .insert([
           {
@@ -82,13 +83,14 @@ const Groups = () => {
         .select()
         .single();
 
-      if (error) throw error;
+      if (groupError) throw groupError;
 
+      // Then add the creator as an admin member
       const { error: memberError } = await supabase
         .from('care_group_members')
         .insert([
           {
-            group_id: data.id,
+            group_id: groupData.id,
             user_id: session.user.id,
             role: 'admin'
           }
@@ -99,7 +101,7 @@ const Groups = () => {
       setNewGroupName("");
       setNewGroupDescription("");
       setIsDialogOpen(false);
-      fetchGroups();
+      await fetchGroups();
       
       toast({
         title: "Success",
@@ -112,6 +114,8 @@ const Groups = () => {
         description: "Failed to create care group",
         variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
     }
   }, [newGroupName, newGroupDescription, toast, fetchGroups]);
 
@@ -174,8 +178,12 @@ const Groups = () => {
                     placeholder="Enter group description"
                   />
                 </div>
-                <Button onClick={createGroup} className="w-full">
-                  Create Group
+                <Button 
+                  onClick={createGroup} 
+                  className="w-full"
+                  disabled={isLoading}
+                >
+                  {isLoading ? "Creating..." : "Create Group"}
                 </Button>
               </div>
             </DialogContent>
