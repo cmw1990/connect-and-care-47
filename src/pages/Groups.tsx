@@ -36,33 +36,34 @@ const Groups = () => {
         return;
       }
 
-      // First, get all groups
+      // First, get all groups the user has access to
       const { data: groupsData, error: groupsError } = await supabase
         .from('care_groups')
-        .select('id, name, description, created_at');
+        .select('*');
 
-      if (groupsError) throw groupsError;
+      if (groupsError) {
+        console.error('Error fetching groups:', groupsError);
+        throw groupsError;
+      }
 
       // Then, for each group, get the member count
       const groupsWithCount = await Promise.all(
         groupsData.map(async (group) => {
-          const { count, error: countError } = await supabase
+          const { count } = await supabase
             .from('care_group_members')
             .select('*', { count: 'exact', head: true })
             .eq('group_id', group.id);
 
-          if (countError) {
-            console.error('Error fetching count for group:', group.id, countError);
-            return { ...group, member_count: 0 };
-          }
-
-          return { ...group, member_count: count || 0 };
+          return { 
+            ...group, 
+            member_count: count || 0 
+          };
         })
       );
 
       setGroups(groupsWithCount);
     } catch (error) {
-      console.error('Error fetching groups:', error);
+      console.error('Error in fetchGroups:', error);
       toast({
         title: "Error",
         description: "Failed to load care groups",
@@ -75,9 +76,12 @@ const Groups = () => {
     try {
       setIsLoading(true);
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session) throw new Error('Not authenticated');
+      if (!session) {
+        navigate("/auth");
+        return;
+      }
 
-      // First create the group
+      // Create the group
       const { data: groupData, error: groupError } = await supabase
         .from('care_groups')
         .insert([
@@ -92,7 +96,7 @@ const Groups = () => {
 
       if (groupError) throw groupError;
 
-      // Then add the creator as an admin member
+      // Add the creator as an admin member
       const { error: memberError } = await supabase
         .from('care_group_members')
         .insert([
@@ -115,7 +119,7 @@ const Groups = () => {
         description: "Care group created successfully",
       });
     } catch (error) {
-      console.error('Error creating group:', error);
+      console.error('Error in createGroup:', error);
       toast({
         title: "Error",
         description: "Failed to create care group",
@@ -124,7 +128,7 @@ const Groups = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [newGroupName, newGroupDescription, toast, fetchGroups]);
+  }, [newGroupName, newGroupDescription, navigate, toast, fetchGroups]);
 
   useEffect(() => {
     fetchGroups();
