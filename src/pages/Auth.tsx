@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
+import apiFetch from '@wordpress/api-fetch';
 import {
   Card,
   CardContent,
@@ -22,27 +22,6 @@ const Auth = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  useEffect(() => {
-    const checkUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        navigate("/");
-      }
-    };
-    
-    checkUser();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (session) {
-        navigate("/");
-      }
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [navigate]);
-
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -59,77 +38,55 @@ const Auth = () => {
 
     try {
       if (isSignUp) {
-        const isEmail = identifier.includes('@');
-        const email = isEmail ? identifier : `${identifier}@make-life-easier.today`;
-        
-        const { data: existingUser } = await supabase
-          .from('profiles')
-          .select('id')
-          .eq('id', email)
-          .single();
-
-        if (existingUser) {
-          throw new Error('User already exists. Please sign in instead.');
-        }
-
-        const { data, error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            data: {
-              first_name: firstName,
-              last_name: lastName,
-              username: !isEmail ? identifier : undefined,
-            },
-          },
+        // Register new user
+        const response = await apiFetch({
+          path: '/wp/v2/users/register',
+          method: 'POST',
+          data: {
+            username: identifier,
+            email: identifier.includes('@') ? identifier : `${identifier}@make-life-easier.today`,
+            password,
+            first_name: firstName,
+            last_name: lastName
+          }
         });
 
-        if (error) throw error;
-        
-        if (data.user) {
+        if (response.id) {
           toast({
             title: "Success!",
-            description: "Account created successfully. Please check your email for verification.",
+            description: "Account created successfully. Please sign in.",
           });
           setIsSignUp(false);
         }
       } else {
-        const isEmail = identifier.includes('@');
-        let email = isEmail ? identifier : `${identifier}@make-life-easier.today`;
-
-        try {
-          const { error } = await supabase.auth.signInWithPassword({
-            email,
+        // Login existing user
+        const response = await apiFetch({
+          path: '/jwt-auth/v1/token',
+          method: 'POST',
+          data: {
+            username: identifier,
             password,
-          });
-
-          if (error) {
-            // If first attempt fails and it's not an email, try direct login
-            if (!isEmail) {
-              const { error: directError } = await supabase.auth.signInWithPassword({
-                email: identifier,
-                password,
-              });
-              
-              if (directError) {
-                throw directError;
-              }
-            } else {
-              throw error;
-            }
           }
-        } catch (error: any) {
-          console.error('Login error:', error);
-          throw new Error(error.message || 'Invalid login credentials');
+        });
+
+        if (response.token) {
+          // Store the token
+          localStorage.setItem('wp_token', response.token);
+          
+          // Redirect to home
+          navigate("/");
+          
+          toast({
+            title: "Success!",
+            description: "Logged in successfully",
+          });
         }
       }
     } catch (error: any) {
       console.error('Auth error:', error);
       toast({
         title: "Error",
-        description: error.message === "Failed to fetch" 
-          ? "Network error. Please check your connection and try again."
-          : error.message || "An error occurred during authentication",
+        description: error.message || "An error occurred during authentication",
         variant: "destructive",
       });
     } finally {
