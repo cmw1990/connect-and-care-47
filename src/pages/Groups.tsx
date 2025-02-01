@@ -14,17 +14,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, Users } from "lucide-react";
+import { Plus } from "lucide-react";
 import { CareComparison } from "@/components/comparison/CareComparison";
-
-interface CareGroup {
-  id: string;
-  name: string;
-  description: string | null;
-  created_at: string;
-  member_count?: number;
-}
+import { GroupsList } from "@/components/groups/GroupsList";
+import type { CareGroup } from "@/types/groups";
 
 const Groups = () => {
   const navigate = useNavigate();
@@ -36,24 +29,31 @@ const Groups = () => {
 
   const fetchGroups = useCallback(async () => {
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        navigate("/auth");
+        return;
+      }
+
       const { data: groupsData, error: groupsError } = await supabase
         .from('care_groups')
-        .select(`
-          id,
-          name,
-          description,
-          created_at,
-          care_group_members (count)
-        `);
+        .select('id, name, description, created_at');
 
       if (groupsError) throw groupsError;
 
-      const groupsWithMemberCount = groupsData.map(group => ({
+      const { data: membersCount, error: membersError } = await supabase
+        .from('care_group_members')
+        .select('group_id, count', { count: 'exact' })
+        .group_by('group_id');
+
+      if (membersError) throw membersError;
+
+      const groupsWithCount = groupsData.map(group => ({
         ...group,
-        member_count: group.care_group_members?.[0]?.count || 0
+        member_count: membersCount.find(m => m.group_id === group.id)?.count || 0
       }));
 
-      setGroups(groupsWithMemberCount);
+      setGroups(groupsWithCount);
     } catch (error) {
       console.error('Error fetching groups:', error);
       toast({
@@ -62,12 +62,12 @@ const Groups = () => {
         variant: "destructive",
       });
     }
-  }, [toast]);
+  }, [navigate, toast]);
 
   const createGroup = useCallback(async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('User not authenticated');
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('Not authenticated');
 
       const { data, error } = await supabase
         .from('care_groups')
@@ -75,7 +75,7 @@ const Groups = () => {
           {
             name: newGroupName,
             description: newGroupDescription,
-            created_by: user.id,
+            created_by: session.user.id,
           }
         ])
         .select()
@@ -88,7 +88,7 @@ const Groups = () => {
         .insert([
           {
             group_id: data.id,
-            user_id: user.id,
+            user_id: session.user.id,
             role: 'admin'
           }
         ]);
@@ -98,6 +98,7 @@ const Groups = () => {
       setNewGroupName("");
       setNewGroupDescription("");
       setIsDialogOpen(false);
+      fetchGroups();
       
       toast({
         title: "Success",
@@ -111,25 +112,10 @@ const Groups = () => {
         variant: "destructive",
       });
     }
-  }, [newGroupName, newGroupDescription, toast]);
+  }, [newGroupName, newGroupDescription, toast, fetchGroups]);
 
   useEffect(() => {
-    const checkUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        navigate("/auth");
-        return;
-      }
-      fetchGroups();
-    };
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (!session) {
-        navigate("/auth");
-      }
-    });
-
-    checkUser();
+    fetchGroups();
 
     const channel = supabase
       .channel('schema-db-changes')
@@ -147,10 +133,9 @@ const Groups = () => {
       .subscribe();
 
     return () => {
-      subscription.unsubscribe();
       supabase.removeChannel(channel);
     };
-  }, [navigate, fetchGroups]);
+  }, [fetchGroups]);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-primary-100 to-white">
@@ -196,27 +181,7 @@ const Groups = () => {
           </Dialog>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {groups.map((group) => (
-            <Card key={group.id} className="hover:shadow-lg transition-shadow">
-              <CardHeader>
-                <CardTitle className="flex justify-between items-center">
-                  <span>{group.name}</span>
-                  <div className="flex items-center text-sm text-gray-500">
-                    <Users className="h-4 w-4 mr-1" />
-                    <span>{group.member_count}</span>
-                  </div>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-600 mb-4">{group.description}</p>
-                <Button variant="outline" className="w-full" onClick={() => navigate(`/groups/${group.id}`)}>
-                  View Details
-                </Button>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        <GroupsList groups={groups} />
 
         <div className="mt-12">
           <h2 className="text-2xl font-bold text-gray-900 mb-6">Care Comparison</h2>
