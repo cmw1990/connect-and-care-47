@@ -89,6 +89,30 @@ export const CareAssistant = ({ groupId }: { groupId?: string }) => {
     webSocketRef.current = ws;
   };
 
+  const formatPatientContext = (patientInfo: any) => {
+    if (!patientInfo) return "No specific patient information available.";
+
+    const basicInfo = patientInfo.basic_info || {};
+    const diseases = patientInfo.diseases || [];
+    const medicines = patientInfo.medicines || [];
+    const careTips = patientInfo.care_tips || [];
+
+    return `
+Patient Information:
+Name: ${basicInfo.name || 'Not specified'}
+Age: ${basicInfo.age || 'Not specified'}
+Current Condition: ${basicInfo.condition || 'Not specified'}
+
+Medical Conditions: ${diseases.length > 0 ? diseases.join(', ') : 'None specified'}
+
+Medications: ${medicines.length > 0 
+  ? medicines.map((med: any) => `${med.name} (${med.dosage}, ${med.frequency})`).join(', ') 
+  : 'None specified'}
+
+Care Tips: ${careTips.length > 0 ? careTips.join(', ') : 'None specified'}
+    `.trim();
+  };
+
   const sendMessage = async () => {
     if (!input.trim()) return;
 
@@ -99,20 +123,13 @@ export const CareAssistant = ({ groupId }: { groupId?: string }) => {
       
       setMessages(prev => [...prev, { role: 'user', content: userMessage }]);
 
-      let context = "No specific care context provided.";
-      if (groupId) {
-        const { data: patientInfo } = await supabase
-          .from('patient_info')
-          .select('*')
-          .eq('group_id', groupId)
-          .maybeSingle();
+      const { data: patientInfo } = await supabase
+        .from('patient_info')
+        .select('*')
+        .eq('group_id', groupId)
+        .maybeSingle();
 
-        if (patientInfo) {
-          context = `Patient Information:
-          Medical Conditions: ${patientInfo.diseases?.join(', ') || 'None specified'}
-          Care Tips: ${patientInfo.care_tips?.join(', ') || 'None specified'}`;
-        }
-      }
+      const context = formatPatientContext(patientInfo);
 
       if (!webSocketRef.current || webSocketRef.current.readyState !== WebSocket.OPEN) {
         connectWebSocket();
@@ -123,9 +140,17 @@ export const CareAssistant = ({ groupId }: { groupId?: string }) => {
       }
 
       if (webSocketRef.current?.readyState === WebSocket.OPEN) {
-        webSocketRef.current.send(JSON.stringify({
-          text: `${context}\n\nUser Question: ${userMessage}`
-        }));
+        const prompt = `
+As a care assistant, use the following patient context to provide relevant and helpful information:
+
+${context}
+
+User Question: ${userMessage}
+
+Please provide a clear and informative response, considering the patient's specific conditions and care requirements.
+        `.trim();
+
+        webSocketRef.current.send(JSON.stringify({ text: prompt }));
       } else {
         throw new Error('WebSocket not connected');
       }
