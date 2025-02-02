@@ -7,6 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Bot, Send, User, Volume2, BarChart2, Mic, Image } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { LanguageSelector } from "@/components/ui/language-selector";
 import "@/i18n/i18n";
 
 interface Message {
