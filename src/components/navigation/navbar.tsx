@@ -5,6 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
 import { LanguageSelector } from "../ui/language-selector";
 import { useTranslation } from "react-i18next";
+import { Heart } from "lucide-react";
 
 interface NavbarProps {
   children?: React.ReactNode;
@@ -70,6 +71,13 @@ export const Navbar = ({ children }: NavbarProps) => {
                   className="text-gray-600 hover:text-primary px-3 py-2 rounded-md text-sm font-medium"
                 >
                   {t("careGroups")}
+                </Link>
+                <Link
+                  to="/mood-support"
+                  className="text-gray-600 hover:text-primary px-3 py-2 rounded-md text-sm font-medium flex items-center gap-2"
+                >
+                  <Heart className="h-4 w-4" />
+                  {t("moodSupport")}
                 </Link>
                 <Link
                   to="/tasks"

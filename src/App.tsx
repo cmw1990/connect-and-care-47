@@ -7,6 +7,7 @@ import NotFound from "@/pages/NotFound";
 import { CareComparison } from "@/components/comparison/CareComparison";
 import { CareGuides } from "@/pages/CareGuides";
 import { Navbar } from "@/components/navigation/navbar";
+import MoodSupport from "@/pages/MoodSupport";
 import "./App.css";
 
 function App() {
@@ -22,6 +23,7 @@ function App() {
             <Route path="/auth" element={<Auth />} />
             <Route path="/compare" element={<CareComparison />} />
             <Route path="/care-guides" element={<CareGuides />} />
+            <Route path="/mood-support" element={<MoodSupport />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </div>
