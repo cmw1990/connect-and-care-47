@@ -5,9 +5,10 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 
 interface MiniCalendarProps {
   onDateSelect?: (date: Date) => void;
+  groupId?: string;  // Added groupId as an optional prop
 }
 
-export const MiniCalendar = ({ onDateSelect }: MiniCalendarProps) => {
+export const MiniCalendar = ({ onDateSelect, groupId }: MiniCalendarProps) => {
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
   
   const weekStart = startOfWeek(currentDate);
