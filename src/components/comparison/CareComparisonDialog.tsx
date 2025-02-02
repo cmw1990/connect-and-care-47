@@ -15,12 +15,12 @@ export const CareComparisonDialog = () => {
       <DialogTrigger asChild>
         <Button variant="outline" className="gap-2">
           <ChartBar className="h-4 w-4" />
-          Compare Care Options
+          Compare Options
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-4xl">
         <DialogHeader>
-          <DialogTitle>Care Comparison</DialogTitle>
+          <DialogTitle>Compare Care Options</DialogTitle>
         </DialogHeader>
         <CareComparison />
       </DialogContent>

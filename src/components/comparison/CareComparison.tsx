@@ -2,21 +2,45 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { compareCareItems, type CareItem } from "@/utils/compareUtils";
 import { useToast } from "@/hooks/use-toast";
 
 export const CareComparison = () => {
   const [facilities, setFacilities] = useState<CareItem[]>([]);
   const [products, setProducts] = useState<CareItem[]>([]);
+  const [selectedCountry, setSelectedCountry] = useState<string>("all");
+  const [selectedState, setSelectedState] = useState<string>("all");
   const [comparisonResult, setComparisonResult] = useState<Record<string, any>>({});
   const { toast } = useToast();
 
   useEffect(() => {
     const fetchData = async () => {
       try {
+        let facilitiesQuery = supabase
+          .from('care_facilities')
+          .select('id, name, description, ratings, location, listing_type');
+
+        if (selectedCountry !== "all") {
+          facilitiesQuery = facilitiesQuery.eq('location->country', selectedCountry);
+        }
+        if (selectedState !== "all") {
+          facilitiesQuery = facilitiesQuery.eq('location->state', selectedState);
+        }
+
         const [facilitiesData, productsData] = await Promise.all([
-          supabase.from('care_facilities').select('id, name, description, ratings'),
-          supabase.from('care_products').select('id, name, description, ratings')
+          facilitiesQuery,
+          supabase
+            .from('care_products')
+            .select('id, name, description, ratings, price_range, affiliate_link')
         ]);
 
         if (facilitiesData.error) throw facilitiesData.error;
@@ -34,7 +58,7 @@ export const CareComparison = () => {
     };
 
     fetchData();
-  }, [toast]);
+  }, [toast, selectedCountry, selectedState]);
 
   const handleCompare = (items: CareItem[]) => {
     try {
@@ -49,6 +73,10 @@ export const CareComparison = () => {
     }
   };
 
+  const handleAffiliateClick = (link: string) => {
+    window.open(link, '_blank');
+  };
+
   return (
     <div className="space-y-6">
       <Card>
@@ -56,11 +84,63 @@ export const CareComparison = () => {
           <CardTitle>Care Facilities Comparison</CardTitle>
         </CardHeader>
         <CardContent>
+          <div className="grid grid-cols-2 gap-4 mb-4">
+            <div>
+              <Label>Country</Label>
+              <Select
+                value={selectedCountry}
+                onValueChange={setSelectedCountry}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select country" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Countries</SelectItem>
+                  <SelectItem value="USA">United States</SelectItem>
+                  <SelectItem value="Canada">Canada</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>State/Province</Label>
+              <Select
+                value={selectedState}
+                onValueChange={setSelectedState}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select state" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All States</SelectItem>
+                  {selectedCountry === "USA" ? (
+                    <>
+                      <SelectItem value="California">California</SelectItem>
+                      <SelectItem value="Florida">Florida</SelectItem>
+                      <SelectItem value="New York">New York</SelectItem>
+                      <SelectItem value="Texas">Texas</SelectItem>
+                    </>
+                  ) : (
+                    <>
+                      <SelectItem value="Ontario">Ontario</SelectItem>
+                      <SelectItem value="Quebec">Quebec</SelectItem>
+                      <SelectItem value="British Columbia">British Columbia</SelectItem>
+                      <SelectItem value="Alberta">Alberta</SelectItem>
+                    </>
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {facilities.map((facility) => (
               <div key={facility.id} className="p-4 border rounded">
                 <h3 className="font-semibold">{facility.name}</h3>
                 <p className="text-sm text-gray-600">{facility.description}</p>
+                <div className="mt-2">
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary-100 text-primary-800">
+                    {facility.listing_type}
+                  </span>
+                </div>
               </div>
             ))}
           </div>
@@ -83,6 +163,16 @@ export const CareComparison = () => {
               <div key={product.id} className="p-4 border rounded">
                 <h3 className="font-semibold">{product.name}</h3>
                 <p className="text-sm text-gray-600">{product.description}</p>
+                {product.affiliate_link && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="mt-2"
+                    onClick={() => handleAffiliateClick(product.affiliate_link!)}
+                  >
+                    View on Amazon
+                  </Button>
+                )}
               </div>
             ))}
           </div>

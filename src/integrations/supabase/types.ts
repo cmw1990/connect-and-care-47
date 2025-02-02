@@ -16,6 +16,9 @@ export type Database = {
           created_at: string
           description: string | null
           id: string
+          listing_expires_at: string | null
+          listing_type: string | null
+          location: Json | null
           name: string
           ratings: Json | null
           services: Json | null
@@ -27,6 +30,9 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          listing_expires_at?: string | null
+          listing_type?: string | null
+          location?: Json | null
           name: string
           ratings?: Json | null
           services?: Json | null
@@ -38,6 +44,9 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          listing_expires_at?: string | null
+          listing_type?: string | null
+          location?: Json | null
           name?: string
           ratings?: Json | null
           services?: Json | null
@@ -124,34 +133,40 @@ export type Database = {
       }
       care_products: {
         Row: {
+          affiliate_link: string | null
           category: string | null
           created_at: string
           description: string | null
           id: string
           name: string
           price: number | null
+          price_range: Json | null
           ratings: Json | null
           specifications: Json | null
           updated_at: string
         }
         Insert: {
+          affiliate_link?: string | null
           category?: string | null
           created_at?: string
           description?: string | null
           id?: string
           name: string
           price?: number | null
+          price_range?: Json | null
           ratings?: Json | null
           specifications?: Json | null
           updated_at?: string
         }
         Update: {
+          affiliate_link?: string | null
           category?: string | null
           created_at?: string
           description?: string | null
           id?: string
           name?: string
           price?: number | null
+          price_range?: Json | null
           ratings?: Json | null
           specifications?: Json | null
           updated_at?: string
