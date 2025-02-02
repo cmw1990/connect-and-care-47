@@ -30,7 +30,29 @@ const config: CapacitorConfig = {
           "android.permission.ACCESS_FINE_LOCATION"
         ]
       }
+    },
+    SplashScreen: {
+      launchShowDuration: 1500,
+      backgroundColor: "#FFFFFF",
+      androidSplashResourceName: "splash",
+      androidScaleType: "CENTER_CROP"
+    },
+    App: {
+      backgroundColor: "#FFFFFF"
     }
+  },
+  android: {
+    buildOptions: {
+      keystorePath: null,
+      keystorePassword: null,
+      keyAlias: null,
+      keyPassword: null
+    }
+  },
+  ios: {
+    contentInset: "always",
+    preferredContentMode: "mobile",
+    scheme: "connectandcare"
   }
 };
 
