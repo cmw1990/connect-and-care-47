@@ -73,7 +73,7 @@ export const PatientInfoCard = ({ groupId, patientInfo }: PatientInfoCardProps) 
           if (payload.new) {
             setLocationEnabled(payload.new.location_enabled);
             const location = payload.new.current_location;
-            if (location && location.latitude && location.longitude) {
+            if (location && typeof location === 'object' && 'latitude' in location && 'longitude' in location) {
               setCurrentLocation({
                 latitude: location.latitude,
                 longitude: location.longitude,
@@ -122,10 +122,11 @@ export const PatientInfoCard = ({ groupId, patientInfo }: PatientInfoCardProps) 
 
       if (data) {
         setLocationEnabled(data.location_enabled);
-        if (data.current_location) {
+        if (data.current_location && typeof data.current_location === 'object') {
+          const location = data.current_location as { latitude: number; longitude: number };
           setCurrentLocation({
-            latitude: data.current_location.latitude,
-            longitude: data.current_location.longitude,
+            latitude: location.latitude,
+            longitude: location.longitude,
           });
         }
       }
