@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -19,8 +19,75 @@ export const CareAssistant = ({ groupId }: { groupId?: string }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
+  const [currentMessage, setCurrentMessage] = useState('');
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const webSocketRef = useRef<WebSocket | null>(null);
   const { toast } = useToast();
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    return () => {
+      if (webSocketRef.current) {
+        webSocketRef.current.close();
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages, currentMessage]);
+
+  const connectWebSocket = () => {
+    const websocketUrl = import.meta.env.PROD 
+      ? 'wss://csngjtaxbnebqfismwvs.supabase.co/functions/v1/realtime-chat'
+      : 'ws://localhost:54321/functions/v1/realtime-chat';
+
+    const ws = new WebSocket(websocketUrl);
+
+    ws.onopen = () => {
+      console.log('WebSocket connected');
+    };
+
+    ws.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      
+      if (data.type === 'chunk') {
+        setCurrentMessage(prev => prev + data.content);
+      } else if (data.type === 'done') {
+        setMessages(prev => [
+          ...prev,
+          { role: 'assistant', content: currentMessage }
+        ]);
+        setCurrentMessage('');
+        setIsLoading(false);
+      } else if (data.type === 'error') {
+        toast({
+          title: "Error",
+          description: "Failed to get AI response",
+          variant: "destructive",
+        });
+        setIsLoading(false);
+      }
+    };
+
+    ws.onerror = (error) => {
+      console.error('WebSocket error:', error);
+      toast({
+        title: "Error",
+        description: "Connection error occurred",
+        variant: "destructive",
+      });
+      setIsLoading(false);
+    };
+
+    ws.onclose = () => {
+      console.log('WebSocket disconnected');
+    };
+
+    webSocketRef.current = ws;
+  };
 
   const sendMessage = async () => {
     if (!input.trim()) return;
@@ -49,22 +116,24 @@ export const CareAssistant = ({ groupId }: { groupId?: string }) => {
         }
       }
 
-      // Call the AI assistant
-      const response = await fetch('/functions/v1/care-assistant', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
-        },
-        body: JSON.stringify({ message: userMessage, context }),
-      });
+      // Ensure WebSocket connection
+      if (!webSocketRef.current || webSocketRef.current.readyState !== WebSocket.OPEN) {
+        connectWebSocket();
+      }
 
-      if (!response.ok) throw new Error('Failed to get AI response');
+      // Wait for connection if needed
+      if (webSocketRef.current?.readyState === WebSocket.CONNECTING) {
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
 
-      const data = await response.json();
-      
-      // Add AI response to chat
-      setMessages(prev => [...prev, { role: 'assistant', content: data.reply }]);
+      // Send message through WebSocket
+      if (webSocketRef.current?.readyState === WebSocket.OPEN) {
+        webSocketRef.current.send(JSON.stringify({
+          text: `${context}\n\nUser Question: ${userMessage}`
+        }));
+      } else {
+        throw new Error('WebSocket not connected');
+      }
 
       // Analyze sentiment
       analyzeSentiment(userMessage);
@@ -80,7 +149,6 @@ export const CareAssistant = ({ groupId }: { groupId?: string }) => {
         description: "Failed to get a response from the AI assistant",
         variant: "destructive",
       });
-    } finally {
       setIsLoading(false);
     }
   };
@@ -310,6 +378,19 @@ export const CareAssistant = ({ groupId }: { groupId?: string }) => {
                 </div>
               </div>
             ))}
+            {currentMessage && (
+              <div className="flex gap-2 items-start">
+                <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                  <Bot className="h-4 w-4" />
+                </div>
+                <div className="flex flex-col gap-2 max-w-[80%]">
+                  <div className="rounded-lg px-4 py-2 bg-secondary">
+                    {currentMessage}
+                  </div>
+                </div>
+              </div>
+            )}
+            <div ref={messagesEndRef} />
           </div>
         </ScrollArea>
         
