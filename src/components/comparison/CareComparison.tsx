@@ -31,31 +31,31 @@ export const CareComparison = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        let facilitiesQuery = supabase
+        const facilitiesQuery = supabase
           .from('care_facilities')
           .select('*');
 
-        let productsQuery = supabase
+        const productsQuery = supabase
           .from('care_products')
           .select('*');
 
         if (selectedCountry !== "all") {
-          facilitiesQuery = facilitiesQuery.eq('location->country', selectedCountry);
+          facilitiesQuery.eq('location->country', selectedCountry);
         }
         if (selectedState !== "all") {
-          facilitiesQuery = facilitiesQuery.eq('location->state', selectedState);
+          facilitiesQuery.eq('location->state', selectedState);
         }
 
-        const [{ data: facilitiesData, error: facilitiesError }, { data: productsData, error: productsError }] = await Promise.all([
+        const [facilitiesResponse, productsResponse] = await Promise.all([
           facilitiesQuery,
           productsQuery
         ]);
 
-        if (facilitiesError) throw facilitiesError;
-        if (productsError) throw productsError;
+        if (facilitiesResponse.error) throw facilitiesResponse.error;
+        if (productsResponse.error) throw productsResponse.error;
 
-        setFacilities(facilitiesData || []);
-        setProducts(productsData || []);
+        setFacilities(facilitiesResponse.data || []);
+        setProducts(productsResponse.data || []);
       } catch (error) {
         toast({
           title: "Error",
