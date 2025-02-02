@@ -63,7 +63,7 @@ export const PatientInfoCard = ({ groupId, patientInfo }: PatientInfoCardProps) 
     const channel = supabase
       .channel('location_updates')
       .on(
-        'postgres_changes',
+        'postgres_changes' as any,
         {
           event: '*',
           schema: 'public',
