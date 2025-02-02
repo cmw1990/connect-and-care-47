@@ -35,6 +35,15 @@ interface PatientInfoCardProps {
   };
 }
 
+interface LocationData {
+  location_enabled: boolean;
+  current_location: {
+    latitude: number;
+    longitude: number;
+    last_updated?: string;
+  };
+}
+
 export const PatientInfoCard = ({ groupId, patientInfo }: PatientInfoCardProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [locationEnabled, setLocationEnabled] = useState(false);
@@ -60,7 +69,7 @@ export const PatientInfoCard = ({ groupId, patientInfo }: PatientInfoCardProps) 
           table: 'patient_locations',
           filter: `group_id=eq.${groupId}`,
         },
-        (payload) => {
+        (payload: { new: LocationData }) => {
           if (payload.new) {
             setLocationEnabled(payload.new.location_enabled);
             const location = payload.new.current_location;
@@ -93,7 +102,10 @@ export const PatientInfoCard = ({ groupId, patientInfo }: PatientInfoCardProps) 
       if (data) {
         setLocationEnabled(data.location_enabled);
         if (data.current_location) {
-          setCurrentLocation(data.current_location);
+          setCurrentLocation({
+            latitude: data.current_location.latitude,
+            longitude: data.current_location.longitude,
+          });
         }
       }
     } catch (error) {
