@@ -91,13 +91,34 @@ export const PatientInfoCard = ({ groupId, patientInfo }: PatientInfoCardProps) 
 
   const fetchLocationSettings = async () => {
     try {
-      const { data, error } = await supabase
+      // First try to get existing record
+      let { data, error } = await supabase
         .from('patient_locations')
         .select('*')
         .eq('group_id', groupId)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
+
+      // If no record exists, create one
+      if (!data) {
+        const { data: newData, error: insertError } = await supabase
+          .from('patient_locations')
+          .insert({
+            group_id: groupId,
+            location_enabled: false,
+            current_location: {
+              latitude: 0,
+              longitude: 0,
+              last_updated: null
+            }
+          })
+          .select()
+          .single();
+
+        if (insertError) throw insertError;
+        data = newData;
+      }
 
       if (data) {
         setLocationEnabled(data.location_enabled);
