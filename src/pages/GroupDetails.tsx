@@ -1,10 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Navbar } from "@/components/navigation/navbar";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { Users, UserPlus, Settings, BookOpen, ArrowLeft } from "lucide-react";
+import { Users, UserPlus, Settings, BookOpen, ArrowLeft, Info } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -43,6 +42,7 @@ const GroupDetails = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [newMemberEmail, setNewMemberEmail] = useState("");
   const [isAddingMember, setIsAddingMember] = useState(false);
+  const [activeTab, setActiveTab] = useState<'posts' | 'tasks' | 'info'>('posts');
 
   const fetchGroupDetails = async () => {
     try {
@@ -187,13 +187,10 @@ const GroupDetails = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-primary-100 to-white">
-        <Navbar />
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="flex justify-center items-center h-64">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-          </div>
-        </main>
+      <div className="min-h-screen bg-gray-50">
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
       </div>
     );
   }
@@ -203,138 +200,155 @@ const GroupDetails = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-primary-100 to-white">
-      <Navbar />
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="space-y-6">
-          <div className="flex justify-between items-center">
-            <Button 
-              variant="ghost" 
-              className="mb-6"
-              onClick={() => navigate(-1)}
-            >
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back
-            </Button>
-            <Button
-              onClick={() => navigate('/care-guides')}
-              className="mb-6"
-            >
-              <BookOpen className="mr-2 h-4 w-4" />
-              Care Guides
-            </Button>
+    <div className="min-h-screen bg-gray-50">
+      {/* Fixed Header */}
+      <div className="fixed top-0 left-0 right-0 bg-white border-b z-10">
+        <div className="flex items-center justify-between p-4">
+          <Button 
+            variant="ghost" 
+            size="icon"
+            onClick={() => navigate(-1)}
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <h1 className="text-lg font-semibold truncate flex-1 text-center">
+            {group.name}
+          </h1>
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button variant="ghost" size="icon">
+                <Info className="h-5 w-5" />
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Group Information</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <PatientInfoCard groupId={groupId} patientInfo={patientInfo} />
+                <GroupStatusBar 
+                  groupId={groupId} 
+                  initialStatus={group.privacy_settings?.status || "normal"} 
+                />
+              </div>
+            </DialogContent>
+          </Dialog>
+        </div>
+
+        {/* Tab Navigation */}
+        <div className="flex border-t">
+          <button
+            className={`flex-1 py-3 text-sm font-medium ${
+              activeTab === 'posts' ? 'text-primary border-b-2 border-primary' : 'text-gray-500'
+            }`}
+            onClick={() => setActiveTab('posts')}
+          >
+            Posts
+          </button>
+          <button
+            className={`flex-1 py-3 text-sm font-medium ${
+              activeTab === 'tasks' ? 'text-primary border-b-2 border-primary' : 'text-gray-500'
+            }`}
+            onClick={() => setActiveTab('tasks')}
+          >
+            Tasks
+          </button>
+          <button
+            className={`flex-1 py-3 text-sm font-medium ${
+              activeTab === 'info' ? 'text-primary border-b-2 border-primary' : 'text-gray-500'
+            }`}
+            onClick={() => setActiveTab('info')}
+          >
+            Members
+          </button>
+        </div>
+      </div>
+
+      {/* Main Content with padding for fixed header */}
+      <div className="pt-28 pb-20 px-4">
+        {activeTab === 'posts' && (
+          <div className="space-y-4">
+            <GroupPosts groupId={groupId} />
           </div>
+        )}
 
-          <GroupStatusBar 
-            groupId={groupId} 
-            initialStatus={group.privacy_settings?.status || "normal"} 
-          />
-          
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Left Column - Group Info, Patient Info, and Members */}
-            <div className="space-y-6">
-              {/* Group Header */}
-              <Card>
-                <CardHeader>
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <CardTitle>{group.name}</CardTitle>
-                      <CardDescription>{group.description}</CardDescription>
-                    </div>
-                    <Button variant="outline" size="icon">
-                      <Settings className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </CardHeader>
-              </Card>
+        {activeTab === 'tasks' && (
+          <div className="space-y-4">
+            <GroupTasks groupId={groupId} members={members} />
+          </div>
+        )}
 
-              {/* Patient Info */}
-              <PatientInfoCard groupId={groupId} patientInfo={patientInfo} />
-
-              {/* Members Section */}
-              <Card>
-                <CardHeader>
-                  <div className="flex justify-between items-center">
-                    <CardTitle className="flex items-center gap-2">
-                      <Users className="h-5 w-5" />
-                      Members ({members.length})
-                    </CardTitle>
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button>
-                          <UserPlus className="mr-2 h-4 w-4" />
-                          Add Member
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent>
-                        <DialogHeader>
-                          <DialogTitle>Add New Member</DialogTitle>
-                        </DialogHeader>
-                        <div className="space-y-4">
-                          <div>
-                            <Label htmlFor="email">Member Email</Label>
-                            <Input
-                              id="email"
-                              type="email"
-                              value={newMemberEmail}
-                              onChange={(e) => setNewMemberEmail(e.target.value)}
-                              placeholder="Enter member email"
-                            />
-                          </div>
-                          <Button 
-                            onClick={handleAddMember} 
-                            className="w-full"
-                            disabled={isAddingMember}
-                          >
-                            {isAddingMember ? "Adding..." : "Add Member"}
-                          </Button>
+        {activeTab === 'info' && (
+          <div className="space-y-4">
+            <Card>
+              <CardHeader>
+                <div className="flex justify-between items-center">
+                  <CardTitle className="flex items-center gap-2">
+                    <Users className="h-5 w-5" />
+                    Members ({members.length})
+                  </CardTitle>
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button size="sm">
+                        <UserPlus className="h-4 w-4 mr-2" />
+                        Add
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Add New Member</DialogTitle>
+                      </DialogHeader>
+                      <div className="space-y-4">
+                        <div>
+                          <Label htmlFor="email">Member Email</Label>
+                          <Input
+                            id="email"
+                            type="email"
+                            value={newMemberEmail}
+                            onChange={(e) => setNewMemberEmail(e.target.value)}
+                            placeholder="Enter member email"
+                          />
                         </div>
-                      </DialogContent>
-                    </Dialog>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {members.map((member) => (
-                      <div
-                        key={member.id}
-                        className="flex items-center justify-between p-4 rounded-lg border"
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                            <Users className="h-5 w-5 text-primary" />
-                          </div>
-                          <div>
-                            <p className="font-medium">
-                              {member.profiles?.first_name} {member.profiles?.last_name}
-                            </p>
-                            <p className="text-sm text-muted-foreground capitalize">
-                              {member.role}
-                            </p>
-                          </div>
+                        <Button 
+                          onClick={handleAddMember} 
+                          className="w-full"
+                          disabled={isAddingMember}
+                        >
+                          {isAddingMember ? "Adding..." : "Add Member"}
+                        </Button>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  {members.map((member) => (
+                    <div
+                      key={member.id}
+                      className="flex items-center justify-between p-3 rounded-lg border"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                          <Users className="h-4 w-4 text-primary" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-sm">
+                            {member.profiles?.first_name} {member.profiles?.last_name}
+                          </p>
+                          <p className="text-xs text-muted-foreground capitalize">
+                            {member.role}
+                          </p>
                         </div>
                       </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Calendar Section */}
-              <GroupCalendar groupId={groupId} />
-            </div>
-
-            {/* Right Column - AI Care Assistant, Posts and Tasks */}
-            <div className="lg:col-span-2 space-y-6">
-              {/* AI Care Assistant */}
-              <CareAssistant groupId={groupId} />
-              
-              {/* Existing Components */}
-              <GroupPosts groupId={groupId} />
-              <GroupTasks groupId={groupId} members={members} />
-            </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
           </div>
-        </div>
-      </main>
+        )}
+      </div>
     </div>
   );
 };
