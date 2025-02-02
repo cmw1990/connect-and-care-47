@@ -9,7 +9,7 @@ import { CareComparison } from "@/components/comparison/CareComparison";
 import { CareGuides } from "@/pages/CareGuides";
 import { Navbar } from "@/components/navigation/navbar";
 import { MobileNav } from "@/components/navigation/mobile-nav";
-import MoodSupport from "@/pages/MoodSupport";
+import Messages from "@/pages/Messages";
 import { useEffect, useState } from "react";
 import "./App.css";
 
@@ -42,7 +42,7 @@ const AppContent = () => {
           <Route path="/auth" element={<Auth />} />
           <Route path="/compare" element={<CareComparison />} />
           <Route path="/care-guides" element={<CareGuides />} />
-          <Route path="/mood-support" element={<MoodSupport />} />
+          <Route path="/messages" element={<Messages />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </div>

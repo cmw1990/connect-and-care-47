@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { Home, Users, Calendar, Heart, Menu } from "lucide-react";
+import { Home, Users, MessageSquare, Calendar, Menu } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export const MobileNav = () => {
@@ -17,9 +17,9 @@ export const MobileNav = () => {
       path: "/groups",
     },
     {
-      icon: Heart,
-      label: "Mood",
-      path: "/mood-support",
+      icon: MessageSquare,
+      label: "Messages",
+      path: "/messages",
     },
     {
       icon: Calendar,

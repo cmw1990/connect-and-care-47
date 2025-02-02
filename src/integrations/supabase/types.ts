@@ -291,6 +291,7 @@ export type Database = {
           first_name: string | null
           id: string
           last_name: string | null
+          notification_preferences: Json | null
           notification_settings: Json | null
           privacy_preferences: Json | null
           relationship_to_patient: string | null
@@ -303,6 +304,7 @@ export type Database = {
           first_name?: string | null
           id: string
           last_name?: string | null
+          notification_preferences?: Json | null
           notification_settings?: Json | null
           privacy_preferences?: Json | null
           relationship_to_patient?: string | null
@@ -315,6 +317,7 @@ export type Database = {
           first_name?: string | null
           id?: string
           last_name?: string | null
+          notification_preferences?: Json | null
           notification_settings?: Json | null
           privacy_preferences?: Json | null
           relationship_to_patient?: string | null
