@@ -56,20 +56,22 @@ export const CareAssistant = ({ groupId }: { groupId?: string }) => {
 
     ws.onmessage = (event) => {
       const data = JSON.parse(event.data);
+      console.log('Received message:', data);
       
       if (data.type === 'chunk') {
         setCurrentMessage(prev => prev + data.content);
       } else if (data.type === 'done') {
         setMessages(prev => [
           ...prev,
-          { role: 'assistant', content: currentMessage }
+          { role: 'assistant', content: currentMessage + (data.content || '') }
         ]);
         setCurrentMessage('');
         setIsLoading(false);
       } else if (data.type === 'error') {
+        console.error('Error from WebSocket:', data.error);
         toast({
-          title: "Error",
-          description: "Failed to get AI response",
+          title: t("error"),
+          description: t("failedToGetResponse"),
           variant: "destructive",
         });
         setIsLoading(false);
@@ -79,8 +81,8 @@ export const CareAssistant = ({ groupId }: { groupId?: string }) => {
     ws.onerror = (error) => {
       console.error('WebSocket error:', error);
       toast({
-        title: "Error",
-        description: "Connection error occurred",
+        title: t("error"),
+        description: t("connectionError"),
         variant: "destructive",
       });
       setIsLoading(false);
@@ -144,6 +146,7 @@ Care Tips: ${careTips.length > 0 ? careTips.join(', ') : 'None specified'}
       }
 
       if (webSocketRef.current?.readyState === WebSocket.OPEN) {
+        console.log('Sending message to WebSocket');
         const prompt = `
 As a care assistant, use the following patient context to provide relevant and helpful information:
 
@@ -154,21 +157,19 @@ User Question: ${userMessage}
 Please provide a clear and informative response, considering the patient's specific conditions and care requirements.
         `.trim();
 
-        webSocketRef.current.send(JSON.stringify({ text: prompt }));
+        webSocketRef.current.send(JSON.stringify({ 
+          text: prompt,
+          type: 'message'
+        }));
       } else {
         throw new Error('WebSocket not connected');
       }
 
-      analyzeSentiment(userMessage);
-
-      if (userMessage.toLowerCase().includes('show me') || userMessage.toLowerCase().includes('visualize')) {
-        await generateImage(userMessage);
-      }
     } catch (error) {
       console.error('Error sending message:', error);
       toast({
-        title: "Error",
-        description: "Failed to get a response from the AI assistant",
+        title: t("error"),
+        description: t("failedToGetResponse"),
         variant: "destructive",
       });
       setIsLoading(false);
