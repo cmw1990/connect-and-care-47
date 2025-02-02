@@ -178,4 +178,4 @@ export const CareComparison = () => {
       </div>
     </div>
   );
-});
+};
