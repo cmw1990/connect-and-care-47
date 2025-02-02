@@ -1,47 +1,59 @@
 import React, { useState } from "react";
-import { Calendar as CalendarIcon } from "lucide-react";
+import { format, startOfWeek, endOfWeek, eachDayOfInterval, addWeeks, subWeeks } from "date-fns";
 import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { format } from "date-fns";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 interface MiniCalendarProps {
   onDateSelect?: (date: Date) => void;
 }
 
 export const MiniCalendar = ({ onDateSelect }: MiniCalendarProps) => {
-  const [date, setDate] = useState<Date>();
+  const [currentDate, setCurrentDate] = useState<Date>(new Date());
+  
+  const weekStart = startOfWeek(currentDate);
+  const weekEnd = endOfWeek(currentDate);
+  const weekDays = eachDayOfInterval({ start: weekStart, end: weekEnd });
 
-  const handleSelect = (newDate: Date | undefined) => {
-    setDate(newDate);
-    if (newDate && onDateSelect) {
-      onDateSelect(newDate);
+  const handlePreviousWeek = () => {
+    setCurrentDate(subWeeks(currentDate, 1));
+  };
+
+  const handleNextWeek = () => {
+    setCurrentDate(addWeeks(currentDate, 1));
+  };
+
+  const handleDateClick = (date: Date) => {
+    if (onDateSelect) {
+      onDateSelect(date);
     }
   };
 
   return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <Button
-          variant="outline"
-          className="w-full justify-start text-left font-normal h-9"
-        >
-          <CalendarIcon className="mr-2 h-4 w-4" />
-          {date ? format(date, "PPP") : <span>Pick a date</span>}
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-auto p-0" align="start">
-        <Calendar
-          mode="single"
-          selected={date}
-          onSelect={handleSelect}
-          initialFocus
-        />
-      </PopoverContent>
-    </Popover>
+    <div className="flex items-center justify-between p-2 bg-white border-b">
+      <Button variant="ghost" size="icon" onClick={handlePreviousWeek}>
+        <ChevronLeft className="h-4 w-4" />
+      </Button>
+      <div className="flex-1 overflow-x-auto">
+        <div className="flex justify-between min-w-full px-2">
+          {weekDays.map((day, index) => (
+            <button
+              key={index}
+              onClick={() => handleDateClick(day)}
+              className={`flex flex-col items-center p-1 rounded-lg ${
+                format(day, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd')
+                  ? 'bg-primary/10 text-primary'
+                  : ''
+              }`}
+            >
+              <span className="text-xs font-medium">{format(day, 'EEE')}</span>
+              <span className="text-sm">{format(day, 'd')}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+      <Button variant="ghost" size="icon" onClick={handleNextWeek}>
+        <ChevronRight className="h-4 w-4" />
+      </Button>
+    </div>
   );
 };

@@ -1,10 +1,20 @@
 import React from "react";
 import { AlertTriangle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { GroupStatusBar } from "./GroupStatusBar";
 
 interface MiniStatusIndicatorProps {
   status: string;
   message: string;
+  groupId: string;
+  isAdmin?: boolean;
 }
 
 const statusColors = {
@@ -14,13 +24,32 @@ const statusColors = {
   emergency: "bg-[#ea384c] text-white",
 };
 
-export const MiniStatusIndicator = ({ status, message }: MiniStatusIndicatorProps) => {
+const statusMessages = {
+  normal: "Everything is fine",
+  warning: "Attention needed",
+  urgent: "Urgent situation",
+  emergency: "Emergency",
+};
+
+export const MiniStatusIndicator = ({ status, groupId, isAdmin = false }: MiniStatusIndicatorProps) => {
   return (
-    <Badge 
-      className={`${statusColors[status as keyof typeof statusColors]} flex items-center gap-1 px-2 py-1`}
-    >
-      <AlertTriangle className="h-3 w-3" />
-      <span className="text-xs">{message}</span>
-    </Badge>
+    <Dialog>
+      <DialogTrigger asChild>
+        <Badge 
+          className={`${statusColors[status as keyof typeof statusColors]} flex items-center gap-1 px-2 py-1 cursor-pointer`}
+        >
+          <AlertTriangle className="h-3 w-3" />
+          <span className="text-xs">{statusMessages[status as keyof typeof statusMessages]}</span>
+        </Badge>
+      </DialogTrigger>
+      {isAdmin && (
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Update Group Status</DialogTitle>
+          </DialogHeader>
+          <GroupStatusBar groupId={groupId} initialStatus={status} />
+        </DialogContent>
+      )}
+    </Dialog>
   );
 };

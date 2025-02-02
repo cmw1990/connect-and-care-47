@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
 import { Users, UserPlus, Settings, BookOpen, ArrowLeft, Info } from "lucide-react";
 import {
   Dialog,
@@ -37,7 +36,6 @@ interface GroupMember {
 const GroupDetails = () => {
   const { groupId } = useParams();
   const navigate = useNavigate();
-  const { toast } = useToast();
   const [group, setGroup] = useState<CareGroup | null>(null);
   const [members, setMembers] = useState<GroupMember[]>([]);
   const [patientInfo, setPatientInfo] = useState(null);
@@ -45,6 +43,7 @@ const GroupDetails = () => {
   const [newMemberEmail, setNewMemberEmail] = useState("");
   const [isAddingMember, setIsAddingMember] = useState(false);
   const [activeTab, setActiveTab] = useState<'posts' | 'tasks' | 'info'>('posts');
+  const [isAdmin, setIsAdmin] = useState(false);
 
   const fetchGroupDetails = async () => {
     try {
@@ -121,6 +120,12 @@ const GroupDetails = () => {
     }
   };
 
+  useEffect(() => {
+    if (groupId) {
+      fetchGroupDetails();
+    }
+  }, [groupId]);
+
   const handleAddMember = async () => {
     if (!newMemberEmail.trim()) {
       toast({
@@ -181,12 +186,6 @@ const GroupDetails = () => {
     }
   };
 
-  useEffect(() => {
-    if (groupId) {
-      fetchGroupDetails();
-    }
-  }, [groupId]);
-
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50">
@@ -220,35 +219,37 @@ const GroupDetails = () => {
             {group.privacy_settings?.status && (
               <MiniStatusIndicator 
                 status={group.privacy_settings.status} 
-                message={"Everything is fine"} // Replace with actual status message
+                message={group.privacy_settings.status} 
+                groupId={groupId}
+                isAdmin={isAdmin}
               />
             )}
           </div>
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button variant="ghost" size="icon">
-                <Info className="h-5 w-5" />
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Group Information</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4">
-                <PatientInfoCard groupId={groupId} patientInfo={patientInfo} />
-                <GroupStatusBar 
-                  groupId={groupId} 
-                  initialStatus={group.privacy_settings?.status || "normal"} 
-                />
-              </div>
-            </DialogContent>
-          </Dialog>
+          {isAdmin && (
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button variant="ghost" size="icon">
+                  <Settings className="h-5 w-5" />
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Group Settings</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <PatientInfoCard groupId={groupId} patientInfo={patientInfo} />
+                  <GroupStatusBar 
+                    groupId={groupId} 
+                    initialStatus={group.privacy_settings?.status || "normal"} 
+                  />
+                </div>
+              </DialogContent>
+            </Dialog>
+          )}
         </div>
 
         {/* Mini Calendar */}
-        <div className="px-4 py-2 border-t">
-          <MiniCalendar />
-        </div>
+        <MiniCalendar />
 
         {/* Tab Navigation */}
         <div className="flex border-t">
