@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { CareGroup } from "@/types/groups";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { notificationService } from "@/services/NotificationService";
 
 interface Notification {
   id: string;
@@ -40,6 +41,7 @@ export default function Messages() {
   const discussionsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    notificationService.initializePushNotifications();
     fetchInitialData();
     const unsubscribe = subscribeToUpdates();
     return () => {
@@ -102,6 +104,10 @@ export default function Messages() {
                 title: "New Group Post",
                 description: `New post in ${post.care_groups?.name || 'your care group'}`,
               });
+              await notificationService.scheduleLocalNotification(
+                "New Group Post",
+                `New post in ${post.care_groups?.name || 'your care group'}`
+              );
             }
           }
         }
@@ -146,6 +152,11 @@ export default function Messages() {
                 title: "Group Status Changed",
                 description: `${group.name}: Status changed to ${newStatus}`,
               });
+
+              await notificationService.scheduleLocalNotification(
+                "Group Status Changed",
+                `${group.name}: Status changed to ${newStatus}`
+              );
             }
           }
         }
