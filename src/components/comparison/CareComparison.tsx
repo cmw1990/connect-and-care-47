@@ -44,15 +44,15 @@ export const CareComparison = () => {
           facilitiesQuery = facilitiesQuery.eq('location->state', selectedState);
         }
 
-        const [facilitiesData, productsData] = await Promise.all([
+        const [{ data: facilitiesData, error: facilitiesError }, { data: productsData, error: productsError }] = await Promise.all([
           facilitiesQuery,
           productsQuery
         ]);
 
-        if (facilitiesData.error) throw facilitiesData.error;
-        if (productsData.error) throw productsData.error;
+        if (facilitiesError) throw facilitiesError;
+        if (productsError) throw productsError;
 
-        setFacilities(facilitiesData.data?.map(facility => ({
+        setFacilities(facilitiesData?.map(facility => ({
           id: facility.id,
           name: facility.name,
           description: facility.description,
@@ -60,7 +60,7 @@ export const CareComparison = () => {
           listing_type: facility.listing_type
         })) || []);
 
-        setProducts(productsData.data?.map(product => ({
+        setProducts(productsData?.map(product => ({
           id: product.id,
           name: product.name,
           description: product.description,
