@@ -24,4 +24,7 @@ export interface ComparisonResult {
   averageRating: number;
   features?: string[];
   aiInsights?: string;
+  sentimentAnalysis?: string;
+  costBenefitAnalysis?: string;
+  trendAnalysis?: string;
 }
