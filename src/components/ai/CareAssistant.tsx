@@ -97,10 +97,8 @@ export const CareAssistant = ({ groupId }: { groupId?: string }) => {
       const userMessage = input;
       setInput('');
       
-      // Add user message to chat
       setMessages(prev => [...prev, { role: 'user', content: userMessage }]);
 
-      // Get context about the care situation if groupId is provided
       let context = "No specific care context provided.";
       if (groupId) {
         const { data: patientInfo } = await supabase
@@ -116,17 +114,14 @@ export const CareAssistant = ({ groupId }: { groupId?: string }) => {
         }
       }
 
-      // Ensure WebSocket connection
       if (!webSocketRef.current || webSocketRef.current.readyState !== WebSocket.OPEN) {
         connectWebSocket();
       }
 
-      // Wait for connection if needed
       if (webSocketRef.current?.readyState === WebSocket.CONNECTING) {
         await new Promise(resolve => setTimeout(resolve, 1000));
       }
 
-      // Send message through WebSocket
       if (webSocketRef.current?.readyState === WebSocket.OPEN) {
         webSocketRef.current.send(JSON.stringify({
           text: `${context}\n\nUser Question: ${userMessage}`
@@ -135,10 +130,8 @@ export const CareAssistant = ({ groupId }: { groupId?: string }) => {
         throw new Error('WebSocket not connected');
       }
 
-      // Analyze sentiment
       analyzeSentiment(userMessage);
 
-      // Generate image if message contains visual description request
       if (userMessage.toLowerCase().includes('show me') || userMessage.toLowerCase().includes('visualize')) {
         await generateImage(userMessage);
       }
@@ -188,7 +181,6 @@ export const CareAssistant = ({ groupId }: { groupId?: string }) => {
 
       const data = await response.json();
       
-      // Add the generated image to the last assistant message
       setMessages(prev => {
         const lastMessage = prev[prev.length - 1];
         if (lastMessage.role === 'assistant') {
