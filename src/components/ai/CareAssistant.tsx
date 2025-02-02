@@ -30,6 +30,8 @@ export const CareAssistant = ({ groupId }: { groupId?: string }) => {
   const { t } = useTranslation();
 
   useEffect(() => {
+    // Initialize WebSocket connection when component mounts
+    connectWebSocket();
     return () => {
       if (webSocketRef.current) {
         webSocketRef.current.close();
@@ -133,6 +135,7 @@ Care Tips: ${careTips.length > 0 ? careTips.join(', ') : 'None specified'}
       
       setMessages(prev => [...prev, { role: 'user', content: userMessage }]);
 
+      // Fetch patient info for context
       const { data: patientInfo } = await supabase
         .from('patient_info')
         .select('*')
@@ -141,10 +144,12 @@ Care Tips: ${careTips.length > 0 ? careTips.join(', ') : 'None specified'}
 
       const context = formatPatientContext(patientInfo);
 
+      // Ensure WebSocket is connected
       if (!webSocketRef.current || webSocketRef.current.readyState !== WebSocket.OPEN) {
         connectWebSocket();
       }
 
+      // Wait for connection if connecting
       if (webSocketRef.current?.readyState === WebSocket.CONNECTING) {
         await new Promise(resolve => setTimeout(resolve, 1000));
       }
