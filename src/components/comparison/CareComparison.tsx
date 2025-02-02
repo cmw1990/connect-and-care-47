@@ -15,25 +15,25 @@ import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 
-type Location = {
+interface Location {
   country: string;
   state: string;
-};
+}
 
-type CareFacility = {
+interface CareFacility {
   id: string;
   name: string;
   description: string | null;
   location: Location | null;
   listing_type: string | null;
-};
+}
 
-type CareProduct = {
+interface CareProduct {
   id: string;
   name: string;
   description: string | null;
   affiliate_link: string | null;
-};
+}
 
 export const CareComparison = () => {
   const navigate = useNavigate();
@@ -47,20 +47,17 @@ export const CareComparison = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Build the facilities query
-        let facilitiesQuery = supabase
+        const facilitiesQuery = supabase
           .from('care_facilities')
           .select('id, name, description, location, listing_type');
 
-        // Add filters if selected
         if (selectedCountry !== "all") {
-          facilitiesQuery = facilitiesQuery.eq('location->country', selectedCountry);
+          facilitiesQuery.eq('location->country', selectedCountry);
         }
         if (selectedState !== "all") {
-          facilitiesQuery = facilitiesQuery.eq('location->state', selectedState);
+          facilitiesQuery.eq('location->state', selectedState);
         }
 
-        // Execute both queries
         const [facilitiesResponse, productsResponse] = await Promise.all([
           facilitiesQuery,
           supabase
@@ -71,12 +68,8 @@ export const CareComparison = () => {
         if (facilitiesResponse.error) throw facilitiesResponse.error;
         if (productsResponse.error) throw productsResponse.error;
 
-        // Type assertion to ensure the data matches our defined types
-        const facilitiesData = (facilitiesResponse.data || []) as CareFacility[];
-        const productsData = (productsResponse.data || []) as CareProduct[];
-
-        setFacilities(facilitiesData);
-        setProducts(productsData);
+        setFacilities(facilitiesResponse.data || []);
+        setProducts(productsResponse.data || []);
       } catch (error) {
         console.error('Error fetching comparison data:', error);
         toast({
