@@ -3,6 +3,8 @@ import { ButtonPrimary } from "../ui/button-primary";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
+import { LanguageSelector } from "../ui/language-selector";
+import { useTranslation } from "react-i18next";
 
 interface NavbarProps {
   children?: React.ReactNode;
@@ -11,6 +13,7 @@ interface NavbarProps {
 export const Navbar = ({ children }: NavbarProps) => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { t } = useTranslation();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userProfile, setUserProfile] = useState<any>(null);
 
@@ -43,8 +46,8 @@ export const Navbar = ({ children }: NavbarProps) => {
     const { error } = await supabase.auth.signOut();
     if (error) {
       toast({
-        title: "Error",
-        description: "Failed to sign out. Please try again.",
+        title: t("error"),
+        description: t("signOutError"),
         variant: "destructive",
       });
     } else {
@@ -58,7 +61,7 @@ export const Navbar = ({ children }: NavbarProps) => {
         <div className="flex justify-between h-16">
           <div className="flex items-center">
             <Link to="/" className="flex-shrink-0 flex items-center">
-              <span className="text-primary text-xl font-bold">Care-Connector</span>
+              <span className="text-primary text-xl font-bold">{t("appName")}</span>
             </Link>
             {isAuthenticated && (
               <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
@@ -66,32 +69,33 @@ export const Navbar = ({ children }: NavbarProps) => {
                   to="/groups"
                   className="text-gray-600 hover:text-primary px-3 py-2 rounded-md text-sm font-medium"
                 >
-                  Care Groups
+                  {t("careGroups")}
                 </Link>
                 <Link
                   to="/tasks"
                   className="text-gray-600 hover:text-primary px-3 py-2 rounded-md text-sm font-medium"
                 >
-                  Tasks
+                  {t("tasks")}
                 </Link>
                 <Link
                   to="/messages"
                   className="text-gray-600 hover:text-primary px-3 py-2 rounded-md text-sm font-medium"
                 >
-                  Messages
+                  {t("messages")}
                 </Link>
               </div>
             )}
           </div>
-          <div className="flex items-center">
+          <div className="flex items-center space-x-4">
+            <LanguageSelector />
             {children}
             {isAuthenticated ? (
               <div className="flex items-center space-x-4">
                 <span className="text-sm text-gray-600">
-                  Welcome, {userProfile?.first_name || 'User'}
+                  {t("welcome")}, {userProfile?.first_name || t("user")}
                 </span>
                 <ButtonPrimary variant="outline" size="sm" onClick={handleSignOut}>
-                  Sign Out
+                  {t("signOut")}
                 </ButtonPrimary>
               </div>
             ) : (
@@ -102,7 +106,7 @@ export const Navbar = ({ children }: NavbarProps) => {
                   className="mr-2"
                   onClick={() => navigate("/auth")}
                 >
-                  Sign In
+                  {t("signIn")}
                 </ButtonPrimary>
                 <ButtonPrimary 
                   size="sm"
@@ -110,7 +114,7 @@ export const Navbar = ({ children }: NavbarProps) => {
                     navigate("/auth");
                   }}
                 >
-                  Sign Up
+                  {t("signUp")}
                 </ButtonPrimary>
               </>
             )}

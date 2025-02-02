@@ -1,29 +1,31 @@
 import { ButtonPrimary } from "@/components/ui/button-primary";
 import { CareComparisonDialog } from "@/components/comparison/CareComparisonDialog";
+import { useTranslation } from "react-i18next";
 
 const Index = () => {
+  const { t } = useTranslation();
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-primary-100 to-white">
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="pt-16 pb-20">
           <div className="text-center">
             <h1 className="text-4xl tracking-tight font-extrabold text-gray-900 sm:text-5xl md:text-6xl">
-              <span className="block">Simplify Care Coordination</span>
-              <span className="block text-primary">Connect. Coordinate. Care.</span>
+              <span className="block">{t("simplifyCareCoordination")}</span>
+              <span className="block text-primary">{t("connectCoordinateCare")}</span>
             </h1>
             <p className="mt-3 max-w-md mx-auto text-base text-gray-500 sm:text-lg md:mt-5 md:text-xl md:max-w-3xl">
-              CareConnector helps caregivers coordinate patient care efficiently. Manage tasks,
-              communicate securely, and ensure everyone stays informed.
+              {t("careConnectorDescription")}
             </p>
             <div className="mt-5 max-w-md mx-auto sm:flex sm:justify-center md:mt-8">
               <div className="rounded-md shadow">
                 <ButtonPrimary size="lg" className="w-full sm:w-auto">
-                  Get Started
+                  {t("getStarted")}
                 </ButtonPrimary>
               </div>
               <div className="mt-3 sm:mt-0 sm:ml-3">
                 <ButtonPrimary size="lg" variant="outline" className="w-full sm:w-auto">
-                  Learn More
+                  {t("learnMore")}
                 </ButtonPrimary>
               </div>
             </div>
