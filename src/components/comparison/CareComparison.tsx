@@ -13,6 +13,10 @@ import {
 } from "@/components/ui/select";
 import { compareCareItems, type CareItem } from "@/utils/compareUtils";
 import { useToast } from "@/hooks/use-toast";
+import { Database } from "@/integrations/supabase/types";
+
+type CareFacility = Database['public']['Tables']['care_facilities']['Row'];
+type CareProduct = Database['public']['Tables']['care_products']['Row'];
 
 export const CareComparison = () => {
   const [facilities, setFacilities] = useState<CareItem[]>([]);
@@ -36,18 +40,32 @@ export const CareComparison = () => {
           facilitiesQuery = facilitiesQuery.eq('location->state', selectedState);
         }
 
-        const [facilitiesData, productsData] = await Promise.all([
+        const [{ data: facilitiesData, error: facilitiesError }, { data: productsData, error: productsError }] = await Promise.all([
           facilitiesQuery,
           supabase
             .from('care_products')
             .select('id, name, description, ratings, price_range, affiliate_link')
         ]);
 
-        if (facilitiesData.error) throw facilitiesData.error;
-        if (productsData.error) throw productsData.error;
+        if (facilitiesError) throw facilitiesError;
+        if (productsError) throw productsError;
 
-        setFacilities(facilitiesData.data);
-        setProducts(productsData.data);
+        setFacilities(facilitiesData?.map(facility => ({
+          id: facility.id,
+          name: facility.name,
+          description: facility.description,
+          ratings: facility.ratings,
+          listing_type: facility.listing_type
+        })) || []);
+
+        setProducts(productsData?.map(product => ({
+          id: product.id,
+          name: product.name,
+          description: product.description,
+          ratings: product.ratings,
+          price_range: product.price_range,
+          affiliate_link: product.affiliate_link
+        })) || []);
       } catch (error) {
         toast({
           title: "Error",
