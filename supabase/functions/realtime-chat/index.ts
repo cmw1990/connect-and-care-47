@@ -7,6 +7,7 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -59,6 +60,7 @@ Respond in a clear, structured way that is easy to understand.`
     });
 
     if (!response.ok) {
+      console.error('Perplexity API error:', response.status, response.statusText);
       throw new Error(`Perplexity API error: ${response.statusText}`);
     }
 
