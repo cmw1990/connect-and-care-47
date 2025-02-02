@@ -32,30 +32,17 @@ export default function Messages() {
   useEffect(() => {
     fetchNotifications();
     fetchDiscussions();
-    subscribeToUpdates();
+    const unsubscribe = subscribeToUpdates();
 
-    // Mark messages as read when component mounts
-    const markMessagesAsRead = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      await supabase
-        .from('profiles')
-        .update({
-          notification_settings: {
-            lastReadAt: new Date().toISOString()
-          }
-        })
-        .eq('id', user.id);
+    return () => {
+      unsubscribe();
     };
-
-    markMessagesAsRead();
   }, []);
 
   const subscribeToUpdates = () => {
     // Subscribe to group posts
     const postsChannel = supabase
-      .channel('public:group_posts')
+      .channel('messages_posts')
       .on(
         'postgres_changes',
         {
@@ -64,7 +51,8 @@ export default function Messages() {
           table: 'group_posts'
         },
         async (payload: any) => {
-          const { data: post } = await supabase
+          console.log('New post received:', payload);
+          const { data: post, error } = await supabase
             .from('group_posts')
             .select(`
               *,
@@ -74,21 +62,31 @@ export default function Messages() {
             .eq('id', payload.new.id)
             .single();
 
+          if (error) {
+            console.error('Error fetching post details:', error);
+            return;
+          }
+
           if (post) {
-            setDiscussions(prev => [{
+            const newDiscussion = {
               id: post.id,
               content: post.content,
               created_at: post.created_at,
               group_name: post.care_groups?.name || "Unknown Group",
               created_by_name: post.profiles ? 
-                `${post.profiles.first_name || ''} ${post.profiles.last_name || ''}`.trim() : 
+                `${post.profiles.first_name || ''} ${post.profiles.last_name || ''}`.trim() || "Unknown User" : 
                 "Unknown User",
-            }, ...prev]);
+            };
 
-            toast({
-              title: "New Group Post",
-              description: "Someone posted in your care group",
-            });
+            setDiscussions(prev => [newDiscussion, ...prev]);
+            
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user && post.created_by !== user.id) {
+              toast({
+                title: "New Group Post",
+                description: `New post in ${post.care_groups?.name || 'your care group'}`,
+              });
+            }
           }
         }
       )
@@ -96,7 +94,7 @@ export default function Messages() {
 
     // Subscribe to care groups for status changes
     const groupsChannel = supabase
-      .channel('public:care_groups')
+      .channel('messages_groups')
       .on(
         'postgres_changes',
         {
@@ -105,6 +103,7 @@ export default function Messages() {
           table: 'care_groups'
         },
         async (payload: any) => {
+          console.log('Group update received:', payload);
           const newStatus = (payload.new.privacy_settings as CareGroup['privacy_settings'])?.status;
           const oldStatus = (payload.old.privacy_settings as CareGroup['privacy_settings'])?.status;
           
@@ -116,17 +115,19 @@ export default function Messages() {
               .single();
 
             if (group) {
-              setNotifications(prev => [{
+              const newNotification = {
                 id: payload.new.id,
                 title: "Group Status Update",
                 message: `${group.name}: Status changed to ${newStatus}`,
                 created_at: new Date().toISOString(),
                 type: "status"
-              }, ...prev]);
+              };
 
+              setNotifications(prev => [newNotification, ...prev]);
+              
               toast({
                 title: "Group Status Changed",
-                description: `Group status has been updated to ${newStatus}`,
+                description: `${group.name}: Status changed to ${newStatus}`,
               });
             }
           }
@@ -145,7 +146,15 @@ export default function Messages() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Fetch group status changes
+      const { data: userGroups } = await supabase
+        .from('care_group_members')
+        .select('group_id')
+        .eq('user_id', user.id);
+
+      if (!userGroups) return;
+
+      const groupIds = userGroups.map(ug => ug.group_id);
+
       const { data: groups, error: groupsError } = await supabase
         .from('care_groups')
         .select(`
@@ -154,6 +163,7 @@ export default function Messages() {
           privacy_settings,
           updated_at
         `)
+        .in('id', groupIds)
         .order('updated_at', { ascending: false });
 
       if (groupsError) throw groupsError;
@@ -181,6 +191,18 @@ export default function Messages() {
 
   const fetchDiscussions = async () => {
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: userGroups } = await supabase
+        .from('care_group_members')
+        .select('group_id')
+        .eq('user_id', user.id);
+
+      if (!userGroups) return;
+
+      const groupIds = userGroups.map(ug => ug.group_id);
+
       const { data: groupPosts, error } = await supabase
         .from("group_posts")
         .select(`
@@ -190,6 +212,7 @@ export default function Messages() {
           care_groups(name),
           profiles(first_name, last_name)
         `)
+        .in('group_id', groupIds)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
@@ -200,7 +223,7 @@ export default function Messages() {
         created_at: post.created_at,
         group_name: post.care_groups?.name || "Unknown Group",
         created_by_name: post.profiles
-          ? `${post.profiles.first_name || ""} ${post.profiles.last_name || ""}`
+          ? `${post.profiles.first_name || ""} ${post.profiles.last_name || ""}`.trim() || "Unknown User"
           : "Unknown User",
       }));
 
@@ -272,4 +295,4 @@ export default function Messages() {
       </Tabs>
     </div>
   );
-}
+};
