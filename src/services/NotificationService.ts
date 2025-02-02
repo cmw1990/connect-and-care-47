@@ -6,6 +6,11 @@ import {
 import { LocalNotifications } from '@capacitor/local-notifications';
 import { supabase } from '@/integrations/supabase/client';
 
+interface NotificationSettings {
+  push_token?: string;
+  [key: string]: any;
+}
+
 class NotificationService {
   async initializePushNotifications() {
     try {
@@ -22,11 +27,13 @@ class NotificationService {
               .eq('id', user.id)
               .single();
 
+            const currentSettings = (profile?.notification_settings || {}) as NotificationSettings;
+            
             await supabase
               .from('profiles')
               .update({ 
                 notification_settings: {
-                  ...profile?.notification_settings,
+                  ...currentSettings,
                   push_token: token.value
                 }
               })

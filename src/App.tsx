@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import { cn } from "@/lib/utils";
 import Index from "@/pages/Index";
 import Groups from "@/pages/Groups";
 import GroupDetails from "@/pages/GroupDetails";

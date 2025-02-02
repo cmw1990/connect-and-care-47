@@ -2,6 +2,7 @@ import { ButtonPrimary } from "@/components/ui/button-primary";
 import { CareComparisonDialog } from "@/components/comparison/CareComparisonDialog";
 import { useTranslation } from "react-i18next";
 import { Heart, Calendar, Users, MessageSquare } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 const Index = () => {
   const { t } = useTranslation();
