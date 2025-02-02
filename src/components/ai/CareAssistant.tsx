@@ -1,15 +1,16 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Bot, Send, User, Volume2, BarChart2 } from "lucide-react";
+import { Bot, Send, User, Volume2, BarChart2, Mic, Image } from "lucide-react";
 
 interface Message {
   role: 'assistant' | 'user';
   content: string;
+  imageUrl?: string;
 }
 
 export const CareAssistant = ({ groupId }: { groupId?: string }) => {
@@ -17,6 +18,8 @@ export const CareAssistant = ({ groupId }: { groupId?: string }) => {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const { toast } = useToast();
 
   const sendMessage = async () => {
@@ -65,6 +68,11 @@ export const CareAssistant = ({ groupId }: { groupId?: string }) => {
 
       // Analyze sentiment
       analyzeSentiment(userMessage);
+
+      // Generate image if message contains visual description request
+      if (userMessage.toLowerCase().includes('show me') || userMessage.toLowerCase().includes('visualize')) {
+        await generateImage(userMessage);
+      }
     } catch (error) {
       console.error('Error sending message:', error);
       toast({
@@ -94,6 +102,109 @@ export const CareAssistant = ({ groupId }: { groupId?: string }) => {
       console.log('Sentiment analysis:', data.analysis);
     } catch (error) {
       console.error('Error analyzing sentiment:', error);
+    }
+  };
+
+  const generateImage = async (prompt: string) => {
+    try {
+      const response = await fetch('/functions/v1/generate-image', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
+        },
+        body: JSON.stringify({ prompt }),
+      });
+
+      if (!response.ok) throw new Error('Failed to generate image');
+
+      const data = await response.json();
+      
+      // Add the generated image to the last assistant message
+      setMessages(prev => {
+        const lastMessage = prev[prev.length - 1];
+        if (lastMessage.role === 'assistant') {
+          return [
+            ...prev.slice(0, -1),
+            { ...lastMessage, imageUrl: data.imageUrl }
+          ];
+        }
+        return prev;
+      });
+    } catch (error) {
+      console.error('Error generating image:', error);
+      toast({
+        title: "Error",
+        description: "Failed to generate image",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream);
+      const audioChunks: BlobPart[] = [];
+
+      mediaRecorder.ondataavailable = (event) => {
+        audioChunks.push(event.data);
+      };
+
+      mediaRecorder.onstop = async () => {
+        const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+        const reader = new FileReader();
+        
+        reader.onload = async () => {
+          if (typeof reader.result === 'string') {
+            const base64Audio = reader.result.split(',')[1];
+            
+            try {
+              const response = await fetch('/functions/v1/voice-to-text', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
+                },
+                body: JSON.stringify({ audioData: base64Audio }),
+              });
+
+              if (!response.ok) throw new Error('Failed to transcribe audio');
+
+              const data = await response.json();
+              setInput(data.text);
+            } catch (error) {
+              console.error('Error transcribing audio:', error);
+              toast({
+                title: "Error",
+                description: "Failed to transcribe audio",
+                variant: "destructive",
+              });
+            }
+          }
+        };
+
+        reader.readAsDataURL(audioBlob);
+      };
+
+      mediaRecorderRef.current = mediaRecorder;
+      mediaRecorder.start();
+      setIsRecording(true);
+    } catch (error) {
+      console.error('Error starting recording:', error);
+      toast({
+        title: "Error",
+        description: "Failed to start recording",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+      mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
     }
   };
 
@@ -163,6 +274,13 @@ export const CareAssistant = ({ groupId }: { groupId?: string }) => {
                   >
                     {message.content}
                   </div>
+                  {message.imageUrl && (
+                    <img 
+                      src={message.imageUrl} 
+                      alt="Generated illustration"
+                      className="rounded-lg max-w-full h-auto"
+                    />
+                  )}
                   {message.role === 'assistant' && (
                     <div className="flex gap-2">
                       <Button
@@ -180,6 +298,13 @@ export const CareAssistant = ({ groupId }: { groupId?: string }) => {
                       >
                         <BarChart2 className="h-4 w-4" />
                       </Button>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => generateImage(message.content)}
+                      >
+                        <Image className="h-4 w-4" />
+                      </Button>
                     </div>
                   )}
                 </div>
@@ -196,6 +321,14 @@ export const CareAssistant = ({ groupId }: { groupId?: string }) => {
             onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
             disabled={isLoading}
           />
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={isRecording ? stopRecording : startRecording}
+            className={isRecording ? 'bg-red-500 hover:bg-red-600' : ''}
+          >
+            <Mic className="h-4 w-4" />
+          </Button>
           <Button onClick={sendMessage} disabled={isLoading}>
             <Send className="h-4 w-4" />
           </Button>
