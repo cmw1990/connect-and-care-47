@@ -4,7 +4,7 @@ import { Navbar } from "@/components/navigation/navbar";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { Users, UserPlus, Settings } from "lucide-react";
+import { Users, UserPlus, Settings, BookOpen, ArrowLeft } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -207,6 +207,24 @@ const GroupDetails = () => {
       <Navbar />
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="space-y-6">
+          <div className="flex justify-between items-center">
+            <Button 
+              variant="ghost" 
+              className="mb-6"
+              onClick={() => navigate(-1)}
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back
+            </Button>
+            <Button
+              onClick={() => navigate('/care-guides')}
+              className="mb-6"
+            >
+              <BookOpen className="mr-2 h-4 w-4" />
+              Care Guides
+            </Button>
+          </div>
+
           <GroupStatusBar 
             groupId={groupId} 
             initialStatus={group.privacy_settings?.status || "normal"} 
