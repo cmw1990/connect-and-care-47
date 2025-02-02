@@ -153,8 +153,8 @@ export const GroupPosts = ({ groupId }: GroupPostsProps) => {
   }, [groupId]);
 
   return (
-    <Card>
-      <CardHeader>
+    <Card className="border-x-0 rounded-none shadow-none">
+      <CardHeader className="px-4">
         <div className="flex justify-between items-center">
           <CardTitle className="flex items-center gap-2">
             <MessageSquare className="h-5 w-5" />
@@ -169,28 +169,36 @@ export const GroupPosts = ({ groupId }: GroupPostsProps) => {
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Create New Post</DialogTitle>
+                <DialogTitle>
+                  {editingPost ? 'Edit Post' : 'Create New Post'}
+                </DialogTitle>
               </DialogHeader>
               <div className="space-y-4">
                 <Textarea
-                  value={newPost}
-                  onChange={(e) => setNewPost(e.target.value)}
+                  value={editingPost ? editingPost.content : newPost}
+                  onChange={(e) => editingPost 
+                    ? setEditingPost({ ...editingPost, content: e.target.value })
+                    : setNewPost(e.target.value)
+                  }
                   placeholder="What's on your mind?"
                   rows={4}
                 />
-                <Button
-                  onClick={handleCreatePost}
+                <Button 
+                  onClick={editingPost ? handleUpdatePost : handleCreatePost}
                   className="w-full"
                   disabled={isLoading}
                 >
-                  {isLoading ? "Posting..." : "Post"}
+                  {isLoading 
+                    ? (editingPost ? "Updating..." : "Posting...") 
+                    : (editingPost ? "Update Post" : "Post")
+                  }
                 </Button>
               </div>
             </DialogContent>
           </Dialog>
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="px-4">
         <div className="space-y-4">
           {posts.map((post) => (
             <div key={post.id} className="p-4 rounded-lg border space-y-2">

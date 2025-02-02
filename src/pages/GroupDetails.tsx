@@ -21,6 +21,8 @@ import { GroupTasks } from "@/components/groups/GroupTasks";
 import { GroupStatusBar } from "@/components/groups/GroupStatusBar";
 import { PatientInfoCard } from "@/components/groups/PatientInfoCard";
 import { CareAssistant } from "@/components/ai/CareAssistant";
+import { MiniStatusIndicator } from "@/components/groups/MiniStatusIndicator";
+import { MiniCalendar } from "@/components/groups/MiniCalendar";
 
 interface GroupMember {
   id: string;
@@ -211,9 +213,17 @@ const GroupDetails = () => {
           >
             <ArrowLeft className="h-5 w-5" />
           </Button>
-          <h1 className="text-lg font-semibold truncate flex-1 text-center">
-            {group.name}
-          </h1>
+          <div className="flex flex-col items-center flex-1">
+            <h1 className="text-lg font-semibold truncate">
+              {group.name}
+            </h1>
+            {group.privacy_settings?.status && (
+              <MiniStatusIndicator 
+                status={group.privacy_settings.status} 
+                message={"Everything is fine"} // Replace with actual status message
+              />
+            )}
+          </div>
           <Dialog>
             <DialogTrigger asChild>
               <Button variant="ghost" size="icon">
@@ -233,6 +243,11 @@ const GroupDetails = () => {
               </div>
             </DialogContent>
           </Dialog>
+        </div>
+
+        {/* Mini Calendar */}
+        <div className="px-4 py-2 border-t">
+          <MiniCalendar />
         </div>
 
         {/* Tab Navigation */}
@@ -265,21 +280,21 @@ const GroupDetails = () => {
       </div>
 
       {/* Main Content with padding for fixed header */}
-      <div className="pt-28 pb-20 px-4">
+      <div className="pt-40 pb-20">
         {activeTab === 'posts' && (
-          <div className="space-y-4">
+          <div className="px-0">
             <GroupPosts groupId={groupId} />
           </div>
         )}
 
         {activeTab === 'tasks' && (
-          <div className="space-y-4">
+          <div className="px-4">
             <GroupTasks groupId={groupId} members={members} />
           </div>
         )}
 
         {activeTab === 'info' && (
-          <div className="space-y-4">
+          <div className="px-4">
             <Card>
               <CardHeader>
                 <div className="flex justify-between items-center">
