@@ -14,11 +14,12 @@ import { compareCareItems, type CareItem } from "@/utils/compareUtils";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
+import { Database } from "@/integrations/supabase/types";
 
-interface Location {
+type Location = {
   country: string;
   state: string;
-}
+};
 
 interface CareFacility {
   id: string;
@@ -68,8 +69,24 @@ export const CareComparison = () => {
         if (facilitiesResponse.error) throw facilitiesResponse.error;
         if (productsResponse.error) throw productsResponse.error;
 
-        setFacilities(facilitiesResponse.data || []);
-        setProducts(productsResponse.data || []);
+        // Transform the data to match our interfaces
+        const transformedFacilities: CareFacility[] = facilitiesResponse.data.map(facility => ({
+          id: facility.id,
+          name: facility.name,
+          description: facility.description,
+          location: facility.location as Location,
+          listing_type: facility.listing_type
+        }));
+
+        const transformedProducts: CareProduct[] = productsResponse.data.map(product => ({
+          id: product.id,
+          name: product.name,
+          description: product.description,
+          affiliate_link: product.affiliate_link
+        }));
+
+        setFacilities(transformedFacilities);
+        setProducts(transformedProducts);
       } catch (error) {
         console.error('Error fetching comparison data:', error);
         toast({
