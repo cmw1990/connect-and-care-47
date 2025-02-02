@@ -21,6 +21,7 @@ import { GroupPosts } from "@/components/groups/GroupPosts";
 import { GroupTasks } from "@/components/groups/GroupTasks";
 import { GroupStatusBar } from "@/components/groups/GroupStatusBar";
 import { PatientInfoCard } from "@/components/groups/PatientInfoCard";
+import { CareAssistant } from "@/components/ai/CareAssistant";
 
 interface GroupMember {
   id: string;
@@ -304,8 +305,12 @@ const GroupDetails = () => {
               <GroupCalendar groupId={groupId} />
             </div>
 
-            {/* Right Column - Posts and Tasks */}
+            {/* Right Column - AI Care Assistant, Posts and Tasks */}
             <div className="lg:col-span-2 space-y-6">
+              {/* AI Care Assistant */}
+              <CareAssistant groupId={groupId} />
+              
+              {/* Existing Components */}
               <GroupPosts groupId={groupId} />
               <GroupTasks groupId={groupId} members={members} />
             </div>
