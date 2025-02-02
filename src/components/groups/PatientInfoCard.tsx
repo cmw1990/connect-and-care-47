@@ -16,10 +16,10 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Edit, MapPin } from "lucide-react";
 import { LocationMap } from "./LocationMap";
-import { Geolocation, PermissionStatus } from '@capacitor/geolocation';
+import { Geolocation } from '@capacitor/geolocation';
 
 interface PatientInfoCardProps {
-  groupId: string;
+  groupId?: string;
   patientInfo?: {
     basic_info: {
       name?: string;
@@ -36,16 +36,21 @@ interface PatientInfoCardProps {
   };
 }
 
-interface LocationData {
-  location_enabled: boolean;
-  current_location: {
-    latitude: number;
-    longitude: number;
-    last_updated?: string;
-  };
-}
-
 export const PatientInfoCard = ({ groupId, patientInfo }: PatientInfoCardProps) => {
+  // If no groupId is provided, show a message
+  if (!groupId) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Patient Information</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-gray-500">No group selected. Please select a care group to view patient information.</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
   const [isEditing, setIsEditing] = useState(false);
   const [locationEnabled, setLocationEnabled] = useState(false);
   const [currentLocation, setCurrentLocation] = useState<{ latitude: number; longitude: number } | null>(null);
