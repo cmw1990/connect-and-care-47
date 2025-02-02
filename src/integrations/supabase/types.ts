@@ -9,6 +9,38 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      care_analytics: {
+        Row: {
+          group_id: string | null
+          id: string
+          metric_type: string
+          metric_value: Json
+          recorded_at: string
+        }
+        Insert: {
+          group_id?: string | null
+          id?: string
+          metric_type: string
+          metric_value: Json
+          recorded_at?: string
+        }
+        Update: {
+          group_id?: string | null
+          id?: string
+          metric_type?: string
+          metric_value?: Json
+          recorded_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "care_analytics_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "care_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       care_facilities: {
         Row: {
           address: string | null
@@ -173,6 +205,60 @@ export type Database = {
         }
         Relationships: []
       }
+      care_schedule: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          end_time: string
+          group_id: string | null
+          id: string
+          recurrence: Json | null
+          start_time: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          end_time: string
+          group_id?: string | null
+          id?: string
+          recurrence?: Json | null
+          start_time: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          end_time?: string
+          group_id?: string | null
+          id?: string
+          recurrence?: Json | null
+          start_time?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "care_schedule_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "care_schedule_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "care_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       caregiver_journals: {
         Row: {
           content: string
@@ -199,6 +285,192 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: []
+      }
+      caregiver_wellness_logs: {
+        Row: {
+          created_at: string
+          exercise_minutes: number | null
+          id: string
+          mood: string | null
+          notes: string | null
+          sleep_hours: number | null
+          stress_level: number | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          exercise_minutes?: number | null
+          id?: string
+          mood?: string | null
+          notes?: string | null
+          sleep_hours?: number | null
+          stress_level?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          exercise_minutes?: number | null
+          id?: string
+          mood?: string | null
+          notes?: string | null
+          sleep_hours?: number | null
+          stress_level?: number | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "caregiver_wellness_logs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      community_posts: {
+        Row: {
+          author_id: string | null
+          category: string | null
+          content: string
+          created_at: string
+          id: string
+          likes: number | null
+          tags: string[] | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          author_id?: string | null
+          category?: string | null
+          content: string
+          created_at?: string
+          id?: string
+          likes?: number | null
+          tags?: string[] | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          author_id?: string | null
+          category?: string | null
+          content?: string
+          created_at?: string
+          id?: string
+          likes?: number | null
+          tags?: string[] | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "community_posts_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      emergency_contacts: {
+        Row: {
+          address: string | null
+          created_at: string
+          email: string | null
+          group_id: string | null
+          id: string
+          name: string
+          notes: string | null
+          phone: string | null
+          priority: number | null
+          relationship: string | null
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string
+          email?: string | null
+          group_id?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          phone?: string | null
+          priority?: number | null
+          relationship?: string | null
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          created_at?: string
+          email?: string | null
+          group_id?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          priority?: number | null
+          relationship?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "emergency_contacts_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "care_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      entertainment_activities: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          group_id: string | null
+          id: string
+          participants: Json | null
+          schedule: Json | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          group_id?: string | null
+          id?: string
+          participants?: Json | null
+          schedule?: Json | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          group_id?: string | null
+          id?: string
+          participants?: Json | null
+          schedule?: Json | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "entertainment_activities_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "entertainment_activities_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "care_groups"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       group_posts: {
         Row: {
@@ -235,6 +507,101 @@ export type Database = {
           },
           {
             foreignKeyName: "group_posts_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "care_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      knowledge_base: {
+        Row: {
+          category: string | null
+          content: string
+          created_at: string
+          created_by: string | null
+          id: string
+          tags: string[] | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category?: string | null
+          content: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          tags?: string[] | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string | null
+          content?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          tags?: string[] | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "knowledge_base_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      medical_documents: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          document_type: string | null
+          file_url: string | null
+          group_id: string | null
+          id: string
+          tags: string[] | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          document_type?: string | null
+          file_url?: string | null
+          group_id?: string | null
+          id?: string
+          tags?: string[] | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          document_type?: string | null
+          file_url?: string | null
+          group_id?: string | null
+          id?: string
+          tags?: string[] | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "medical_documents_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "medical_documents_group_id_fkey"
             columns: ["group_id"]
             isOneToOne: false
             referencedRelation: "care_groups"
@@ -325,6 +692,45 @@ export type Database = {
         }
         Relationships: []
       }
+      resource_directory: {
+        Row: {
+          category: string
+          contact_info: Json | null
+          created_at: string
+          description: string | null
+          id: string
+          location: Json | null
+          name: string
+          ratings: Json | null
+          updated_at: string
+          verified: boolean | null
+        }
+        Insert: {
+          category: string
+          contact_info?: Json | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          location?: Json | null
+          name: string
+          ratings?: Json | null
+          updated_at?: string
+          verified?: boolean | null
+        }
+        Update: {
+          category?: string
+          contact_info?: Json | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          location?: Json | null
+          name?: string
+          ratings?: Json | null
+          updated_at?: string
+          verified?: boolean | null
+        }
+        Relationships: []
+      }
       tasks: {
         Row: {
           assigned_to: string | null
@@ -391,6 +797,51 @@ export type Database = {
             columns: ["group_id"]
             isOneToOne: false
             referencedRelation: "care_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      team_messages: {
+        Row: {
+          attachments: Json | null
+          content: string
+          created_at: string
+          group_id: string | null
+          id: string
+          message_type: string | null
+          sender_id: string | null
+        }
+        Insert: {
+          attachments?: Json | null
+          content: string
+          created_at?: string
+          group_id?: string | null
+          id?: string
+          message_type?: string | null
+          sender_id?: string | null
+        }
+        Update: {
+          attachments?: Json | null
+          content?: string
+          created_at?: string
+          group_id?: string | null
+          id?: string
+          message_type?: string | null
+          sender_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_messages_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "care_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "team_messages_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
