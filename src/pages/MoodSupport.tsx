@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -7,12 +7,20 @@ import { supabase } from "@/integrations/supabase/client";
 import { Smile, Frown, HeartPulse, Heart, Angry, Meh, Bot } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { CareAssistant } from "@/components/ai/CareAssistant";
+import { notificationService } from "@/services/NotificationService";
 
 export const MoodSupport = () => {
   const [journalEntry, setJournalEntry] = useState("");
   const [selectedMood, setSelectedMood] = useState<string | null>(null);
   const { toast } = useToast();
   const { t } = useTranslation();
+
+  useEffect(() => {
+    // Initialize notifications when component mounts
+    notificationService.initializePushNotifications();
+    // Schedule next day's mood check reminder
+    notificationService.scheduleMoodCheckReminder();
+  }, []);
 
   const moods = [
     { icon: Smile, label: "Happy", color: "text-green-500" },
@@ -60,6 +68,9 @@ export const MoodSupport = () => {
         description: t("Journal entry saved successfully"),
       });
 
+      // Schedule next mood check reminder
+      await notificationService.scheduleMoodCheckReminder();
+
       setJournalEntry("");
       setSelectedMood(null);
     } catch (error) {
@@ -73,11 +84,11 @@ export const MoodSupport = () => {
   };
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <h1 className="text-3xl font-bold mb-8">{t("Caregiver Mood Support")}</h1>
+    <div className="container mx-auto p-4 md:p-6 space-y-6">
+      <h1 className="text-2xl md:text-3xl font-bold mb-8">{t("Caregiver Mood Support")}</h1>
       
-      <div className="grid md:grid-cols-2 gap-6">
-        <Card>
+      <div className="grid md:grid-cols-2 gap-4 md:gap-6">
+        <Card className="w-full">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Heart className="h-5 w-5" />
@@ -85,7 +96,7 @@ export const MoodSupport = () => {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex flex-wrap gap-3">
+            <div className="flex flex-wrap gap-2 md:gap-3">
               {moods.map((mood) => (
                 <Button
                   key={mood.label}
@@ -110,7 +121,7 @@ export const MoodSupport = () => {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="w-full">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Bot className="h-5 w-5" />
