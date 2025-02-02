@@ -19,9 +19,21 @@ import { useTranslation } from "react-i18next";
 const languages = [
   { label: "English", value: "en" },
   { label: "Español", value: "es" },
-  { label: "中文", value: "zh" },
+  { label: "简体中文", value: "zh-CN" },
+  { label: "繁體中文", value: "zh-TW" },
   { label: "हिंदी", value: "hi" },
   { label: "العربية", value: "ar" },
+  { label: "Français", value: "fr" },
+  { label: "Deutsch", value: "de" },
+  { label: "Italiano", value: "it" },
+  { label: "日本語", value: "ja" },
+  { label: "한국어", value: "ko" },
+  { label: "Português", value: "pt" },
+  { label: "Русский", value: "ru" },
+  { label: "Türkçe", value: "tr" },
+  { label: "Tiếng Việt", value: "vi" },
+  { label: "ไทย", value: "th" },
+  { label: "Nederlands", value: "nl" },
 ];
 
 export function LanguageSelector() {
