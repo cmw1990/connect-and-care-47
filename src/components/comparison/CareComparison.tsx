@@ -47,7 +47,11 @@ export const CareComparison = () => {
         id: facility.id,
         name: facility.name,
         description: facility.description,
-        location: facility.location as Location,
+        location: {
+          country: (facility.location as any)?.country || '',
+          state: (facility.location as any)?.state || '',
+          city: (facility.location as any)?.city || ''
+        },
         listing_type: facility.listing_type
       }));
 
@@ -97,7 +101,10 @@ export const CareComparison = () => {
       
       const enhancedResult: Record<string, ComparisonResult> = {};
       for (const [id, data] of Object.entries(result)) {
-        const aiInsight = await generateAIInsights([items.find(item => item.id === id)!]);
+        const item = items.find(item => item.id === id);
+        if (!item) continue;
+        
+        const aiInsight = await generateAIInsights([item]);
         enhancedResult[id] = {
           name: data.name,
           averageRating: data.averageRating,
