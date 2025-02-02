@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MessageSquare, Bell } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -34,7 +34,7 @@ export default function Messages() {
 
   const subscribeToNotifications = () => {
     // Subscribe to group posts
-    const channel = supabase
+    const postsChannel = supabase
       .channel('public:group_posts')
       .on(
         'postgres_changes',
@@ -43,7 +43,7 @@ export default function Messages() {
           schema: 'public',
           table: 'group_posts'
         },
-        (payload) => {
+        (payload: any) => {
           toast({
             title: "New Group Post",
             description: "Someone posted in your care group",
@@ -53,31 +53,91 @@ export default function Messages() {
       )
       .subscribe();
 
+    // Subscribe to care groups for status changes
+    const groupsChannel = supabase
+      .channel('public:care_groups')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'care_groups'
+        },
+        (payload: any) => {
+          const newStatus = payload.new.privacy_settings?.status;
+          if (newStatus && newStatus !== payload.old.privacy_settings?.status) {
+            toast({
+              title: "Group Status Changed",
+              description: `Group status has been updated to ${newStatus}`,
+            });
+          }
+        }
+      )
+      .subscribe();
+
+    // Subscribe to tasks
+    const tasksChannel = supabase
+      .channel('public:tasks')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'tasks'
+        },
+        (payload: any) => {
+          if (payload.eventType === 'INSERT') {
+            toast({
+              title: "New Task",
+              description: "A new task has been created",
+            });
+          } else if (payload.eventType === 'UPDATE') {
+            toast({
+              title: "Task Updated",
+              description: "A task has been updated",
+            });
+          }
+        }
+      )
+      .subscribe();
+
     return () => {
-      supabase.removeChannel(channel);
+      supabase.removeChannel(postsChannel);
+      supabase.removeChannel(groupsChannel);
+      supabase.removeChannel(tasksChannel);
     };
   };
 
   const fetchNotifications = async () => {
     try {
-      // In a real app, you would fetch notifications from your backend
-      const dummyNotifications = [
-        {
-          id: "1",
-          title: "New Task Assigned",
-          message: "You have been assigned a new task in Family Care Group",
-          created_at: new Date().toISOString(),
-          type: "task",
-        },
-        {
-          id: "2",
-          title: "Medication Reminder",
-          message: "Time to take morning medications",
-          created_at: new Date().toISOString(),
-          type: "medication",
-        },
-      ];
-      setNotifications(dummyNotifications);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Fetch group status changes
+      const { data: groups, error: groupsError } = await supabase
+        .from('care_groups')
+        .select(`
+          id,
+          name,
+          privacy_settings,
+          updated_at
+        `)
+        .order('updated_at', { ascending: false })
+        .limit(10);
+
+      if (groupsError) throw groupsError;
+
+      const notifications = groups
+        .filter(group => group.privacy_settings?.status)
+        .map(group => ({
+          id: group.id,
+          title: "Group Status Update",
+          message: `${group.name}: ${group.privacy_settings.status}`,
+          created_at: group.updated_at,
+          type: "status",
+        }));
+
+      setNotifications(notifications);
     } catch (error) {
       console.error("Error fetching notifications:", error);
       toast({

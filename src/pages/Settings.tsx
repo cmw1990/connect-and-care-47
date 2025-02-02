@@ -31,6 +31,7 @@ export default function Settings() {
 
   useEffect(() => {
     fetchPreferences();
+    subscribeToNotifications();
   }, []);
 
   const fetchPreferences = async () => {
@@ -47,7 +48,13 @@ export default function Settings() {
       if (error) throw error;
       
       if (data?.notification_preferences) {
-        setPreferences(data.notification_preferences as NotificationPreferences);
+        const prefs = data.notification_preferences as Record<string, boolean>;
+        setPreferences(prev => ({
+          ...prev,
+          ...Object.fromEntries(
+            Object.entries(prefs).filter(([key]) => key in prev)
+          )
+        }));
       }
     } catch (error) {
       console.error('Error fetching preferences:', error);
@@ -57,6 +64,33 @@ export default function Settings() {
         variant: "destructive",
       });
     }
+  };
+
+  const subscribeToNotifications = () => {
+    // Subscribe to group posts
+    const channel = supabase
+      .channel('public:group_posts')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'group_posts'
+        },
+        (payload) => {
+          if (preferences.groupActivity) {
+            toast({
+              title: "New Group Post",
+              description: "Someone posted in your care group",
+            });
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   };
 
   const updatePreference = async (key: keyof NotificationPreferences, value: boolean) => {
