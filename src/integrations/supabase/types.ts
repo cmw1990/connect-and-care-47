@@ -650,6 +650,41 @@ export type Database = {
           },
         ]
       }
+      patient_locations: {
+        Row: {
+          created_at: string
+          current_location: Json | null
+          group_id: string | null
+          id: string
+          location_enabled: boolean | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          current_location?: Json | null
+          group_id?: string | null
+          id?: string
+          location_enabled?: boolean | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          current_location?: Json | null
+          group_id?: string | null
+          id?: string
+          location_enabled?: boolean | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "patient_locations_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: true
+            referencedRelation: "care_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           availability_settings: Json | null
