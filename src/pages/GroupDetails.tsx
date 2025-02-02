@@ -14,10 +14,10 @@ interface GroupPost {
   created_at: string;
   created_by: string;
   group_id: string;
-  profiles: {
-    first_name: string;
-    last_name: string;
-  };
+  profiles?: {
+    first_name: string | null;
+    last_name: string | null;
+  } | null;
 }
 
 export default function GroupDetails() {
@@ -113,6 +113,13 @@ export default function GroupDetails() {
     }
   };
 
+  const getAuthorName = (post: GroupPost) => {
+    if (!post.profiles) return t("unknownUser");
+    const firstName = post.profiles.first_name || '';
+    const lastName = post.profiles.last_name || '';
+    return firstName || lastName ? `${firstName} ${lastName}`.trim() : t("unknownUser");
+  };
+
   return (
     <div className="container py-6 space-y-6">
       <form onSubmit={handleSubmit} className="flex gap-2">
@@ -134,7 +141,7 @@ export default function GroupDetails() {
               <div className="flex items-center gap-2">
                 <MessageSquare className="h-4 w-4 text-gray-500" />
                 <span className="font-medium">
-                  {post.profiles.first_name} {post.profiles.last_name}
+                  {getAuthorName(post)}
                 </span>
                 <span className="text-sm text-gray-500">
                   {new Date(post.created_at).toLocaleDateString()}
