@@ -1,27 +1,23 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 
-const GOOGLE_PLACES_API_KEY = Deno.env.get('GOOGLE_PLACES_API_KEY')
-
 interface SearchParams {
   location: {
     lat: number
     lng: number
   }
   radius?: number // in meters
-  keyword?: string
+}
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
 serve(async (req) => {
   try {
     // Handle CORS
     if (req.method === 'OPTIONS') {
-      return new Response('ok', {
-        headers: {
-          'Access-Control-Allow-Origin': '*',
-          'Access-Control-Allow-Methods': 'POST',
-          'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-        }
-      })
+      return new Response('ok', { headers: corsHeaders })
     }
 
     // Verify request method
@@ -30,53 +26,84 @@ serve(async (req) => {
     }
 
     // Get search parameters from request body
-    const { location, radius = 5000, keyword = 'care home' }: SearchParams = await req.json()
+    const { location, radius = 5000 }: SearchParams = await req.json()
 
-    // Construct Google Places API URL
-    const baseUrl = 'https://maps.googleapis.com/maps/api/place/nearbysearch/json'
-    const url = new URL(baseUrl)
-    url.searchParams.append('location', `${location.lat},${location.lng}`)
-    url.searchParams.append('radius', radius.toString())
-    url.searchParams.append('keyword', keyword)
-    url.searchParams.append('type', 'health')
-    url.searchParams.append('key', GOOGLE_PLACES_API_KEY || '')
+    // Convert radius from meters to degrees (approximate)
+    const radiusDegrees = radius / 111000 // 1 degree is approximately 111km
 
-    // Make request to Google Places API
-    const response = await fetch(url.toString())
+    // Construct Overpass API query
+    const query = `
+      [out:json][timeout:25];
+      (
+        node["amenity"="nursing_home"](around:${radius},${location.lat},${location.lng});
+        way["amenity"="nursing_home"](around:${radius},${location.lat},${location.lng});
+        node["healthcare"="nursing_home"](around:${radius},${location.lat},${location.lng});
+        way["healthcare"="nursing_home"](around:${radius},${location.lat},${location.lng});
+        node["social_facility"="nursing_home"](around:${radius},${location.lat},${location.lng});
+        way["social_facility"="nursing_home"](around:${radius},${location.lat},${location.lng});
+      );
+      out body;
+      >;
+      out skel qt;
+    `
+
+    console.log('Querying Overpass API with:', query)
+
+    // Make request to Overpass API
+    const response = await fetch('https://overpass-api.de/api/interpreter', {
+      method: 'POST',
+      body: query
+    })
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch from Overpass API')
+    }
+
     const data = await response.json()
+    console.log('Received data from Overpass:', data)
 
-    // Transform and filter results
-    const facilities = data.results.map((place: any) => ({
-      id: place.place_id,
-      name: place.name,
-      address: place.vicinity,
-      location: {
-        lat: place.geometry.location.lat,
-        lng: place.geometry.location.lng
-      },
-      rating: place.rating,
-      user_ratings_total: place.user_ratings_total,
-      types: place.types,
-    }))
+    // Transform results to match our expected format
+    const facilities = data.elements
+      .filter(element => element.type === 'node' || element.type === 'way')
+      .map((place) => ({
+        id: place.id.toString(),
+        name: place.tags?.name || 'Unnamed Facility',
+        address: [
+          place.tags?.['addr:street'],
+          place.tags?.['addr:housenumber'],
+          place.tags?.['addr:city'],
+          place.tags?.['addr:postcode']
+        ].filter(Boolean).join(', ') || 'Address not available',
+        location: {
+          lat: place.lat || (place.center?.lat),
+          lng: place.lon || (place.center?.lon)
+        },
+        rating: place.tags?.stars || null,
+        user_ratings_total: null,
+        types: ['nursing_home'],
+      }))
+
+    console.log('Transformed facilities:', facilities)
 
     return new Response(
       JSON.stringify({ facilities }),
-      {
-        headers: {
+      { 
+        headers: { 
           'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*',
-        },
+          ...corsHeaders
+        } 
       },
     )
   } catch (error) {
+    console.error('Error in search-care-facilities:', error)
     return new Response(
       JSON.stringify({ error: error.message }),
-      {
+      { 
         status: 400,
-        headers: {
+        headers: { 
           'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*',
-        },
+          ...corsHeaders
+        } 
       },
     )
   }
