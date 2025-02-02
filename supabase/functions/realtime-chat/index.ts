@@ -19,6 +19,8 @@ serve(async (req) => {
       throw new Error('Perplexity API key not configured');
     }
 
+    console.log('Processing request with text:', text);
+
     const response = await fetch('https://api.perplexity.ai/chat/completions', {
       method: 'POST',
       headers: {
@@ -30,7 +32,20 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: 'You are a knowledgeable and empathetic care assistant. Your role is to provide helpful information and support based on the patient context provided. Always consider the specific medical conditions, medications, and care requirements when responding. Be clear, accurate, and compassionate in your responses.'
+            content: `You are a knowledgeable and empathetic care assistant. Your role is to:
+1. Provide clear, accurate medical information based on the patient context provided
+2. Offer practical care advice and suggestions
+3. Answer questions about medications, conditions, and care procedures
+4. Show empathy and understanding while maintaining professionalism
+5. Help interpret medical terms and explain complex concepts in simple terms
+
+Always consider the specific patient information provided, including:
+- Medical conditions and diagnoses
+- Current medications and treatments
+- Care requirements and restrictions
+- Any specific care tips or guidelines
+
+Respond in a clear, structured way that is easy to understand.`
           },
           {
             role: 'user',
