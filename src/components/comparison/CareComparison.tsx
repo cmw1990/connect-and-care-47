@@ -29,28 +29,30 @@ export const CareComparison = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        let facilitiesQuery = supabase
+        const facilitiesPromise = supabase
           .from('care_facilities')
           .select('id, name, description, ratings, location, listing_type');
 
+        const productsPromise = supabase
+          .from('care_products')
+          .select('id, name, description, ratings, price_range, affiliate_link');
+
         if (selectedCountry !== "all") {
-          facilitiesQuery = facilitiesQuery.eq('location->country', selectedCountry);
+          facilitiesPromise.eq('location->country', selectedCountry);
         }
         if (selectedState !== "all") {
-          facilitiesQuery = facilitiesQuery.eq('location->state', selectedState);
+          facilitiesPromise.eq('location->state', selectedState);
         }
 
-        const [{ data: facilitiesData, error: facilitiesError }, { data: productsData, error: productsError }] = await Promise.all([
-          facilitiesQuery,
-          supabase
-            .from('care_products')
-            .select('id, name, description, ratings, price_range, affiliate_link')
+        const [facilitiesResponse, productsResponse] = await Promise.all([
+          facilitiesPromise,
+          productsPromise
         ]);
 
-        if (facilitiesError) throw facilitiesError;
-        if (productsError) throw productsError;
+        if (facilitiesResponse.error) throw facilitiesResponse.error;
+        if (productsResponse.error) throw productsResponse.error;
 
-        setFacilities(facilitiesData?.map(facility => ({
+        setFacilities(facilitiesResponse.data?.map(facility => ({
           id: facility.id,
           name: facility.name,
           description: facility.description,
@@ -58,7 +60,7 @@ export const CareComparison = () => {
           listing_type: facility.listing_type
         })) || []);
 
-        setProducts(productsData?.map(product => ({
+        setProducts(productsResponse.data?.map(product => ({
           id: product.id,
           name: product.name,
           description: product.description,
