@@ -12,12 +12,26 @@ import {
 } from "@/components/ui/select";
 import { compareCareItems, type CareItem } from "@/utils/compareUtils";
 import { useToast } from "@/hooks/use-toast";
-import { Database } from "@/integrations/supabase/types";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 
-type CareFacility = Database['public']['Tables']['care_facilities']['Row'];
-type CareProduct = Database['public']['Tables']['care_products']['Row'];
+type CareFacility = {
+  id: string;
+  name: string;
+  description: string | null;
+  location: {
+    country: string;
+    state: string;
+  } | null;
+  listing_type: string | null;
+};
+
+type CareProduct = {
+  id: string;
+  name: string;
+  description: string | null;
+  affiliate_link: string | null;
+};
 
 export const CareComparison = () => {
   const navigate = useNavigate();
@@ -34,7 +48,7 @@ export const CareComparison = () => {
         // Build the facilities query
         let facilitiesQuery = supabase
           .from('care_facilities')
-          .select('*');
+          .select('id, name, description, location, listing_type');
 
         // Add filters if selected
         if (selectedCountry !== "all") {
@@ -44,15 +58,12 @@ export const CareComparison = () => {
           facilitiesQuery = facilitiesQuery.eq('location->state', selectedState);
         }
 
-        // Build the products query
-        const productsQuery = supabase
-          .from('care_products')
-          .select('*');
-
         // Execute both queries
         const [facilitiesResponse, productsResponse] = await Promise.all([
           facilitiesQuery,
-          productsQuery
+          supabase
+            .from('care_products')
+            .select('id, name, description, affiliate_link')
         ]);
 
         if (facilitiesResponse.error) throw facilitiesResponse.error;
@@ -61,6 +72,7 @@ export const CareComparison = () => {
         setFacilities(facilitiesResponse.data || []);
         setProducts(productsResponse.data || []);
       } catch (error) {
+        console.error('Error fetching comparison data:', error);
         toast({
           title: "Error",
           description: "Failed to fetch comparison data",
