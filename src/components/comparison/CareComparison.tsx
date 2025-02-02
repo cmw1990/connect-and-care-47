@@ -31,11 +31,11 @@ export const CareComparison = () => {
       try {
         let facilitiesQuery = supabase
           .from('care_facilities')
-          .select<'care_facilities', CareFacility>('id, name, description, ratings, location, listing_type');
+          .select('*');
 
         let productsQuery = supabase
           .from('care_products')
-          .select<'care_products', CareProduct>('id, name, description, ratings, price_range, affiliate_link');
+          .select('*');
 
         if (selectedCountry !== "all") {
           facilitiesQuery = facilitiesQuery.eq('location->country', selectedCountry);
