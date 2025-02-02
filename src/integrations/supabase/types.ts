@@ -173,6 +173,33 @@ export type Database = {
         }
         Relationships: []
       }
+      caregiver_journals: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          mood: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          mood?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          mood?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       group_posts: {
         Row: {
           content: string

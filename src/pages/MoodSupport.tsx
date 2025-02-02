@@ -33,13 +33,25 @@ export const MoodSupport = () => {
       return;
     }
 
-    try {
-      // Save journal entry to Supabase
-      const { error } = await supabase.from("caregiver_journals").insert({
-        content: journalEntry,
-        mood: selectedMood,
-        user_id: (await supabase.auth.getUser()).data.user?.id,
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      toast({
+        title: t("Error"),
+        description: t("Please sign in to save journal entries"),
+        variant: "destructive",
       });
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from("caregiver_journals")
+        .insert({
+          content: journalEntry,
+          mood: selectedMood,
+          user_id: user.id,
+        });
 
       if (error) throw error;
 
@@ -51,6 +63,7 @@ export const MoodSupport = () => {
       setJournalEntry("");
       setSelectedMood(null);
     } catch (error) {
+      console.error("Error saving journal entry:", error);
       toast({
         title: t("Error"),
         description: t("Failed to save journal entry"),
