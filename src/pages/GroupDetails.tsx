@@ -7,6 +7,11 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
 import { MessageSquare, Send } from "lucide-react";
+import { GroupStatusBar } from "@/components/groups/GroupStatusBar";
+import { GroupTasks } from "@/components/groups/GroupTasks";
+import { GroupPosts } from "@/components/groups/GroupPosts";
+import { PatientInfoCard } from "@/components/groups/PatientInfoCard";
+import { MiniCalendar } from "@/components/groups/MiniCalendar";
 
 interface GroupPost {
   id: string;
@@ -25,31 +30,36 @@ export default function GroupDetails() {
   const [posts, setPosts] = useState<GroupPost[]>([]);
   const [newPost, setNewPost] = useState("");
   const [loading, setLoading] = useState(false);
+  const [groupMembers, setGroupMembers] = useState<any[]>([]);
   const { toast } = useToast();
   const { t } = useTranslation();
 
   useEffect(() => {
-    fetchPosts();
-    const channel = supabase
-      .channel('public:group_posts')
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'group_posts',
-          filter: `group_id=eq.${groupId}`
-        },
-        (payload) => {
-          setPosts((currentPosts) => [payload.new as GroupPost, ...currentPosts]);
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
+    if (groupId) {
+      fetchPosts();
+      fetchGroupMembers();
+    }
   }, [groupId]);
+
+  const fetchGroupMembers = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('care_group_members')
+        .select(`
+          user_id,
+          profiles (
+            first_name,
+            last_name
+          )
+        `)
+        .eq('group_id', groupId);
+
+      if (error) throw error;
+      setGroupMembers(data || []);
+    } catch (error) {
+      console.error('Error fetching group members:', error);
+    }
+  };
 
   const fetchPosts = async () => {
     try {
@@ -101,6 +111,7 @@ export default function GroupDetails() {
         title: t("success"),
         description: t("postCreated"),
       });
+      await fetchPosts();
     } catch (error) {
       console.error('Error creating post:', error);
       toast({
@@ -120,37 +131,23 @@ export default function GroupDetails() {
     return firstName || lastName ? `${firstName} ${lastName}`.trim() : t("unknownUser");
   };
 
-  return (
-    <div className="container py-6 space-y-6">
-      <form onSubmit={handleSubmit} className="flex gap-2">
-        <Input
-          value={newPost}
-          onChange={(e) => setNewPost(e.target.value)}
-          placeholder={t("writeMessage")}
-          className="flex-1"
-        />
-        <ButtonPrimary type="submit" disabled={loading}>
-          <Send className="h-4 w-4" />
-        </ButtonPrimary>
-      </form>
+  if (!groupId) return null;
 
-      <div className="space-y-4">
-        {posts.map((post) => (
-          <Card key={post.id}>
-            <CardContent className="p-4 space-y-2">
-              <div className="flex items-center gap-2">
-                <MessageSquare className="h-4 w-4 text-gray-500" />
-                <span className="font-medium">
-                  {getAuthorName(post)}
-                </span>
-                <span className="text-sm text-gray-500">
-                  {new Date(post.created_at).toLocaleDateString()}
-                </span>
-              </div>
-              <p className="text-gray-700">{post.content}</p>
-            </CardContent>
-          </Card>
-        ))}
+  return (
+    <div className="container mx-auto px-4 py-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* Left Column */}
+        <div className="md:col-span-2 space-y-6">
+          <GroupStatusBar groupId={groupId} />
+          <GroupTasks groupId={groupId} members={groupMembers} />
+          <GroupPosts groupId={groupId} />
+        </div>
+
+        {/* Right Column */}
+        <div className="space-y-6">
+          <PatientInfoCard groupId={groupId} />
+          <MiniCalendar groupId={groupId} />
+        </div>
       </div>
     </div>
   );
