@@ -29,30 +29,30 @@ export const CareComparison = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const facilitiesPromise = supabase
+        const facilitiesQuery = supabase
           .from('care_facilities')
           .select('id, name, description, ratings, location, listing_type');
 
-        const productsPromise = supabase
+        const productsQuery = supabase
           .from('care_products')
           .select('id, name, description, ratings, price_range, affiliate_link');
 
         if (selectedCountry !== "all") {
-          facilitiesPromise.eq('location->country', selectedCountry);
+          facilitiesQuery.eq('location->country', selectedCountry);
         }
         if (selectedState !== "all") {
-          facilitiesPromise.eq('location->state', selectedState);
+          facilitiesQuery.eq('location->state', selectedState);
         }
 
-        const [facilitiesResponse, productsResponse] = await Promise.all([
-          facilitiesPromise,
-          productsPromise
+        const [facilitiesData, productsData] = await Promise.all([
+          facilitiesQuery as Promise<{ data: CareFacility[] | null; error: any }>,
+          productsQuery as Promise<{ data: CareProduct[] | null; error: any }>
         ]);
 
-        if (facilitiesResponse.error) throw facilitiesResponse.error;
-        if (productsResponse.error) throw productsResponse.error;
+        if (facilitiesData.error) throw facilitiesData.error;
+        if (productsData.error) throw productsData.error;
 
-        setFacilities(facilitiesResponse.data?.map(facility => ({
+        setFacilities(facilitiesData.data?.map(facility => ({
           id: facility.id,
           name: facility.name,
           description: facility.description,
@@ -60,7 +60,7 @@ export const CareComparison = () => {
           listing_type: facility.listing_type
         })) || []);
 
-        setProducts(productsResponse.data?.map(product => ({
+        setProducts(productsData.data?.map(product => ({
           id: product.id,
           name: product.name,
           description: product.description,
