@@ -29,24 +29,24 @@ export const CareComparison = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const facilitiesQuery = supabase
+        let facilitiesQuery = supabase
           .from('care_facilities')
           .select('id, name, description, ratings, location, listing_type');
 
-        const productsQuery = supabase
+        let productsQuery = supabase
           .from('care_products')
           .select('id, name, description, ratings, price_range, affiliate_link');
 
         if (selectedCountry !== "all") {
-          facilitiesQuery.eq('location->country', selectedCountry);
+          facilitiesQuery = facilitiesQuery.eq('location->country', selectedCountry);
         }
         if (selectedState !== "all") {
-          facilitiesQuery.eq('location->state', selectedState);
+          facilitiesQuery = facilitiesQuery.eq('location->state', selectedState);
         }
 
         const [facilitiesData, productsData] = await Promise.all([
-          facilitiesQuery as Promise<{ data: CareFacility[] | null; error: any }>,
-          productsQuery as Promise<{ data: CareProduct[] | null; error: any }>
+          facilitiesQuery,
+          productsQuery
         ]);
 
         if (facilitiesData.error) throw facilitiesData.error;
