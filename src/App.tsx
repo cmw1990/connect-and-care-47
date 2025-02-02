@@ -4,6 +4,7 @@ import Groups from "@/pages/Groups";
 import GroupDetails from "@/pages/GroupDetails";
 import Auth from "@/pages/Auth";
 import NotFound from "@/pages/NotFound";
+import { CareComparison } from "@/components/comparison/CareComparison";
 import "./App.css";
 
 function App() {
@@ -14,6 +15,7 @@ function App() {
         <Route path="/groups" element={<Groups />} />
         <Route path="/groups/:groupId" element={<GroupDetails />} />
         <Route path="/auth" element={<Auth />} />
+        <Route path="/compare" element={<CareComparison />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </BrowserRouter>
