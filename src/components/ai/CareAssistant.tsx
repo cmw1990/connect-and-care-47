@@ -7,7 +7,6 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Bot, Send, User, Volume2, BarChart2, Mic, Image } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { LanguageSelector } from "@/components/ui/language-selector";
 import "@/i18n/i18n";
 
 interface Message {
@@ -25,35 +24,30 @@ export const CareAssistant = ({ groupId }: { groupId?: string }) => {
   const [currentMessage, setCurrentMessage] = useState('');
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const webSocketRef = useRef<WebSocket | null>(null);
+  const reconnectTimeoutRef = useRef<number | null>(null);
   const { toast } = useToast();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { t } = useTranslation();
 
-  useEffect(() => {
-    // Initialize WebSocket connection when component mounts
-    connectWebSocket();
-    return () => {
-      if (webSocketRef.current) {
-        webSocketRef.current.close();
-      }
-    };
-  }, []);
-
-  useEffect(() => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
-    }
-  }, [messages, currentMessage]);
-
   const connectWebSocket = () => {
+    if (webSocketRef.current?.readyState === WebSocket.OPEN) {
+      return;
+    }
+
     const websocketUrl = import.meta.env.PROD 
       ? 'wss://csngjtaxbnebqfismwvs.supabase.co/functions/v1/realtime-chat'
       : 'ws://localhost:54321/functions/v1/realtime-chat';
+
+    console.log('Connecting to WebSocket:', websocketUrl);
 
     const ws = new WebSocket(websocketUrl);
 
     ws.onopen = () => {
       console.log('WebSocket connected');
+      if (reconnectTimeoutRef.current) {
+        window.clearTimeout(reconnectTimeoutRef.current);
+        reconnectTimeoutRef.current = null;
+      }
     };
 
     ws.onmessage = (event) => {
@@ -96,10 +90,35 @@ export const CareAssistant = ({ groupId }: { groupId?: string }) => {
 
     ws.onclose = () => {
       console.log('WebSocket disconnected');
+      // Attempt to reconnect after 5 seconds
+      if (!reconnectTimeoutRef.current) {
+        reconnectTimeoutRef.current = window.setTimeout(() => {
+          console.log('Attempting to reconnect...');
+          connectWebSocket();
+        }, 5000);
+      }
     };
 
     webSocketRef.current = ws;
   };
+
+  useEffect(() => {
+    connectWebSocket();
+    return () => {
+      if (webSocketRef.current) {
+        webSocketRef.current.close();
+      }
+      if (reconnectTimeoutRef.current) {
+        window.clearTimeout(reconnectTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages, currentMessage]);
 
   const formatPatientContext = (patientInfo: any) => {
     if (!patientInfo) return "No specific patient information available.";
@@ -147,10 +166,7 @@ Care Tips: ${careTips.length > 0 ? careTips.join(', ') : 'None specified'}
       // Ensure WebSocket is connected
       if (!webSocketRef.current || webSocketRef.current.readyState !== WebSocket.OPEN) {
         connectWebSocket();
-      }
-
-      // Wait for connection if connecting
-      if (webSocketRef.current?.readyState === WebSocket.CONNECTING) {
+        // Wait a bit for the connection to establish
         await new Promise(resolve => setTimeout(resolve, 1000));
       }
 

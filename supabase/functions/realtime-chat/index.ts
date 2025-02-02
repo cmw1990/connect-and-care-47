@@ -54,13 +54,7 @@ Respond in a clear, structured way that is easy to understand.`
         ],
         temperature: 0.7,
         max_tokens: 1000,
-        stream: true,
-        return_images: false,
-        return_related_questions: false,
-        search_domain_filter: ['perplexity.ai'],
-        search_recency_filter: 'month',
-        frequency_penalty: 1,
-        presence_penalty: 0
+        stream: true
       }),
     });
 
