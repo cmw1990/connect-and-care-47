@@ -16,6 +16,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Edit, MapPin } from "lucide-react";
 import { LocationMap } from "./LocationMap";
+import { Geolocation, PermissionStatus } from '@capacitor/geolocation';
 
 interface PatientInfoCardProps {
   groupId: string;
@@ -89,9 +90,24 @@ export const PatientInfoCard = ({ groupId, patientInfo }: PatientInfoCardProps) 
     };
   }, [groupId]);
 
+  const checkPermissions = async () => {
+    try {
+      const permissionStatus = await Geolocation.checkPermissions();
+      
+      if (permissionStatus.location === 'prompt' || permissionStatus.location === 'prompt-with-rationale') {
+        const requestStatus = await Geolocation.requestPermissions();
+        return requestStatus.location === 'granted';
+      }
+      
+      return permissionStatus.location === 'granted';
+    } catch (error) {
+      console.error('Error checking location permissions:', error);
+      return false;
+    }
+  };
+
   const fetchLocationSettings = async () => {
     try {
-      // First try to get existing record
       let { data, error } = await supabase
         .from('patient_locations')
         .select('*')
@@ -100,7 +116,6 @@ export const PatientInfoCard = ({ groupId, patientInfo }: PatientInfoCardProps) 
 
       if (error) throw error;
 
-      // If no record exists, create one
       if (!data) {
         const { data: newData, error: insertError } = await supabase
           .from('patient_locations')
@@ -138,53 +153,60 @@ export const PatientInfoCard = ({ groupId, patientInfo }: PatientInfoCardProps) 
   const updateLocation = async () => {
     if (!locationEnabled) return;
 
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        const newLocation = {
-          latitude: position.coords.latitude,
-          longitude: position.coords.longitude,
-          last_updated: new Date().toISOString(),
-        };
-
-        try {
-          const { error } = await supabase
-            .from('patient_locations')
-            .upsert({
-              group_id: groupId,
-              current_location: newLocation,
-              location_enabled: true,
-            });
-
-          if (error) throw error;
-
-          setCurrentLocation(newLocation);
-        } catch (error) {
-          console.error('Error updating location:', error);
-          toast({
-            title: "Error",
-            description: "Failed to update location",
-            variant: "destructive",
-          });
-        }
-      },
-      (error) => {
-        console.error('Error getting location:', error);
+    try {
+      const hasPermission = await checkPermissions();
+      if (!hasPermission) {
         toast({
-          title: "Error",
-          description: "Failed to get current location",
+          title: "Permission Denied",
+          description: "Location permission is required to update location",
           variant: "destructive",
         });
+        return;
       }
-    );
+
+      const position = await Geolocation.getCurrentPosition({
+        enableHighAccuracy: true,
+        timeout: 30000,
+      });
+
+      const newLocation = {
+        latitude: position.coords.latitude,
+        longitude: position.coords.longitude,
+        last_updated: new Date().toISOString(),
+      };
+
+      const { error } = await supabase
+        .from('patient_locations')
+        .upsert({
+          group_id: groupId,
+          current_location: newLocation,
+          location_enabled: true,
+        });
+
+      if (error) throw error;
+
+      setCurrentLocation(newLocation);
+    } catch (error) {
+      console.error('Error updating location:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update location",
+        variant: "destructive",
+      });
+    }
   };
 
   const toggleLocationSharing = async () => {
     try {
       if (!locationEnabled) {
-        // Request permission when enabling
-        const permission = await navigator.permissions.query({ name: 'geolocation' });
-        if (permission.state === 'denied') {
-          throw new Error('Location permission denied');
+        const hasPermission = await checkPermissions();
+        if (!hasPermission) {
+          toast({
+            title: "Permission Denied",
+            description: "Location permission is required to enable location sharing",
+            variant: "destructive",
+          });
+          return;
         }
       }
 
@@ -199,7 +221,6 @@ export const PatientInfoCard = ({ groupId, patientInfo }: PatientInfoCardProps) 
 
       setLocationEnabled(!locationEnabled);
       if (!locationEnabled) {
-        // Start updating location when enabled
         updateLocation();
       }
 
@@ -221,9 +242,7 @@ export const PatientInfoCard = ({ groupId, patientInfo }: PatientInfoCardProps) 
     let intervalId: NodeJS.Timeout;
 
     if (locationEnabled) {
-      // Update location every minute when enabled
       intervalId = setInterval(updateLocation, 60000);
-      // Initial update
       updateLocation();
     }
 
