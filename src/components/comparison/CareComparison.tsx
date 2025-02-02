@@ -6,7 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { compareCareItems } from "@/utils/compareUtils";
-import { CareFacility, CareProduct, ComparisonResult, Location } from "./types";
+import { CareFacility, CareProduct, ComparisonResult } from "./types";
 import { FacilitiesComparison } from "./FacilitiesComparison";
 import { ProductsComparison } from "./ProductsComparison";
 import { ComparisonResults } from "./ComparisonResults";
