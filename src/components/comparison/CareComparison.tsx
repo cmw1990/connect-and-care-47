@@ -97,6 +97,12 @@ export const CareComparison = () => {
   const handleCompare = async (items: CareFacility[] | CareProduct[]) => {
     try {
       setIsAnalyzing(true);
+      
+      // Type guard to check if we're dealing with facilities or products
+      const isFacilities = (items: CareFacility[] | CareProduct[]): items is CareFacility[] => {
+        return items.length > 0 && 'location' in items[0];
+      };
+
       const result = compareCareItems(items);
       
       const enhancedResult: Record<string, ComparisonResult> = {};
