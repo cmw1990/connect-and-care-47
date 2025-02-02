@@ -8,8 +8,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Brain } from "lucide-react";
+import { Brain, Search } from "lucide-react";
 import { CareFacility } from "./types";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface FacilitiesComparisonProps {
   facilities: CareFacility[];
@@ -26,6 +28,8 @@ export const FacilitiesComparison = ({
 }: FacilitiesComparisonProps) => {
   const [selectedCountry, setSelectedCountry] = useState<string>("all");
   const [selectedState, setSelectedState] = useState<string>("all");
+  const [isSearching, setIsSearching] = useState(false);
+  const { toast } = useToast();
 
   const handleCountryChange = (value: string) => {
     setSelectedCountry(value);
@@ -36,6 +40,70 @@ export const FacilitiesComparison = ({
   const handleStateChange = (value: string) => {
     setSelectedState(value);
     onLocationChange(selectedCountry, value);
+  };
+
+  const searchNearbyFacilities = async () => {
+    try {
+      setIsSearching(true);
+
+      // Get user's location
+      const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resolve, reject);
+      });
+
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      // Call our Edge Function
+      const response = await fetch('/functions/v1/search-care-facilities', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token}`,
+        },
+        body: JSON.stringify({
+          location: {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+          },
+          radius: 5000, // 5km radius
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to search for facilities');
+      }
+
+      const { facilities: nearbyFacilities } = await response.json();
+
+      // Transform the facilities to match our CareFacility type
+      const transformedFacilities: CareFacility[] = nearbyFacilities.map((f: any) => ({
+        id: f.id,
+        name: f.name,
+        description: `Rating: ${f.rating} (${f.user_ratings_total} reviews)`,
+        location: {
+          country: selectedCountry,
+          state: selectedState,
+          city: f.address,
+        },
+        listing_type: 'automated',
+      }));
+
+      onCompare(transformedFacilities);
+      
+      toast({
+        title: "Success",
+        description: `Found ${transformedFacilities.length} facilities near you`,
+      });
+    } catch (error) {
+      console.error('Error searching facilities:', error);
+      toast({
+        title: "Error",
+        description: "Failed to search for nearby facilities. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSearching(false);
+    }
   };
 
   return (
@@ -94,20 +162,38 @@ export const FacilitiesComparison = ({
           </div>
         ))}
       </div>
-      <Button 
-        onClick={() => onCompare(facilities)}
-        className="mt-4"
-        disabled={isAnalyzing}
-      >
-        {isAnalyzing ? (
-          <>
-            <Brain className="mr-2 h-4 w-4 animate-pulse" />
-            Analyzing...
-          </>
-        ) : (
-          'Compare Facilities'
-        )}
-      </Button>
+      <div className="flex gap-4 mt-4">
+        <Button 
+          onClick={() => onCompare(facilities)}
+          disabled={isAnalyzing}
+        >
+          {isAnalyzing ? (
+            <>
+              <Brain className="mr-2 h-4 w-4 animate-pulse" />
+              Analyzing...
+            </>
+          ) : (
+            'Compare Facilities'
+          )}
+        </Button>
+        <Button
+          variant="secondary"
+          onClick={searchNearbyFacilities}
+          disabled={isSearching}
+        >
+          {isSearching ? (
+            <>
+              <Search className="mr-2 h-4 w-4 animate-pulse" />
+              Searching...
+            </>
+          ) : (
+            <>
+              <Search className="mr-2 h-4 w-4" />
+              Find Nearby Facilities
+            </>
+          )}
+        </Button>
+      </div>
     </div>
   );
 };
