@@ -787,6 +787,7 @@ export const translations = {
       connectionError: "연결 오류"
     }
   },
+
   pt: {
     translation: {
       appName: "Care-Connector",
@@ -797,4 +798,65 @@ export const translations = {
       user: "Usuário",
       signIn: "Entrar",
       signOut: "Sair",
-      signUp: "Inscr
+      signUp: "Inscrever-se",
+      error: "Erro",
+      signOutError: "Falha ao sair. Por favor, tente novamente.",
+      careAssistant: "Assistente de Cuidados",
+      askAboutCare: "Pergunte sobre conselhos de cuidados...",
+      sendMessage: "Enviar mensagem",
+      startRecording: "Iniciar gravação",
+      stopRecording: "Parar gravação",
+      speakMessage: "Reproduzir mensagem",
+      analyzeMessage: "Analisar mensagem",
+      generateImage: "Gerar imagem",
+      home: "Início",
+      groups: "Grupos",
+      careGuides: "Guias de Cuidados",
+      compare: "Comparar",
+      settings: "Configurações",
+      
+      backToGroups: "Voltar aos Grupos",
+      members: "Membros",
+      addMember: "Adicionar Membro",
+      memberEmail: "Email do Membro",
+      memberRole: "Função",
+      admin: "Administrador",
+      member: "Membro",
+      
+      groupStatus: "Status do Grupo",
+      normal: "Normal",
+      warning: "Aviso",
+      urgent: "Urgente",
+      emergency: "Emergência",
+      
+      patientInfo: "Informações do Paciente",
+      basicInfo: "Informações Básicas",
+      medicalConditions: "Condições Médicas",
+      medications: "Medicamentos",
+      careTips: "Dicas de Cuidados",
+      
+      createTask: "Criar Tarefa",
+      taskTitle: "Título da Tarefa",
+      taskDescription: "Descrição",
+      assignTo: "Atribuir a",
+      dueDate: "Data de Vencimento",
+      priority: "Prioridade",
+      status: "Status",
+      
+      save: "Salvar",
+      cancel: "Cancelar",
+      delete: "Excluir",
+      edit: "Editar",
+      update: "Atualizar",
+      confirm: "Confirmar",
+      
+      email: "Email",
+      password: "Senha",
+      
+      success: "Sucesso",
+      loading: "Carregando...",
+      failedToGetResponse: "Falha ao obter resposta da IA",
+      connectionError: "Erro de conexão"
+    }
+  }
+}
