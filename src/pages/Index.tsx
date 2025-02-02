@@ -1,17 +1,9 @@
 import { ButtonPrimary } from "@/components/ui/button-primary";
-import { Navbar } from "@/components/navigation/navbar";
 import { CareComparisonDialog } from "@/components/comparison/CareComparisonDialog";
 
 const Index = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-primary-100 to-white">
-      <div className="sticky top-0 z-50">
-        <Navbar>
-          <div className="ml-auto">
-            <CareComparisonDialog />
-          </div>
-        </Navbar>
-      </div>
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="pt-16 pb-20">
           <div className="text-center">
@@ -60,6 +52,9 @@ const Index = () => {
           </div>
         </div>
       </main>
+      <div className="fixed top-4 right-4 z-50">
+        <CareComparisonDialog />
+      </div>
     </div>
   );
 };
