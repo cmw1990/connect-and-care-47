@@ -6,6 +6,9 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Bot, Send, User, Volume2, BarChart2, Mic, Image } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { LanguageSelector } from "@/components/ui/language-selector";
+import "@/i18n/i18n";
 
 interface Message {
   role: 'assistant' | 'user';
@@ -24,6 +27,7 @@ export const CareAssistant = ({ groupId }: { groupId?: string }) => {
   const webSocketRef = useRef<WebSocket | null>(null);
   const { toast } = useToast();
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const { t } = useTranslation();
 
   useEffect(() => {
     return () => {
@@ -326,11 +330,12 @@ Please provide a clear and informative response, considering the patient's speci
 
   return (
     <Card className="w-full max-w-2xl mx-auto">
-      <CardHeader>
+      <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle className="flex items-center gap-2">
           <Bot className="h-5 w-5" />
-          Care Assistant
+          {t('careAssistant')}
         </CardTitle>
+        <LanguageSelector />
       </CardHeader>
       <CardContent>
         <ScrollArea className="h-[400px] pr-4">
@@ -373,6 +378,7 @@ Please provide a clear and informative response, considering the patient's speci
                         size="icon"
                         onClick={() => speakMessage(message.content)}
                         disabled={isSpeaking}
+                        title={t('speakMessage')}
                       >
                         <Volume2 className="h-4 w-4" />
                       </Button>
@@ -380,6 +386,7 @@ Please provide a clear and informative response, considering the patient's speci
                         variant="outline"
                         size="icon"
                         onClick={() => analyzeSentiment(message.content)}
+                        title={t('analyzeMessage')}
                       >
                         <BarChart2 className="h-4 w-4" />
                       </Button>
@@ -387,6 +394,7 @@ Please provide a clear and informative response, considering the patient's speci
                         variant="outline"
                         size="icon"
                         onClick={() => generateImage(message.content)}
+                        title={t('generateImage')}
                       >
                         <Image className="h-4 w-4" />
                       </Button>
@@ -415,7 +423,7 @@ Please provide a clear and informative response, considering the patient's speci
           <Input
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Ask about care advice..."
+            placeholder={t('askAboutCare')}
             onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
             disabled={isLoading}
           />
@@ -424,10 +432,15 @@ Please provide a clear and informative response, considering the patient's speci
             size="icon"
             onClick={isRecording ? stopRecording : startRecording}
             className={isRecording ? 'bg-red-500 hover:bg-red-600' : ''}
+            title={isRecording ? t('stopRecording') : t('startRecording')}
           >
             <Mic className="h-4 w-4" />
           </Button>
-          <Button onClick={sendMessage} disabled={isLoading}>
+          <Button 
+            onClick={sendMessage} 
+            disabled={isLoading}
+            title={t('sendMessage')}
+          >
             <Send className="h-4 w-4" />
           </Button>
         </div>
