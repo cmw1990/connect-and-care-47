@@ -16,13 +16,9 @@ serve(async (req) => {
   try {
     const { message, context } = await req.json();
 
-    const systemPrompt = `You are a knowledgeable and compassionate care assistant. 
-    Your role is to help caregivers by providing accurate, helpful information about patient care.
-    Always maintain a professional and empathetic tone.
-    If asked about specific medical advice, remind users to consult healthcare professionals.
-    
-    Context about the care situation:
-    ${context}`;
+    const systemPrompt = `You are a helpful care assistant that provides advice and support for caregivers. 
+    Use this context about the patient to provide relevant advice: ${context}
+    Always be empathetic, clear, and practical in your responses.`;
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -36,21 +32,28 @@ serve(async (req) => {
           { role: 'system', content: systemPrompt },
           { role: 'user', content: message }
         ],
-        temperature: 0.7,
       }),
     });
 
     const data = await response.json();
-    const reply = data.choices[0].message.content;
+    
+    if (!response.ok) {
+      throw new Error(data.error?.message || 'Failed to get AI response');
+    }
 
-    return new Response(JSON.stringify({ reply }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    return new Response(
+      JSON.stringify({ reply: data.choices[0].message.content }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+
   } catch (error) {
-    console.error('Error:', error);
-    return new Response(JSON.stringify({ error: error.message }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    console.error('Error in care-assistant function:', error);
+    return new Response(
+      JSON.stringify({ error: error.message }),
+      { 
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      }
+    );
   }
 });

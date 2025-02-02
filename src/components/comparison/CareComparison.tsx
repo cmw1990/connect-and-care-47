@@ -15,14 +15,16 @@ import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 
+type Location = {
+  country: string;
+  state: string;
+};
+
 type CareFacility = {
   id: string;
   name: string;
   description: string | null;
-  location: {
-    country: string;
-    state: string;
-  } | null;
+  location: Location | null;
   listing_type: string | null;
 };
 
@@ -69,8 +71,12 @@ export const CareComparison = () => {
         if (facilitiesResponse.error) throw facilitiesResponse.error;
         if (productsResponse.error) throw productsResponse.error;
 
-        setFacilities(facilitiesResponse.data || []);
-        setProducts(productsResponse.data || []);
+        // Type assertion to ensure the data matches our defined types
+        const facilitiesData = (facilitiesResponse.data || []) as CareFacility[];
+        const productsData = (productsResponse.data || []) as CareProduct[];
+
+        setFacilities(facilitiesData);
+        setProducts(productsData);
       } catch (error) {
         console.error('Error fetching comparison data:', error);
         toast({
