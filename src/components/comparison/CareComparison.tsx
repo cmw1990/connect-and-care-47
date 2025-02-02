@@ -6,7 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { compareCareItems } from "@/utils/compareUtils";
-import { CareFacility, CareProduct, ComparisonResult } from "./types";
+import { CareFacility, CareProduct, ComparisonResult, Location } from "./types";
 import { FacilitiesComparison } from "./FacilitiesComparison";
 import { ProductsComparison } from "./ProductsComparison";
 import { ComparisonResults } from "./ComparisonResults";
@@ -42,7 +42,16 @@ export const CareComparison = () => {
       if (facilitiesResponse.error) throw facilitiesResponse.error;
       if (productsResponse.error) throw productsResponse.error;
 
-      setFacilities(facilitiesResponse.data);
+      // Transform the facilities data to ensure it matches the CareFacility type
+      const transformedFacilities: CareFacility[] = facilitiesResponse.data.map(facility => ({
+        id: facility.id,
+        name: facility.name,
+        description: facility.description,
+        location: facility.location as Location,
+        listing_type: facility.listing_type
+      }));
+
+      setFacilities(transformedFacilities);
       setProducts(productsResponse.data);
     } catch (error) {
       console.error('Error fetching comparison data:', error);
@@ -58,7 +67,7 @@ export const CareComparison = () => {
     fetchData();
   }, [toast]);
 
-  const generateAIInsights = async (items: any[]) => {
+  const generateAIInsights = async (items: CareFacility[] | CareProduct[]) => {
     try {
       const response = await fetch('/functions/v1/care-assistant', {
         method: 'POST',
@@ -88,11 +97,12 @@ export const CareComparison = () => {
       
       const enhancedResult: Record<string, ComparisonResult> = {};
       for (const [id, data] of Object.entries(result)) {
-        const aiInsight = await generateAIInsights([items.find(item => item.id === id)]);
+        const aiInsight = await generateAIInsights([items.find(item => item.id === id)!]);
         enhancedResult[id] = {
-          ...data,
-          aiInsights: aiInsight,
-          features: data.description?.split('.').filter(Boolean) || []
+          name: data.name,
+          averageRating: data.averageRating,
+          features: data.description?.split('.').filter(Boolean) || [],
+          aiInsights: aiInsight
         };
       }
 

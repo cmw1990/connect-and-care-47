@@ -1,7 +1,8 @@
-export type Location = {
+export interface Location {
   country: string;
   state: string;
-};
+  city: string;
+}
 
 export interface CareFacility {
   id: string;
@@ -19,7 +20,6 @@ export interface CareProduct {
 }
 
 export interface ComparisonResult {
-  id: string;
   name: string;
   averageRating: number;
   features?: string[];
