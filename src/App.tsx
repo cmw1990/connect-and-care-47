@@ -10,6 +10,7 @@ import { CareGuides } from "@/pages/CareGuides";
 import { Navbar } from "@/components/navigation/navbar";
 import { MobileNav } from "@/components/navigation/mobile-nav";
 import Messages from "@/pages/Messages";
+import Settings from "@/pages/Settings";
 import { useEffect, useState } from "react";
 import "./App.css";
 
@@ -43,6 +44,7 @@ const AppContent = () => {
           <Route path="/compare" element={<CareComparison />} />
           <Route path="/care-guides" element={<CareGuides />} />
           <Route path="/messages" element={<Messages />} />
+          <Route path="/settings" element={<Settings />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </div>

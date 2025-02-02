@@ -29,12 +29,38 @@ export default function Messages() {
   useEffect(() => {
     fetchNotifications();
     fetchDiscussions();
+    subscribeToNotifications();
   }, []);
+
+  const subscribeToNotifications = () => {
+    // Subscribe to group posts
+    const channel = supabase
+      .channel('public:group_posts')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'group_posts'
+        },
+        (payload) => {
+          toast({
+            title: "New Group Post",
+            description: "Someone posted in your care group",
+          });
+          fetchDiscussions();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  };
 
   const fetchNotifications = async () => {
     try {
       // In a real app, you would fetch notifications from your backend
-      // For now, we'll use dummy data
       const dummyNotifications = [
         {
           id: "1",
@@ -100,69 +126,59 @@ export default function Messages() {
   };
 
   return (
-    <div className="container py-6 space-y-6">
-      <Tabs defaultValue="notifications" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="notifications">
+    <div className="min-h-screen bg-gray-50">
+      <Tabs defaultValue="notifications" className="w-full h-full">
+        <TabsList className="fixed top-0 left-0 right-0 z-10 grid w-full grid-cols-2 bg-white border-b">
+          <TabsTrigger value="notifications" className="p-4">
             <Bell className="h-4 w-4 mr-2" />
             Notifications
           </TabsTrigger>
-          <TabsTrigger value="discussions">
+          <TabsTrigger value="discussions" className="p-4">
             <MessageSquare className="h-4 w-4 mr-2" />
             Discussions
           </TabsTrigger>
         </TabsList>
-        <TabsContent value="notifications">
-          <Card>
-            <CardHeader>
-              <CardTitle>Recent Notifications</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
+        <div className="pt-16 pb-20">
+          <TabsContent value="notifications" className="m-0">
+            <div className="space-y-2 p-4">
               {notifications.map((notification) => (
-                <div
-                  key={notification.id}
-                  className="p-4 rounded-lg border space-y-2"
-                >
-                  <h3 className="font-medium">{notification.title}</h3>
-                  <p className="text-sm text-gray-600">
-                    {notification.message}
-                  </p>
-                  <span className="text-xs text-gray-400">
-                    {new Date(notification.created_at).toLocaleDateString()}
-                  </span>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-        </TabsContent>
-        <TabsContent value="discussions">
-          <Card>
-            <CardHeader>
-              <CardTitle>Recent Discussions</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {discussions.map((discussion) => (
-                <div
-                  key={discussion.id}
-                  className="p-4 rounded-lg border space-y-2"
-                >
-                  <div className="flex justify-between items-start">
-                    <span className="text-sm font-medium">
-                      {discussion.created_by_name}
-                    </span>
+                <Card key={notification.id} className="shadow-sm">
+                  <CardContent className="p-4 space-y-2">
+                    <h3 className="font-medium">{notification.title}</h3>
+                    <p className="text-sm text-gray-600">
+                      {notification.message}
+                    </p>
                     <span className="text-xs text-gray-400">
-                      {discussion.group_name}
+                      {new Date(notification.created_at).toLocaleDateString()}
                     </span>
-                  </div>
-                  <p className="text-sm">{discussion.content}</p>
-                  <span className="text-xs text-gray-400">
-                    {new Date(discussion.created_at).toLocaleDateString()}
-                  </span>
-                </div>
+                  </CardContent>
+                </Card>
               ))}
-            </CardContent>
-          </Card>
-        </TabsContent>
+            </div>
+          </TabsContent>
+          <TabsContent value="discussions" className="m-0">
+            <div className="space-y-2 p-4">
+              {discussions.map((discussion) => (
+                <Card key={discussion.id} className="shadow-sm">
+                  <CardContent className="p-4 space-y-2">
+                    <div className="flex justify-between items-start">
+                      <span className="text-sm font-medium">
+                        {discussion.created_by_name}
+                      </span>
+                      <span className="text-xs text-gray-400">
+                        {discussion.group_name}
+                      </span>
+                    </div>
+                    <p className="text-sm">{discussion.content}</p>
+                    <span className="text-xs text-gray-400">
+                      {new Date(discussion.created_at).toLocaleDateString()}
+                    </span>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </TabsContent>
+        </div>
       </Tabs>
     </div>
   );

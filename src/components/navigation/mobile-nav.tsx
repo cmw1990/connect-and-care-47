@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { Home, Users, MessageSquare, Calendar, Menu } from "lucide-react";
+import { Home, Users, MessageSquare, Settings, Menu } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export const MobileNav = () => {
@@ -22,9 +22,9 @@ export const MobileNav = () => {
       path: "/messages",
     },
     {
-      icon: Calendar,
-      label: "Tasks",
-      path: "/tasks",
+      icon: Settings,
+      label: "Settings",
+      path: "/settings",
     },
     {
       icon: Menu,
