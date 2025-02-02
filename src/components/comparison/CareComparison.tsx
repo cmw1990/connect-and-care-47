@@ -14,7 +14,6 @@ import { compareCareItems, type CareItem } from "@/utils/compareUtils";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
-import { Database } from "@/integrations/supabase/types";
 
 type Location = {
   country: string;
@@ -69,7 +68,6 @@ export const CareComparison = () => {
         if (facilitiesResponse.error) throw facilitiesResponse.error;
         if (productsResponse.error) throw productsResponse.error;
 
-        // Transform the data to match our interfaces
         const transformedFacilities: CareFacility[] = facilitiesResponse.data.map(facility => ({
           id: facility.id,
           name: facility.name,
