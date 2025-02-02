@@ -42,15 +42,14 @@ export const CareComparison = () => {
       if (facilitiesResponse.error) throw facilitiesResponse.error;
       if (productsResponse.error) throw productsResponse.error;
 
-      // Transform the facilities data to ensure it matches the CareFacility type
       const transformedFacilities: CareFacility[] = facilitiesResponse.data.map(facility => ({
         id: facility.id,
         name: facility.name,
         description: facility.description,
         location: {
-          country: (facility.location as any)?.country || '',
-          state: (facility.location as any)?.state || '',
-          city: (facility.location as any)?.city || ''
+          country: facility.location?.country || '',
+          state: facility.location?.state || '',
+          city: facility.location?.city || ''
         },
         listing_type: facility.listing_type
       }));
@@ -71,7 +70,7 @@ export const CareComparison = () => {
     fetchData();
   }, [toast]);
 
-  const generateAIInsights = async (items: CareFacility[] | CareProduct[]) => {
+  const generateAIInsights = async (items: (CareFacility | CareProduct)[]) => {
     try {
       const response = await fetch('/functions/v1/care-assistant', {
         method: 'POST',
