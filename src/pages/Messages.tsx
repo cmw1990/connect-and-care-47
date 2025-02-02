@@ -4,6 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MessageSquare, Bell } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { CareGroup } from "@/types/groups";
 
 interface Notification {
   id: string;
@@ -64,8 +65,9 @@ export default function Messages() {
           table: 'care_groups'
         },
         (payload: any) => {
-          const newStatus = payload.new.privacy_settings?.status;
-          if (newStatus && newStatus !== payload.old.privacy_settings?.status) {
+          const newStatus = (payload.new.privacy_settings as CareGroup['privacy_settings'])?.status;
+          const oldStatus = (payload.old.privacy_settings as CareGroup['privacy_settings'])?.status;
+          if (newStatus && newStatus !== oldStatus) {
             toast({
               title: "Group Status Changed",
               description: `Group status has been updated to ${newStatus}`,
@@ -128,11 +130,11 @@ export default function Messages() {
       if (groupsError) throw groupsError;
 
       const notifications = groups
-        .filter(group => group.privacy_settings?.status)
+        .filter(group => (group.privacy_settings as CareGroup['privacy_settings'])?.status)
         .map(group => ({
           id: group.id,
           title: "Group Status Update",
-          message: `${group.name}: ${group.privacy_settings.status}`,
+          message: `${group.name}: ${(group.privacy_settings as CareGroup['privacy_settings'])?.status}`,
           created_at: group.updated_at,
           type: "status",
         }));
@@ -243,3 +245,4 @@ export default function Messages() {
     </div>
   );
 }
+};
