@@ -1,372 +1,150 @@
-import React, { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Users, UserPlus, Settings, BookOpen, ArrowLeft, Info } from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import type { CareGroup } from "@/types/groups";
-import { GroupCalendar } from "@/components/groups/GroupCalendar";
-import { GroupPosts } from "@/components/groups/GroupPosts";
-import { GroupTasks } from "@/components/groups/GroupTasks";
-import { GroupStatusBar } from "@/components/groups/GroupStatusBar";
-import { PatientInfoCard } from "@/components/groups/PatientInfoCard";
-import { CareAssistant } from "@/components/ai/CareAssistant";
-import { MiniStatusIndicator } from "@/components/groups/MiniStatusIndicator";
-import { MiniCalendar } from "@/components/groups/MiniCalendar";
+import { Card, CardContent } from "@/components/ui/card";
+import { ButtonPrimary } from "@/components/ui/button-primary";
+import { Input } from "@/components/ui/input";
+import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "react-i18next";
+import { MessageSquare, Send } from "lucide-react";
 
-interface GroupMember {
+interface GroupPost {
   id: string;
-  user_id: string;
-  role: string;
+  content: string;
+  created_at: string;
+  created_by: string;
+  group_id: string;
   profiles: {
-    first_name: string | null;
-    last_name: string | null;
-  } | null;
+    first_name: string;
+    last_name: string;
+  };
 }
 
-const GroupDetails = () => {
+export default function GroupDetails() {
   const { groupId } = useParams();
-  const navigate = useNavigate();
-  const [group, setGroup] = useState<CareGroup | null>(null);
-  const [members, setMembers] = useState<GroupMember[]>([]);
-  const [patientInfo, setPatientInfo] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [newMemberEmail, setNewMemberEmail] = useState("");
-  const [isAddingMember, setIsAddingMember] = useState(false);
-  const [activeTab, setActiveTab] = useState<'posts' | 'tasks' | 'info'>('posts');
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [posts, setPosts] = useState<GroupPost[]>([]);
+  const [newPost, setNewPost] = useState("");
+  const [loading, setLoading] = useState(false);
+  const { toast } = useToast();
+  const { t } = useTranslation();
 
-  const fetchGroupDetails = async () => {
+  useEffect(() => {
+    fetchPosts();
+    const channel = supabase
+      .channel('public:group_posts')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'group_posts',
+          filter: `group_id=eq.${groupId}`
+        },
+        (payload) => {
+          setPosts((currentPosts) => [payload.new as GroupPost, ...currentPosts]);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [groupId]);
+
+  const fetchPosts = async () => {
     try {
-      setIsLoading(true);
-      
-      // Fetch group details
-      const { data: groupData, error: groupError } = await supabase
-        .from('care_groups')
-        .select('*')
-        .eq('id', groupId)
-        .single();
-
-      if (groupError) throw groupError;
-      if (!groupData) {
-        navigate('/groups');
-        return;
-      }
-
-      // Transform the data to match CareGroup type
-      const transformedGroup: CareGroup = {
-        id: groupData.id,
-        name: groupData.name,
-        description: groupData.description,
-        created_at: groupData.created_at,
-        privacy_settings: groupData.privacy_settings as CareGroup['privacy_settings']
-      };
-
-      setGroup(transformedGroup);
-
-      // Fetch group members with their profiles
-      const { data: membersData, error: membersError } = await supabase
-        .from('care_group_members')
+      const { data, error } = await supabase
+        .from('group_posts')
         .select(`
-          id,
-          user_id,
-          role,
+          *,
           profiles (
             first_name,
             last_name
           )
         `)
-        .eq('group_id', groupId);
-
-      if (membersError) throw membersError;
-      setMembers(membersData);
-
-      // Fetch patient info - using maybeSingle() instead of single()
-      const { data: patientData, error: patientError } = await supabase
-        .from('patient_info')
-        .select('*')
         .eq('group_id', groupId)
-        .maybeSingle();
+        .order('created_at', { ascending: false });
 
-      if (patientError) {
-        console.error('Error fetching patient info:', patientError);
-        toast({
-          title: "Error",
-          description: "Failed to load patient information",
-          variant: "destructive",
-        });
-      } else {
-        setPatientInfo(patientData);
-      }
-
+      if (error) throw error;
+      setPosts(data || []);
     } catch (error) {
-      console.error('Error fetching group details:', error);
+      console.error('Error fetching posts:', error);
       toast({
-        title: "Error",
-        description: "Failed to load group details",
+        title: t("error"),
+        description: t("errorFetchingPosts"),
         variant: "destructive",
       });
-    } finally {
-      setIsLoading(false);
     }
   };
 
-  useEffect(() => {
-    if (groupId) {
-      fetchGroupDetails();
-    }
-  }, [groupId]);
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newPost.trim()) return;
 
-  const handleAddMember = async () => {
-    if (!newMemberEmail.trim()) {
-      toast({
-        title: "Error",
-        description: "Please enter an email address",
-        variant: "destructive",
-      });
-      return;
-    }
-
+    setLoading(true);
     try {
-      setIsAddingMember(true);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('No user found');
 
-      // First, find the user by email to get their ID
-      const { data: userData, error: userError } = await supabase
-        .from('profiles')
-        .select('id, first_name, last_name')
-        .eq('contact_info', newMemberEmail)
-        .single();
-
-      if (userError || !userData) {
-        toast({
-          title: "Error",
-          description: "User not found with this email",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      // Add the user as a member
-      const { error: memberError } = await supabase
-        .from('care_group_members')
+      const { error } = await supabase
+        .from('group_posts')
         .insert({
+          content: newPost.trim(),
           group_id: groupId,
-          user_id: userData.id,
-          role: 'member'
+          created_by: user.id,
         });
 
-      if (memberError) throw memberError;
+      if (error) throw error;
 
+      setNewPost("");
       toast({
-        title: "Success",
-        description: "Member added successfully",
+        title: t("success"),
+        description: t("postCreated"),
       });
-
-      setNewMemberEmail("");
-      await fetchGroupDetails();
-
     } catch (error) {
-      console.error('Error adding member:', error);
+      console.error('Error creating post:', error);
       toast({
-        title: "Error",
-        description: "Failed to add member",
+        title: t("error"),
+        description: t("errorCreatingPost"),
         variant: "destructive",
       });
     } finally {
-      setIsAddingMember(false);
+      setLoading(false);
     }
   };
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-        </div>
-      </div>
-    );
-  }
-
-  if (!group || !groupId) {
-    return null;
-  }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Fixed Header */}
-      <div className="fixed top-0 left-0 right-0 bg-white border-b z-10">
-        <div className="flex items-center justify-between p-4">
-          <Button 
-            variant="ghost" 
-            size="icon"
-            onClick={() => navigate(-1)}
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <div className="flex flex-col items-center flex-1">
-            <h1 className="text-lg font-semibold truncate">
-              {group.name}
-            </h1>
-            {group.privacy_settings?.status && (
-              <MiniStatusIndicator 
-                status={group.privacy_settings.status} 
-                message={group.privacy_settings.status} 
-                groupId={groupId}
-                isAdmin={isAdmin}
-              />
-            )}
-          </div>
-          {isAdmin && (
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button variant="ghost" size="icon">
-                  <Settings className="h-5 w-5" />
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Group Settings</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4">
-                  <PatientInfoCard groupId={groupId} patientInfo={patientInfo} />
-                  <GroupStatusBar 
-                    groupId={groupId} 
-                    initialStatus={group.privacy_settings?.status || "normal"} 
-                  />
-                </div>
-              </DialogContent>
-            </Dialog>
-          )}
-        </div>
+    <div className="container py-6 space-y-6">
+      <form onSubmit={handleSubmit} className="flex gap-2">
+        <Input
+          value={newPost}
+          onChange={(e) => setNewPost(e.target.value)}
+          placeholder={t("writeMessage")}
+          className="flex-1"
+        />
+        <ButtonPrimary type="submit" disabled={loading}>
+          <Send className="h-4 w-4" />
+        </ButtonPrimary>
+      </form>
 
-        {/* Mini Calendar */}
-        <MiniCalendar />
-
-        {/* Tab Navigation */}
-        <div className="flex border-t">
-          <button
-            className={`flex-1 py-3 text-sm font-medium ${
-              activeTab === 'posts' ? 'text-primary border-b-2 border-primary' : 'text-gray-500'
-            }`}
-            onClick={() => setActiveTab('posts')}
-          >
-            Posts
-          </button>
-          <button
-            className={`flex-1 py-3 text-sm font-medium ${
-              activeTab === 'tasks' ? 'text-primary border-b-2 border-primary' : 'text-gray-500'
-            }`}
-            onClick={() => setActiveTab('tasks')}
-          >
-            Tasks
-          </button>
-          <button
-            className={`flex-1 py-3 text-sm font-medium ${
-              activeTab === 'info' ? 'text-primary border-b-2 border-primary' : 'text-gray-500'
-            }`}
-            onClick={() => setActiveTab('info')}
-          >
-            Members
-          </button>
-        </div>
-      </div>
-
-      {/* Main Content with padding for fixed header */}
-      <div className="pt-40 pb-20">
-        {activeTab === 'posts' && (
-          <div className="px-0">
-            <GroupPosts groupId={groupId} />
-          </div>
-        )}
-
-        {activeTab === 'tasks' && (
-          <div className="px-4">
-            <GroupTasks groupId={groupId} members={members} />
-          </div>
-        )}
-
-        {activeTab === 'info' && (
-          <div className="px-4">
-            <Card>
-              <CardHeader>
-                <div className="flex justify-between items-center">
-                  <CardTitle className="flex items-center gap-2">
-                    <Users className="h-5 w-5" />
-                    Members ({members.length})
-                  </CardTitle>
-                  <Dialog>
-                    <DialogTrigger asChild>
-                      <Button size="sm">
-                        <UserPlus className="h-4 w-4 mr-2" />
-                        Add
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                      <DialogHeader>
-                        <DialogTitle>Add New Member</DialogTitle>
-                      </DialogHeader>
-                      <div className="space-y-4">
-                        <div>
-                          <Label htmlFor="email">Member Email</Label>
-                          <Input
-                            id="email"
-                            type="email"
-                            value={newMemberEmail}
-                            onChange={(e) => setNewMemberEmail(e.target.value)}
-                            placeholder="Enter member email"
-                          />
-                        </div>
-                        <Button 
-                          onClick={handleAddMember} 
-                          className="w-full"
-                          disabled={isAddingMember}
-                        >
-                          {isAddingMember ? "Adding..." : "Add Member"}
-                        </Button>
-                      </div>
-                    </DialogContent>
-                  </Dialog>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  {members.map((member) => (
-                    <div
-                      key={member.id}
-                      className="flex items-center justify-between p-3 rounded-lg border"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-                          <Users className="h-4 w-4 text-primary" />
-                        </div>
-                        <div>
-                          <p className="font-medium text-sm">
-                            {member.profiles?.first_name} {member.profiles?.last_name}
-                          </p>
-                          <p className="text-xs text-muted-foreground capitalize">
-                            {member.role}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        )}
+      <div className="space-y-4">
+        {posts.map((post) => (
+          <Card key={post.id}>
+            <CardContent className="p-4 space-y-2">
+              <div className="flex items-center gap-2">
+                <MessageSquare className="h-4 w-4 text-gray-500" />
+                <span className="font-medium">
+                  {post.profiles.first_name} {post.profiles.last_name}
+                </span>
+                <span className="text-sm text-gray-500">
+                  {new Date(post.created_at).toLocaleDateString()}
+                </span>
+              </div>
+              <p className="text-gray-700">{post.content}</p>
+            </CardContent>
+          </Card>
+        ))}
       </div>
     </div>
   );
-};
-
-export default GroupDetails;
+}

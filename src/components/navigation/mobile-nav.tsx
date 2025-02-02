@@ -3,10 +3,12 @@ import { Home, Users, MessageSquare, Settings, Menu } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 export const MobileNav = () => {
   const location = useLocation();
   const [hasUnreadMessages, setHasUnreadMessages] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     const checkUnreadMessages = async () => {
@@ -26,6 +28,32 @@ export const MobileNav = () => {
           (payload) => {
             if (payload.new.sender_id !== user.id) {
               setHasUnreadMessages(true);
+              toast({
+                title: "New Message",
+                description: "You have a new message in your care group",
+              });
+            }
+          }
+        )
+        .subscribe();
+
+      // Subscribe to group posts
+      const postsChannel = supabase
+        .channel('public:group_posts')
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'group_posts'
+          },
+          (payload) => {
+            if (payload.new.created_by !== user.id) {
+              setHasUnreadMessages(true);
+              toast({
+                title: "New Post",
+                description: "Someone posted in your care group",
+              });
             }
           }
         )
@@ -33,11 +61,12 @@ export const MobileNav = () => {
 
       return () => {
         supabase.removeChannel(channel);
+        supabase.removeChannel(postsChannel);
       };
     };
 
     checkUnreadMessages();
-  }, []);
+  }, [toast]);
 
   const navItems = [
     {

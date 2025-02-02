@@ -12,6 +12,7 @@ interface Notification {
   message: string;
   created_at: string;
   type: string;
+  read?: boolean;
 }
 
 interface Discussion {
@@ -20,6 +21,7 @@ interface Discussion {
   created_at: string;
   group_name?: string;
   created_by_name?: string;
+  read?: boolean;
 }
 
 export default function Messages() {
@@ -31,6 +33,28 @@ export default function Messages() {
     fetchNotifications();
     fetchDiscussions();
     subscribeToNotifications();
+
+    // Mark messages as read when component mounts
+    const markMessagesAsRead = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Update user's profile to mark messages as read
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          notification_settings: {
+            lastReadAt: new Date().toISOString()
+          }
+        })
+        .eq('id', user.id);
+
+      if (error) {
+        console.error('Error marking messages as read:', error);
+      }
+    };
+
+    markMessagesAsRead();
   }, []);
 
   const subscribeToNotifications = () => {
