@@ -81,7 +81,7 @@ export const CareComparison = () => {
     fetchData();
   }, []);
 
-  const generateAIInsights = async (items: CareFacility[] | CareProduct[], analysisType: AnalysisType = 'recommendations') => {
+  const generateAIInsights = async <T extends CareFacility | CareProduct>(items: T[], analysisType: AnalysisType = 'recommendations') => {
     try {
       const response = await supabase.functions.invoke('care-assistant', {
         body: {
@@ -111,10 +111,10 @@ export const CareComparison = () => {
         if (!item) continue;
         
         const [sentiment, recommendations, costBenefit, trends] = await Promise.all([
-          generateAIInsights([item], 'sentiment'),
-          generateAIInsights([item], 'recommendations'),
-          generateAIInsights([item], 'costBenefit'),
-          generateAIInsights([item], 'trends')
+          generateAIInsights<T>([item], 'sentiment'),
+          generateAIInsights<T>([item], 'recommendations'),
+          generateAIInsights<T>([item], 'costBenefit'),
+          generateAIInsights<T>([item], 'trends')
         ]);
 
         enhancedResult[id] = {
