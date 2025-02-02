@@ -9,21 +9,24 @@ import { supabase } from '@/integrations/supabase/client';
 class NotificationService {
   async initializePushNotifications() {
     try {
-      // Request permission
       const permission = await PushNotifications.requestPermissions();
       if (permission.receive === 'granted') {
-        // Register with FCM or APNS
         await PushNotifications.register();
 
-        // Store the token in Supabase for the current user
         PushNotifications.addListener('registration', async (token) => {
           const { data: { user } } = await supabase.auth.getUser();
           if (user) {
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('notification_settings')
+              .eq('id', user.id)
+              .single();
+
             await supabase
               .from('profiles')
               .update({ 
                 notification_settings: {
-                  ...user.notification_settings,
+                  ...profile?.notification_settings,
                   push_token: token.value
                 }
               })
@@ -31,14 +34,12 @@ class NotificationService {
           }
         });
 
-        // Handle incoming notifications when app is in foreground
         PushNotifications.addListener('pushNotificationReceived',
           (notification: PushNotificationSchema) => {
             console.log('Push notification received:', notification);
           }
         );
 
-        // Handle notification click
         PushNotifications.addListener('pushNotificationActionPerformed',
           (action: ActionPerformed) => {
             console.log('Push notification action performed:', action);

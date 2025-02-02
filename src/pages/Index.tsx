@@ -1,56 +1,85 @@
 import { ButtonPrimary } from "@/components/ui/button-primary";
 import { CareComparisonDialog } from "@/components/comparison/CareComparisonDialog";
 import { useTranslation } from "react-i18next";
+import { Heart, Calendar, Users, MessageSquare } from "lucide-react";
 
 const Index = () => {
   const { t } = useTranslation();
 
+  const quickActions = [
+    {
+      icon: Heart,
+      title: t("moodCheck"),
+      description: t("trackYourMood"),
+      path: "/mood-support",
+      color: "bg-red-100",
+      iconColor: "text-red-500",
+    },
+    {
+      icon: Calendar,
+      title: t("tasks"),
+      description: t("manageCare"),
+      path: "/tasks",
+      color: "bg-blue-100",
+      iconColor: "text-blue-500",
+    },
+    {
+      icon: Users,
+      title: t("groups"),
+      description: t("connectWithOthers"),
+      path: "/groups",
+      color: "bg-green-100",
+      iconColor: "text-green-500",
+    },
+    {
+      icon: MessageSquare,
+      title: t("messages"),
+      description: t("communicate"),
+      path: "/messages",
+      color: "bg-purple-100",
+      iconColor: "text-purple-500",
+    },
+  ];
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-primary-100 to-white">
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="pt-16 pb-20">
+    <div className="min-h-screen bg-gradient-to-b from-primary-100 to-white px-4 py-6">
+      <main className="max-w-lg mx-auto">
+        <div className="space-y-6">
           <div className="text-center">
-            <h1 className="text-4xl tracking-tight font-extrabold text-gray-900 sm:text-5xl md:text-6xl">
-              <span className="block">{t("simplifyCareCoordination")}</span>
-              <span className="block text-primary">{t("connectCoordinateCare")}</span>
+            <h1 className="text-2xl font-bold text-gray-900">
+              {t("welcomeToCareConnect")}
             </h1>
-            <p className="mt-3 max-w-md mx-auto text-base text-gray-500 sm:text-lg md:mt-5 md:text-xl md:max-w-3xl">
+            <p className="mt-2 text-sm text-gray-600">
               {t("careConnectorDescription")}
             </p>
-            <div className="mt-5 max-w-md mx-auto sm:flex sm:justify-center md:mt-8">
-              <div className="rounded-md shadow">
-                <ButtonPrimary size="lg" className="w-full sm:w-auto">
-                  {t("getStarted")}
-                </ButtonPrimary>
-              </div>
-              <div className="mt-3 sm:mt-0 sm:ml-3">
-                <ButtonPrimary size="lg" variant="outline" className="w-full sm:w-auto">
-                  {t("learnMore")}
-                </ButtonPrimary>
-              </div>
-            </div>
           </div>
 
-          <div className="mt-20">
-            <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
-              {features.map((feature) => (
-                <div key={feature.title} className="pt-6">
-                  <div className="flow-root bg-white rounded-lg px-6 pb-8">
-                    <div className="-mt-6">
-                      <div>
-                        <span className="inline-flex items-center justify-center p-3 bg-primary rounded-md shadow-lg">
-                          {feature.icon}
-                        </span>
-                      </div>
-                      <h3 className="mt-8 text-lg font-medium text-gray-900 tracking-tight">
-                        {feature.title}
-                      </h3>
-                      <p className="mt-5 text-base text-gray-500">{feature.description}</p>
-                    </div>
-                  </div>
+          <div className="grid grid-cols-2 gap-4">
+            {quickActions.map((action) => (
+              <a
+                key={action.title}
+                href={action.path}
+                className="block p-4 rounded-xl bg-white shadow-sm border border-gray-100"
+              >
+                <div className={cn(
+                  "w-10 h-10 rounded-full flex items-center justify-center mb-3",
+                  action.color
+                )}>
+                  <action.icon className={cn("w-5 h-5", action.iconColor)} />
                 </div>
-              ))}
-            </div>
+                <h3 className="font-medium text-sm">{action.title}</h3>
+                <p className="text-xs text-gray-500 mt-1">{action.description}</p>
+              </a>
+            ))}
+          </div>
+
+          <div className="space-y-4">
+            <ButtonPrimary size="lg" className="w-full">
+              {t("getStarted")}
+            </ButtonPrimary>
+            <ButtonPrimary size="lg" variant="outline" className="w-full">
+              {t("learnMore")}
+            </ButtonPrimary>
           </div>
         </div>
       </main>
@@ -60,68 +89,5 @@ const Index = () => {
     </div>
   );
 };
-
-const features = [
-  {
-    title: "Task Management",
-    description: "Create, assign and track care tasks easily. Set priorities and due dates.",
-    icon: (
-      <svg
-        className="h-6 w-6 text-white"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor"
-        aria-hidden="true"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-        />
-      </svg>
-    ),
-  },
-  {
-    title: "Care Groups",
-    description: "Organize care teams with different roles and privacy levels.",
-    icon: (
-      <svg
-        className="h-6 w-6 text-white"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor"
-        aria-hidden="true"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-        />
-      </svg>
-    ),
-  },
-  {
-    title: "Secure Communication",
-    description: "Share updates and communicate with team members securely.",
-    icon: (
-      <svg
-        className="h-6 w-6 text-white"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor"
-        aria-hidden="true"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"
-        />
-      </svg>
-    ),
-  },
-];
 
 export default Index;
