@@ -68,7 +68,7 @@ export const CareComparison = () => {
         if (facilitiesResponse.error) throw facilitiesResponse.error;
         if (productsResponse.error) throw productsResponse.error;
 
-        const transformedFacilities: CareFacility[] = facilitiesResponse.data.map(facility => ({
+        const transformedFacilities = facilitiesResponse.data.map(facility => ({
           id: facility.id,
           name: facility.name,
           description: facility.description,
@@ -76,7 +76,7 @@ export const CareComparison = () => {
           listing_type: facility.listing_type
         }));
 
-        const transformedProducts: CareProduct[] = productsResponse.data.map(product => ({
+        const transformedProducts = productsResponse.data.map(product => ({
           id: product.id,
           name: product.name,
           description: product.description,
