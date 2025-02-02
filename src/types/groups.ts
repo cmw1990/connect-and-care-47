@@ -10,7 +10,7 @@ export interface CareGroup {
     status?: string;
     lastUpdated?: string;
     visibility?: 'public' | 'private';
-  };
+  } | null;
 }
 
 export interface GroupPrivacySettings {

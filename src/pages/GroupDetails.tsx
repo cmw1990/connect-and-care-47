@@ -60,7 +60,16 @@ const GroupDetails = () => {
         return;
       }
 
-      setGroup(groupData);
+      // Transform the data to match CareGroup type
+      const transformedGroup: CareGroup = {
+        id: groupData.id,
+        name: groupData.name,
+        description: groupData.description,
+        created_at: groupData.created_at,
+        privacy_settings: groupData.privacy_settings as CareGroup['privacy_settings']
+      };
+
+      setGroup(transformedGroup);
 
       // Fetch group members with their profiles
       const { data: membersData, error: membersError } = await supabase

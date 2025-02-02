@@ -5,6 +5,9 @@ export interface CareItem {
   name: string;
   description?: string | null;
   ratings?: Json | null;
+  listing_type?: string | null;
+  affiliate_link?: string | null;
+  price_range?: Json | null;
 }
 
 export const compareCareItems = (items: CareItem[]): Record<string, any> => {
