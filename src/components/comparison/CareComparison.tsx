@@ -21,15 +21,15 @@ export const CareComparison = () => {
 
   const fetchData = async (country: string = "all", state: string = "all") => {
     try {
-      const facilitiesQuery = supabase
+      let facilitiesQuery = supabase
         .from('care_facilities')
         .select('id, name, description, location, listing_type');
 
       if (country !== "all") {
-        facilitiesQuery.eq('location->country', country);
+        facilitiesQuery = facilitiesQuery.filter('location->country', 'eq', country);
       }
       if (state !== "all") {
-        facilitiesQuery.eq('location->state', state);
+        facilitiesQuery = facilitiesQuery.filter('location->state', 'eq', state);
       }
 
       const [facilitiesResponse, productsResponse] = await Promise.all([
@@ -42,20 +42,17 @@ export const CareComparison = () => {
       if (facilitiesResponse.error) throw facilitiesResponse.error;
       if (productsResponse.error) throw productsResponse.error;
 
-      const transformedFacilities: CareFacility[] = facilitiesResponse.data.map(facility => {
-        const locationData = facility.location as { country?: string; state?: string; city?: string } | null;
-        return {
-          id: facility.id,
-          name: facility.name,
-          description: facility.description,
-          location: {
-            country: locationData?.country || '',
-            state: locationData?.state || '',
-            city: locationData?.city || ''
-          },
-          listing_type: facility.listing_type
-        };
-      });
+      const transformedFacilities: CareFacility[] = facilitiesResponse.data.map(facility => ({
+        id: facility.id,
+        name: facility.name,
+        description: facility.description,
+        location: {
+          country: facility.location?.country || '',
+          state: facility.location?.state || '',
+          city: facility.location?.city || ''
+        },
+        listing_type: facility.listing_type
+      }));
 
       setFacilities(transformedFacilities);
       setProducts(productsResponse.data);
@@ -71,7 +68,7 @@ export const CareComparison = () => {
 
   useEffect(() => {
     fetchData();
-  }, [toast]);
+  }, []);
 
   const generateAIInsights = async (items: CareFacility[] | CareProduct[]) => {
     try {
@@ -96,7 +93,7 @@ export const CareComparison = () => {
     }
   };
 
-  const handleCompare = async (items: CareFacility[] | CareProduct[]) => {
+  const handleCompare = async <T extends CareFacility | CareProduct>(items: T[]) => {
     try {
       setIsAnalyzing(true);
       
