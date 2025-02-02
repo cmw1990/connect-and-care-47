@@ -11,6 +11,8 @@ import { Navbar } from "@/components/navigation/navbar";
 import { MobileNav } from "@/components/navigation/mobile-nav";
 import Messages from "@/pages/Messages";
 import Settings from "@/pages/Settings";
+import { MoodSupport } from "@/pages/MoodSupport";
+import More from "@/pages/More";
 import { useEffect, useState } from "react";
 import "./App.css";
 
@@ -45,6 +47,8 @@ const AppContent = () => {
           <Route path="/care-guides" element={<CareGuides />} />
           <Route path="/messages" element={<Messages />} />
           <Route path="/settings" element={<Settings />} />
+          <Route path="/mood-support" element={<MoodSupport />} />
+          <Route path="/more" element={<More />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </div>
