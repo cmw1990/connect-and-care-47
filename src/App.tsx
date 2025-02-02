@@ -12,17 +12,19 @@ import "./App.css";
 function App() {
   return (
     <BrowserRouter>
-      <div className="min-h-screen">
+      <div className="min-h-screen flex flex-col">
         <Navbar />
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/groups" element={<Groups />} />
-          <Route path="/groups/:groupId" element={<GroupDetails />} />
-          <Route path="/auth" element={<Auth />} />
-          <Route path="/compare" element={<CareComparison />} />
-          <Route path="/care-guides" element={<CareGuides />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+        <div className="flex-grow">
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/groups" element={<Groups />} />
+            <Route path="/groups/:groupId" element={<GroupDetails />} />
+            <Route path="/auth" element={<Auth />} />
+            <Route path="/compare" element={<CareComparison />} />
+            <Route path="/care-guides" element={<CareGuides />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </div>
       </div>
     </BrowserRouter>
   );

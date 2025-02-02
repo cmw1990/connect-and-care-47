@@ -55,26 +55,30 @@ export const CareAssistant = ({ groupId }: { groupId?: string }) => {
     };
 
     ws.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      console.log('Received message:', data);
-      
-      if (data.type === 'chunk') {
-        setCurrentMessage(prev => prev + data.content);
-      } else if (data.type === 'done') {
-        setMessages(prev => [
-          ...prev,
-          { role: 'assistant', content: currentMessage + (data.content || '') }
-        ]);
-        setCurrentMessage('');
-        setIsLoading(false);
-      } else if (data.type === 'error') {
-        console.error('Error from WebSocket:', data.error);
-        toast({
-          title: t("error"),
-          description: t("failedToGetResponse"),
-          variant: "destructive",
-        });
-        setIsLoading(false);
+      try {
+        const data = JSON.parse(event.data);
+        console.log('Received message:', data);
+        
+        if (data.type === 'chunk') {
+          setCurrentMessage(prev => prev + data.content);
+        } else if (data.type === 'done') {
+          setMessages(prev => [
+            ...prev,
+            { role: 'assistant', content: currentMessage + (data.content || '') }
+          ]);
+          setCurrentMessage('');
+          setIsLoading(false);
+        } else if (data.type === 'error') {
+          console.error('Error from WebSocket:', data.error);
+          toast({
+            title: t("error"),
+            description: t("failedToGetResponse"),
+            variant: "destructive",
+          });
+          setIsLoading(false);
+        }
+      } catch (error) {
+        console.error('Error parsing WebSocket message:', error);
       }
     };
 
