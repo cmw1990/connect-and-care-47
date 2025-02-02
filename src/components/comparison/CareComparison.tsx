@@ -10,10 +10,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { compareCareItems, type CareItem } from "@/utils/compareUtils";
+import { compareCareItems } from "@/utils/compareUtils";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, BarChart2, Brain, Image } from "lucide-react";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
 
 type Location = {
   country: string;
@@ -35,13 +44,22 @@ interface CareProduct {
   affiliate_link: string | null;
 }
 
+interface ComparisonResult {
+  id: string;
+  name: string;
+  averageRating: number;
+  features?: string[];
+  aiInsights?: string;
+}
+
 export const CareComparison = () => {
   const navigate = useNavigate();
   const [facilities, setFacilities] = useState<CareFacility[]>([]);
   const [products, setProducts] = useState<CareProduct[]>([]);
   const [selectedCountry, setSelectedCountry] = useState<string>("all");
   const [selectedState, setSelectedState] = useState<string>("all");
-  const [comparisonResult, setComparisonResult] = useState<Record<string, any>>({});
+  const [comparisonResult, setComparisonResult] = useState<Record<string, ComparisonResult>>({});
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -98,21 +116,78 @@ export const CareComparison = () => {
     fetchData();
   }, [toast, selectedCountry, selectedState]);
 
-  const handleCompare = (items: CareItem[]) => {
+  const generateAIInsights = async (items: any[]) => {
     try {
+      const response = await fetch('/functions/v1/care-assistant', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
+        },
+        body: JSON.stringify({
+          message: `Compare these items and provide insights: ${items.map(item => item.name).join(', ')}`,
+          context: "Comparison analysis"
+        }),
+      });
+
+      if (!response.ok) throw new Error('Failed to get AI insights');
+      const data = await response.json();
+      return data.reply;
+    } catch (error) {
+      console.error('Error getting AI insights:', error);
+      return "Unable to generate AI insights at this time.";
+    }
+  };
+
+  const handleCompare = async (items: CareFacility[] | CareProduct[]) => {
+    try {
+      setIsAnalyzing(true);
       const result = compareCareItems(items);
-      setComparisonResult(result);
+      
+      // Generate AI insights for each item
+      const enhancedResult: Record<string, ComparisonResult> = {};
+      for (const [id, data] of Object.entries(result)) {
+        const aiInsight = await generateAIInsights([items.find(item => item.id === id)]);
+        enhancedResult[id] = {
+          ...data,
+          aiInsights: aiInsight,
+          features: data.description?.split('.').filter(Boolean) || []
+        };
+      }
+
+      setComparisonResult(enhancedResult);
     } catch (error) {
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Comparison failed",
         variant: "destructive",
       });
+    } finally {
+      setIsAnalyzing(false);
     }
   };
 
   const handleAffiliateClick = (link: string) => {
     window.open(link, '_blank');
+  };
+
+  const renderComparisonChart = (data: Record<string, ComparisonResult>) => {
+    const chartData = Object.entries(data).map(([id, item]) => ({
+      name: item.name,
+      rating: item.averageRating
+    }));
+
+    return (
+      <ResponsiveContainer width="100%" height={300}>
+        <BarChart data={chartData}>
+          <CartesianGrid strokeDasharray="3 3" />
+          <XAxis dataKey="name" />
+          <YAxis />
+          <Tooltip />
+          <Bar dataKey="rating" fill="#8884d8" />
+        </BarChart>
+      </ResponsiveContainer>
+    );
   };
 
   return (
@@ -195,8 +270,16 @@ export const CareComparison = () => {
             <Button 
               onClick={() => handleCompare(facilities)}
               className="mt-4"
+              disabled={isAnalyzing}
             >
-              Compare Facilities
+              {isAnalyzing ? (
+                <>
+                  <Brain className="mr-2 h-4 w-4 animate-pulse" />
+                  Analyzing...
+                </>
+              ) : (
+                'Compare Facilities'
+              )}
             </Button>
           </CardContent>
         </Card>
@@ -227,8 +310,16 @@ export const CareComparison = () => {
             <Button 
               onClick={() => handleCompare(products)}
               className="mt-4"
+              disabled={isAnalyzing}
             >
-              Compare Products
+              {isAnalyzing ? (
+                <>
+                  <Brain className="mr-2 h-4 w-4 animate-pulse" />
+                  Analyzing...
+                </>
+              ) : (
+                'Compare Products'
+              )}
             </Button>
           </CardContent>
         </Card>
@@ -236,14 +327,36 @@ export const CareComparison = () => {
         {Object.keys(comparisonResult).length > 0 && (
           <Card>
             <CardHeader>
-              <CardTitle>Comparison Results</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <BarChart2 className="h-5 w-5" />
+                Comparison Results
+              </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {Object.entries(comparisonResult).map(([id, data]: [string, any]) => (
+              {renderComparisonChart(comparisonResult)}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
+                {Object.entries(comparisonResult).map(([id, data]) => (
                   <div key={id} className="p-4 border rounded">
                     <h3 className="font-semibold">{data.name}</h3>
-                    <p className="text-sm text-gray-600">Average Rating: {data.averageRating.toFixed(1)}</p>
+                    <p className="text-sm text-gray-600 mt-2">
+                      Rating: {data.averageRating.toFixed(1)}
+                    </p>
+                    {data.features && data.features.length > 0 && (
+                      <div className="mt-2">
+                        <h4 className="text-sm font-medium">Key Features:</h4>
+                        <ul className="list-disc list-inside text-sm text-gray-600">
+                          {data.features.slice(0, 3).map((feature, index) => (
+                            <li key={index}>{feature}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    {data.aiInsights && (
+                      <div className="mt-2">
+                        <h4 className="text-sm font-medium">AI Insights:</h4>
+                        <p className="text-sm text-gray-600">{data.aiInsights}</p>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
