@@ -11,6 +11,12 @@ import { FacilitiesComparison } from "./FacilitiesComparison";
 import { ProductsComparison } from "./ProductsComparison";
 import { ComparisonResults } from "./ComparisonResults";
 
+type LocationData = {
+  country: string;
+  state: string;
+  city: string;
+};
+
 export const CareComparison = () => {
   const navigate = useNavigate();
   const [facilities, setFacilities] = useState<CareFacility[]>([]);
@@ -42,17 +48,20 @@ export const CareComparison = () => {
       if (facilitiesResponse.error) throw facilitiesResponse.error;
       if (productsResponse.error) throw productsResponse.error;
 
-      const transformedFacilities: CareFacility[] = facilitiesResponse.data.map(facility => ({
-        id: facility.id,
-        name: facility.name,
-        description: facility.description,
-        location: {
-          country: facility.location?.country || '',
-          state: facility.location?.state || '',
-          city: facility.location?.city || ''
-        },
-        listing_type: facility.listing_type
-      }));
+      const transformedFacilities: CareFacility[] = facilitiesResponse.data.map(facility => {
+        const locationData = facility.location as LocationData;
+        return {
+          id: facility.id,
+          name: facility.name,
+          description: facility.description,
+          location: {
+            country: locationData?.country || '',
+            state: locationData?.state || '',
+            city: locationData?.city || ''
+          },
+          listing_type: facility.listing_type
+        };
+      });
 
       setFacilities(transformedFacilities);
       setProducts(productsResponse.data);
@@ -72,21 +81,15 @@ export const CareComparison = () => {
 
   const generateAIInsights = async (items: CareFacility[] | CareProduct[]) => {
     try {
-      const response = await fetch('/functions/v1/care-assistant', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
-        },
-        body: JSON.stringify({
+      const response = await supabase.functions.invoke('care-assistant', {
+        body: {
           message: `Compare these items and provide insights: ${items.map(item => item.name).join(', ')}`,
           context: "Comparison analysis"
-        }),
+        },
       });
 
-      if (!response.ok) throw new Error('Failed to get AI insights');
-      const data = await response.json();
-      return data.reply;
+      if (response.error) throw new Error('Failed to get AI insights');
+      return response.data.reply;
     } catch (error) {
       console.error('Error getting AI insights:', error);
       return "Unable to generate AI insights at this time.";
@@ -175,4 +178,4 @@ export const CareComparison = () => {
       </div>
     </div>
   );
-};
+});
