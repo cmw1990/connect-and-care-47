@@ -42,17 +42,20 @@ export const CareComparison = () => {
       if (facilitiesResponse.error) throw facilitiesResponse.error;
       if (productsResponse.error) throw productsResponse.error;
 
-      const transformedFacilities: CareFacility[] = facilitiesResponse.data.map(facility => ({
-        id: facility.id,
-        name: facility.name,
-        description: facility.description,
-        location: {
-          country: facility.location?.country || '',
-          state: facility.location?.state || '',
-          city: facility.location?.city || ''
-        },
-        listing_type: facility.listing_type
-      }));
+      const transformedFacilities: CareFacility[] = facilitiesResponse.data.map(facility => {
+        const locationData = facility.location as { country?: string; state?: string; city?: string } | null;
+        return {
+          id: facility.id,
+          name: facility.name,
+          description: facility.description,
+          location: {
+            country: locationData?.country || '',
+            state: locationData?.state || '',
+            city: locationData?.city || ''
+          },
+          listing_type: facility.listing_type
+        };
+      });
 
       setFacilities(transformedFacilities);
       setProducts(productsResponse.data);
@@ -70,7 +73,7 @@ export const CareComparison = () => {
     fetchData();
   }, [toast]);
 
-  const generateAIInsights = async (items: (CareFacility | CareProduct)[]) => {
+  const generateAIInsights = async (items: CareFacility[] | CareProduct[]) => {
     try {
       const response = await fetch('/functions/v1/care-assistant', {
         method: 'POST',
@@ -97,11 +100,6 @@ export const CareComparison = () => {
     try {
       setIsAnalyzing(true);
       
-      // Type guard to check if we're dealing with facilities or products
-      const isFacilities = (items: CareFacility[] | CareProduct[]): items is CareFacility[] => {
-        return items.length > 0 && 'location' in items[0];
-      };
-
       const result = compareCareItems(items);
       
       const enhancedResult: Record<string, ComparisonResult> = {};
