@@ -9,6 +9,7 @@ import { GroupPosts } from "@/components/groups/GroupPosts";
 import { VideoConsultations } from "@/components/video/VideoConsultations";
 import { CareQualityMetrics } from "@/components/metrics/CareQualityMetrics";
 import { DocumentSharing } from "@/components/documents/DocumentSharing";
+import { ResourceLibrary } from "@/components/library/ResourceLibrary";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -94,6 +95,7 @@ const GroupDetails = () => {
           <GroupCalendar groupId={groupId} />
           <GroupTasks groupId={groupId} members={groupMembers} />
           <GroupPosts groupId={groupId} />
+          <ResourceLibrary groupId={groupId} />
         </div>
         <div className="space-y-6">
           <CareCircleManager groupId={groupId} />
