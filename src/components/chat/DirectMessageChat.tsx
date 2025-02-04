@@ -71,8 +71,8 @@ export const DirectMessageChat = ({ recipientId, recipientName }: DirectMessageC
   };
 
   const subscribeToMessages = () => {
-    const userResponse = supabase.auth.getUser();
-    if (!userResponse) return;
+    const user = supabase.auth.getUser();
+    if (!user) return;
 
     return supabase
       .channel("private_messages")
@@ -82,7 +82,7 @@ export const DirectMessageChat = ({ recipientId, recipientName }: DirectMessageC
           event: "INSERT",
           schema: "public",
           table: "private_messages",
-          filter: `sender_id=eq.${recipientId},recipient_id=eq.${userResponse.data?.user?.id}`,
+          filter: `sender_id=eq.${recipientId}`,
         },
         (payload) => {
           console.log("New message received:", payload);

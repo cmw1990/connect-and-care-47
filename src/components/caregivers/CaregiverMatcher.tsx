@@ -28,7 +28,23 @@ type LocationData = {
   longitude: number;
 };
 
-type SimplifiedCaregiverProfile = Omit<CaregiverProfile, 'certifications' | 'availability'> & {
+type SimplifiedCaregiverProfile = {
+  id: string;
+  user_id: string;
+  bio: string | null;
+  experience_years: number | null;
+  hourly_rate: number | null;
+  skills: string[] | null;
+  rating: number | null;
+  reviews_count: number | null;
+  background_check_status: string | null;
+  identity_verified: boolean | null;
+  service_radius: number | null;
+  emergency_response: boolean | null;
+  user: {
+    first_name: string;
+    last_name: string;
+  };
   certifications: any[];
   availability: any;
   location?: LocationData;
@@ -114,7 +130,26 @@ export const CaregiverMatcher = () => {
 
       if (error) throw error;
 
-      let filteredCaregivers = (data || []) as SimplifiedCaregiverProfile[];
+      const simplifiedCaregivers = (data || []).map(caregiver => ({
+        id: caregiver.id,
+        user_id: caregiver.user_id,
+        bio: caregiver.bio,
+        experience_years: caregiver.experience_years,
+        hourly_rate: caregiver.hourly_rate,
+        skills: caregiver.skills,
+        rating: caregiver.rating,
+        reviews_count: caregiver.reviews_count,
+        background_check_status: caregiver.background_check_status,
+        identity_verified: caregiver.identity_verified,
+        service_radius: caregiver.service_radius,
+        emergency_response: caregiver.emergency_response,
+        user: caregiver.user,
+        certifications: caregiver.certifications as any[],
+        availability: caregiver.availability,
+        location: caregiver.location as LocationData | undefined
+      }));
+
+      let filteredCaregivers = simplifiedCaregivers;
 
       if (userLocation) {
         filteredCaregivers = filteredCaregivers.filter(caregiver => {
