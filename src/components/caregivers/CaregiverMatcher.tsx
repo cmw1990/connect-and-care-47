@@ -13,6 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Heart, Search, MapPin, Clock, Shield, Star } from "lucide-react";
+import { getCurrentLocation, calculateDistance } from "@/utils/locationUtils";
 
 interface Caregiver {
   id: string;
@@ -25,6 +26,11 @@ interface Caregiver {
   background_check_status: string;
   rating: number;
   identity_verified: boolean;
+  dementia_care_certified: boolean;
+  mental_health_certified: boolean;
+  emergency_response: boolean;
+  service_radius: number;
+  location: { latitude: number; longitude: number };
   user: {
     first_name: string;
     last_name: string;
@@ -37,14 +43,40 @@ export const CaregiverMatcher = () => {
     specialization: "",
     maxRate: 100,
     experienceYears: 0,
-    verifiedOnly: false
+    verifiedOnly: false,
+    dementiaOnly: false,
+    mentalHealthOnly: false,
+    emergencyResponse: false,
+    maxDistance: 50
   });
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
 
   useEffect(() => {
+    initializeLocation();
+  }, []);
+
+  useEffect(() => {
     fetchCaregivers();
-  }, [filters]);
+  }, [filters, userLocation]);
+
+  const initializeLocation = async () => {
+    try {
+      const position = await getCurrentLocation();
+      setUserLocation({
+        lat: position.coords.latitude,
+        lng: position.coords.longitude
+      });
+    } catch (error) {
+      console.error('Error getting location:', error);
+      toast({
+        title: "Location Access Failed",
+        description: "Unable to access your location. Distance-based search will be disabled.",
+        variant: "destructive",
+      });
+    }
+  };
 
   const fetchCaregivers = async () => {
     try {
@@ -63,6 +95,18 @@ export const CaregiverMatcher = () => {
         query = query.eq('background_check_status', 'verified');
       }
 
+      if (filters.dementiaOnly) {
+        query = query.eq('dementia_care_certified', true);
+      }
+
+      if (filters.mentalHealthOnly) {
+        query = query.eq('mental_health_certified', true);
+      }
+
+      if (filters.emergencyResponse) {
+        query = query.eq('emergency_response', true);
+      }
+
       if (filters.experienceYears > 0) {
         query = query.gte('experience_years', filters.experienceYears);
       }
@@ -73,24 +117,25 @@ export const CaregiverMatcher = () => {
 
       if (error) throw error;
 
-      // Transform the data to match the Caregiver interface
-      const formattedCaregivers: Caregiver[] = (data || []).map(caregiver => ({
-        id: caregiver.id,
-        user_id: caregiver.user_id,
-        bio: caregiver.bio || '',
-        experience_years: caregiver.experience_years || 0,
-        hourly_rate: caregiver.hourly_rate || 0,
-        skills: caregiver.skills || [],
-        certifications: Array.isArray(caregiver.certifications) 
-          ? caregiver.certifications 
-          : [],
-        background_check_status: caregiver.background_check_status || 'pending',
-        rating: caregiver.rating || 0,
-        identity_verified: caregiver.identity_verified || false,
-        user: caregiver.user || { first_name: '', last_name: '' }
-      }));
+      let filteredCaregivers = data || [];
 
-      setCaregivers(formattedCaregivers);
+      // Apply distance filter if user location is available
+      if (userLocation) {
+        filteredCaregivers = filteredCaregivers.filter(caregiver => {
+          if (!caregiver.location?.latitude || !caregiver.location?.longitude) return false;
+          
+          const distance = calculateDistance(
+            userLocation.lat,
+            userLocation.lng,
+            caregiver.location.latitude,
+            caregiver.location.longitude
+          );
+          
+          return distance <= filters.maxDistance;
+        });
+      }
+
+      setCaregivers(filteredCaregivers);
     } catch (error) {
       console.error('Error fetching caregivers:', error);
       toast({
@@ -129,15 +174,21 @@ export const CaregiverMatcher = () => {
               </SelectContent>
             </Select>
 
-            <div className="flex items-center space-x-2">
-              <Input
-                type="number"
-                placeholder="Max hourly rate"
-                value={filters.maxRate}
-                onChange={(e) => setFilters({ ...filters, maxRate: parseInt(e.target.value) })}
-                className="w-full"
-              />
-            </div>
+            <Input
+              type="number"
+              placeholder="Max distance (miles)"
+              value={filters.maxDistance}
+              onChange={(e) => setFilters({ ...filters, maxDistance: parseInt(e.target.value) })}
+              className="w-full"
+            />
+
+            <Input
+              type="number"
+              placeholder="Max hourly rate"
+              value={filters.maxRate}
+              onChange={(e) => setFilters({ ...filters, maxRate: parseInt(e.target.value) })}
+              className="w-full"
+            />
 
             <Select
               value={filters.experienceYears.toString()}
@@ -153,7 +204,9 @@ export const CaregiverMatcher = () => {
                 <SelectItem value="5">5+ Years</SelectItem>
               </SelectContent>
             </Select>
+          </div>
 
+          <div className="flex flex-wrap gap-2">
             <Button
               variant="outline"
               onClick={() => setFilters({ ...filters, verifiedOnly: !filters.verifiedOnly })}
@@ -161,6 +214,30 @@ export const CaregiverMatcher = () => {
             >
               <Shield className="h-4 w-4 mr-2" />
               Verified Only
+            </Button>
+
+            <Button
+              variant="outline"
+              onClick={() => setFilters({ ...filters, dementiaOnly: !filters.dementiaOnly })}
+              className={filters.dementiaOnly ? "bg-primary-100" : ""}
+            >
+              Dementia Certified
+            </Button>
+
+            <Button
+              variant="outline"
+              onClick={() => setFilters({ ...filters, mentalHealthOnly: !filters.mentalHealthOnly })}
+              className={filters.mentalHealthOnly ? "bg-primary-100" : ""}
+            >
+              Mental Health Certified
+            </Button>
+
+            <Button
+              variant="outline"
+              onClick={() => setFilters({ ...filters, emergencyResponse: !filters.emergencyResponse })}
+              className={filters.emergencyResponse ? "bg-primary-100" : ""}
+            >
+              Emergency Response
             </Button>
           </div>
 
