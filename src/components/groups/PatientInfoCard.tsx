@@ -67,6 +67,27 @@ export const PatientInfoCard = ({ groupId, patientInfo }: PatientInfoCardProps) 
     careTips: patientInfo?.care_tips?.join("\n") || "",
   });
   const { toast } = useToast();
+  const [userRole, setUserRole] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchUserRole = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: memberData } = await supabase
+          .from('care_group_members')
+          .select('member_type')
+          .eq('group_id', groupId)
+          .eq('user_id', user.id)
+          .maybeSingle();
+        
+        setUserRole(memberData?.member_type || null);
+      }
+    };
+    
+    if (groupId) {
+      fetchUserRole();
+    }
+  }, [groupId]);
 
   useEffect(() => {
     fetchLocationSettings();

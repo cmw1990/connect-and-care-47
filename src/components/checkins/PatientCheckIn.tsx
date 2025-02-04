@@ -61,7 +61,15 @@ export const PatientCheckIn = ({ groupId }: { groupId: string }) => {
         .maybeSingle();
 
       if (error) throw error;
-      setActiveCheckIn(data);
+      
+      if (data && typeof data.response_data === 'object' && data.response_data !== null) {
+        setActiveCheckIn(data);
+        // Initialize answers if questions exist
+        const questions = (data.response_data as { questions?: string[] }).questions || [];
+        const initialAnswers: Record<string, string> = {};
+        questions.forEach(q => initialAnswers[q] = '');
+        setAnswers(initialAnswers);
+      }
     } catch (error) {
       console.error('Error fetching active check-in:', error);
       toast({
@@ -170,9 +178,9 @@ export const PatientCheckIn = ({ groupId }: { groupId: string }) => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {activeCheckIn ? (
+          {activeCheckIn && activeCheckIn.response_data && typeof activeCheckIn.response_data === 'object' && 'questions' in activeCheckIn.response_data ? (
             <div className="space-y-4">
-              {activeCheckIn.response_data.questions.map((question: string, index: number) => (
+              {(activeCheckIn.response_data.questions as string[]).map((question: string, index: number) => (
                 <div key={index}>
                   <label className="block text-sm font-medium mb-2">
                     {question}
