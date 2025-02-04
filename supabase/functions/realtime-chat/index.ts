@@ -12,121 +12,114 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const upgradeHeader = req.headers.get('Upgrade');
+  if (!upgradeHeader || upgradeHeader !== 'websocket') {
+    return new Response('Expected Upgrade: websocket', { status: 426 });
+  }
+
   try {
-    const { text } = await req.json();
-    const apiKey = Deno.env.get('PERPLEXITY_API_KEY');
-    
-    if (!apiKey) {
-      throw new Error('Perplexity API key not configured');
+    const { socket, response } = Deno.upgradeWebSocket(req);
+    const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
+
+    if (!openAIApiKey) {
+      throw new Error('OpenAI API key not configured');
     }
 
-    console.log('Processing request with text:', text);
+    socket.onopen = () => {
+      console.log('WebSocket connected');
+    };
 
-    const response = await fetch('https://api.perplexity.ai/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'llama-3.1-sonar-small-128k-online',
-        messages: [
-          {
-            role: 'system',
-            content: `You are a knowledgeable and empathetic care assistant. Your role is to:
-1. Provide clear, accurate medical information based on the patient context provided
-2. Offer practical care advice and suggestions
-3. Answer questions about medications, conditions, and care procedures
-4. Show empathy and understanding while maintaining professionalism
-5. Help interpret medical terms and explain complex concepts in simple terms
+    socket.onmessage = async (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        console.log('Received message:', data);
 
-Always consider the specific patient information provided, including:
-- Medical conditions and diagnoses
-- Current medications and treatments
-- Care requirements and restrictions
-- Any specific care tips or guidelines
+        if (data.type !== 'message' || !data.text) {
+          throw new Error('Invalid message format');
+        }
 
-Respond in a clear, structured way that is easy to understand.`
+        const response = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${openAIApiKey}`,
+            'Content-Type': 'application/json',
           },
-          {
-            role: 'user',
-            content: text
-          }
-        ],
-        temperature: 0.7,
-        max_tokens: 1000,
-        stream: true
-      }),
-    });
+          body: JSON.stringify({
+            model: 'gpt-4o-mini',
+            messages: [
+              {
+                role: 'system',
+                content: 'You are a helpful care assistant that provides support and guidance for caregivers and patients. Your responses should be empathetic, clear, and focused on healthcare and wellbeing.'
+              },
+              {
+                role: 'user',
+                content: data.text
+              }
+            ],
+            stream: true,
+          }),
+        });
 
-    if (!response.ok) {
-      console.error('Perplexity API error:', response.status, response.statusText);
-      throw new Error(`Perplexity API error: ${response.statusText}`);
-    }
+        if (!response.ok) {
+          throw new Error(`OpenAI API error: ${response.statusText}`);
+        }
 
-    const reader = response.body?.getReader();
-    if (!reader) {
-      throw new Error("Failed to get response reader");
-    }
+        const reader = response.body?.getReader();
+        if (!reader) {
+          throw new Error('Failed to get response reader');
+        }
 
-    const encoder = new TextEncoder();
-    const decoder = new TextDecoder();
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
 
-    const stream = new ReadableStream({
-      async start(controller) {
-        try {
-          while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
+          const chunk = new TextDecoder().decode(value);
+          const lines = chunk.split('\n').filter(line => line.trim());
 
-            const chunk = decoder.decode(value);
-            const lines = chunk.split('\n').filter(line => line.trim());
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              const data = line.slice(6);
+              if (data === '[DONE]') continue;
 
-            for (const line of lines) {
-              if (line.startsWith('data: ')) {
-                const data = line.slice(6);
-                if (data === '[DONE]') continue;
-
-                try {
-                  const parsed = JSON.parse(data);
-                  if (parsed.choices?.[0]?.delta?.content) {
-                    controller.enqueue(encoder.encode(`data: ${JSON.stringify({
-                      type: 'chunk',
-                      content: parsed.choices[0].delta.content
-                    })}\n\n`));
-                  }
-                } catch (e) {
-                  console.error('Error parsing chunk:', e);
+              try {
+                const parsed = JSON.parse(data);
+                if (parsed.choices?.[0]?.delta?.content) {
+                  socket.send(JSON.stringify({
+                    type: 'chunk',
+                    content: parsed.choices[0].delta.content
+                  }));
                 }
+              } catch (e) {
+                console.error('Error parsing chunk:', e);
               }
             }
           }
-          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'done' })}\n\n`));
-        } catch (error) {
-          console.error('Stream processing error:', error);
-          controller.error(error);
-        } finally {
-          controller.close();
         }
-      },
-    });
 
-    return new Response(stream, {
-      headers: {
-        ...corsHeaders,
-        'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache',
-        'Connection': 'keep-alive',
-      },
-    });
+        socket.send(JSON.stringify({ type: 'done' }));
+      } catch (error) {
+        console.error('Error processing message:', error);
+        socket.send(JSON.stringify({
+          type: 'error',
+          error: error.message
+        }));
+      }
+    };
+
+    socket.onerror = (error) => {
+      console.error('WebSocket error:', error);
+    };
+
+    socket.onclose = () => {
+      console.log('WebSocket closed');
+    };
+
+    return response;
   } catch (error) {
     console.error('Error in realtime-chat function:', error);
-    return new Response(
-      JSON.stringify({ error: error.message }),
-      { 
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      }
-    );
+    return new Response(JSON.stringify({ error: error.message }), {
+      status: 500,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
   }
 });
