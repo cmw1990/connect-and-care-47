@@ -24,7 +24,6 @@ export const ProfessionalCaregiverDashboard = ({ groupId }: { groupId: string })
           id,
           recorded_at,
           metric_value,
-          created_by,
           profiles:created_by (
             first_name,
             last_name
@@ -103,7 +102,7 @@ export const ProfessionalCaregiverDashboard = ({ groupId }: { groupId: string })
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {reports.map((report: any) => (
+            {reports.map((report) => (
               <div key={report.id} className="p-4 border rounded">
                 <div className="flex justify-between items-start mb-2">
                   <div>

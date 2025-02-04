@@ -21,9 +21,13 @@ export interface CareMetrics {
 
 export interface CareReport {
   id: string;
-  timestamp: string;
-  metrics: CareMetrics;
-  notes: string;
-  created_by: string;
-  group_id: string;
+  recorded_at: string;
+  metric_value: {
+    notes: string;
+    timestamp: string;
+  };
+  profiles?: {
+    first_name: string;
+    last_name: string;
+  };
 }
