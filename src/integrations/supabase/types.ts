@@ -545,6 +545,51 @@ export type Database = {
           },
         ]
       }
+      care_reviews: {
+        Row: {
+          booking_id: string | null
+          created_at: string | null
+          id: string
+          rating: number | null
+          review_text: string | null
+          reviewee_id: string | null
+          reviewer_id: string | null
+        }
+        Insert: {
+          booking_id?: string | null
+          created_at?: string | null
+          id?: string
+          rating?: number | null
+          review_text?: string | null
+          reviewee_id?: string | null
+          reviewer_id?: string | null
+        }
+        Update: {
+          booking_id?: string | null
+          created_at?: string | null
+          id?: string
+          rating?: number | null
+          review_text?: string | null
+          reviewee_id?: string | null
+          reviewer_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "care_reviews_reviewee_id_fkey"
+            columns: ["reviewee_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "care_reviews_reviewer_id_fkey"
+            columns: ["reviewer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       care_routines: {
         Row: {
           created_at: string | null
@@ -743,6 +788,70 @@ export type Database = {
           },
         ]
       }
+      caregiver_bookings: {
+        Row: {
+          caregiver_id: string | null
+          created_at: string | null
+          end_time: string | null
+          group_id: string | null
+          id: string
+          notes: string | null
+          rate: number | null
+          requester_id: string | null
+          start_time: string | null
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          caregiver_id?: string | null
+          created_at?: string | null
+          end_time?: string | null
+          group_id?: string | null
+          id?: string
+          notes?: string | null
+          rate?: number | null
+          requester_id?: string | null
+          start_time?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          caregiver_id?: string | null
+          created_at?: string | null
+          end_time?: string | null
+          group_id?: string | null
+          id?: string
+          notes?: string | null
+          rate?: number | null
+          requester_id?: string | null
+          start_time?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "caregiver_bookings_caregiver_id_fkey"
+            columns: ["caregiver_id"]
+            isOneToOne: false
+            referencedRelation: "caregiver_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "caregiver_bookings_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "care_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "caregiver_bookings_requester_id_fkey"
+            columns: ["requester_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       caregiver_journals: {
         Row: {
           content: string
@@ -769,6 +878,62 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: []
+      }
+      caregiver_profiles: {
+        Row: {
+          availability: Json | null
+          background_check_status: string | null
+          bio: string | null
+          certifications: Json | null
+          created_at: string | null
+          experience_years: number | null
+          hourly_rate: number | null
+          id: string
+          rating: number | null
+          reviews_count: number | null
+          skills: string[] | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          availability?: Json | null
+          background_check_status?: string | null
+          bio?: string | null
+          certifications?: Json | null
+          created_at?: string | null
+          experience_years?: number | null
+          hourly_rate?: number | null
+          id?: string
+          rating?: number | null
+          reviews_count?: number | null
+          skills?: string[] | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          availability?: Json | null
+          background_check_status?: string | null
+          bio?: string | null
+          certifications?: Json | null
+          created_at?: string | null
+          experience_years?: number | null
+          hourly_rate?: number | null
+          id?: string
+          rating?: number | null
+          reviews_count?: number | null
+          skills?: string[] | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "caregiver_profiles_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       caregiver_wellness_logs: {
         Row: {
@@ -905,6 +1070,135 @@ export type Database = {
           {
             foreignKeyName: "community_posts_author_id_fkey"
             columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      companion_meetings: {
+        Row: {
+          companion_id: string | null
+          created_at: string | null
+          end_time: string | null
+          group_id: string | null
+          id: string
+          location: Json | null
+          meeting_link: string | null
+          meeting_type: string | null
+          notes: string | null
+          rate: number | null
+          requester_id: string | null
+          start_time: string | null
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          companion_id?: string | null
+          created_at?: string | null
+          end_time?: string | null
+          group_id?: string | null
+          id?: string
+          location?: Json | null
+          meeting_link?: string | null
+          meeting_type?: string | null
+          notes?: string | null
+          rate?: number | null
+          requester_id?: string | null
+          start_time?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          companion_id?: string | null
+          created_at?: string | null
+          end_time?: string | null
+          group_id?: string | null
+          id?: string
+          location?: Json | null
+          meeting_link?: string | null
+          meeting_type?: string | null
+          notes?: string | null
+          rate?: number | null
+          requester_id?: string | null
+          start_time?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "companion_meetings_companion_id_fkey"
+            columns: ["companion_id"]
+            isOneToOne: false
+            referencedRelation: "companion_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "companion_meetings_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "care_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "companion_meetings_requester_id_fkey"
+            columns: ["requester_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      companion_profiles: {
+        Row: {
+          availability: Json | null
+          bio: string | null
+          created_at: string | null
+          hourly_rate: number | null
+          id: string
+          in_person_meeting_preference: boolean | null
+          interests: string[] | null
+          languages: string[] | null
+          rating: number | null
+          reviews_count: number | null
+          updated_at: string | null
+          user_id: string | null
+          virtual_meeting_preference: boolean | null
+        }
+        Insert: {
+          availability?: Json | null
+          bio?: string | null
+          created_at?: string | null
+          hourly_rate?: number | null
+          id?: string
+          in_person_meeting_preference?: boolean | null
+          interests?: string[] | null
+          languages?: string[] | null
+          rating?: number | null
+          reviews_count?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+          virtual_meeting_preference?: boolean | null
+        }
+        Update: {
+          availability?: Json | null
+          bio?: string | null
+          created_at?: string | null
+          hourly_rate?: number | null
+          id?: string
+          in_person_meeting_preference?: boolean | null
+          interests?: string[] | null
+          languages?: string[] | null
+          rating?: number | null
+          reviews_count?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+          virtual_meeting_preference?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "companion_profiles_user_id_fkey"
+            columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]

@@ -13,16 +13,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Users } from "lucide-react";
+import { Plus, Users, Search, UserPlus, UserRound } from "lucide-react";
 import { GroupsList } from "@/components/groups/GroupsList";
-import { CareComparisonDialog } from "@/components/comparison/CareComparisonDialog";
-import { CareAssistant } from "@/components/ai/CareAssistant";
-import { CareTeamCalendar } from "@/components/calendar/CareTeamCalendar";
+import { CaregiverCard } from "@/components/caregivers/CaregiverCard";
+import { CompanionCard } from "@/components/companions/CompanionCard";
 import { CareTeamPresence } from "@/components/groups/CareTeamPresence";
 import { CareQualityMetrics } from "@/components/metrics/CareQualityMetrics";
 import { CareUpdates } from "@/components/groups/CareUpdates";
 import { WellnessTracker } from "@/components/wellness/WellnessTracker";
-import type { CareGroup, GroupPrivacySettings } from "@/types/groups";
+import type { CareGroup } from "@/types/groups";
 import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
@@ -38,6 +37,10 @@ const Groups = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [editingGroup, setEditingGroup] = useState<CareGroup | null>(null);
+  const [activeTab, setActiveTab] = useState("my-groups");
+  const [caregivers, setCaregivers] = useState([]);
+  const [companions, setCompanions] = useState([]);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const fetchGroups = useCallback(async () => {
     try {
@@ -123,6 +126,58 @@ const Groups = () => {
       setIsLoading(false);
     }
   }, [toast]);
+
+  const fetchCaregivers = async () => {
+    const { data, error } = await supabase
+      .from('caregiver_profiles')
+      .select(`
+        *,
+        user:profiles(first_name, last_name)
+      `)
+      .ilike('skills', `%${searchQuery}%`);
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: "Failed to load caregivers",
+        variant: "destructive",
+      });
+    } else {
+      setCaregivers(data);
+    }
+  };
+
+  const fetchCompanions = async () => {
+    const { data, error } = await supabase
+      .from('companion_profiles')
+      .select(`
+        *,
+        user:profiles(first_name, last_name)
+      `)
+      .ilike('interests', `%${searchQuery}%`);
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: "Failed to load companions",
+        variant: "destructive",
+      });
+    } else {
+      setCompanions(data);
+    }
+  };
+
+  useEffect(() => {
+    fetchGroups();
+  }, [fetchGroups]);
+
+  useEffect(() => {
+    if (activeTab === 'caregivers') {
+      fetchCaregivers();
+    } else if (activeTab === 'companions') {
+      fetchCompanions();
+    }
+  }, [activeTab, searchQuery]);
 
   const handleSubmit = useCallback(async () => {
     if (!newGroupName.trim()) {
@@ -238,10 +293,6 @@ const Groups = () => {
     }
   };
 
-  useEffect(() => {
-    fetchGroups();
-  }, [fetchGroups]);
-
   return (
     <div className="min-h-screen bg-gradient-to-b from-primary-100 to-white">
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -249,19 +300,10 @@ const Groups = () => {
           <div className="flex items-center gap-4">
             <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
               <Users className="h-8 w-8 text-primary-600" />
-              Care Groups
+              Care Network
             </h1>
-            <CareComparisonDialog />
           </div>
-          <Dialog open={isDialogOpen} onOpenChange={(open) => {
-            setIsDialogOpen(open);
-            if (!open) {
-              setEditingGroup(null);
-              setNewGroupName("");
-              setNewGroupDescription("");
-              setIsPublic(false);
-            }
-          }}>
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
               <Button className="bg-primary-600 hover:bg-primary-700 text-white shadow-lg hover:shadow-xl transition-all duration-300">
                 <Plus className="mr-2 h-4 w-4" />
@@ -338,94 +380,110 @@ const Groups = () => {
           </Dialog>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          <div className="lg:col-span-3">
-            <Tabs defaultValue="my-groups" className="w-full">
-              <TabsList className="mb-4 bg-white shadow-sm">
-                <TabsTrigger value="my-groups" className="data-[state=active]:bg-primary-100">
-                  My Care Groups
-                </TabsTrigger>
-                <TabsTrigger value="all-groups" className="data-[state=active]:bg-primary-100">
-                  Public Groups
-                </TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="my-groups">
-                {isLoading ? (
-                  <div className="flex justify-center items-center h-64">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
-                  </div>
-                ) : myGroups.length === 0 ? (
-                  <motion.div 
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="text-center py-12 bg-white rounded-lg shadow-sm"
-                  >
-                    <Users className="mx-auto h-12 w-12 text-gray-400" />
-                    <h3 className="mt-2 text-sm font-semibold text-gray-900">No groups yet</h3>
-                    <p className="mt-1 text-sm text-gray-500">Get started by creating a new care group.</p>
-                    <div className="mt-6">
-                      <Button
-                        onClick={() => setIsDialogOpen(true)}
-                        className="bg-primary-600 hover:bg-primary-700 text-white"
-                      >
-                        <Plus className="mr-2 h-4 w-4" />
-                        Create New Group
-                      </Button>
-                    </div>
-                  </motion.div>
-                ) : (
-                  <>
-                    {myGroups.map((group) => (
-                      <div key={group.id} className="mb-8 animate-fade-in">
-                        <GroupsList 
-                          groups={[group]}
-                          onDelete={handleDelete}
-                          onEdit={handleEdit}
-                        />
-                        <div className="mt-4 space-y-4">
-                          <CareTeamPresence groupId={group.id} />
-                          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                            <CareUpdates groupId={group.id} />
-                            <WellnessTracker groupId={group.id} />
-                          </div>
-                          <CareTeamCalendar groupId={group.id} />
-                          <CareQualityMetrics groupId={group.id} />
-                        </div>
-                      </div>
-                    ))}
-                  </>
-                )}
-              </TabsContent>
-              
-              <TabsContent value="all-groups">
-                {isLoading ? (
-                  <div className="flex justify-center items-center h-64">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
-                  </div>
-                ) : groups.length === 0 ? (
-                  <motion.div 
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="text-center py-12 bg-white rounded-lg shadow-sm"
-                  >
-                    <Users className="mx-auto h-12 w-12 text-gray-400" />
-                    <h3 className="mt-2 text-sm font-semibold text-gray-900">No public groups available</h3>
-                    <p className="mt-1 text-sm text-gray-500">Create a new public group to get started.</p>
-                  </motion.div>
-                ) : (
-                  <GroupsList 
-                    groups={groups}
-                    showActions={false}
-                  />
-                )}
-              </TabsContent>
-            </Tabs>
-          </div>
-          <div className="hidden lg:block">
-            <CareAssistant />
+        <div className="mb-6">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+            <Input
+              placeholder="Search caregivers, companions, or groups..."
+              className="pl-10"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
           </div>
         </div>
+
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="mb-4 bg-white shadow-sm">
+            <TabsTrigger value="my-groups" className="data-[state=active]:bg-primary-100">
+              <Users className="h-4 w-4 mr-2" />
+              My Care Groups
+            </TabsTrigger>
+            <TabsTrigger value="caregivers" className="data-[state=active]:bg-primary-100">
+              <UserPlus className="h-4 w-4 mr-2" />
+              Find Caregivers
+            </TabsTrigger>
+            <TabsTrigger value="companions" className="data-[state=active]:bg-primary-100">
+              <UserRound className="h-4 w-4 mr-2" />
+              Find Companions
+            </TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="my-groups">
+            {isLoading ? (
+              <div className="flex justify-center items-center h-64">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+              </div>
+            ) : myGroups.length === 0 ? (
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="text-center py-12 bg-white rounded-lg shadow-sm"
+              >
+                <Users className="mx-auto h-12 w-12 text-gray-400" />
+                <h3 className="mt-2 text-sm font-semibold text-gray-900">No groups yet</h3>
+                <p className="mt-1 text-sm text-gray-500">Get started by creating a new care group.</p>
+                <div className="mt-6">
+                  <Button
+                    onClick={() => setIsDialogOpen(true)}
+                    className="bg-primary-600 hover:bg-primary-700 text-white"
+                  >
+                    <Plus className="mr-2 h-4 w-4" />
+                    Create New Group
+                  </Button>
+                </div>
+              </motion.div>
+            ) : (
+              <>
+                {myGroups.map((group) => (
+                  <div key={group.id} className="mb-8 animate-fade-in">
+                    <GroupsList 
+                      groups={[group]}
+                      onDelete={handleDelete}
+                      onEdit={handleEdit}
+                    />
+                    <div className="mt-4 space-y-4">
+                      <CareTeamPresence groupId={group.id} />
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                        <CareUpdates groupId={group.id} />
+                        <WellnessTracker groupId={group.id} />
+                      </div>
+                      <CareTeamCalendar groupId={group.id} />
+                      <CareQualityMetrics groupId={group.id} />
+                    </div>
+                  </div>
+                ))}
+              </>
+            )}
+          </TabsContent>
+          
+          <TabsContent value="caregivers">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {caregivers.map((caregiver) => (
+                <CaregiverCard
+                  key={caregiver.id}
+                  caregiver={caregiver}
+                  onBook={() => {
+                    // Implement booking logic
+                  }}
+                />
+              ))}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="companions">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {companions.map((companion) => (
+                <CompanionCard
+                  key={companion.id}
+                  companion={companion}
+                  onBook={() => {
+                    // Implement booking logic
+                  }}
+                />
+              ))}
+            </div>
+          </TabsContent>
+        </Tabs>
       </main>
     </div>
   );
