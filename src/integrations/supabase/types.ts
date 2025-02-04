@@ -551,6 +551,62 @@ export type Database = {
           },
         ]
       }
+      check_in_settings: {
+        Row: {
+          automated_responses: boolean | null
+          check_in_frequency: unknown | null
+          created_at: string
+          escalation_threshold: unknown | null
+          group_id: string | null
+          id: string
+          notification_preferences: Json | null
+          photo_required: boolean | null
+          reminder_threshold: unknown | null
+          required_check_in_types: string[] | null
+          updated_at: string
+          vital_signs_required: boolean | null
+          voice_enabled: boolean | null
+        }
+        Insert: {
+          automated_responses?: boolean | null
+          check_in_frequency?: unknown | null
+          created_at?: string
+          escalation_threshold?: unknown | null
+          group_id?: string | null
+          id?: string
+          notification_preferences?: Json | null
+          photo_required?: boolean | null
+          reminder_threshold?: unknown | null
+          required_check_in_types?: string[] | null
+          updated_at?: string
+          vital_signs_required?: boolean | null
+          voice_enabled?: boolean | null
+        }
+        Update: {
+          automated_responses?: boolean | null
+          check_in_frequency?: unknown | null
+          created_at?: string
+          escalation_threshold?: unknown | null
+          group_id?: string | null
+          id?: string
+          notification_preferences?: Json | null
+          photo_required?: boolean | null
+          reminder_threshold?: unknown | null
+          required_check_in_types?: string[] | null
+          updated_at?: string
+          vital_signs_required?: boolean | null
+          voice_enabled?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "check_in_settings_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "care_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       community_posts: {
         Row: {
           author_id: string | null
@@ -835,37 +891,76 @@ export type Database = {
       }
       patient_check_ins: {
         Row: {
+          caregiver_notes: string | null
+          check_in_method: string | null
           check_in_type: string
+          cognitive_score: number | null
           completed_time: string | null
           created_at: string | null
+          escalation_level: string | null
           group_id: string | null
           id: string
+          medication_taken: boolean | null
+          mood_score: number | null
+          nutrition_log: Json | null
+          pain_level: number | null
+          photo_verification_url: string | null
           response_data: Json | null
           scheduled_time: string | null
+          sleep_hours: number | null
+          social_interactions: Json | null
           status: string | null
           updated_at: string | null
+          vital_signs: Json | null
+          weather_conditions: Json | null
         }
         Insert: {
+          caregiver_notes?: string | null
+          check_in_method?: string | null
           check_in_type: string
+          cognitive_score?: number | null
           completed_time?: string | null
           created_at?: string | null
+          escalation_level?: string | null
           group_id?: string | null
           id?: string
+          medication_taken?: boolean | null
+          mood_score?: number | null
+          nutrition_log?: Json | null
+          pain_level?: number | null
+          photo_verification_url?: string | null
           response_data?: Json | null
           scheduled_time?: string | null
+          sleep_hours?: number | null
+          social_interactions?: Json | null
           status?: string | null
           updated_at?: string | null
+          vital_signs?: Json | null
+          weather_conditions?: Json | null
         }
         Update: {
+          caregiver_notes?: string | null
+          check_in_method?: string | null
           check_in_type?: string
+          cognitive_score?: number | null
           completed_time?: string | null
           created_at?: string | null
+          escalation_level?: string | null
           group_id?: string | null
           id?: string
+          medication_taken?: boolean | null
+          mood_score?: number | null
+          nutrition_log?: Json | null
+          pain_level?: number | null
+          photo_verification_url?: string | null
           response_data?: Json | null
           scheduled_time?: string | null
+          sleep_hours?: number | null
+          social_interactions?: Json | null
           status?: string | null
           updated_at?: string | null
+          vital_signs?: Json | null
+          weather_conditions?: Json | null
         }
         Relationships: [
           {
