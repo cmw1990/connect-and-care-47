@@ -23,15 +23,17 @@ type CaregiverProfile = Database['public']['Tables']['caregiver_profiles']['Row'
   };
 };
 
-interface Caregiver extends Omit<CaregiverProfile, 'location'> {
-  location?: {
-    latitude: number;
-    longitude: number;
-  };
+type LocationData = {
+  latitude: number;
+  longitude: number;
+};
+
+interface CaregiverWithLocation extends CaregiverProfile {
+  location?: LocationData;
 }
 
 export const CaregiverMatcher = () => {
-  const [caregivers, setCaregivers] = useState<Caregiver[]>([]);
+  const [caregivers, setCaregivers] = useState<CaregiverWithLocation[]>([]);
   const [filters, setFilters] = useState({
     specialization: "",
     maxRate: 100,
@@ -110,7 +112,7 @@ export const CaregiverMatcher = () => {
 
       if (error) throw error;
 
-      let filteredCaregivers = (data || []) as Caregiver[];
+      let filteredCaregivers = (data || []) as CaregiverWithLocation[];
 
       // Apply distance filter if user location is available
       if (userLocation) {
