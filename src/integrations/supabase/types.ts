@@ -105,6 +105,54 @@ export type Database = {
           },
         ]
       }
+      care_circle_invites: {
+        Row: {
+          created_at: string | null
+          email: string
+          expires_at: string | null
+          group_id: string | null
+          id: string
+          invited_by: string | null
+          role: string
+          status: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email: string
+          expires_at?: string | null
+          group_id?: string | null
+          id?: string
+          invited_by?: string | null
+          role: string
+          status?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          expires_at?: string | null
+          group_id?: string | null
+          id?: string
+          invited_by?: string | null
+          role?: string
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "care_circle_invites_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "care_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "care_circle_invites_invited_by_fkey"
+            columns: ["invited_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       care_facilities: {
         Row: {
           address: string | null
@@ -429,6 +477,60 @@ export type Database = {
         }
         Relationships: []
       }
+      care_routines: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          frequency: string
+          group_id: string | null
+          id: string
+          tasks: Json | null
+          time_of_day: string[] | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          frequency: string
+          group_id?: string | null
+          id?: string
+          tasks?: Json | null
+          time_of_day?: string[] | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          frequency?: string
+          group_id?: string | null
+          id?: string
+          tasks?: Json | null
+          time_of_day?: string[] | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "care_routines_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "care_routines_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "care_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       care_schedule: {
         Row: {
           created_at: string
@@ -476,6 +578,51 @@ export type Database = {
           },
           {
             foreignKeyName: "care_schedule_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "care_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      care_updates: {
+        Row: {
+          author_id: string | null
+          content: string
+          created_at: string | null
+          group_id: string | null
+          id: string
+          update_type: string
+          visibility: string[] | null
+        }
+        Insert: {
+          author_id?: string | null
+          content: string
+          created_at?: string | null
+          group_id?: string | null
+          id?: string
+          update_type: string
+          visibility?: string[] | null
+        }
+        Update: {
+          author_id?: string | null
+          content?: string
+          created_at?: string | null
+          group_id?: string | null
+          id?: string
+          update_type?: string
+          visibility?: string[] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "care_updates_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "care_updates_group_id_fkey"
             columns: ["group_id"]
             isOneToOne: false
             referencedRelation: "care_groups"
@@ -891,6 +1038,7 @@ export type Database = {
       }
       patient_check_ins: {
         Row: {
+          care_routine_completed: Json | null
           caregiver_notes: string | null
           check_in_method: string | null
           check_in_type: string
@@ -910,11 +1058,14 @@ export type Database = {
           sleep_hours: number | null
           social_interactions: Json | null
           status: string | null
+          symptoms: Json | null
           updated_at: string | null
           vital_signs: Json | null
           weather_conditions: Json | null
+          wellness_notes: string | null
         }
         Insert: {
+          care_routine_completed?: Json | null
           caregiver_notes?: string | null
           check_in_method?: string | null
           check_in_type: string
@@ -934,11 +1085,14 @@ export type Database = {
           sleep_hours?: number | null
           social_interactions?: Json | null
           status?: string | null
+          symptoms?: Json | null
           updated_at?: string | null
           vital_signs?: Json | null
           weather_conditions?: Json | null
+          wellness_notes?: string | null
         }
         Update: {
+          care_routine_completed?: Json | null
           caregiver_notes?: string | null
           check_in_method?: string | null
           check_in_type?: string
@@ -958,9 +1112,11 @@ export type Database = {
           sleep_hours?: number | null
           social_interactions?: Json | null
           status?: string | null
+          symptoms?: Json | null
           updated_at?: string | null
           vital_signs?: Json | null
           weather_conditions?: Json | null
+          wellness_notes?: string | null
         }
         Relationships: [
           {
@@ -1068,6 +1224,61 @@ export type Database = {
           },
         ]
       }
+      private_messages: {
+        Row: {
+          content: string
+          created_at: string | null
+          group_id: string | null
+          id: string
+          message_type: string | null
+          read_at: string | null
+          recipient_id: string | null
+          sender_id: string | null
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          group_id?: string | null
+          id?: string
+          message_type?: string | null
+          read_at?: string | null
+          recipient_id?: string | null
+          sender_id?: string | null
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          group_id?: string | null
+          id?: string
+          message_type?: string | null
+          read_at?: string | null
+          recipient_id?: string | null
+          sender_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "private_messages_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "care_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "private_messages_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "private_messages_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           availability_settings: Json | null
@@ -1165,6 +1376,105 @@ export type Database = {
           verified?: boolean | null
         }
         Relationships: []
+      }
+      respite_care_logs: {
+        Row: {
+          caregiver_id: string | null
+          created_at: string | null
+          end_time: string | null
+          group_id: string | null
+          id: string
+          notes: string | null
+          relief_caregiver_id: string | null
+          start_time: string
+        }
+        Insert: {
+          caregiver_id?: string | null
+          created_at?: string | null
+          end_time?: string | null
+          group_id?: string | null
+          id?: string
+          notes?: string | null
+          relief_caregiver_id?: string | null
+          start_time: string
+        }
+        Update: {
+          caregiver_id?: string | null
+          created_at?: string | null
+          end_time?: string | null
+          group_id?: string | null
+          id?: string
+          notes?: string | null
+          relief_caregiver_id?: string | null
+          start_time?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "respite_care_logs_caregiver_id_fkey"
+            columns: ["caregiver_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "respite_care_logs_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "care_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "respite_care_logs_relief_caregiver_id_fkey"
+            columns: ["relief_caregiver_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      support_groups: {
+        Row: {
+          category: string
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          id: string
+          meeting_schedule: Json | null
+          name: string
+          updated_at: string | null
+          virtual_meeting_link: string | null
+        }
+        Insert: {
+          category: string
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          meeting_schedule?: Json | null
+          name: string
+          updated_at?: string | null
+          virtual_meeting_link?: string | null
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          meeting_schedule?: Json | null
+          name?: string
+          updated_at?: string | null
+          virtual_meeting_link?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_groups_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       tasks: {
         Row: {

@@ -1,12 +1,8 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent } from "@/components/ui/card";
-import { ButtonPrimary } from "@/components/ui/button-primary";
-import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
-import { MessageSquare, Send } from "lucide-react";
 import { GroupStatusBar } from "@/components/groups/GroupStatusBar";
 import { GroupTasks } from "@/components/groups/GroupTasks";
 import { GroupPosts } from "@/components/groups/GroupPosts";
@@ -16,6 +12,8 @@ import { CareAssistant } from "@/components/ai/CareAssistant";
 import { FacilityDashboard } from "@/components/roles/FacilityDashboard";
 import { ProfessionalCaregiverDashboard } from "@/components/roles/ProfessionalCaregiverDashboard";
 import { FamilyCaregiverView } from "@/components/roles/FamilyCaregiverView";
+import { CareCircleManager } from "@/components/groups/CareCircleManager";
+import { CareUpdates } from "@/components/groups/CareUpdates";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 export default function GroupDetails() {
@@ -92,6 +90,8 @@ export default function GroupDetails() {
         {/* Left Column */}
         <div className="md:col-span-2 space-y-6">
           <GroupStatusBar groupId={groupId} />
+          <CareCircleManager groupId={groupId} />
+          <CareUpdates groupId={groupId} />
           {renderRoleBasedDashboard()}
           <GroupTasks groupId={groupId} members={groupMembers} />
           <GroupPosts groupId={groupId} />
