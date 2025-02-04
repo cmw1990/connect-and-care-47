@@ -9,6 +9,9 @@ import { NutritionLog } from "../health/NutritionLog";
 import { VitalSigns } from "../health/VitalSigns";
 import { SocialInteractions } from "../social/SocialInteractions";
 import { WeatherAlert } from "../weather/WeatherAlert";
+import { VoiceInput } from "../voice/VoiceInput";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 
 interface CheckInFormProps {
   onSubmit: (data: any) => void;
@@ -28,6 +31,11 @@ export const CheckInForm = ({ onSubmit, submitting }: CheckInFormProps) => {
     oxygenLevel?: string;
   }>({});
   const [socialInteractions, setSocialInteractions] = useState<string[]>([]);
+  const [notes, setNotes] = useState("");
+
+  const handleVoiceTranscription = (text: string) => {
+    setNotes(prev => prev + (prev ? "\n" : "") + text);
+  };
 
   const handleSubmit = () => {
     onSubmit({
@@ -38,6 +46,7 @@ export const CheckInForm = ({ onSubmit, submitting }: CheckInFormProps) => {
       nutritionLog,
       vitalSigns,
       socialInteractions,
+      notes,
     });
   };
 
@@ -64,6 +73,19 @@ export const CheckInForm = ({ onSubmit, submitting }: CheckInFormProps) => {
         condition: "Sunny",
         warning: "High UV index today. Remember to wear sunscreen."
       }} />
+      
+      <div className="space-y-2">
+        <Label>Additional Notes</Label>
+        <div className="flex items-start gap-2">
+          <Textarea
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            placeholder="Add any additional notes..."
+            className="flex-1"
+          />
+          <VoiceInput onTranscriptionComplete={handleVoiceTranscription} />
+        </div>
+      </div>
       
       <Button
         className="w-full mt-4"

@@ -77,7 +77,14 @@ export const PatientCheckIn = ({ groupId }: { groupId: string }) => {
         .update({
           status: 'completed',
           completed_time: new Date().toISOString(),
-          ...checkInData
+          mood_score: checkInData.moodScore,
+          pain_level: checkInData.painLevel,
+          sleep_hours: checkInData.sleepHours,
+          medication_taken: checkInData.medicationTaken,
+          nutrition_log: checkInData.nutritionLog,
+          vital_signs: checkInData.vitalSigns,
+          social_interactions: checkInData.socialInteractions,
+          caregiver_notes: checkInData.notes,
         })
         .eq('id', activeCheckIn.id);
 
