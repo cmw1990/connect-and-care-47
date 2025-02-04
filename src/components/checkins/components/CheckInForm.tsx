@@ -10,6 +10,7 @@ import { VitalSigns } from "../health/VitalSigns";
 import { SocialInteractions } from "../social/SocialInteractions";
 import { WeatherAlert } from "../weather/WeatherAlert";
 import { VoiceInput } from "../voice/VoiceInput";
+import { PhotoVerification } from "./PhotoVerification";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 
@@ -32,6 +33,7 @@ export const CheckInForm = ({ onSubmit, submitting }: CheckInFormProps) => {
   }>({});
   const [socialInteractions, setSocialInteractions] = useState<string[]>([]);
   const [notes, setNotes] = useState("");
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
 
   const handleVoiceTranscription = (text: string) => {
     setNotes(prev => prev + (prev ? "\n" : "") + text);
@@ -47,6 +49,7 @@ export const CheckInForm = ({ onSubmit, submitting }: CheckInFormProps) => {
       vitalSigns,
       socialInteractions,
       notes,
+      photoVerificationUrl: photoUrl,
     });
   };
 
@@ -73,6 +76,8 @@ export const CheckInForm = ({ onSubmit, submitting }: CheckInFormProps) => {
         condition: "Sunny",
         warning: "High UV index today. Remember to wear sunscreen."
       }} />
+      
+      <PhotoVerification onPhotoUploaded={setPhotoUrl} />
       
       <div className="space-y-2">
         <Label>Additional Notes</Label>

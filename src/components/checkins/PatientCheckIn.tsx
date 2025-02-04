@@ -85,6 +85,7 @@ export const PatientCheckIn = ({ groupId }: { groupId: string }) => {
           vital_signs: checkInData.vitalSigns,
           social_interactions: checkInData.socialInteractions,
           caregiver_notes: checkInData.notes,
+          photo_verification_url: checkInData.photoVerificationUrl,
         })
         .eq('id', activeCheckIn.id);
 
