@@ -22,6 +22,7 @@ import { CareQualityMetrics } from "@/components/metrics/CareQualityMetrics";
 import { CareUpdates } from "@/components/groups/CareUpdates";
 import { WellnessTracker } from "@/components/wellness/WellnessTracker";
 import { CareTeamCalendar } from "@/components/calendar/CareTeamCalendar";
+import { ConnectionManager } from "@/components/connections/ConnectionManager";
 import type { CareGroup, GroupPrivacySettings } from "@/types/groups";
 import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -403,6 +404,10 @@ const Groups = () => {
               <UserRound className="h-4 w-4 mr-2" />
               Find Companions
             </TabsTrigger>
+            <TabsTrigger value="connections" className="data-[state=active]:bg-primary-100">
+              <Users className="h-4 w-4 mr-2" />
+              My Connections
+            </TabsTrigger>
           </TabsList>
           
           <TabsContent value="my-groups">
@@ -479,6 +484,10 @@ const Groups = () => {
                 />
               ))}
             </div>
+          </TabsContent>
+
+          <TabsContent value="connections">
+            <ConnectionManager />
           </TabsContent>
         </Tabs>
       </main>

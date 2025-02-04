@@ -153,6 +153,51 @@ export type Database = {
           },
         ]
       }
+      care_connections: {
+        Row: {
+          connection_type: Database["public"]["Enums"]["connection_type"]
+          created_at: string
+          id: string
+          recipient_id: string
+          requester_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          connection_type: Database["public"]["Enums"]["connection_type"]
+          created_at?: string
+          id?: string
+          recipient_id: string
+          requester_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          connection_type?: Database["public"]["Enums"]["connection_type"]
+          created_at?: string
+          id?: string
+          recipient_id?: string
+          requester_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "care_connections_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "care_connections_requester_id_fkey"
+            columns: ["requester_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       care_facilities: {
         Row: {
           address: string | null
@@ -2291,6 +2336,7 @@ export type Database = {
       }
     }
     Enums: {
+      connection_type: "carer" | "pal"
       user_type:
         | "patient"
         | "family_caregiver"
