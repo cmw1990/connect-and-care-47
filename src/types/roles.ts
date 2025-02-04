@@ -26,8 +26,9 @@ export interface CareReport {
     notes: string;
     timestamp: string;
   };
+  created_by?: string;
   profiles?: {
-    first_name: string;
-    last_name: string;
-  };
+    first_name: string | null;
+    last_name: string | null;
+  } | null;
 }

@@ -11,6 +11,7 @@ export type Database = {
     Tables: {
       care_analytics: {
         Row: {
+          created_by: string | null
           group_id: string | null
           id: string
           metric_type: string
@@ -18,6 +19,7 @@ export type Database = {
           recorded_at: string
         }
         Insert: {
+          created_by?: string | null
           group_id?: string | null
           id?: string
           metric_type: string
@@ -25,6 +27,7 @@ export type Database = {
           recorded_at?: string
         }
         Update: {
+          created_by?: string | null
           group_id?: string | null
           id?: string
           metric_type?: string
@@ -32,6 +35,13 @@ export type Database = {
           recorded_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "care_analytics_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "care_analytics_group_id_fkey"
             columns: ["group_id"]

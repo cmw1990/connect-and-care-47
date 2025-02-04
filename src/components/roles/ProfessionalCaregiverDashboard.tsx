@@ -24,6 +24,7 @@ export const ProfessionalCaregiverDashboard = ({ groupId }: { groupId: string })
           id,
           recorded_at,
           metric_value,
+          created_by,
           profiles:created_by (
             first_name,
             last_name
