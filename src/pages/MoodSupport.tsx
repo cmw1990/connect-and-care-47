@@ -9,6 +9,7 @@ import { useTranslation } from "react-i18next";
 import { CareAssistant } from "@/components/ai/CareAssistant";
 import { notificationService } from "@/services/NotificationService";
 import { CompanionMatcher } from "@/components/companions/CompanionMatcher";
+import { CaregiverMatcher } from "@/components/caregivers/CaregiverMatcher";
 
 export const MoodSupport = () => {
   const [journalEntry, setJournalEntry] = useState("");
@@ -135,7 +136,10 @@ export const MoodSupport = () => {
         </Card>
       </div>
 
-      <CompanionMatcher />
+      <div className="space-y-6">
+        <CaregiverMatcher />
+        <CompanionMatcher />
+      </div>
     </div>
   );
 };
