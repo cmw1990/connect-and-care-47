@@ -15,6 +15,13 @@ interface CheckInQuestion {
   answer?: string;
 }
 
+interface ResponseData {
+  questions?: string[];
+  answers?: Record<string, string>;
+  type?: string;
+  triggered_at?: string;
+}
+
 export const PatientCheckIn = ({ groupId }: { groupId: string }) => {
   const [activeCheckIn, setActiveCheckIn] = useState<PatientCheckIn | null>(null);
   const [answers, setAnswers] = useState<Record<string, string>>({});
@@ -64,8 +71,8 @@ export const PatientCheckIn = ({ groupId }: { groupId: string }) => {
       
       if (data && typeof data.response_data === 'object' && data.response_data !== null) {
         setActiveCheckIn(data);
-        // Initialize answers if questions exist
-        const questions = (data.response_data as { questions?: string[] }).questions || [];
+        const responseData = data.response_data as ResponseData;
+        const questions = responseData.questions || [];
         const initialAnswers: Record<string, string> = {};
         questions.forEach(q => initialAnswers[q] = '');
         setAnswers(initialAnswers);
@@ -87,15 +94,18 @@ export const PatientCheckIn = ({ groupId }: { groupId: string }) => {
     
     try {
       setSubmitting(true);
+      const responseData = activeCheckIn.response_data as ResponseData;
+      const updatedResponseData: ResponseData = {
+        ...responseData,
+        answers,
+      };
+
       const { error } = await supabase
         .from('patient_check_ins')
         .update({
           status: 'completed',
           completed_time: new Date().toISOString(),
-          response_data: {
-            ...activeCheckIn.response_data,
-            answers,
-          },
+          response_data: updatedResponseData,
         })
         .eq('id', activeCheckIn.id);
 
