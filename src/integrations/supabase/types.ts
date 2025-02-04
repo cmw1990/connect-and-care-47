@@ -1070,6 +1070,7 @@ export type Database = {
         | "family_caregiver"
         | "professional_caregiver"
         | "care_facility_staff"
+        | "doctor"
     }
     CompositeTypes: {
       [_ in never]: never
