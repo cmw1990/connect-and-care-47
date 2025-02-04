@@ -1,33 +1,39 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Check, AlertTriangle, Activity, Heart } from "lucide-react";
+import { Check, Activity, Heart } from "lucide-react";
 import { format } from "date-fns";
-import { Tables, Json } from "@/integrations/supabase/types";
+import { Tables } from "@/integrations/supabase/types";
+import { MoodTracker } from "./health/MoodTracker";
+import { PainLevel } from "./health/PainLevel";
+import { SleepTracker } from "./health/SleepTracker";
+import { MedicationTracker } from "./health/MedicationTracker";
+import { NutritionLog } from "./health/NutritionLog";
+import { VitalSigns } from "./health/VitalSigns";
+import { SocialInteractions } from "./social/SocialInteractions";
+import { EmergencyAlert } from "./safety/EmergencyAlert";
+import { WeatherAlert } from "./weather/WeatherAlert";
 
 type PatientCheckIn = Tables<"patient_check_ins">;
 
-interface CheckInQuestion {
-  question: string;
-  answer?: string;
-}
-
-interface ResponseData {
-  questions?: string[];
-  answers?: Record<string, string>;
-  type?: string;
-  triggered_at?: string;
-  [key: string]: unknown; // Add index signature to make it compatible with Json type
-}
-
 export const PatientCheckIn = ({ groupId }: { groupId: string }) => {
   const [activeCheckIn, setActiveCheckIn] = useState<PatientCheckIn | null>(null);
-  const [answers, setAnswers] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [moodScore, setMoodScore] = useState<number | null>(null);
+  const [painLevel, setPainLevel] = useState<number | null>(null);
+  const [sleepHours, setSleepHours] = useState<number | null>(null);
+  const [medicationTaken, setMedicationTaken] = useState(false);
+  const [nutritionLog, setNutritionLog] = useState<{ meal: string; time: string }[]>([]);
+  const [vitalSigns, setVitalSigns] = useState<{
+    bloodPressure?: string;
+    heartRate?: string;
+    temperature?: string;
+    oxygenLevel?: string;
+  }>({});
+  const [socialInteractions, setSocialInteractions] = useState<string[]>([]);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -69,15 +75,7 @@ export const PatientCheckIn = ({ groupId }: { groupId: string }) => {
         .maybeSingle();
 
       if (error) throw error;
-      
-      if (data && typeof data.response_data === 'object' && data.response_data !== null) {
-        setActiveCheckIn(data);
-        const responseData = data.response_data as ResponseData;
-        const questions = responseData.questions || [];
-        const initialAnswers: Record<string, string> = {};
-        questions.forEach(q => initialAnswers[q] = '');
-        setAnswers(initialAnswers);
-      }
+      setActiveCheckIn(data);
     } catch (error) {
       console.error('Error fetching active check-in:', error);
       toast({
@@ -95,19 +93,21 @@ export const PatientCheckIn = ({ groupId }: { groupId: string }) => {
     
     try {
       setSubmitting(true);
-      const responseData = activeCheckIn.response_data as ResponseData;
-      const updatedResponseData: ResponseData = {
-        ...responseData,
-        answers,
+      const checkInData = {
+        status: 'completed',
+        completed_time: new Date().toISOString(),
+        mood_score: moodScore,
+        pain_level: painLevel,
+        sleep_hours: sleepHours,
+        medication_taken: medicationTaken,
+        nutrition_log: nutritionLog,
+        vital_signs: vitalSigns,
+        social_interactions: socialInteractions,
       };
 
       const { error } = await supabase
         .from('patient_check_ins')
-        .update({
-          status: 'completed',
-          completed_time: new Date().toISOString(),
-          response_data: updatedResponseData as Json,
-        })
+        .update(checkInData)
         .eq('id', activeCheckIn.id);
 
       if (error) throw error;
@@ -118,7 +118,14 @@ export const PatientCheckIn = ({ groupId }: { groupId: string }) => {
       });
 
       setActiveCheckIn(null);
-      setAnswers({});
+      // Reset all states
+      setMoodScore(null);
+      setPainLevel(null);
+      setSleepHours(null);
+      setMedicationTaken(false);
+      setNutritionLog([]);
+      setVitalSigns({});
+      setSocialInteractions([]);
     } catch (error) {
       console.error('Error submitting check-in:', error);
       toast({
@@ -128,38 +135,6 @@ export const PatientCheckIn = ({ groupId }: { groupId: string }) => {
       });
     } finally {
       setSubmitting(false);
-    }
-  };
-
-  const handleEmergency = async () => {
-    try {
-      const { error } = await supabase
-        .from('patient_check_ins')
-        .insert({
-          group_id: groupId,
-          check_in_type: 'emergency',
-          status: 'urgent',
-          scheduled_time: new Date().toISOString(),
-          response_data: {
-            type: 'emergency_alert',
-            triggered_at: new Date().toISOString(),
-          },
-        });
-
-      if (error) throw error;
-
-      toast({
-        title: "Emergency Alert Sent",
-        description: "Help is on the way. Stay calm.",
-        variant: "destructive",
-      });
-    } catch (error) {
-      console.error('Error sending emergency alert:', error);
-      toast({
-        title: "Error",
-        description: "Failed to send emergency alert. Please try again or call emergency services directly.",
-        variant: "destructive",
-      });
     }
   };
 
@@ -173,58 +148,52 @@ export const PatientCheckIn = ({ groupId }: { groupId: string }) => {
 
   return (
     <div className="space-y-4">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center justify-between">
-            <span>Daily Check-in</span>
-            <Button
-              variant="destructive"
-              size="sm"
-              className="flex items-center"
-              onClick={handleEmergency}
-            >
-              <AlertTriangle className="mr-2 h-4 w-4" />
-              Emergency
-            </Button>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {activeCheckIn && activeCheckIn.response_data && typeof activeCheckIn.response_data === 'object' && 'questions' in activeCheckIn.response_data ? (
-            <div className="space-y-4">
-              {(activeCheckIn.response_data.questions as string[]).map((question: string, index: number) => (
-                <div key={index}>
-                  <label className="block text-sm font-medium mb-2">
-                    {question}
-                  </label>
-                  <Textarea
-                    value={answers[question] || ''}
-                    onChange={(e) =>
-                      setAnswers({ ...answers, [question]: e.target.value })
-                    }
-                    placeholder="Type your answer here..."
-                  />
-                </div>
-              ))}
-              <Button
-                className="w-full"
-                onClick={handleSubmitCheckIn}
-                disabled={submitting}
-              >
-                <Check className="mr-2 h-4 w-4" />
-                Complete Check-in
-              </Button>
-            </div>
-          ) : (
-            <div className="text-center py-6">
-              <Heart className="h-12 w-12 text-primary mx-auto mb-4" />
-              <p className="text-lg font-medium">No Active Check-ins</p>
-              <p className="text-gray-500">
-                You're all caught up! Your next check-in will appear here.
-              </p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      <EmergencyAlert groupId={groupId} />
+      
+      {activeCheckIn ? (
+        <>
+          <MoodTracker moodScore={moodScore} onMoodSelect={setMoodScore} />
+          <PainLevel painLevel={painLevel} onPainLevelChange={setPainLevel} />
+          <SleepTracker sleepHours={sleepHours} onSleepHoursChange={setSleepHours} />
+          <MedicationTracker 
+            medicationTaken={medicationTaken} 
+            onMedicationStatusChange={setMedicationTaken} 
+          />
+          <NutritionLog 
+            nutritionLog={nutritionLog} 
+            onNutritionLogUpdate={setNutritionLog} 
+          />
+          <VitalSigns vitalSigns={vitalSigns} onChange={setVitalSigns} />
+          <SocialInteractions 
+            interactions={socialInteractions} 
+            onInteractionAdd={(type) => setSocialInteractions([...socialInteractions, type])} 
+          />
+          <WeatherAlert conditions={{
+            temperature: 72,
+            condition: "Sunny",
+            warning: "High UV index today. Remember to wear sunscreen."
+          }} />
+          
+          <Button
+            className="w-full mt-4"
+            onClick={handleSubmitCheckIn}
+            disabled={submitting}
+          >
+            <Check className="mr-2 h-4 w-4" />
+            Complete Check-in
+          </Button>
+        </>
+      ) : (
+        <Card>
+          <CardContent className="text-center py-6">
+            <Heart className="h-12 w-12 text-primary mx-auto mb-4" />
+            <p className="text-lg font-medium">No Active Check-ins</p>
+            <p className="text-gray-500">
+              You're all caught up! Your next check-in will appear here.
+            </p>
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardHeader>
