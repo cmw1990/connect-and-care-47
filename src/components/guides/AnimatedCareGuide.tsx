@@ -15,10 +15,13 @@ export const AnimatedCareGuide = ({ disease, description }: AnimatedGuideProps) 
   useEffect(() => {
     const fetchVideo = async () => {
       try {
+        // Log the query for debugging
+        console.log('Fetching video for disease:', disease);
+        
         const { data, error } = await supabase
           .from('care_guide_videos')
           .select('video_url')
-          .eq('disease', disease)
+          .ilike('disease', disease) // Using ilike for case-insensitive matching
           .maybeSingle();
 
         if (error) {
@@ -28,8 +31,10 @@ export const AnimatedCareGuide = ({ disease, description }: AnimatedGuideProps) 
         }
 
         if (data) {
+          console.log('Video data found:', data);
           setVideoUrl(data.video_url);
         } else {
+          console.log('No video found for disease:', disease);
           setError('No video available for this condition');
         }
       } catch (err) {
