@@ -32,6 +32,7 @@ export const CareAssistant = ({ groupId }: { groupId?: string }) => {
 
   const connectWebSocket = () => {
     if (webSocketRef.current?.readyState === WebSocket.OPEN) {
+      console.log('WebSocket already connected');
       return;
     }
 
@@ -166,6 +167,7 @@ Care Tips: ${careTips.length > 0 ? careTips.join(', ') : 'None specified'}
 
       // Ensure WebSocket is connected
       if (!webSocketRef.current || webSocketRef.current.readyState !== WebSocket.OPEN) {
+        console.log('WebSocket not connected, attempting to connect...');
         connectWebSocket();
         // Wait a bit for the connection to establish
         await new Promise(resolve => setTimeout(resolve, 1000));

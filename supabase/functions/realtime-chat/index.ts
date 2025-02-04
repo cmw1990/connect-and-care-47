@@ -25,8 +25,10 @@ serve(async (req) => {
       throw new Error('OpenAI API key not configured');
     }
 
+    console.log('WebSocket connected');
+
     socket.onopen = () => {
-      console.log('WebSocket connected');
+      console.log('Client connected to WebSocket');
     };
 
     socket.onmessage = async (event) => {
@@ -71,24 +73,28 @@ serve(async (req) => {
           throw new Error('Failed to get response reader');
         }
 
+        let buffer = '';
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
 
           const chunk = new TextDecoder().decode(value);
-          const lines = chunk.split('\n').filter(line => line.trim());
+          buffer += chunk;
+
+          const lines = buffer.split('\n');
+          buffer = lines.pop() || '';
 
           for (const line of lines) {
+            if (line.trim() === '') continue;
+            if (line.trim() === 'data: [DONE]') continue;
+            
             if (line.startsWith('data: ')) {
-              const data = line.slice(6);
-              if (data === '[DONE]') continue;
-
               try {
-                const parsed = JSON.parse(data);
-                if (parsed.choices?.[0]?.delta?.content) {
+                const data = JSON.parse(line.slice(6));
+                if (data.choices?.[0]?.delta?.content) {
                   socket.send(JSON.stringify({
                     type: 'chunk',
-                    content: parsed.choices[0].delta.content
+                    content: data.choices[0].delta.content
                   }));
                 }
               } catch (e) {
