@@ -9,6 +9,7 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -29,6 +30,8 @@ serve(async (req) => {
     
     Format the response as a detailed, step-by-step guide that could be used to create an educational video.`;
 
+    console.log('Generating care guide for:', disease);
+    
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -60,6 +63,8 @@ serve(async (req) => {
     // 2. Upload the video to storage
     // 3. Return the video URL
     const mockVideoUrl = "https://example.com/placeholder-video.mp4";
+
+    console.log('Successfully generated care guide');
 
     return new Response(
       JSON.stringify({ 
