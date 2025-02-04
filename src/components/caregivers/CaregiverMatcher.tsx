@@ -38,7 +38,9 @@ interface SimplifiedCaregiverProfile {
     last_name: string;
   };
   certifications: any[];
-  availability: any;
+  availability: {
+    location?: LocationData;
+  } | null;
   location: LocationData | null;
   specializations: string[] | null;
 }
@@ -125,8 +127,9 @@ export const CaregiverMatcher = () => {
 
       let filteredCaregivers = (data || []).map(caregiver => ({
         ...caregiver,
+        certifications: Array.isArray(caregiver.certifications) ? caregiver.certifications : [],
         location: caregiver.availability?.location || null
-      }));
+      })) as SimplifiedCaregiverProfile[];
 
       if (userLocation && filters.maxDistance > 0) {
         filteredCaregivers = filteredCaregivers.filter(caregiver => {
