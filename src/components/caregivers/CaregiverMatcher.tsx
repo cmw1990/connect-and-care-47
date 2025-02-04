@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { CaregiverCard } from "./CaregiverCard";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -22,7 +21,7 @@ interface Caregiver {
   experience_years: number;
   hourly_rate: number;
   skills: string[];
-  certifications: any[];
+  certifications: string[];
   background_check_status: string;
   rating: number;
   identity_verified: boolean;
@@ -73,7 +72,25 @@ export const CaregiverMatcher = () => {
       const { data, error } = await query;
 
       if (error) throw error;
-      setCaregivers(data || []);
+
+      // Transform the data to match the Caregiver interface
+      const formattedCaregivers: Caregiver[] = (data || []).map(caregiver => ({
+        id: caregiver.id,
+        user_id: caregiver.user_id,
+        bio: caregiver.bio || '',
+        experience_years: caregiver.experience_years || 0,
+        hourly_rate: caregiver.hourly_rate || 0,
+        skills: caregiver.skills || [],
+        certifications: Array.isArray(caregiver.certifications) 
+          ? caregiver.certifications 
+          : [],
+        background_check_status: caregiver.background_check_status || 'pending',
+        rating: caregiver.rating || 0,
+        identity_verified: caregiver.identity_verified || false,
+        user: caregiver.user || { first_name: '', last_name: '' }
+      }));
+
+      setCaregivers(formattedCaregivers);
     } catch (error) {
       console.error('Error fetching caregivers:', error);
       toast({
@@ -83,42 +100,6 @@ export const CaregiverMatcher = () => {
       });
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const handleConnect = async (caregiverId: string) => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        toast({
-          title: "Error",
-          description: "Please sign in to connect with caregivers",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      const { error } = await supabase
-        .from('care_connections')
-        .insert({
-          requester_id: user.id,
-          recipient_id: caregiverId,
-          connection_type: 'carer',
-        });
-
-      if (error) throw error;
-
-      toast({
-        title: "Success",
-        description: "Connection request sent successfully",
-      });
-    } catch (error) {
-      console.error('Error connecting with caregiver:', error);
-      toast({
-        title: "Error",
-        description: "Failed to send connection request",
-        variant: "destructive",
-      });
     }
   };
 
@@ -197,7 +178,6 @@ export const CaregiverMatcher = () => {
                 <CaregiverCard
                   key={caregiver.id}
                   caregiver={caregiver}
-                  onBook={() => handleConnect(caregiver.id)}
                 />
               ))
             )}
