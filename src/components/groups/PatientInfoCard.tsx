@@ -18,6 +18,8 @@ import { Edit, MapPin } from "lucide-react";
 import { LocationMap } from "./LocationMap";
 import { Geolocation } from '@capacitor/geolocation';
 import { Tables } from "@/integrations/supabase/types";
+import { CheckInManager } from "@/components/checkins/CheckInManager";
+import { PatientCheckIn } from "@/components/checkins/PatientCheckIn";
 
 type PatientLocation = Tables<"patient_locations">;
 
@@ -408,6 +410,14 @@ export const PatientInfoCard = ({ groupId, patientInfo }: PatientInfoCardProps) 
                   longitude={currentLocation.longitude}
                 />
               </div>
+            )}
+          </div>
+
+          <div className="border-t pt-4">
+            {userRole === 'patient' ? (
+              <PatientCheckIn groupId={groupId} />
+            ) : (
+              <CheckInManager groupId={groupId} />
             )}
           </div>
         </div>
