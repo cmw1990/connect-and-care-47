@@ -3,8 +3,14 @@ import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Star, MapPin, ShieldCheck, Calendar } from "lucide-react";
+import { Star, MapPin, ShieldCheck, Calendar, Video } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { ConsultationScheduler } from "@/components/consultations/ConsultationScheduler";
+import {
+  Dialog,
+  DialogContent,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 interface CaregiverCardProps {
   caregiver: {
@@ -94,10 +100,20 @@ export const CaregiverCard = ({ caregiver, onBook }: CaregiverCardProps) => {
           ${caregiver.hourly_rate}/hr
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm">
-            <Calendar className="h-4 w-4 mr-2" />
-            View Schedule
-          </Button>
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button variant="outline" size="sm">
+                <Video className="h-4 w-4 mr-2" />
+                Schedule Call
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <ConsultationScheduler 
+                providerId={caregiver.id}
+                providerType="caregiver"
+              />
+            </DialogContent>
+          </Dialog>
           <Button onClick={handleBook} disabled={isLoading}>
             Book Now
           </Button>

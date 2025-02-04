@@ -3,8 +3,14 @@ import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Star, MapPin, ShieldCheck, Calendar } from "lucide-react";
+import { Star, Video, Heart, ShieldCheck } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { ConsultationScheduler } from "@/components/consultations/ConsultationScheduler";
+import {
+  Dialog,
+  DialogContent,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 interface CompanionCardProps {
   companion: {
@@ -14,34 +20,36 @@ interface CompanionCardProps {
       last_name: string;
     };
     bio: string;
-    hourly_rate: number;
-    rating: number;
     interests: string[];
     languages: string[];
+    hourly_rate: number;
+    rating: number;
+    expertise_areas: string[];
     virtual_meeting_preference: boolean;
     in_person_meeting_preference: boolean;
+    identity_verified: boolean;
   };
-  onBook?: () => void;
+  onConnect?: () => void;
 }
 
-export const CompanionCard = ({ companion, onBook }: CompanionCardProps) => {
+export const CompanionCard = ({ companion, onConnect }: CompanionCardProps) => {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleBook = async () => {
+  const handleConnect = async () => {
     setIsLoading(true);
     try {
-      if (onBook) {
-        await onBook();
+      if (onConnect) {
+        await onConnect();
       }
       toast({
         title: "Success",
-        description: "Meeting request sent successfully",
+        description: "Connection request sent successfully",
       });
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to send meeting request",
+        description: "Failed to send connection request",
         variant: "destructive",
       });
     } finally {
@@ -63,46 +71,54 @@ export const CompanionCard = ({ companion, onBook }: CompanionCardProps) => {
           <div className="flex items-center gap-2 text-sm text-gray-500">
             <Star className="h-4 w-4 text-yellow-400" />
             <span>{companion.rating}/5</span>
-            <span>•</span>
-            <span>{companion.languages.join(", ")}</span>
           </div>
         </div>
       </CardHeader>
       <CardContent>
         <p className="text-sm text-gray-600 mb-4">{companion.bio}</p>
         <div className="flex flex-wrap gap-2 mb-4">
-          {companion.interests.map((interest) => (
-            <Badge key={interest} variant="secondary">
-              {interest}
+          {companion.expertise_areas.map((area) => (
+            <Badge key={area} variant="secondary">
+              {area}
             </Badge>
           ))}
         </div>
-        <div className="flex items-center gap-4 text-sm text-gray-500">
-          <div className="flex items-center gap-1">
-            <MapPin className="h-4 w-4" />
-            <span>Local Area</span>
-          </div>
-          <div className="flex gap-2">
-            {companion.virtual_meeting_preference && (
-              <Badge variant="outline">Virtual</Badge>
-            )}
-            {companion.in_person_meeting_preference && (
-              <Badge variant="outline">In-Person</Badge>
-            )}
-          </div>
+        <div className="flex flex-wrap gap-2 mb-4">
+          {companion.languages.map((language) => (
+            <Badge key={language} variant="outline">
+              {language}
+            </Badge>
+          ))}
         </div>
+        {companion.identity_verified && (
+          <div className="flex items-center gap-1 text-green-600">
+            <ShieldCheck className="h-4 w-4" />
+            <span>Verified Identity</span>
+          </div>
+        )}
       </CardContent>
       <CardFooter className="flex justify-between items-center">
         <div className="text-lg font-semibold">
           ${companion.hourly_rate}/hr
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm">
-            <Calendar className="h-4 w-4 mr-2" />
-            View Schedule
-          </Button>
-          <Button onClick={handleBook} disabled={isLoading}>
-            Schedule Meeting
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button variant="outline" size="sm">
+                <Video className="h-4 w-4 mr-2" />
+                Schedule Call
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <ConsultationScheduler 
+                providerId={companion.id}
+                providerType="companion"
+              />
+            </DialogContent>
+          </Dialog>
+          <Button onClick={handleConnect} disabled={isLoading}>
+            <Heart className="h-4 w-4 mr-2" />
+            Connect
           </Button>
         </div>
       </CardFooter>
