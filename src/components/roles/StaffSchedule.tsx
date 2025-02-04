@@ -6,6 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 
 export const StaffSchedule = ({ facilityId }: { facilityId: string }) => {
   const [schedules, setSchedules] = useState<CareHomeStaffSchedule[]>([]);
+  const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -13,18 +14,26 @@ export const StaffSchedule = ({ facilityId }: { facilityId: string }) => {
       try {
         const { data, error } = await supabase
           .from('care_home_staff_schedule')
-          .select(`
-            *,
-            profiles:staff_id (
-              first_name,
-              last_name
-            )
-          `)
+          .select('*')
           .eq('facility_id', facilityId)
           .order('shift_start', { ascending: true });
 
         if (error) throw error;
-        setSchedules(data as CareHomeStaffSchedule[]);
+
+        // Ensure type safety by mapping the response
+        const typedSchedules: CareHomeStaffSchedule[] = data.map(item => ({
+          id: item.id,
+          facility_id: item.facility_id,
+          staff_id: item.staff_id,
+          shift_start: item.shift_start,
+          shift_end: item.shift_end,
+          shift_type: item.shift_type,
+          department: item.department,
+          status: item.status,
+          notes: item.notes
+        }));
+
+        setSchedules(typedSchedules);
       } catch (error) {
         console.error('Error fetching schedules:', error);
         toast({
@@ -32,11 +41,21 @@ export const StaffSchedule = ({ facilityId }: { facilityId: string }) => {
           description: "Failed to load staff schedules",
           variant: "destructive",
         });
+      } finally {
+        setLoading(false);
       }
     };
 
     fetchSchedules();
   }, [facilityId, toast]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
@@ -45,35 +64,40 @@ export const StaffSchedule = ({ facilityId }: { facilityId: string }) => {
           <CardTitle>Staff Schedule</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            {schedules.map((schedule) => (
-              <Card key={schedule.id}>
-                <CardContent className="p-4">
-                  <div className="space-y-2">
+          {schedules.length === 0 ? (
+            <p className="text-center text-muted-foreground py-8">No schedules available</p>
+          ) : (
+            <div className="space-y-4">
+              {schedules.map((schedule) => (
+                <Card key={schedule.id}>
+                  <CardContent className="p-4">
                     <div className="flex justify-between items-center">
-                      <h3 className="font-medium">
-                        {(schedule as any).profiles?.first_name} {(schedule as any).profiles?.last_name}
-                      </h3>
-                      <span className={`px-2 py-1 rounded text-sm ${
-                        schedule.status === 'scheduled' ? 'bg-green-100 text-green-800' :
-                        schedule.status === 'in-progress' ? 'bg-blue-100 text-blue-800' :
-                        'bg-gray-100 text-gray-800'
-                      }`}>
-                        {schedule.status}
-                      </span>
-                    </div>
-                    <div className="text-sm text-gray-500">
-                      <p>{new Date(schedule.shift_start).toLocaleString()} - {new Date(schedule.shift_end).toLocaleString()}</p>
-                      <p>{schedule.department} - {schedule.shift_type}</p>
+                      <div>
+                        <h3 className="font-medium">{schedule.department}</h3>
+                        <p className="text-sm text-gray-500">{schedule.shift_type}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-medium">
+                          {new Date(schedule.shift_start).toLocaleTimeString()} - 
+                          {new Date(schedule.shift_end).toLocaleTimeString()}
+                        </p>
+                        <p className={`text-sm ${
+                          schedule.status === 'scheduled' 
+                            ? 'text-green-500' 
+                            : 'text-yellow-500'
+                        }`}>
+                          {schedule.status}
+                        </p>
+                      </div>
                     </div>
                     {schedule.notes && (
-                      <p className="text-sm text-gray-600">{schedule.notes}</p>
+                      <p className="mt-2 text-sm text-gray-500">{schedule.notes}</p>
                     )}
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
