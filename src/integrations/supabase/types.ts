@@ -41,6 +41,60 @@ export type Database = {
           },
         ]
       }
+      care_assignments: {
+        Row: {
+          assignment_type: Database["public"]["Enums"]["user_type"]
+          caregiver_id: string
+          created_at: string | null
+          end_date: string | null
+          group_id: string
+          id: string
+          notes: string | null
+          start_date: string | null
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          assignment_type: Database["public"]["Enums"]["user_type"]
+          caregiver_id: string
+          created_at?: string | null
+          end_date?: string | null
+          group_id: string
+          id?: string
+          notes?: string | null
+          start_date?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          assignment_type?: Database["public"]["Enums"]["user_type"]
+          caregiver_id?: string
+          created_at?: string | null
+          end_date?: string | null
+          group_id?: string
+          id?: string
+          notes?: string | null
+          start_date?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "care_assignments_caregiver_id_fkey"
+            columns: ["caregiver_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "care_assignments_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "care_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       care_facilities: {
         Row: {
           address: string | null
@@ -91,6 +145,7 @@ export type Database = {
           created_at: string
           group_id: string | null
           id: string
+          member_type: Database["public"]["Enums"]["user_type"] | null
           role: string
           user_id: string | null
         }
@@ -98,6 +153,7 @@ export type Database = {
           created_at?: string
           group_id?: string | null
           id?: string
+          member_type?: Database["public"]["Enums"]["user_type"] | null
           role: string
           user_id?: string | null
         }
@@ -105,6 +161,7 @@ export type Database = {
           created_at?: string
           group_id?: string | null
           id?: string
+          member_type?: Database["public"]["Enums"]["user_type"] | null
           role?: string
           user_id?: string | null
         }
@@ -642,9 +699,11 @@ export type Database = {
           care_tips: string[] | null
           created_at: string
           diseases: string[] | null
+          facility_id: string | null
           group_id: string | null
           id: string
           medicines: Json | null
+          primary_caregiver_id: string | null
           updated_at: string
         }
         Insert: {
@@ -652,9 +711,11 @@ export type Database = {
           care_tips?: string[] | null
           created_at?: string
           diseases?: string[] | null
+          facility_id?: string | null
           group_id?: string | null
           id?: string
           medicines?: Json | null
+          primary_caregiver_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -662,17 +723,33 @@ export type Database = {
           care_tips?: string[] | null
           created_at?: string
           diseases?: string[] | null
+          facility_id?: string | null
           group_id?: string | null
           id?: string
           medicines?: Json | null
+          primary_caregiver_id?: string | null
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "patient_info_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "care_facilities"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "patient_info_group_id_fkey"
             columns: ["group_id"]
             isOneToOne: false
             referencedRelation: "care_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "patient_info_primary_caregiver_id_fkey"
+            columns: ["primary_caregiver_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -717,42 +794,59 @@ export type Database = {
           availability_settings: Json | null
           contact_info: string | null
           created_at: string
+          facility_id: string | null
           first_name: string | null
           id: string
           last_name: string | null
           notification_preferences: Json | null
           notification_settings: Json | null
           privacy_preferences: Json | null
+          professional_credentials: Json | null
           relationship_to_patient: string | null
           updated_at: string
+          user_type: Database["public"]["Enums"]["user_type"] | null
         }
         Insert: {
           availability_settings?: Json | null
           contact_info?: string | null
           created_at?: string
+          facility_id?: string | null
           first_name?: string | null
           id: string
           last_name?: string | null
           notification_preferences?: Json | null
           notification_settings?: Json | null
           privacy_preferences?: Json | null
+          professional_credentials?: Json | null
           relationship_to_patient?: string | null
           updated_at?: string
+          user_type?: Database["public"]["Enums"]["user_type"] | null
         }
         Update: {
           availability_settings?: Json | null
           contact_info?: string | null
           created_at?: string
+          facility_id?: string | null
           first_name?: string | null
           id?: string
           last_name?: string | null
           notification_preferences?: Json | null
           notification_settings?: Json | null
           privacy_preferences?: Json | null
+          professional_credentials?: Json | null
           relationship_to_patient?: string | null
           updated_at?: string
+          user_type?: Database["public"]["Enums"]["user_type"] | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "care_facilities"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       resource_directory: {
         Row: {
@@ -961,7 +1055,11 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      user_type:
+        | "patient"
+        | "family_caregiver"
+        | "professional_caregiver"
+        | "care_facility_staff"
     }
     CompositeTypes: {
       [_ in never]: never

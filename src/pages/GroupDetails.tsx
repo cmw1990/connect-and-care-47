@@ -13,25 +13,14 @@ import { GroupPosts } from "@/components/groups/GroupPosts";
 import { PatientInfoCard } from "@/components/groups/PatientInfoCard";
 import { MiniCalendar } from "@/components/groups/MiniCalendar";
 import { CareAssistant } from "@/components/ai/CareAssistant";
+import { FacilityDashboard } from "@/components/roles/FacilityDashboard";
+import { ProfessionalCaregiverDashboard } from "@/components/roles/ProfessionalCaregiverDashboard";
+import { FamilyCaregiverView } from "@/components/roles/FamilyCaregiverView";
 import { useIsMobile } from "@/hooks/use-mobile";
-
-interface GroupPost {
-  id: string;
-  content: string;
-  created_at: string;
-  created_by: string;
-  group_id: string;
-  profiles?: {
-    first_name: string | null;
-    last_name: string | null;
-  } | null;
-}
 
 export default function GroupDetails() {
   const { groupId } = useParams();
-  const [posts, setPosts] = useState<GroupPost[]>([]);
-  const [newPost, setNewPost] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [userRole, setUserRole] = useState<string | null>(null);
   const [groupMembers, setGroupMembers] = useState<any[]>([]);
   const { toast } = useToast();
   const { t } = useTranslation();
@@ -39,10 +28,28 @@ export default function GroupDetails() {
 
   useEffect(() => {
     if (groupId) {
-      fetchPosts();
+      fetchUserRole();
       fetchGroupMembers();
     }
   }, [groupId]);
+
+  const fetchUserRole = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('user_type')
+        .eq('id', user.id)
+        .single();
+
+      if (error) throw error;
+      setUserRole(data?.user_type);
+    } catch (error) {
+      console.error('Error fetching user role:', error);
+    }
+  };
 
   const fetchGroupMembers = async () => {
     try {
@@ -64,70 +71,20 @@ export default function GroupDetails() {
     }
   };
 
-  const fetchPosts = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('group_posts')
-        .select(`
-          *,
-          profiles (
-            first_name,
-            last_name
-          )
-        `)
-        .eq('group_id', groupId)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      setPosts(data || []);
-    } catch (error) {
-      console.error('Error fetching posts:', error);
-      toast({
-        title: t("error"),
-        description: t("errorFetchingPosts"),
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newPost.trim()) return;
-
-    setLoading(true);
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('No user found');
-
-      const { error } = await supabase
-        .from('group_posts')
-        .insert({
-          content: newPost.trim(),
-          group_id: groupId,
-          created_by: user.id,
-        });
-
-      if (error) throw error;
-
-      setNewPost("");
-      toast({
-        title: t("success"),
-        description: t("postCreated"),
-      });
-      await fetchPosts();
-    } catch (error) {
-      console.error('Error creating post:', error);
-      toast({
-        title: t("error"),
-        description: t("errorCreatingPost"),
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
   if (!groupId) return null;
+
+  const renderRoleBasedDashboard = () => {
+    switch (userRole) {
+      case 'care_facility_staff':
+        return <FacilityDashboard groupId={groupId} />;
+      case 'professional_caregiver':
+        return <ProfessionalCaregiverDashboard groupId={groupId} />;
+      case 'family_caregiver':
+        return <FamilyCaregiverView groupId={groupId} />;
+      default:
+        return null;
+    }
+  };
 
   return (
     <div className="container mx-auto px-4 py-6">
@@ -135,6 +92,7 @@ export default function GroupDetails() {
         {/* Left Column */}
         <div className="md:col-span-2 space-y-6">
           <GroupStatusBar groupId={groupId} />
+          {renderRoleBasedDashboard()}
           <GroupTasks groupId={groupId} members={groupMembers} />
           <GroupPosts groupId={groupId} />
         </div>
