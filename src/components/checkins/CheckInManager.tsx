@@ -20,6 +20,14 @@ import { CheckInHistory } from "./components/CheckInHistory";
 
 type PatientCheckIn = Tables<"patient_check_ins">;
 
+interface NotificationPreferences {
+  medicationReminders?: boolean;
+  emergencyContacts?: boolean;
+  sms?: boolean;
+  push?: boolean;
+  email?: boolean;
+}
+
 interface CheckInSettings {
   dailyCheckIn: boolean;
   checkInTime: string;
@@ -62,14 +70,15 @@ export const CheckInManager = ({ groupId }: { groupId: string }) => {
       if (error) throw error;
 
       if (data) {
+        const notificationPrefs = data.notification_preferences as NotificationPreferences;
         setSettings({
           dailyCheckIn: true,
           checkInTime: data.check_in_frequency ? data.check_in_frequency.toString().slice(0, 5) : "09:00",
           customQuestions: data.required_check_in_types || [],
           activityMonitoring: data.automated_responses || false,
           inactivityThreshold: 12,
-          medicationReminders: data.notification_preferences?.medicationReminders ?? true,
-          emergencyContacts: data.notification_preferences?.emergencyContacts ?? true,
+          medicationReminders: notificationPrefs?.medicationReminders ?? true,
+          emergencyContacts: notificationPrefs?.emergencyContacts ?? true,
         });
       }
     } catch (error) {
