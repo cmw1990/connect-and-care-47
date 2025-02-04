@@ -13,8 +13,15 @@ serve(async (req) => {
 
   try {
     const { disease, description } = await req.json();
+    console.log('Generating image for disease:', disease);
+
+    if (!Deno.env.get('OPENAI_API_KEY')) {
+      console.error('OPENAI_API_KEY is not set');
+      throw new Error('OpenAI API key is not configured');
+    }
 
     const prompt = `Create a simple, clear medical illustration showing care instructions for ${disease}. ${description}. Use a clean, professional medical style with soft colors.`;
+    console.log('Using prompt:', prompt);
 
     const response = await fetch('https://api.openai.com/v1/images/generations', {
       method: 'POST',
@@ -30,9 +37,14 @@ serve(async (req) => {
       }),
     });
 
-    if (!response.ok) throw new Error('Failed to generate image');
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error('OpenAI API error:', errorData);
+      throw new Error(`OpenAI API error: ${JSON.stringify(errorData)}`);
+    }
 
     const data = await response.json();
+    console.log('Successfully generated image');
     
     return new Response(
       JSON.stringify({ imageUrl: data.data[0].url }),
@@ -41,7 +53,10 @@ serve(async (req) => {
   } catch (error) {
     console.error('Error in generate-care-image function:', error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error.message,
+        details: error.toString()
+      }),
       { 
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
