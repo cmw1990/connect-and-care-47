@@ -22,7 +22,7 @@ import { CareQualityMetrics } from "@/components/metrics/CareQualityMetrics";
 import { CareUpdates } from "@/components/groups/CareUpdates";
 import { WellnessTracker } from "@/components/wellness/WellnessTracker";
 import { CareTeamCalendar } from "@/components/calendar/CareTeamCalendar";
-import type { CareGroup } from "@/types/groups";
+import type { CareGroup, GroupPrivacySettings } from "@/types/groups";
 import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
