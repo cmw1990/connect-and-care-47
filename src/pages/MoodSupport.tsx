@@ -133,6 +133,8 @@ export const MoodSupport = () => {
           </CardContent>
         </Card>
       </div>
+
+      <CompanionMatcher />
     </div>
   );
 };

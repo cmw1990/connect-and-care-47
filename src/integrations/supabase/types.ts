@@ -9,6 +9,47 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      availability_slots: {
+        Row: {
+          created_at: string | null
+          day_of_week: string
+          end_time: string
+          id: string
+          profile_id: string
+          profile_type: string
+          recurring: boolean | null
+          start_time: string
+        }
+        Insert: {
+          created_at?: string | null
+          day_of_week: string
+          end_time: string
+          id?: string
+          profile_id: string
+          profile_type: string
+          recurring?: boolean | null
+          start_time: string
+        }
+        Update: {
+          created_at?: string | null
+          day_of_week?: string
+          end_time?: string
+          id?: string
+          profile_id?: string
+          profile_type?: string
+          recurring?: boolean | null
+          start_time?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_profile_id"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       care_analytics: {
         Row: {
           created_by: string | null
@@ -927,46 +968,67 @@ export type Database = {
       caregiver_profiles: {
         Row: {
           availability: Json | null
+          background_check_date: string | null
           background_check_status: string | null
           bio: string | null
           certifications: Json | null
           created_at: string | null
+          emergency_response: boolean | null
           experience_years: number | null
           hourly_rate: number | null
           id: string
+          identity_verified: boolean | null
+          preferred_hours: Json | null
           rating: number | null
+          reference_check_status: string | null
           reviews_count: number | null
+          service_radius: number | null
           skills: string[] | null
+          specializations: string[] | null
           updated_at: string | null
           user_id: string | null
         }
         Insert: {
           availability?: Json | null
+          background_check_date?: string | null
           background_check_status?: string | null
           bio?: string | null
           certifications?: Json | null
           created_at?: string | null
+          emergency_response?: boolean | null
           experience_years?: number | null
           hourly_rate?: number | null
           id?: string
+          identity_verified?: boolean | null
+          preferred_hours?: Json | null
           rating?: number | null
+          reference_check_status?: string | null
           reviews_count?: number | null
+          service_radius?: number | null
           skills?: string[] | null
+          specializations?: string[] | null
           updated_at?: string | null
           user_id?: string | null
         }
         Update: {
           availability?: Json | null
+          background_check_date?: string | null
           background_check_status?: string | null
           bio?: string | null
           certifications?: Json | null
           created_at?: string | null
+          emergency_response?: boolean | null
           experience_years?: number | null
           hourly_rate?: number | null
           id?: string
+          identity_verified?: boolean | null
+          preferred_hours?: Json | null
           rating?: number | null
+          reference_check_status?: string | null
           reviews_count?: number | null
+          service_radius?: number | null
           skills?: string[] | null
+          specializations?: string[] | null
           updated_at?: string | null
           user_id?: string | null
         }
@@ -1197,14 +1259,21 @@ export type Database = {
       companion_profiles: {
         Row: {
           availability: Json | null
+          background_check_date: string | null
           bio: string | null
+          communication_preferences: string[] | null
           created_at: string | null
+          dementia_experience: boolean | null
+          expertise_areas: string[] | null
           hourly_rate: number | null
           id: string
+          identity_verified: boolean | null
           in_person_meeting_preference: boolean | null
           interests: string[] | null
           languages: string[] | null
+          preferred_activities: string[] | null
           rating: number | null
+          reference_check_status: string | null
           reviews_count: number | null
           updated_at: string | null
           user_id: string | null
@@ -1212,14 +1281,21 @@ export type Database = {
         }
         Insert: {
           availability?: Json | null
+          background_check_date?: string | null
           bio?: string | null
+          communication_preferences?: string[] | null
           created_at?: string | null
+          dementia_experience?: boolean | null
+          expertise_areas?: string[] | null
           hourly_rate?: number | null
           id?: string
+          identity_verified?: boolean | null
           in_person_meeting_preference?: boolean | null
           interests?: string[] | null
           languages?: string[] | null
+          preferred_activities?: string[] | null
           rating?: number | null
+          reference_check_status?: string | null
           reviews_count?: number | null
           updated_at?: string | null
           user_id?: string | null
@@ -1227,14 +1303,21 @@ export type Database = {
         }
         Update: {
           availability?: Json | null
+          background_check_date?: string | null
           bio?: string | null
+          communication_preferences?: string[] | null
           created_at?: string | null
+          dementia_experience?: boolean | null
+          expertise_areas?: string[] | null
           hourly_rate?: number | null
           id?: string
+          identity_verified?: boolean | null
           in_person_meeting_preference?: boolean | null
           interests?: string[] | null
           languages?: string[] | null
+          preferred_activities?: string[] | null
           rating?: number | null
+          reference_check_status?: string | null
           reviews_count?: number | null
           updated_at?: string | null
           user_id?: string | null
@@ -2056,6 +2139,60 @@ export type Database = {
           {
             foreignKeyName: "respite_care_logs_relief_caregiver_id_fkey"
             columns: ["relief_caregiver_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      service_reviews: {
+        Row: {
+          booking_id: string
+          care_quality_score: number | null
+          communication_score: number | null
+          created_at: string | null
+          id: string
+          provider_id: string
+          rating: number
+          reliability_score: number | null
+          review_text: string | null
+          reviewer_id: string
+        }
+        Insert: {
+          booking_id: string
+          care_quality_score?: number | null
+          communication_score?: number | null
+          created_at?: string | null
+          id?: string
+          provider_id: string
+          rating: number
+          reliability_score?: number | null
+          review_text?: string | null
+          reviewer_id: string
+        }
+        Update: {
+          booking_id?: string
+          care_quality_score?: number | null
+          communication_score?: number | null
+          created_at?: string | null
+          id?: string
+          provider_id?: string
+          rating?: number
+          reliability_score?: number | null
+          review_text?: string | null
+          reviewer_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_provider"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_reviewer"
+            columns: ["reviewer_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
