@@ -74,7 +74,16 @@ export const CareQualityMetrics = ({ groupId }: { groupId: string }) => {
         .order('recorded_at', { ascending: true });
 
       if (error) throw error;
-      setMetrics(data || []);
+      
+      // Transform the data to match our expected type
+      const transformedData = (data || []).map(item => ({
+        ...item,
+        metric_value: typeof item.metric_value === 'string' 
+          ? JSON.parse(item.metric_value)
+          : item.metric_value
+      })) as CareQualityMetric[];
+
+      setMetrics(transformedData);
     } catch (error) {
       console.error('Error fetching metrics:', error);
       toast({

@@ -15,11 +15,19 @@ import { useToast } from "@/hooks/use-toast";
 const GroupDetails = () => {
   const { groupId } = useParams<{ groupId: string }>();
   const [patientInfo, setPatientInfo] = useState(null);
+  const [groupMembers, setGroupMembers] = useState<{
+    user_id: string;
+    profiles: {
+      first_name: string | null;
+      last_name: string | null;
+    } | null;
+  }[]>([]);
   const { toast } = useToast();
 
   useEffect(() => {
     if (groupId) {
       fetchPatientInfo();
+      fetchGroupMembers();
     }
   }, [groupId]);
 
@@ -45,6 +53,33 @@ const GroupDetails = () => {
     }
   };
 
+  const fetchGroupMembers = async () => {
+    if (!groupId) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('care_group_members')
+        .select(`
+          user_id,
+          profiles (
+            first_name,
+            last_name
+          )
+        `)
+        .eq('group_id', groupId);
+
+      if (error) throw error;
+      setGroupMembers(data || []);
+    } catch (error) {
+      console.error('Error fetching group members:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load group members",
+        variant: "destructive",
+      });
+    }
+  };
+
   if (!groupId) {
     return <div>Group not found</div>;
   }
@@ -57,7 +92,7 @@ const GroupDetails = () => {
           <CareQualityMetrics groupId={groupId} />
           <VideoConsultations groupId={groupId} />
           <GroupCalendar groupId={groupId} />
-          <GroupTasks groupId={groupId} />
+          <GroupTasks groupId={groupId} members={groupMembers} />
           <GroupPosts groupId={groupId} />
         </div>
         <div className="space-y-6">
