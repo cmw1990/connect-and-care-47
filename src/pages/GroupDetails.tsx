@@ -21,6 +21,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { MedicationScheduler } from "@/components/medications/MedicationScheduler";
 import { CareTeamCalendar } from "@/components/calendar/CareTeamCalendar";
 import { DocumentSharing } from "@/components/documents/DocumentSharing";
+import { VideoConsultations } from "@/components/video/VideoConsultations";
 
 // ... keep existing code (imports and component setup)
 
@@ -102,6 +103,7 @@ export default function GroupDetails() {
         <div className="md:col-span-2 space-y-6">
           <GroupStatusBar groupId={groupId} />
           <CareCircleManager groupId={groupId} />
+          <VideoConsultations groupId={groupId} />
           <MedicationScheduler groupId={groupId} />
           <CareTeamCalendar groupId={groupId} />
           <DocumentSharing groupId={groupId} />
