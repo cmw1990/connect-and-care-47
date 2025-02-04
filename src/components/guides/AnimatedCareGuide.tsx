@@ -10,17 +10,31 @@ interface AnimatedGuideProps {
 
 export const AnimatedCareGuide = ({ disease, description }: AnimatedGuideProps) => {
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchVideo = async () => {
-      const { data, error } = await supabase
-        .from('care_guide_videos')
-        .select('video_url')
-        .eq('disease', disease)
-        .single();
+      try {
+        const { data, error } = await supabase
+          .from('care_guide_videos')
+          .select('video_url')
+          .eq('disease', disease)
+          .maybeSingle();
 
-      if (!error && data) {
-        setVideoUrl(data.video_url);
+        if (error) {
+          console.error('Error fetching video:', error);
+          setError('Failed to load video');
+          return;
+        }
+
+        if (data) {
+          setVideoUrl(data.video_url);
+        } else {
+          setError('No video available for this condition');
+        }
+      } catch (err) {
+        console.error('Error in fetchVideo:', err);
+        setError('Failed to load video');
       }
     };
 
@@ -45,8 +59,9 @@ export const AnimatedCareGuide = ({ disease, description }: AnimatedGuideProps) 
               className="w-full h-full object-cover"
             />
           ) : (
-            <div className="flex items-center justify-center h-full">
+            <div className="flex items-center justify-center h-full flex-col gap-2">
               <Play className="h-12 w-12 text-muted-foreground" />
+              {error && <p className="text-sm text-muted-foreground">{error}</p>}
             </div>
           )}
         </div>
