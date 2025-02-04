@@ -14,17 +14,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Plus, Clock, Pill } from "lucide-react";
-
-interface MedicationSchedule {
-  id: string;
-  medication_name: string;
-  dosage: string;
-  frequency: string;
-  time_of_day: string[];
-  instructions: string;
-  start_date: string;
-  end_date: string | null;
-}
+import type { MedicationSchedule } from "@/types/roles";
 
 export const MedicationScheduler = ({ groupId }: { groupId: string }) => {
   const [schedules, setSchedules] = useState<MedicationSchedule[]>([]);

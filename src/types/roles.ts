@@ -32,3 +32,28 @@ export interface CareReport {
     last_name: string | null;
   } | null;
 }
+
+export interface Availability {
+  id: string;
+  user_id: string;
+  available_days: string[];
+  available_hours: {
+    start: string;
+    end: string;
+  };
+  profiles?: {
+    first_name: string | null;
+    last_name: string | null;
+  };
+}
+
+export interface MedicationSchedule {
+  id: string;
+  medication_name: string;
+  dosage: string;
+  frequency: string;
+  time_of_day: string[];
+  instructions: string;
+  start_date: string;
+  end_date: string | null;
+}

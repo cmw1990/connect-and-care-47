@@ -14,20 +14,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Plus, Calendar as CalendarIcon } from "lucide-react";
-
-interface Availability {
-  id: string;
-  user_id: string;
-  available_days: string[];
-  available_hours: {
-    start: string;
-    end: string;
-  };
-  profiles?: {
-    first_name: string | null;
-    last_name: string | null;
-  };
-}
+import type { Availability } from "@/types/roles";
 
 export const CareTeamCalendar = ({ groupId }: { groupId: string }) => {
   const [date, setDate] = useState<Date | undefined>(new Date());
