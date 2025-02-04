@@ -16,13 +16,6 @@ import {
 } from "@/components/ui/select";
 import { Database } from "@/integrations/supabase/types";
 
-type CaregiverProfile = Database['public']['Tables']['caregiver_profiles']['Row'] & {
-  user: {
-    first_name: string;
-    last_name: string;
-  };
-};
-
 type LocationData = {
   latitude: number;
   longitude: number;
@@ -47,7 +40,7 @@ type SimplifiedCaregiverProfile = {
   };
   certifications: any[];
   availability: any;
-  location?: LocationData;
+  location: LocationData | undefined;
 };
 
 export const CaregiverMatcher = () => {
