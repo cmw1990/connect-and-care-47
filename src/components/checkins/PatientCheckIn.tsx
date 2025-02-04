@@ -20,6 +20,7 @@ interface ResponseData {
   answers?: Record<string, string>;
   type?: string;
   triggered_at?: string;
+  [key: string]: unknown; // Add index signature to make it compatible with Json type
 }
 
 export const PatientCheckIn = ({ groupId }: { groupId: string }) => {
@@ -105,7 +106,7 @@ export const PatientCheckIn = ({ groupId }: { groupId: string }) => {
         .update({
           status: 'completed',
           completed_time: new Date().toISOString(),
-          response_data: updatedResponseData,
+          response_data: updatedResponseData as Json,
         })
         .eq('id', activeCheckIn.id);
 
