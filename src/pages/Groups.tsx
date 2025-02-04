@@ -17,11 +17,13 @@ import { Plus, Users } from "lucide-react";
 import { GroupsList } from "@/components/groups/GroupsList";
 import { CareComparisonDialog } from "@/components/comparison/CareComparisonDialog";
 import { CareAssistant } from "@/components/ai/CareAssistant";
-import type { CareGroup, GroupPrivacySettings } from "@/types/groups";
+import { CareTeamCalendar } from "@/components/calendar/CareTeamCalendar";
+import { CareTeamPresence } from "@/components/groups/CareTeamPresence";
+import { CareQualityMetrics } from "@/components/metrics/CareQualityMetrics";
+import type { CareGroup } from "@/types/groups";
 import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
-import { useIsMobile } from "@/hooks/use-mobile";
 
 const Groups = () => {
   const navigate = useNavigate();
@@ -34,7 +36,6 @@ const Groups = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [editingGroup, setEditingGroup] = useState<CareGroup | null>(null);
-  const isMobile = useIsMobile();
 
   const fetchGroups = useCallback(async () => {
     try {
@@ -332,11 +333,22 @@ const Groups = () => {
                     <p className="mt-1 text-sm text-gray-500">Get started by creating a new care group.</p>
                   </div>
                 ) : (
-                  <GroupsList 
-                    groups={myGroups}
-                    onDelete={handleDelete}
-                    onEdit={handleEdit}
-                  />
+                  <>
+                    {myGroups.map((group) => (
+                      <div key={group.id} className="mb-8">
+                        <GroupsList 
+                          groups={[group]}
+                          onDelete={handleDelete}
+                          onEdit={handleEdit}
+                        />
+                        <div className="mt-4 space-y-4">
+                          <CareTeamPresence groupId={group.id} />
+                          <CareTeamCalendar groupId={group.id} />
+                          <CareQualityMetrics groupId={group.id} />
+                        </div>
+                      </div>
+                    ))}
+                  </>
                 )}
               </TabsContent>
               
