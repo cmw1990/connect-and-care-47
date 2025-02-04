@@ -19,24 +19,18 @@ export const AnimatedCareGuide = ({ disease, description }: AnimatedGuideProps) 
     try {
       setIsLoading(true);
       
-      // Generate a detailed care guide using OpenAI
-      const response = await fetch('/functions/v1/generate-care-guide', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
-        },
-        body: JSON.stringify({
+      // Use Supabase client to invoke the Edge Function
+      const { data, error } = await supabase.functions.invoke('generate-care-guide', {
+        body: {
           disease,
           description
-        }),
+        }
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to generate video');
+      if (error) {
+        throw error;
       }
 
-      const data = await response.json();
       setVideoUrl(data.videoUrl);
       
       toast({
