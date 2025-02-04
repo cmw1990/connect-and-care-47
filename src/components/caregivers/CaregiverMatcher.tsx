@@ -17,16 +17,19 @@ import { Heart, Search, MapPin, Clock, Shield, Star } from "lucide-react";
 
 interface Caregiver {
   id: string;
+  user_id: string;
+  bio: string;
+  experience_years: number;
+  hourly_rate: number;
+  skills: string[];
+  certifications: any[];
+  background_check_status: string;
+  rating: number;
+  identity_verified: boolean;
   user: {
     first_name: string;
     last_name: string;
   };
-  bio: string;
-  hourly_rate: number;
-  rating: number;
-  experience_years: number;
-  skills: string[];
-  background_check_status: string;
 }
 
 export const CaregiverMatcher = () => {

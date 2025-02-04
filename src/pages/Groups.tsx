@@ -464,9 +464,6 @@ const Groups = () => {
                 <CaregiverCard
                   key={caregiver.id}
                   caregiver={caregiver}
-                  onBook={() => {
-                    // Implement booking logic
-                  }}
                 />
               ))}
             </div>
@@ -478,9 +475,6 @@ const Groups = () => {
                 <CompanionCard
                   key={companion.id}
                   companion={companion}
-                  onBook={() => {
-                    // Implement booking logic
-                  }}
                 />
               ))}
             </div>
