@@ -14,14 +14,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Database } from "@/integrations/supabase/types";
 
-type LocationData = {
+interface LocationData {
   latitude: number;
   longitude: number;
-};
+}
 
-type SimplifiedCaregiverProfile = {
+interface SimplifiedCaregiverProfile {
   id: string;
   user_id: string;
   bio: string | null;
@@ -40,8 +39,9 @@ type SimplifiedCaregiverProfile = {
   };
   certifications: any[];
   availability: any;
-  location: LocationData | undefined;
-};
+  location: LocationData | null;
+  specializations: string[] | null;
+}
 
 export const CaregiverMatcher = () => {
   const [caregivers, setCaregivers] = useState<SimplifiedCaregiverProfile[]>([]);
@@ -98,15 +98,15 @@ export const CaregiverMatcher = () => {
       }
 
       if (filters.verifiedOnly) {
-        query = query.eq('background_check_status', 'verified');
+        query = query.eq('identity_verified', true);
       }
 
       if (filters.dementiaOnly) {
-        query = query.eq('dementia_care_certified', true);
+        query = query.contains('specializations', ['dementia_care']);
       }
 
       if (filters.mentalHealthOnly) {
-        query = query.eq('mental_health_certified', true);
+        query = query.contains('specializations', ['mental_health']);
       }
 
       if (filters.emergencyResponse) {
@@ -123,28 +123,12 @@ export const CaregiverMatcher = () => {
 
       if (error) throw error;
 
-      const simplifiedCaregivers = (data || []).map(caregiver => ({
-        id: caregiver.id,
-        user_id: caregiver.user_id,
-        bio: caregiver.bio,
-        experience_years: caregiver.experience_years,
-        hourly_rate: caregiver.hourly_rate,
-        skills: caregiver.skills,
-        rating: caregiver.rating,
-        reviews_count: caregiver.reviews_count,
-        background_check_status: caregiver.background_check_status,
-        identity_verified: caregiver.identity_verified,
-        service_radius: caregiver.service_radius,
-        emergency_response: caregiver.emergency_response,
-        user: caregiver.user,
-        certifications: caregiver.certifications as any[],
-        availability: caregiver.availability,
-        location: caregiver.location as LocationData | undefined
+      let filteredCaregivers = (data || []).map(caregiver => ({
+        ...caregiver,
+        location: caregiver.availability?.location || null
       }));
 
-      let filteredCaregivers = simplifiedCaregivers;
-
-      if (userLocation) {
+      if (userLocation && filters.maxDistance > 0) {
         filteredCaregivers = filteredCaregivers.filter(caregiver => {
           if (!caregiver.location?.latitude || !caregiver.location?.longitude) return false;
           
