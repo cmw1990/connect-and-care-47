@@ -10,6 +10,7 @@ import { VideoConsultations } from "@/components/video/VideoConsultations";
 import { CareQualityMetrics } from "@/components/metrics/CareQualityMetrics";
 import { DocumentSharing } from "@/components/documents/DocumentSharing";
 import { ResourceLibrary } from "@/components/library/ResourceLibrary";
+import { CareTeamChat } from "@/components/chat/CareTeamChat";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -99,6 +100,7 @@ const GroupDetails = () => {
         </div>
         <div className="space-y-6">
           <CareCircleManager groupId={groupId} />
+          <CareTeamChat groupId={groupId} />
           <CareUpdates groupId={groupId} />
           <DocumentSharing groupId={groupId} />
         </div>
