@@ -28,13 +28,15 @@ interface MedicationSchedule {
 
 export const MedicationScheduler = ({ groupId }: { groupId: string }) => {
   const [schedules, setSchedules] = useState<MedicationSchedule[]>([]);
-  const [newSchedule, setNewSchedule] = useState<Partial<MedicationSchedule>>({
+  const [newSchedule, setNewSchedule] = useState<MedicationSchedule>({
+    id: "",
     medication_name: "",
     dosage: "",
-    frequency: "",
+    frequency: "daily", // Set a default value
     time_of_day: [],
     instructions: "",
     start_date: new Date().toISOString(),
+    end_date: null
   });
   const { toast } = useToast();
 
@@ -64,8 +66,24 @@ export const MedicationScheduler = ({ groupId }: { groupId: string }) => {
 
   const handleCreateSchedule = async () => {
     try {
+      // Ensure required fields are present
+      if (!newSchedule.medication_name || !newSchedule.frequency) {
+        toast({
+          title: "Error",
+          description: "Medication name and frequency are required",
+          variant: "destructive",
+        });
+        return;
+      }
+
       const { error } = await supabase.from("medication_schedules").insert({
-        ...newSchedule,
+        medication_name: newSchedule.medication_name,
+        dosage: newSchedule.dosage,
+        frequency: newSchedule.frequency,
+        time_of_day: newSchedule.time_of_day,
+        instructions: newSchedule.instructions,
+        start_date: newSchedule.start_date,
+        end_date: newSchedule.end_date,
         group_id: groupId,
       });
 
@@ -78,12 +96,14 @@ export const MedicationScheduler = ({ groupId }: { groupId: string }) => {
       
       fetchMedicationSchedules();
       setNewSchedule({
+        id: "",
         medication_name: "",
         dosage: "",
-        frequency: "",
+        frequency: "daily",
         time_of_day: [],
         instructions: "",
         start_date: new Date().toISOString(),
+        end_date: null
       });
     } catch (error) {
       console.error("Error creating medication schedule:", error);

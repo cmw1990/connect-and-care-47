@@ -59,7 +59,16 @@ export const CareTeamCalendar = ({ groupId }: { groupId: string }) => {
         .eq("group_id", groupId);
 
       if (error) throw error;
-      setAvailabilities(data || []);
+      
+      // Transform the data to match our interface
+      const transformedData = (data || []).map(item => ({
+        ...item,
+        available_hours: typeof item.available_hours === 'string' 
+          ? JSON.parse(item.available_hours)
+          : item.available_hours
+      }));
+      
+      setAvailabilities(transformedData as Availability[]);
     } catch (error) {
       console.error("Error fetching availabilities:", error);
       toast({
