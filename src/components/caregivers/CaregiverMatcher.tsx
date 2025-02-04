@@ -28,14 +28,14 @@ type LocationData = {
   longitude: number;
 };
 
-interface CaregiverWithLocation extends Omit<CaregiverProfile, 'certifications' | 'availability'> {
+type SimplifiedCaregiverProfile = Omit<CaregiverProfile, 'certifications' | 'availability'> & {
   certifications: any[];
   availability: any;
   location?: LocationData;
-}
+};
 
 export const CaregiverMatcher = () => {
-  const [caregivers, setCaregivers] = useState<CaregiverWithLocation[]>([]);
+  const [caregivers, setCaregivers] = useState<SimplifiedCaregiverProfile[]>([]);
   const [filters, setFilters] = useState({
     specialization: "",
     maxRate: 100,
@@ -114,9 +114,8 @@ export const CaregiverMatcher = () => {
 
       if (error) throw error;
 
-      let filteredCaregivers = (data || []) as CaregiverWithLocation[];
+      let filteredCaregivers = (data || []) as SimplifiedCaregiverProfile[];
 
-      // Apply distance filter if user location is available
       if (userLocation) {
         filteredCaregivers = filteredCaregivers.filter(caregiver => {
           if (!caregiver.location?.latitude || !caregiver.location?.longitude) return false;

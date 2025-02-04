@@ -38,7 +38,8 @@ export const DirectMessageChat = ({ recipientId, recipientName }: DirectMessageC
 
   const fetchMessages = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const userResponse = await supabase.auth.getUser();
+      const user = userResponse.data.user;
       if (!user) return;
 
       const { data, error } = await supabase
@@ -70,8 +71,8 @@ export const DirectMessageChat = ({ recipientId, recipientName }: DirectMessageC
   };
 
   const subscribeToMessages = () => {
-    const { data: { user } } = supabase.auth.getUser();
-    if (!user) return;
+    const userResponse = supabase.auth.getUser();
+    if (!userResponse) return;
 
     return supabase
       .channel("private_messages")
@@ -81,7 +82,7 @@ export const DirectMessageChat = ({ recipientId, recipientName }: DirectMessageC
           event: "INSERT",
           schema: "public",
           table: "private_messages",
-          filter: `sender_id=eq.${recipientId},recipient_id=eq.${user.id}`,
+          filter: `sender_id=eq.${recipientId},recipient_id=eq.${userResponse.data?.user?.id}`,
         },
         (payload) => {
           console.log("New message received:", payload);
