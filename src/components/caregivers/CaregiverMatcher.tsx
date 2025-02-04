@@ -14,26 +14,19 @@ import {
 } from "@/components/ui/select";
 import { Heart, Search, MapPin, Clock, Shield, Star } from "lucide-react";
 import { getCurrentLocation, calculateDistance } from "@/utils/locationUtils";
+import { Database } from "@/integrations/supabase/types";
 
-interface Caregiver {
-  id: string;
-  user_id: string;
-  bio: string;
-  experience_years: number;
-  hourly_rate: number;
-  skills: string[];
-  certifications: string[];
-  background_check_status: string;
-  rating: number;
-  identity_verified: boolean;
-  dementia_care_certified: boolean;
-  mental_health_certified: boolean;
-  emergency_response: boolean;
-  service_radius: number;
-  location: { latitude: number; longitude: number };
+type CaregiverProfile = Database['public']['Tables']['caregiver_profiles']['Row'] & {
   user: {
     first_name: string;
     last_name: string;
+  };
+};
+
+interface Caregiver extends Omit<CaregiverProfile, 'location'> {
+  location?: {
+    latitude: number;
+    longitude: number;
   };
 }
 
@@ -117,7 +110,7 @@ export const CaregiverMatcher = () => {
 
       if (error) throw error;
 
-      let filteredCaregivers = data || [];
+      let filteredCaregivers = (data || []) as Caregiver[];
 
       // Apply distance filter if user location is available
       if (userLocation) {
