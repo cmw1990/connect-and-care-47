@@ -14,6 +14,9 @@ import { ProfessionalCaregiverDashboard } from "@/components/roles/ProfessionalC
 import { FamilyCaregiverView } from "@/components/roles/FamilyCaregiverView";
 import { CareCircleManager } from "@/components/groups/CareCircleManager";
 import { CareUpdates } from "@/components/groups/CareUpdates";
+import { WellnessTracker } from "@/components/wellness/WellnessTracker";
+import { CareRoutineManager } from "@/components/routines/CareRoutineManager";
+import { CaregiverSupport } from "@/components/support/CaregiverSupport";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 export default function GroupDetails() {
@@ -71,19 +74,6 @@ export default function GroupDetails() {
 
   if (!groupId) return null;
 
-  const renderRoleBasedDashboard = () => {
-    switch (userRole) {
-      case 'care_facility_staff':
-        return <FacilityDashboard groupId={groupId} />;
-      case 'professional_caregiver':
-        return <ProfessionalCaregiverDashboard groupId={groupId} />;
-      case 'family_caregiver':
-        return <FamilyCaregiverView groupId={groupId} />;
-      default:
-        return null;
-    }
-  };
-
   return (
     <div className="container mx-auto px-4 py-6">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -92,6 +82,8 @@ export default function GroupDetails() {
           <GroupStatusBar groupId={groupId} />
           <CareCircleManager groupId={groupId} />
           <CareUpdates groupId={groupId} />
+          <WellnessTracker groupId={groupId} />
+          <CareRoutineManager groupId={groupId} />
           {renderRoleBasedDashboard()}
           <GroupTasks groupId={groupId} members={groupMembers} />
           <GroupPosts groupId={groupId} />
@@ -100,6 +92,7 @@ export default function GroupDetails() {
         {/* Right Column */}
         <div className="space-y-6">
           <PatientInfoCard groupId={groupId} />
+          <CaregiverSupport groupId={groupId} />
           <MiniCalendar groupId={groupId} />
           {!isMobile && <CareAssistant groupId={groupId} />}
         </div>
