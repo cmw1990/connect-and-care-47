@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Users, Search, UserPlus, UserRound } from "lucide-react";
+import { Plus, Users, Search, UserPlus, UserRound, Edit } from "lucide-react";
 import { GroupsList } from "@/components/groups/GroupsList";
 import { CaregiverCard } from "@/components/caregivers/CaregiverCard";
 import { CompanionCard } from "@/components/companions/CompanionCard";
@@ -21,10 +21,12 @@ import { CareTeamPresence } from "@/components/groups/CareTeamPresence";
 import { CareQualityMetrics } from "@/components/metrics/CareQualityMetrics";
 import { CareUpdates } from "@/components/groups/CareUpdates";
 import { WellnessTracker } from "@/components/wellness/WellnessTracker";
+import { CareTeamCalendar } from "@/components/calendar/CareTeamCalendar";
 import type { CareGroup } from "@/types/groups";
 import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
+import { motion } from "framer-motion";
 
 const Groups = () => {
   const navigate = useNavigate();
@@ -56,7 +58,6 @@ const Groups = () => {
         return;
       }
 
-      // Fetch groups where user is a member
       const { data: memberGroups, error: memberError } = await supabase
         .from('care_groups')
         .select(`
@@ -75,7 +76,6 @@ const Groups = () => {
 
       if (memberError) throw memberError;
 
-      // Format member groups
       const formattedMemberGroups = memberGroups?.map(group => ({
         id: group.id,
         name: group.name,
@@ -88,7 +88,6 @@ const Groups = () => {
 
       setMyGroups(formattedMemberGroups);
 
-      // Fetch all public groups
       const { data: publicGroups, error: publicError } = await supabase
         .from('care_groups')
         .select(`
@@ -212,7 +211,6 @@ const Groups = () => {
           description: "Care group updated successfully",
         });
       } else {
-        // Create new group
         const { data: group, error: groupError } = await supabase
           .from('care_groups')
           .insert({
@@ -226,7 +224,6 @@ const Groups = () => {
 
         if (groupError) throw groupError;
 
-        // Add creator as member with admin role
         const { error: memberError } = await supabase
           .from('care_group_members')
           .insert({
