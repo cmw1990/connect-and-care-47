@@ -833,6 +833,50 @@ export type Database = {
           },
         ]
       }
+      patient_check_ins: {
+        Row: {
+          check_in_type: string
+          completed_time: string | null
+          created_at: string | null
+          group_id: string | null
+          id: string
+          response_data: Json | null
+          scheduled_time: string | null
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          check_in_type: string
+          completed_time?: string | null
+          created_at?: string | null
+          group_id?: string | null
+          id?: string
+          response_data?: Json | null
+          scheduled_time?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          check_in_type?: string
+          completed_time?: string | null
+          created_at?: string | null
+          group_id?: string | null
+          id?: string
+          response_data?: Json | null
+          scheduled_time?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "patient_check_ins_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "care_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       patient_info: {
         Row: {
           basic_info: Json | null

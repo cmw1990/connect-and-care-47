@@ -6,6 +6,9 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Check, AlertTriangle, Activity, Heart } from "lucide-react";
 import { format } from "date-fns";
+import { Tables } from "@/integrations/supabase/types";
+
+type PatientCheckIn = Tables<"patient_check_ins">;
 
 interface CheckInQuestion {
   question: string;
@@ -13,7 +16,7 @@ interface CheckInQuestion {
 }
 
 export const PatientCheckIn = ({ groupId }: { groupId: string }) => {
-  const [activeCheckIn, setActiveCheckIn] = useState<any>(null);
+  const [activeCheckIn, setActiveCheckIn] = useState<PatientCheckIn | null>(null);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -55,9 +58,9 @@ export const PatientCheckIn = ({ groupId }: { groupId: string }) => {
         .eq('status', 'pending')
         .order('created_at', { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle();
 
-      if (error && error.code !== 'PGRST116') throw error;
+      if (error) throw error;
       setActiveCheckIn(data);
     } catch (error) {
       console.error('Error fetching active check-in:', error);
@@ -72,6 +75,8 @@ export const PatientCheckIn = ({ groupId }: { groupId: string }) => {
   };
 
   const handleSubmitCheckIn = async () => {
+    if (!activeCheckIn) return;
+    
     try {
       setSubmitting(true);
       const { error } = await supabase

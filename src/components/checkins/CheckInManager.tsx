@@ -17,6 +17,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { Bell, Calendar, Clock, Activity, AlertTriangle } from "lucide-react";
 import { format } from "date-fns";
 import { notificationService } from "@/services/NotificationService";
+import { Tables } from "@/integrations/supabase/types";
+
+type PatientCheckIn = Tables<"patient_check_ins">;
 
 interface CheckInSettings {
   dailyCheckIn: boolean;
@@ -39,7 +42,7 @@ export const CheckInManager = ({ groupId }: { groupId: string }) => {
     emergencyContacts: true,
   });
   const [isEditing, setIsEditing] = useState(false);
-  const [checkIns, setCheckIns] = useState<any[]>([]);
+  const [checkIns, setCheckIns] = useState<PatientCheckIn[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
