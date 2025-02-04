@@ -17,6 +17,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { Edit, MapPin } from "lucide-react";
 import { LocationMap } from "./LocationMap";
 import { Geolocation } from '@capacitor/geolocation';
+import { Tables } from "@/integrations/supabase/types";
+
+type PatientLocation = Tables<"patient_locations">;
 
 interface PatientInfoCardProps {
   groupId?: string;
@@ -75,14 +78,14 @@ export const PatientInfoCard = ({ groupId, patientInfo }: PatientInfoCardProps) 
           table: 'patient_locations',
           filter: `group_id=eq.${groupId}`,
         },
-        (payload: { new: LocationData }) => {
+        (payload: { new: PatientLocation }) => {
           if (payload.new) {
-            setLocationEnabled(payload.new.location_enabled);
+            setLocationEnabled(payload.new.location_enabled || false);
             const location = payload.new.current_location;
             if (location && typeof location === 'object' && 'latitude' in location && 'longitude' in location) {
               setCurrentLocation({
-                latitude: location.latitude,
-                longitude: location.longitude,
+                latitude: location.latitude as number,
+                longitude: location.longitude as number,
               });
             }
           }
