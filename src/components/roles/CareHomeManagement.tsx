@@ -3,33 +3,32 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { Activity, Users, Package, AlertTriangle } from "lucide-react";
 
-interface Metric {
-  occupancy: number;
-  staffing: {
-    ratio: number;
-    present: number;
-    total: number;
+interface CareHomeMetric {
+  id: string;
+  facility_id: string;
+  metric_type: string;
+  metric_value: {
+    occupancy: number;
+    staffing: {
+      ratio: number;
+      present: number;
+      total: number;
+    };
+    resources: {
+      utilization: number;
+      lowStock: string[];
+    };
+    metrics: {
+      quality: number;
+      incidents: number;
+    };
   };
-  resources: {
-    utilization: number;
-    lowStock: string[];
-  };
-  metrics: {
-    quality: number;
-    incidents: number;
-  };
+  recorded_at: string;
 }
 
 export const CareHomeManagement = ({ facilityId }: { facilityId: string }) => {
@@ -48,7 +47,7 @@ export const CareHomeManagement = ({ facilityId }: { facilityId: string }) => {
         .single();
 
       if (error) throw error;
-      return data?.metric_value as Metric;
+      return data as CareHomeMetric;
     },
   });
 
@@ -59,7 +58,7 @@ export const CareHomeManagement = ({ facilityId }: { facilityId: string }) => {
         body: {
           facilityId,
           action: 'analyze',
-          data: metrics
+          data: metrics?.metric_value
         },
       });
 
@@ -70,7 +69,6 @@ export const CareHomeManagement = ({ facilityId }: { facilityId: string }) => {
         description: "Facility metrics have been analyzed successfully.",
       });
 
-      // Update metrics in the database with the analysis results
       const { error: updateError } = await supabase
         .from('care_home_metrics')
         .insert({
@@ -108,7 +106,7 @@ export const CareHomeManagement = ({ facilityId }: { facilityId: string }) => {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{metrics?.occupancy}%</div>
+            <div className="text-2xl font-bold">{metrics?.metric_value.occupancy}%</div>
           </CardContent>
         </Card>
 
@@ -120,7 +118,7 @@ export const CareHomeManagement = ({ facilityId }: { facilityId: string }) => {
             <Activity className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">1:{metrics?.staffing.ratio}</div>
+            <div className="text-2xl font-bold">1:{metrics?.metric_value.staffing.ratio}</div>
           </CardContent>
         </Card>
 
@@ -132,7 +130,7 @@ export const CareHomeManagement = ({ facilityId }: { facilityId: string }) => {
             <Package className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{metrics?.resources.utilization}%</div>
+            <div className="text-2xl font-bold">{metrics?.metric_value.resources.utilization}%</div>
           </CardContent>
         </Card>
 
@@ -144,7 +142,7 @@ export const CareHomeManagement = ({ facilityId }: { facilityId: string }) => {
             <AlertTriangle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{metrics?.metrics.quality}/10</div>
+            <div className="text-2xl font-bold">{metrics?.metric_value.metrics.quality}/10</div>
           </CardContent>
         </Card>
       </div>

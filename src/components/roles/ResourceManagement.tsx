@@ -4,14 +4,17 @@ import { Package, AlertTriangle } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
-interface Resource {
+interface CareHomeResource {
   id: string;
+  facility_id: string;
   resource_type: string;
   resource_name: string;
   quantity: number;
   unit: string;
   minimum_threshold: number;
   status: string;
+  last_restocked: string;
+  notes: string;
 }
 
 export const ResourceManagement = ({ facilityId }: { facilityId: string }) => {
@@ -25,7 +28,7 @@ export const ResourceManagement = ({ facilityId }: { facilityId: string }) => {
         .order('resource_type', { ascending: true });
 
       if (error) throw error;
-      return data as Resource[];
+      return data as CareHomeResource[];
     },
   });
 

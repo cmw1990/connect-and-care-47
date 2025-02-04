@@ -5,14 +5,16 @@ import { Calendar } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
-interface StaffSchedule {
+interface CareHomeStaffSchedule {
   id: string;
+  facility_id: string;
   staff_id: string;
   shift_start: string;
   shift_end: string;
   shift_type: string;
   department: string;
   status: string;
+  notes: string;
   staff: {
     first_name: string;
     last_name: string;
@@ -27,6 +29,7 @@ export const StaffSchedule = ({ facilityId }: { facilityId: string }) => {
         .from('care_home_staff_schedule')
         .select(`
           id,
+          facility_id,
           staff_id,
           shift_start,
           shift_end,
@@ -40,7 +43,7 @@ export const StaffSchedule = ({ facilityId }: { facilityId: string }) => {
         .order('shift_start', { ascending: true });
 
       if (error) throw error;
-      return data as StaffSchedule[];
+      return data as CareHomeStaffSchedule[];
     },
   });
 
