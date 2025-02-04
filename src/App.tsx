@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
 import Index from "@/pages/Index";
 import Groups from "@/pages/Groups";
 import GroupDetails from "@/pages/GroupDetails";
@@ -13,30 +14,19 @@ import Messages from "@/pages/Messages";
 import Settings from "@/pages/Settings";
 import { MoodSupport } from "@/pages/MoodSupport";
 import More from "@/pages/More";
-import { useEffect, useState } from "react";
 import "./App.css";
 
 const AppContent = () => {
   const location = useLocation();
-  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
-
-  useEffect(() => {
-    const handleResize = () => {
-      setIsMobile(window.innerWidth <= 768);
-    };
-
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
+  const isMobile = useIsMobile();
   const showNavbar = !location.pathname.includes('/auth');
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
       {showNavbar && !isMobile && <Navbar />}
-      <div className={cn(
-        "flex-grow",
-        isMobile && "pb-16" // Add padding for mobile navigation
+      <main className={cn(
+        "flex-1 container mx-auto px-4 py-6",
+        isMobile && "pb-20" // Extra padding for mobile navigation
       )}>
         <Routes>
           <Route path="/" element={<Index />} />
@@ -51,7 +41,7 @@ const AppContent = () => {
           <Route path="/more" element={<More />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
-      </div>
+      </main>
       {showNavbar && isMobile && <MobileNav />}
     </div>
   );

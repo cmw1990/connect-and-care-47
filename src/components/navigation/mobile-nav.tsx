@@ -1,21 +1,35 @@
 import { Link, useLocation } from "react-router-dom";
-import { Home, Users, MessageSquare, Settings, Menu } from "lucide-react";
+import { Home, Users, MessageSquare, Heart, Menu } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "react-i18next";
 
 export const MobileNav = () => {
   const location = useLocation();
   const [hasUnreadMessages, setHasUnreadMessages] = useState(false);
   const { toast } = useToast();
+  const { t } = useTranslation();
+
+  const navItems = [
+    { icon: Home, label: t("home"), path: "/" },
+    { icon: Users, label: t("careGroups"), path: "/groups" },
+    { icon: Heart, label: t("moodSupport"), path: "/mood-support" },
+    {
+      icon: MessageSquare,
+      label: t("messages"),
+      path: "/messages",
+      badge: hasUnreadMessages,
+    },
+    { icon: Menu, label: t("more"), path: "/more" },
+  ];
 
   useEffect(() => {
     const checkUnreadMessages = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Subscribe to new messages
       const channel = supabase
         .channel('public:team_messages')
         .on(
@@ -29,30 +43,8 @@ export const MobileNav = () => {
             if (payload.new.sender_id !== user.id) {
               setHasUnreadMessages(true);
               toast({
-                title: "New Message",
-                description: "You have a new message in your care group",
-              });
-            }
-          }
-        )
-        .subscribe();
-
-      // Subscribe to group posts
-      const postsChannel = supabase
-        .channel('public:group_posts')
-        .on(
-          'postgres_changes',
-          {
-            event: 'INSERT',
-            schema: 'public',
-            table: 'group_posts'
-          },
-          (payload) => {
-            if (payload.new.created_by !== user.id) {
-              setHasUnreadMessages(true);
-              toast({
-                title: "New Post",
-                description: "Someone posted in your care group",
+                title: t("newMessage"),
+                description: t("newMessageInGroup"),
               });
             }
           }
@@ -61,48 +53,18 @@ export const MobileNav = () => {
 
       return () => {
         supabase.removeChannel(channel);
-        supabase.removeChannel(postsChannel);
       };
     };
 
     checkUnreadMessages();
-  }, [toast]);
-
-  const navItems = [
-    {
-      icon: Home,
-      label: "Home",
-      path: "/",
-    },
-    {
-      icon: Users,
-      label: "Groups",
-      path: "/groups",
-    },
-    {
-      icon: MessageSquare,
-      label: "Messages",
-      path: "/messages",
-      badge: hasUnreadMessages,
-    },
-    {
-      icon: Settings,
-      label: "Settings",
-      path: "/settings",
-    },
-    {
-      icon: Menu,
-      label: "More",
-      path: "/more",
-    },
-  ];
+  }, [toast, t]);
 
   const handleMessageClick = () => {
     setHasUnreadMessages(false);
   };
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 pb-safe">
+    <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 pb-safe z-50">
       <div className="flex justify-around items-center h-16">
         {navItems.map((item) => (
           <Link
