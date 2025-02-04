@@ -21,6 +21,7 @@ export interface CareProduct {
 
 export interface ComparisonResult {
   name: string;
+  description?: string;
   averageRating: number;
   features?: string[];
   aiInsights?: string;
