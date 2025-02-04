@@ -57,7 +57,7 @@ export const CheckInManager = ({ groupId }: { groupId: string }) => {
         .from('check_in_settings')
         .select('*')
         .eq('group_id', groupId)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
 
@@ -68,12 +68,17 @@ export const CheckInManager = ({ groupId }: { groupId: string }) => {
           customQuestions: data.required_check_in_types || [],
           activityMonitoring: data.automated_responses || false,
           inactivityThreshold: 12,
-          medicationReminders: true,
-          emergencyContacts: true,
+          medicationReminders: data.notification_preferences?.medicationReminders ?? true,
+          emergencyContacts: data.notification_preferences?.emergencyContacts ?? true,
         });
       }
     } catch (error) {
       console.error('Error loading check-in settings:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load check-in settings",
+        variant: "destructive",
+      });
     }
   };
 
