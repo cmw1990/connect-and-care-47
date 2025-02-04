@@ -72,6 +72,22 @@ export default function GroupDetails() {
     }
   };
 
+  const renderRoleBasedDashboard = () => {
+    if (!groupId) return null;
+
+    switch (userRole) {
+      case 'facility_admin':
+      case 'facility_staff':
+        return <FacilityDashboard groupId={groupId} />;
+      case 'professional_caregiver':
+        return <ProfessionalCaregiverDashboard groupId={groupId} />;
+      case 'family_caregiver':
+        return <FamilyCaregiverView groupId={groupId} />;
+      default:
+        return null;
+    }
+  };
+
   if (!groupId) return null;
 
   return (
