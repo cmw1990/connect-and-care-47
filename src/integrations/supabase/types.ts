@@ -163,6 +163,33 @@ export type Database = {
           },
         ]
       }
+      care_guide_videos: {
+        Row: {
+          created_at: string
+          description: string | null
+          disease: string
+          id: string
+          updated_at: string
+          video_url: string | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          disease: string
+          id?: string
+          updated_at?: string
+          video_url?: string | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          disease?: string
+          id?: string
+          updated_at?: string
+          video_url?: string | null
+        }
+        Relationships: []
+      }
       care_products: {
         Row: {
           affiliate_link: string | null

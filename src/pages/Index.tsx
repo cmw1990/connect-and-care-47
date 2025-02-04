@@ -3,6 +3,7 @@ import { UpcomingSchedule } from "@/components/schedule/UpcomingSchedule";
 import { Button } from "@/components/ui/button";
 import { Play } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { AnimatedCareGuide } from "@/components/guides/AnimatedCareGuide";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -10,6 +11,22 @@ const Index = () => {
   const handleGenerateClick = () => {
     navigate('/care-guides');
   };
+
+  // Development examples
+  const devExamples = [
+    {
+      disease: "Alzheimer's Disease",
+      description: "Early stage care and management techniques"
+    },
+    {
+      disease: "Diabetes Type 2",
+      description: "Daily monitoring and lifestyle adjustments"
+    },
+    {
+      disease: "Parkinson's Disease",
+      description: "Movement assistance and safety precautions"
+    }
+  ];
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -27,6 +44,20 @@ const Index = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <UpcomingSchedule />
+      </div>
+
+      {/* Development Section */}
+      <div className="mt-12 border-t pt-8">
+        <h2 className="text-2xl font-semibold mb-6">Development: Generate Care Guide Videos</h2>
+        <div className="grid grid-cols-1 gap-6">
+          {devExamples.map((example, index) => (
+            <AnimatedCareGuide
+              key={index}
+              disease={example.disease}
+              description={example.description}
+            />
+          ))}
+        </div>
       </div>
     </div>
   );
