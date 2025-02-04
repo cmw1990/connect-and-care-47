@@ -6,7 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Check, AlertTriangle, Activity, Heart } from "lucide-react";
 import { format } from "date-fns";
-import { Tables } from "@/integrations/supabase/types";
+import { Tables, Json } from "@/integrations/supabase/types";
 
 type PatientCheckIn = Tables<"patient_check_ins">;
 
