@@ -65,7 +65,7 @@ export const MobileNav = () => {
   };
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 pb-safe z-50">
+    <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 pb-safe z-50 shadow-lg">
       <div className="max-w-lg mx-auto">
         <div className="flex justify-around items-center h-16">
           {navItems.map((item) => (
@@ -80,13 +80,13 @@ export const MobileNav = () => {
                 className={cn(
                   "flex flex-col items-center justify-center py-2 px-3 space-y-1 relative rounded-lg mx-1",
                   location.pathname === item.path
-                    ? "bg-primary-100 text-primary"
+                    ? "bg-primary-100 text-primary-600 font-medium"
                     : "text-gray-500 hover:bg-gray-50"
                 )}
               >
                 <item.icon className="h-5 w-5" />
                 {item.badge && (
-                  <span className="absolute top-1 right-1 h-2 w-2 bg-red-500 rounded-full" />
+                  <span className="absolute top-1 right-1 h-2 w-2 bg-red-500 rounded-full animate-pulse" />
                 )}
                 <span className="text-xs font-medium">{item.label}</span>
               </motion.div>

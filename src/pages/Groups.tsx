@@ -245,9 +245,12 @@ const Groups = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-primary-100 to-white">
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex justify-between items-center mb-8">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
           <div className="flex items-center gap-4">
-            <h1 className="text-3xl font-bold text-gray-900">Care Groups</h1>
+            <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
+              <Users className="h-8 w-8 text-primary-600" />
+              Care Groups
+            </h1>
             <CareComparisonDialog />
           </div>
           <Dialog open={isDialogOpen} onOpenChange={(open) => {
@@ -260,15 +263,25 @@ const Groups = () => {
             }
           }}>
             <DialogTrigger asChild>
-              <Button>
+              <Button className="bg-primary-600 hover:bg-primary-700 text-white shadow-lg hover:shadow-xl transition-all duration-300">
                 <Plus className="mr-2 h-4 w-4" />
                 New Group
               </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="sm:max-w-[500px]">
               <DialogHeader>
-                <DialogTitle>
-                  {editingGroup ? 'Edit Care Group' : 'Create New Care Group'}
+                <DialogTitle className="flex items-center gap-2">
+                  {editingGroup ? (
+                    <>
+                      <Edit className="h-5 w-5 text-primary-600" />
+                      Edit Care Group
+                    </>
+                  ) : (
+                    <>
+                      <Users className="h-5 w-5 text-primary-600" />
+                      Create New Care Group
+                    </>
+                  )}
                 </DialogTitle>
                 <DialogDescription>
                   {editingGroup 
@@ -276,23 +289,26 @@ const Groups = () => {
                     : 'Create a new care group to collaborate with others.'}
                 </DialogDescription>
               </DialogHeader>
-              <div className="space-y-4">
-                <div>
+              <div className="space-y-4 mt-4">
+                <div className="space-y-2">
                   <Label htmlFor="name">Group Name</Label>
                   <Input
                     id="name"
                     value={newGroupName}
                     onChange={(e) => setNewGroupName(e.target.value)}
                     placeholder="Enter group name"
+                    className="w-full"
                   />
                 </div>
-                <div>
+                <div className="space-y-2">
                   <Label htmlFor="description">Description</Label>
                   <Textarea
                     id="description"
                     value={newGroupDescription}
                     onChange={(e) => setNewGroupDescription(e.target.value)}
                     placeholder="Enter group description"
+                    className="w-full"
+                    rows={4}
                   />
                 </div>
                 <div className="flex items-center space-x-2">
@@ -305,10 +321,17 @@ const Groups = () => {
                 </div>
                 <Button 
                   onClick={handleSubmit} 
-                  className="w-full"
+                  className="w-full bg-primary-600 hover:bg-primary-700 text-white"
                   disabled={isLoading}
                 >
-                  {isLoading ? (editingGroup ? "Updating..." : "Creating...") : (editingGroup ? "Update Group" : "Create Group")}
+                  {isLoading ? (
+                    <div className="flex items-center justify-center">
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2" />
+                      {editingGroup ? "Updating..." : "Creating..."}
+                    </div>
+                  ) : (
+                    editingGroup ? "Update Group" : "Create Group"
+                  )}
                 </Button>
               </div>
             </DialogContent>
@@ -318,26 +341,43 @@ const Groups = () => {
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           <div className="lg:col-span-3">
             <Tabs defaultValue="my-groups" className="w-full">
-              <TabsList className="mb-4">
-                <TabsTrigger value="my-groups">My Care Groups</TabsTrigger>
-                <TabsTrigger value="all-groups">Public Groups</TabsTrigger>
+              <TabsList className="mb-4 bg-white shadow-sm">
+                <TabsTrigger value="my-groups" className="data-[state=active]:bg-primary-100">
+                  My Care Groups
+                </TabsTrigger>
+                <TabsTrigger value="all-groups" className="data-[state=active]:bg-primary-100">
+                  Public Groups
+                </TabsTrigger>
               </TabsList>
               
               <TabsContent value="my-groups">
                 {isLoading ? (
                   <div className="flex justify-center items-center h-64">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
                   </div>
                 ) : myGroups.length === 0 ? (
-                  <div className="text-center py-12">
+                  <motion.div 
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="text-center py-12 bg-white rounded-lg shadow-sm"
+                  >
                     <Users className="mx-auto h-12 w-12 text-gray-400" />
                     <h3 className="mt-2 text-sm font-semibold text-gray-900">No groups yet</h3>
                     <p className="mt-1 text-sm text-gray-500">Get started by creating a new care group.</p>
-                  </div>
+                    <div className="mt-6">
+                      <Button
+                        onClick={() => setIsDialogOpen(true)}
+                        className="bg-primary-600 hover:bg-primary-700 text-white"
+                      >
+                        <Plus className="mr-2 h-4 w-4" />
+                        Create New Group
+                      </Button>
+                    </div>
+                  </motion.div>
                 ) : (
                   <>
                     {myGroups.map((group) => (
-                      <div key={group.id} className="mb-8">
+                      <div key={group.id} className="mb-8 animate-fade-in">
                         <GroupsList 
                           groups={[group]}
                           onDelete={handleDelete}
@@ -361,14 +401,18 @@ const Groups = () => {
               <TabsContent value="all-groups">
                 {isLoading ? (
                   <div className="flex justify-center items-center h-64">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
                   </div>
                 ) : groups.length === 0 ? (
-                  <div className="text-center py-12">
+                  <motion.div 
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="text-center py-12 bg-white rounded-lg shadow-sm"
+                  >
                     <Users className="mx-auto h-12 w-12 text-gray-400" />
                     <h3 className="mt-2 text-sm font-semibold text-gray-900">No public groups available</h3>
                     <p className="mt-1 text-sm text-gray-500">Create a new public group to get started.</p>
-                  </div>
+                  </motion.div>
                 ) : (
                   <GroupsList 
                     groups={groups}

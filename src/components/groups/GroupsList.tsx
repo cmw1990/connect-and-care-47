@@ -40,12 +40,13 @@ export const GroupsList = ({ groups, onDelete, onEdit, showActions = true }: Gro
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: index * 0.1 }}
+          className="group"
         >
-          <Card className="hover:shadow-lg transition-shadow bg-white overflow-hidden">
-            <CardHeader className="bg-gradient-to-r from-primary-100 to-secondary-100">
+          <Card className="hover:shadow-lg transition-shadow duration-300 bg-white overflow-hidden border border-gray-200">
+            <CardHeader className="bg-gradient-to-r from-primary-100 to-secondary-100 pb-4">
               <CardTitle className="flex justify-between items-center">
-                <span className="truncate text-lg font-semibold">{group.name}</span>
-                <div className="flex items-center text-sm text-gray-600 bg-white/80 px-2 py-1 rounded-full">
+                <span className="truncate text-lg font-semibold text-gray-800">{group.name}</span>
+                <div className="flex items-center text-sm text-gray-600 bg-white/80 px-2 py-1 rounded-full shadow-sm">
                   <Users className="h-4 w-4 mr-1" />
                   <span>{group.member_count}</span>
                 </div>
@@ -53,7 +54,9 @@ export const GroupsList = ({ groups, onDelete, onEdit, showActions = true }: Gro
             </CardHeader>
             <CardContent className="pt-4">
               <div className="space-y-4">
-                <p className="text-gray-600 text-sm line-clamp-2">{group.description}</p>
+                <p className="text-gray-600 text-sm line-clamp-2 group-hover:line-clamp-none transition-all duration-300">
+                  {group.description}
+                </p>
                 
                 <div className="flex items-center text-sm text-gray-500 gap-2">
                   <Clock className="h-4 w-4" />
@@ -70,7 +73,7 @@ export const GroupsList = ({ groups, onDelete, onEdit, showActions = true }: Gro
                 <div className="flex gap-2 pt-2">
                   <Button 
                     variant="default"
-                    className="flex-1 gap-2 bg-primary hover:bg-primary-600" 
+                    className="flex-1 gap-2 bg-primary hover:bg-primary-600 transition-colors duration-300" 
                     onClick={() => navigate(`/groups/${group.id}`)}
                   >
                     View Details
@@ -83,7 +86,7 @@ export const GroupsList = ({ groups, onDelete, onEdit, showActions = true }: Gro
                           variant="outline"
                           size="icon"
                           onClick={() => onEdit(group)}
-                          className="shrink-0 hover:bg-gray-50"
+                          className="shrink-0 hover:bg-gray-50 transition-colors duration-200"
                         >
                           <Edit className="h-4 w-4" />
                         </Button>
@@ -93,7 +96,7 @@ export const GroupsList = ({ groups, onDelete, onEdit, showActions = true }: Gro
                           variant="outline"
                           size="icon"
                           onClick={() => handleDelete(group.id)}
-                          className="shrink-0 hover:bg-red-50 hover:text-red-500"
+                          className="shrink-0 hover:bg-red-50 hover:text-red-500 transition-colors duration-200"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
