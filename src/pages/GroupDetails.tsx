@@ -1,133 +1,73 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
-import { useTranslation } from "react-i18next";
-import { GroupStatusBar } from "@/components/groups/GroupStatusBar";
+import { CareCircleManager } from "@/components/groups/CareCircleManager";
+import { PatientInfoCard } from "@/components/groups/PatientInfoCard";
+import { GroupCalendar } from "@/components/groups/GroupCalendar";
+import { CareUpdates } from "@/components/groups/CareUpdates";
 import { GroupTasks } from "@/components/groups/GroupTasks";
 import { GroupPosts } from "@/components/groups/GroupPosts";
-import { PatientInfoCard } from "@/components/groups/PatientInfoCard";
-import { MiniCalendar } from "@/components/groups/MiniCalendar";
-import { CareAssistant } from "@/components/ai/CareAssistant";
-import { FacilityDashboard } from "@/components/roles/FacilityDashboard";
-import { ProfessionalCaregiverDashboard } from "@/components/roles/ProfessionalCaregiverDashboard";
-import { FamilyCaregiverView } from "@/components/roles/FamilyCaregiverView";
-import { CareCircleManager } from "@/components/groups/CareCircleManager";
-import { CareUpdates } from "@/components/groups/CareUpdates";
-import { WellnessTracker } from "@/components/wellness/WellnessTracker";
-import { CareRoutineManager } from "@/components/routines/CareRoutineManager";
-import { CaregiverSupport } from "@/components/support/CaregiverSupport";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { MedicationScheduler } from "@/components/medications/MedicationScheduler";
-import { CareTeamCalendar } from "@/components/calendar/CareTeamCalendar";
-import { DocumentSharing } from "@/components/documents/DocumentSharing";
 import { VideoConsultations } from "@/components/video/VideoConsultations";
+import { CareQualityMetrics } from "@/components/metrics/CareQualityMetrics";
+import { DocumentSharing } from "@/components/documents/DocumentSharing";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
-// ... keep existing code (imports and component setup)
-
-export default function GroupDetails() {
-  const { groupId } = useParams();
-  const [userRole, setUserRole] = useState<string | null>(null);
-  const [groupMembers, setGroupMembers] = useState<any[]>([]);
+const GroupDetails = () => {
+  const { groupId } = useParams<{ groupId: string }>();
+  const [patientInfo, setPatientInfo] = useState(null);
   const { toast } = useToast();
-  const { t } = useTranslation();
-  const isMobile = useIsMobile();
 
   useEffect(() => {
     if (groupId) {
-      fetchUserRole();
-      fetchGroupMembers();
+      fetchPatientInfo();
     }
   }, [groupId]);
 
-  const fetchUserRole = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+  const fetchPatientInfo = async () => {
+    if (!groupId) return;
 
+    try {
       const { data, error } = await supabase
-        .from('profiles')
-        .select('user_type')
-        .eq('id', user.id)
+        .from('patient_info')
+        .select('*')
+        .eq('group_id', groupId)
         .single();
 
       if (error) throw error;
-      setUserRole(data?.user_type);
+      setPatientInfo(data);
     } catch (error) {
-      console.error('Error fetching user role:', error);
+      console.error('Error fetching patient info:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load patient information",
+        variant: "destructive",
+      });
     }
   };
 
-  const fetchGroupMembers = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('care_group_members')
-        .select(`
-          user_id,
-          profiles (
-            first_name,
-            last_name
-          )
-        `)
-        .eq('group_id', groupId);
-
-      if (error) throw error;
-      setGroupMembers(data || []);
-    } catch (error) {
-      console.error('Error fetching group members:', error);
-    }
-  };
-
-  const renderRoleBasedDashboard = () => {
-    if (!groupId) return null;
-
-    switch (userRole) {
-      case 'facility_admin':
-      case 'facility_staff':
-        return <FacilityDashboard groupId={groupId} />;
-      case 'professional_caregiver':
-        return <ProfessionalCaregiverDashboard groupId={groupId} />;
-      case 'family_caregiver':
-        return <FamilyCaregiverView groupId={groupId} />;
-      default:
-        return null;
-    }
-  };
-
-  if (!groupId) return null;
+  if (!groupId) {
+    return <div>Group not found</div>;
+  }
 
   return (
-    <div className="container mx-auto px-4 py-6">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Left Column */}
-        <div className="md:col-span-2 space-y-6">
-          <GroupStatusBar groupId={groupId} />
-          <CareCircleManager groupId={groupId} />
+    <div className="container mx-auto px-4 py-8 space-y-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 space-y-6">
+          <PatientInfoCard groupId={groupId} patientInfo={patientInfo} />
+          <CareQualityMetrics groupId={groupId} />
           <VideoConsultations groupId={groupId} />
-          <MedicationScheduler groupId={groupId} />
-          <CareTeamCalendar groupId={groupId} />
-          <DocumentSharing groupId={groupId} />
-          <CareUpdates groupId={groupId} />
-          <WellnessTracker groupId={groupId} />
-          <CareRoutineManager groupId={groupId} />
-          {renderRoleBasedDashboard()}
-          <GroupTasks groupId={groupId} members={groupMembers} />
+          <GroupCalendar groupId={groupId} />
+          <GroupTasks groupId={groupId} />
           <GroupPosts groupId={groupId} />
         </div>
-
-        {/* Right Column */}
         <div className="space-y-6">
-          <PatientInfoCard groupId={groupId} />
-          <CaregiverSupport groupId={groupId} />
-          <MiniCalendar groupId={groupId} />
-          {!isMobile && <CareAssistant groupId={groupId} />}
+          <CareCircleManager groupId={groupId} />
+          <CareUpdates groupId={groupId} />
+          <DocumentSharing groupId={groupId} />
         </div>
       </div>
-      {isMobile && (
-        <div className="mt-6">
-          <CareAssistant groupId={groupId} />
-        </div>
-      )}
     </div>
   );
-}
+};
+
+export default GroupDetails;
