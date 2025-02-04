@@ -20,6 +20,8 @@ import { CareAssistant } from "@/components/ai/CareAssistant";
 import { CareTeamCalendar } from "@/components/calendar/CareTeamCalendar";
 import { CareTeamPresence } from "@/components/groups/CareTeamPresence";
 import { CareQualityMetrics } from "@/components/metrics/CareQualityMetrics";
+import { CareUpdates } from "@/components/groups/CareUpdates";
+import { WellnessTracker } from "@/components/wellness/WellnessTracker";
 import type { CareGroup, GroupPrivacySettings } from "@/types/groups";
 import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -343,6 +345,10 @@ const Groups = () => {
                         />
                         <div className="mt-4 space-y-4">
                           <CareTeamPresence groupId={group.id} />
+                          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                            <CareUpdates groupId={group.id} />
+                            <WellnessTracker groupId={group.id} />
+                          </div>
                           <CareTeamCalendar groupId={group.id} />
                           <CareQualityMetrics groupId={group.id} />
                         </div>
