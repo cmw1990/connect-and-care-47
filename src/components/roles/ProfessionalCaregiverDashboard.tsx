@@ -35,7 +35,19 @@ export const ProfessionalCaregiverDashboard = ({ groupId }: { groupId: string })
         .order('recorded_at', { ascending: false });
 
       if (error) throw error;
-      setReports(data || []);
+
+      // Transform the data to match our CareReport type
+      const transformedData: CareReport[] = (data || []).map(item => ({
+        id: item.id,
+        recorded_at: item.recorded_at,
+        metric_value: typeof item.metric_value === 'string' 
+          ? JSON.parse(item.metric_value)
+          : item.metric_value,
+        created_by: item.created_by,
+        profiles: item.profiles
+      }));
+
+      setReports(transformedData);
     } catch (error) {
       console.error('Error fetching reports:', error);
     }
