@@ -15,28 +15,36 @@ export const AnimatedCareGuide = ({ disease, description }: AnimatedGuideProps) 
   useEffect(() => {
     const fetchVideo = async () => {
       try {
-        // Log the query for debugging
         console.log('Fetching video for disease:', disease);
         
         const { data, error } = await supabase
           .from('care_guide_videos')
-          .select('video_url')
-          .ilike('disease', disease) // Using ilike for case-insensitive matching
+          .select('video_url, disease')
+          .eq('disease', disease)
           .maybeSingle();
 
+        console.log('Query result:', { data, error });
+
         if (error) {
-          console.error('Error fetching video:', error);
+          console.error('Supabase error:', error);
           setError('Failed to load video');
           return;
         }
 
-        if (data) {
-          console.log('Video data found:', data);
-          setVideoUrl(data.video_url);
-        } else {
+        if (!data) {
           console.log('No video found for disease:', disease);
           setError('No video available for this condition');
+          return;
         }
+
+        if (!data.video_url) {
+          console.log('Video URL is null for disease:', disease);
+          setError('Video URL is missing');
+          return;
+        }
+
+        console.log('Setting video URL:', data.video_url);
+        setVideoUrl(data.video_url);
       } catch (err) {
         console.error('Error in fetchVideo:', err);
         setError('Failed to load video');
@@ -45,6 +53,11 @@ export const AnimatedCareGuide = ({ disease, description }: AnimatedGuideProps) 
 
     fetchVideo();
   }, [disease]);
+
+  const handleVideoError = (e: React.SyntheticEvent<HTMLVideoElement, Event>) => {
+    console.error('Video loading error:', e);
+    setError('Failed to load video');
+  };
 
   return (
     <Card className="w-full animate-fade-in">
@@ -62,6 +75,7 @@ export const AnimatedCareGuide = ({ disease, description }: AnimatedGuideProps) 
               src={videoUrl}
               controls
               className="w-full h-full object-cover"
+              onError={handleVideoError}
             />
           ) : (
             <div className="flex items-center justify-center h-full flex-col gap-2">
