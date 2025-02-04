@@ -1,6 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { Navbar } from "@/components/navigation/navbar";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -17,10 +16,12 @@ import { useToast } from "@/hooks/use-toast";
 import { Plus, Users } from "lucide-react";
 import { GroupsList } from "@/components/groups/GroupsList";
 import { CareComparisonDialog } from "@/components/comparison/CareComparisonDialog";
+import { CareAssistant } from "@/components/ai/CareAssistant";
 import type { CareGroup, GroupPrivacySettings } from "@/types/groups";
 import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const Groups = () => {
   const navigate = useNavigate();
@@ -33,6 +34,7 @@ const Groups = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [editingGroup, setEditingGroup] = useState<CareGroup | null>(null);
+  const isMobile = useIsMobile();
 
   const fetchGroups = useCallback(async () => {
     try {
@@ -239,7 +241,6 @@ const Groups = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-primary-100 to-white">
-      <Navbar />
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex justify-between items-center mb-8">
           <div className="flex items-center gap-4">
@@ -311,51 +312,58 @@ const Groups = () => {
           </Dialog>
         </div>
 
-        <Tabs defaultValue="my-groups" className="w-full">
-          <TabsList className="mb-4">
-            <TabsTrigger value="my-groups">My Care Groups</TabsTrigger>
-            <TabsTrigger value="all-groups">Public Groups</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="my-groups">
-            {isLoading ? (
-              <div className="flex justify-center items-center h-64">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-              </div>
-            ) : myGroups.length === 0 ? (
-              <div className="text-center py-12">
-                <Users className="mx-auto h-12 w-12 text-gray-400" />
-                <h3 className="mt-2 text-sm font-semibold text-gray-900">No groups yet</h3>
-                <p className="mt-1 text-sm text-gray-500">Get started by creating a new care group.</p>
-              </div>
-            ) : (
-              <GroupsList 
-                groups={myGroups}
-                onDelete={handleDelete}
-                onEdit={handleEdit}
-              />
-            )}
-          </TabsContent>
-          
-          <TabsContent value="all-groups">
-            {isLoading ? (
-              <div className="flex justify-center items-center h-64">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-              </div>
-            ) : groups.length === 0 ? (
-              <div className="text-center py-12">
-                <Users className="mx-auto h-12 w-12 text-gray-400" />
-                <h3 className="mt-2 text-sm font-semibold text-gray-900">No public groups available</h3>
-                <p className="mt-1 text-sm text-gray-500">Create a new public group to get started.</p>
-              </div>
-            ) : (
-              <GroupsList 
-                groups={groups}
-                showActions={false}
-              />
-            )}
-          </TabsContent>
-        </Tabs>
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          <div className="lg:col-span-3">
+            <Tabs defaultValue="my-groups" className="w-full">
+              <TabsList className="mb-4">
+                <TabsTrigger value="my-groups">My Care Groups</TabsTrigger>
+                <TabsTrigger value="all-groups">Public Groups</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="my-groups">
+                {isLoading ? (
+                  <div className="flex justify-center items-center h-64">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                  </div>
+                ) : myGroups.length === 0 ? (
+                  <div className="text-center py-12">
+                    <Users className="mx-auto h-12 w-12 text-gray-400" />
+                    <h3 className="mt-2 text-sm font-semibold text-gray-900">No groups yet</h3>
+                    <p className="mt-1 text-sm text-gray-500">Get started by creating a new care group.</p>
+                  </div>
+                ) : (
+                  <GroupsList 
+                    groups={myGroups}
+                    onDelete={handleDelete}
+                    onEdit={handleEdit}
+                  />
+                )}
+              </TabsContent>
+              
+              <TabsContent value="all-groups">
+                {isLoading ? (
+                  <div className="flex justify-center items-center h-64">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                  </div>
+                ) : groups.length === 0 ? (
+                  <div className="text-center py-12">
+                    <Users className="mx-auto h-12 w-12 text-gray-400" />
+                    <h3 className="mt-2 text-sm font-semibold text-gray-900">No public groups available</h3>
+                    <p className="mt-1 text-sm text-gray-500">Create a new public group to get started.</p>
+                  </div>
+                ) : (
+                  <GroupsList 
+                    groups={groups}
+                    showActions={false}
+                  />
+                )}
+              </TabsContent>
+            </Tabs>
+          </div>
+          <div className="hidden lg:block">
+            <CareAssistant />
+          </div>
+        </div>
       </main>
     </div>
   );
