@@ -12,6 +12,8 @@ import { GroupTasks } from "@/components/groups/GroupTasks";
 import { GroupPosts } from "@/components/groups/GroupPosts";
 import { PatientInfoCard } from "@/components/groups/PatientInfoCard";
 import { MiniCalendar } from "@/components/groups/MiniCalendar";
+import { CareAssistant } from "@/components/ai/CareAssistant";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface GroupPost {
   id: string;
@@ -33,6 +35,7 @@ export default function GroupDetails() {
   const [groupMembers, setGroupMembers] = useState<any[]>([]);
   const { toast } = useToast();
   const { t } = useTranslation();
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     if (groupId) {
@@ -124,13 +127,6 @@ export default function GroupDetails() {
     }
   };
 
-  const getAuthorName = (post: GroupPost) => {
-    if (!post.profiles) return t("unknownUser");
-    const firstName = post.profiles.first_name || '';
-    const lastName = post.profiles.last_name || '';
-    return firstName || lastName ? `${firstName} ${lastName}`.trim() : t("unknownUser");
-  };
-
   if (!groupId) return null;
 
   return (
@@ -147,8 +143,14 @@ export default function GroupDetails() {
         <div className="space-y-6">
           <PatientInfoCard groupId={groupId} />
           <MiniCalendar groupId={groupId} />
+          {!isMobile && <CareAssistant groupId={groupId} />}
         </div>
       </div>
+      {isMobile && (
+        <div className="mt-6">
+          <CareAssistant groupId={groupId} />
+        </div>
+      )}
     </div>
   );
 }

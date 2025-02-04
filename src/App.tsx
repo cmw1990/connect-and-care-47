@@ -20,11 +20,10 @@ const AppContent = () => {
   const location = useLocation();
   const isMobile = useIsMobile();
   const showNavbar = !location.pathname.includes('/auth');
-  const isGroupsPage = location.pathname === '/groups';
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
-      {showNavbar && !isMobile && !isGroupsPage && <Navbar />}
+      {showNavbar && !isMobile && <Navbar />}
       <main className={cn(
         "flex-1 container mx-auto px-4 py-6",
         isMobile && "pb-20" // Extra padding for mobile navigation
