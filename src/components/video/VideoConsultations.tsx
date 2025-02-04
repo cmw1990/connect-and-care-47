@@ -23,6 +23,10 @@ interface VideoConsultation {
   participants: any[] | null;
   host_id: string | null;
   duration: number | null;
+  host?: {
+    first_name: string | null;
+    last_name: string | null;
+  };
 }
 
 export const VideoConsultations = ({ groupId }: { groupId: string }) => {
@@ -53,7 +57,16 @@ export const VideoConsultations = ({ groupId }: { groupId: string }) => {
         .order("scheduled_time", { ascending: true });
 
       if (error) throw error;
-      setConsultations(data || []);
+      
+      // Transform the data to ensure participants is always an array
+      const transformedData = (data || []).map(consultation => ({
+        ...consultation,
+        participants: Array.isArray(consultation.participants) 
+          ? consultation.participants 
+          : []
+      }));
+      
+      setConsultations(transformedData);
     } catch (error) {
       console.error("Error fetching consultations:", error);
       toast({
@@ -77,6 +90,7 @@ export const VideoConsultations = ({ groupId }: { groupId: string }) => {
         duration: newConsultation.duration,
         status: "scheduled",
         meeting_url: `https://meet.jit.si/${groupId}-${Date.now()}`,
+        participants: [], // Initialize with empty array
       });
 
       if (error) throw error;
