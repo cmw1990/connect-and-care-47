@@ -1,66 +1,64 @@
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Play } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Play, CheckCircle2, AlertCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 interface AnimatedGuideProps {
   disease: string;
   description: string;
+  guidelines: string[];
 }
 
-export const AnimatedCareGuide = ({ disease, description }: AnimatedGuideProps) => {
-  const [videoUrl, setVideoUrl] = useState<string | null>(null);
+export const AnimatedCareGuide = ({ disease, description, guidelines }: AnimatedGuideProps) => {
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [currentStep, setCurrentStep] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(false);
 
   useEffect(() => {
-    const fetchVideo = async () => {
+    const generateImage = async () => {
       try {
-        console.log('Fetching video for disease:', disease);
-        
-        const { data, error } = await supabase
-          .from('care_guide_videos')
-          .select('video_url, disease')
-          .eq('disease', disease)
-          .maybeSingle();
+        const { data, error } = await supabase.functions.invoke('generate-care-image', {
+          body: { disease, description }
+        });
 
-        console.log('Query result:', { data, error });
-
-        if (error) {
-          console.error('Supabase error:', error);
-          setError('Failed to load video');
-          return;
-        }
-
-        if (!data) {
-          console.log('No video found for disease:', disease);
-          setError('No video available for this condition');
-          return;
-        }
-
-        if (!data.video_url) {
-          console.log('Video URL is null for disease:', disease);
-          setError('Video URL is missing');
-          return;
-        }
-
-        console.log('Setting video URL:', data.video_url);
-        setVideoUrl(data.video_url);
+        if (error) throw error;
+        setImageUrl(data.imageUrl);
       } catch (err) {
-        console.error('Error in fetchVideo:', err);
-        setError('Failed to load video');
+        console.error('Error generating image:', err);
+        setError('Failed to generate care guide image');
       }
     };
 
-    fetchVideo();
-  }, [disease]);
+    generateImage();
+  }, [disease, description]);
 
-  const handleVideoError = (e: React.SyntheticEvent<HTMLVideoElement, Event>) => {
-    console.error('Video loading error:', e);
-    setError('Failed to load video');
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (isPlaying) {
+      interval = setInterval(() => {
+        setCurrentStep((prev) => {
+          if (prev === guidelines.length - 1) {
+            setIsPlaying(false);
+            return prev;
+          }
+          return prev + 1;
+        });
+      }, 3000);
+    }
+    return () => clearInterval(interval);
+  }, [isPlaying, guidelines.length]);
+
+  const handlePlayPause = () => {
+    setIsPlaying(!isPlaying);
+    if (!isPlaying && currentStep === guidelines.length - 1) {
+      setCurrentStep(0);
+    }
   };
 
   return (
-    <Card className="w-full animate-fade-in">
+    <Card className="w-full">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Play className="h-5 w-5" />
@@ -68,21 +66,61 @@ export const AnimatedCareGuide = ({ disease, description }: AnimatedGuideProps) 
         </CardTitle>
         <CardDescription>{description}</CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="relative aspect-video rounded-lg overflow-hidden bg-muted">
-          {videoUrl ? (
-            <video 
-              src={videoUrl}
-              controls
+      <CardContent className="space-y-6">
+        <div className="relative aspect-square rounded-lg overflow-hidden bg-muted">
+          {imageUrl ? (
+            <motion.img
+              src={imageUrl}
+              alt={`Care guide for ${disease}`}
               className="w-full h-full object-cover"
-              onError={handleVideoError}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5 }}
             />
+          ) : error ? (
+            <div className="flex items-center justify-center h-full">
+              <AlertCircle className="h-12 w-12 text-destructive" />
+              <p className="text-sm text-muted-foreground mt-2">{error}</p>
+            </div>
           ) : (
-            <div className="flex items-center justify-center h-full flex-col gap-2">
-              <Play className="h-12 w-12 text-muted-foreground" />
-              {error && <p className="text-sm text-muted-foreground">{error}</p>}
+            <div className="flex items-center justify-center h-full">
+              <Play className="h-12 w-12 text-muted-foreground animate-pulse" />
             </div>
           )}
+        </div>
+
+        <div className="space-y-4">
+          <div className="flex justify-between items-center">
+            <motion.button
+              onClick={handlePlayPause}
+              className={`px-4 py-2 rounded-full ${
+                isPlaying ? 'bg-secondary' : 'bg-primary'
+              } text-white flex items-center gap-2`}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <Play className="h-4 w-4" />
+              {isPlaying ? 'Pause' : 'Play'}
+            </motion.button>
+            <span className="text-sm text-muted-foreground">
+              Step {currentStep + 1} of {guidelines.length}
+            </span>
+          </div>
+
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={currentStep}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="bg-muted p-4 rounded-lg"
+            >
+              <div className="flex items-start gap-3">
+                <CheckCircle2 className="h-5 w-5 text-primary mt-0.5" />
+                <p className="text-sm">{guidelines[currentStep]}</p>
+              </div>
+            </motion.div>
+          </AnimatePresence>
         </div>
       </CardContent>
     </Card>
