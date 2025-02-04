@@ -8,6 +8,7 @@ import { Smile, Frown, HeartPulse, Heart, Angry, Meh, Bot } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { CareAssistant } from "@/components/ai/CareAssistant";
 import { notificationService } from "@/services/NotificationService";
+import { CompanionMatcher } from "@/components/companions/CompanionMatcher";
 
 export const MoodSupport = () => {
   const [journalEntry, setJournalEntry] = useState("");
