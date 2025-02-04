@@ -1989,7 +1989,12 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      check_group_access: {
+        Args: {
+          group_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
       user_type:
