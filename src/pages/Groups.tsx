@@ -20,7 +20,7 @@ import { CareAssistant } from "@/components/ai/CareAssistant";
 import { CareTeamCalendar } from "@/components/calendar/CareTeamCalendar";
 import { CareTeamPresence } from "@/components/groups/CareTeamPresence";
 import { CareQualityMetrics } from "@/components/metrics/CareQualityMetrics";
-import type { CareGroup } from "@/types/groups";
+import type { CareGroup, GroupPrivacySettings } from "@/types/groups";
 import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
