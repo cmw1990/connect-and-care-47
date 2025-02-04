@@ -5,8 +5,9 @@ import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
 import { LanguageSelector } from "../ui/language-selector";
 import { useTranslation } from "react-i18next";
-import { Home, Users, MessageSquare, Heart, Settings, Bell, Menu } from "lucide-react";
+import { Home, Users, MessageSquare, Heart, Settings, Bell, Menu, LogOut } from "lucide-react";
 import { motion } from "framer-motion";
+import { cn } from "@/lib/utils";
 import {
   DropdownMenu,
   DropdownMenuContent,

@@ -30,10 +30,27 @@ export const WellnessScore = ({ groupId }: WellnessScoreProps) => {
         .limit(1)
         .single();
         
-      return data?.metric_value as MetricValue || null;
+      // Cast the metric_value to MetricValue type after validation
+      const metricValue = data?.metric_value as unknown;
+      if (isValidMetricValue(metricValue)) {
+        return metricValue;
+      }
+      return null;
     },
     enabled: !!groupId
   });
+
+  // Type guard to validate metric value shape
+  const isValidMetricValue = (value: unknown): value is MetricValue => {
+    if (typeof value !== 'object' || value === null) return false;
+    const v = value as any;
+    return (
+      typeof v.physical === 'number' &&
+      typeof v.mental === 'number' &&
+      typeof v.mood === 'number' &&
+      typeof v.activity === 'number'
+    );
+  };
 
   const calculateOverallScore = () => {
     if (!metrics) return 0;
@@ -72,8 +89,7 @@ export const WellnessScore = ({ groupId }: WellnessScoreProps) => {
               </div>
               <Progress 
                 value={score} 
-                className="h-2"
-                indicatorClassName={getScoreColor(score)}
+                className={`h-2 ${getScoreColor(score)}`}
               />
               {metrics && (
                 <div className="grid grid-cols-2 gap-2 mt-3 text-xs text-gray-500">

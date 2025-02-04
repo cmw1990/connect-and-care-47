@@ -6,6 +6,7 @@ export interface CareGroup {
   member_count?: number;
   is_owner?: boolean;
   is_public?: boolean;
+  location?: string;
   privacy_settings?: GroupPrivacySettings | null;
 }
 
