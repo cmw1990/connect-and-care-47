@@ -257,6 +257,136 @@ export type Database = {
         }
         Relationships: []
       }
+      care_home_metrics: {
+        Row: {
+          facility_id: string | null
+          id: string
+          metric_type: string
+          metric_value: Json
+          recorded_at: string | null
+        }
+        Insert: {
+          facility_id?: string | null
+          id?: string
+          metric_type: string
+          metric_value: Json
+          recorded_at?: string | null
+        }
+        Update: {
+          facility_id?: string | null
+          id?: string
+          metric_type?: string
+          metric_value?: Json
+          recorded_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "care_home_metrics_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "care_facilities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      care_home_resources: {
+        Row: {
+          facility_id: string | null
+          id: string
+          last_restocked: string | null
+          minimum_threshold: number
+          notes: string | null
+          quantity: number
+          resource_name: string
+          resource_type: string
+          status: string | null
+          unit: string
+        }
+        Insert: {
+          facility_id?: string | null
+          id?: string
+          last_restocked?: string | null
+          minimum_threshold: number
+          notes?: string | null
+          quantity: number
+          resource_name: string
+          resource_type: string
+          status?: string | null
+          unit: string
+        }
+        Update: {
+          facility_id?: string | null
+          id?: string
+          last_restocked?: string | null
+          minimum_threshold?: number
+          notes?: string | null
+          quantity?: number
+          resource_name?: string
+          resource_type?: string
+          status?: string | null
+          unit?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "care_home_resources_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "care_facilities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      care_home_staff_schedule: {
+        Row: {
+          department: string
+          facility_id: string | null
+          id: string
+          notes: string | null
+          shift_end: string
+          shift_start: string
+          shift_type: string
+          staff_id: string | null
+          status: string | null
+        }
+        Insert: {
+          department: string
+          facility_id?: string | null
+          id?: string
+          notes?: string | null
+          shift_end: string
+          shift_start: string
+          shift_type: string
+          staff_id?: string | null
+          status?: string | null
+        }
+        Update: {
+          department?: string
+          facility_id?: string | null
+          id?: string
+          notes?: string | null
+          shift_end?: string
+          shift_start?: string
+          shift_type?: string
+          staff_id?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "care_home_staff_schedule_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "care_facilities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "care_home_staff_schedule_staff_id_fkey"
+            columns: ["staff_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       care_products: {
         Row: {
           affiliate_link: string | null

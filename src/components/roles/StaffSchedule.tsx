@@ -1,97 +1,81 @@
-import React from "react";
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Calendar } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-
-interface CareHomeStaffSchedule {
-  id: string;
-  facility_id: string;
-  staff_id: string;
-  shift_start: string;
-  shift_end: string;
-  shift_type: string;
-  department: string;
-  status: string;
-  notes: string;
-  staff: {
-    first_name: string;
-    last_name: string;
-  };
-}
+import { CareHomeStaffSchedule } from "@/types/care-home";
+import { useToast } from "@/hooks/use-toast";
 
 export const StaffSchedule = ({ facilityId }: { facilityId: string }) => {
-  const { data: schedules, isLoading } = useQuery({
-    queryKey: ['staff-schedules', facilityId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('care_home_staff_schedule')
-        .select(`
-          id,
-          facility_id,
-          staff_id,
-          shift_start,
-          shift_end,
-          shift_type,
-          department,
-          status,
-          staff:profiles(first_name, last_name)
-        `)
-        .eq('facility_id', facilityId)
-        .gte('shift_start', new Date().toISOString())
-        .order('shift_start', { ascending: true });
+  const [schedules, setSchedules] = useState<CareHomeStaffSchedule[]>([]);
+  const { toast } = useToast();
 
-      if (error) throw error;
-      return data as CareHomeStaffSchedule[];
-    },
-  });
+  useEffect(() => {
+    const fetchSchedules = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('care_home_staff_schedule')
+          .select(`
+            *,
+            profiles:staff_id (
+              first_name,
+              last_name
+            )
+          `)
+          .eq('facility_id', facilityId)
+          .order('shift_start', { ascending: true });
 
-  if (isLoading) {
-    return <div>Loading schedules...</div>;
-  }
+        if (error) throw error;
+        setSchedules(data as CareHomeStaffSchedule[]);
+      } catch (error) {
+        console.error('Error fetching schedules:', error);
+        toast({
+          title: "Error",
+          description: "Failed to load staff schedules",
+          variant: "destructive",
+        });
+      }
+    };
+
+    fetchSchedules();
+  }, [facilityId, toast]);
 
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-xl font-bold">Staff Schedule</CardTitle>
-        <Calendar className="h-4 w-4 text-muted-foreground" />
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          {schedules?.map((schedule) => (
-            <div
-              key={schedule.id}
-              className="flex items-center justify-between p-4 border rounded-lg"
-            >
-              <div>
-                <p className="font-medium">
-                  {schedule.staff.first_name} {schedule.staff.last_name}
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  {schedule.department} - {schedule.shift_type}
-                </p>
-              </div>
-              <div className="text-right">
-                <p className="text-sm">
-                  {new Date(schedule.shift_start).toLocaleTimeString()} -{" "}
-                  {new Date(schedule.shift_end).toLocaleTimeString()}
-                </p>
-                <span
-                  className={`text-xs px-2 py-1 rounded-full ${
-                    schedule.status === "scheduled"
-                      ? "bg-green-100 text-green-800"
-                      : "bg-yellow-100 text-yellow-800"
-                  }`}
-                >
-                  {schedule.status}
-                </span>
-              </div>
-            </div>
-          ))}
-          <Button className="w-full">Add Shift</Button>
-        </div>
-      </CardContent>
-    </Card>
+    <div className="space-y-4">
+      <Card>
+        <CardHeader>
+          <CardTitle>Staff Schedule</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {schedules.map((schedule) => (
+              <Card key={schedule.id}>
+                <CardContent className="p-4">
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <h3 className="font-medium">
+                        {(schedule as any).profiles?.first_name} {(schedule as any).profiles?.last_name}
+                      </h3>
+                      <span className={`px-2 py-1 rounded text-sm ${
+                        schedule.status === 'scheduled' ? 'bg-green-100 text-green-800' :
+                        schedule.status === 'in-progress' ? 'bg-blue-100 text-blue-800' :
+                        'bg-gray-100 text-gray-800'
+                      }`}>
+                        {schedule.status}
+                      </span>
+                    </div>
+                    <div className="text-sm text-gray-500">
+                      <p>{new Date(schedule.shift_start).toLocaleString()} - {new Date(schedule.shift_end).toLocaleString()}</p>
+                      <p>{schedule.department} - {schedule.shift_type}</p>
+                    </div>
+                    {schedule.notes && (
+                      <p className="text-sm text-gray-600">{schedule.notes}</p>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
 };
