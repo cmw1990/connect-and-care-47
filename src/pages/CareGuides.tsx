@@ -1,6 +1,7 @@
 import { Navbar } from "@/components/navigation/navbar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { AnimatedCareGuide } from "@/components/guides/AnimatedCareGuide";
 
 const careGuides = [
   {
@@ -62,35 +63,41 @@ export const CareGuides = () => {
           <CardHeader>
             <CardTitle>Care Guides</CardTitle>
             <CardDescription>
-              Comprehensive guides for managing common conditions requiring collaborative care
+              Comprehensive guides and animated videos for managing common conditions requiring collaborative care
             </CardDescription>
           </CardHeader>
         </Card>
 
         <div className="grid gap-6 md:grid-cols-2">
           {careGuides.map((guide) => (
-            <Card key={guide.disease}>
-              <CardHeader>
-                <CardTitle>{guide.disease}</CardTitle>
-                <CardDescription>{guide.description}</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Accordion type="single" collapsible>
-                  <AccordionItem value="guidelines">
-                    <AccordionTrigger>Care Guidelines</AccordionTrigger>
-                    <AccordionContent>
-                      <ul className="list-disc pl-6 space-y-2">
-                        {guide.guidelines.map((guideline, index) => (
-                          <li key={index} className="text-sm text-muted-foreground">
-                            {guideline}
-                          </li>
-                        ))}
-                      </ul>
-                    </AccordionContent>
-                  </AccordionItem>
-                </Accordion>
-              </CardContent>
-            </Card>
+            <div key={guide.disease} className="space-y-4">
+              <AnimatedCareGuide 
+                disease={guide.disease}
+                description={guide.description}
+              />
+              <Card>
+                <CardHeader>
+                  <CardTitle>{guide.disease}</CardTitle>
+                  <CardDescription>{guide.description}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Accordion type="single" collapsible>
+                    <AccordionItem value="guidelines">
+                      <AccordionTrigger>Care Guidelines</AccordionTrigger>
+                      <AccordionContent>
+                        <ul className="list-disc pl-6 space-y-2">
+                          {guide.guidelines.map((guideline, index) => (
+                            <li key={index} className="text-sm text-muted-foreground">
+                              {guideline}
+                            </li>
+                          ))}
+                        </ul>
+                      </AccordionContent>
+                    </AccordionItem>
+                  </Accordion>
+                </CardContent>
+              </Card>
+            </div>
           ))}
         </div>
       </main>
