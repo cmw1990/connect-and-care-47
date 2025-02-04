@@ -9,6 +9,13 @@ interface WellnessScoreProps {
   groupId?: string;
 }
 
+interface MetricValue {
+  physical: number;
+  mental: number;
+  mood: number;
+  activity: number;
+}
+
 export const WellnessScore = ({ groupId }: WellnessScoreProps) => {
   const { data: metrics } = useQuery({
     queryKey: ['wellnessMetrics', groupId],
@@ -23,7 +30,7 @@ export const WellnessScore = ({ groupId }: WellnessScoreProps) => {
         .limit(1)
         .single();
         
-      return data?.metric_value || null;
+      return data?.metric_value as MetricValue || null;
     },
     enabled: !!groupId
   });
@@ -40,6 +47,11 @@ export const WellnessScore = ({ groupId }: WellnessScoreProps) => {
   };
 
   const score = calculateOverallScore();
+  const getScoreColor = (score: number) => {
+    if (score > 70) return 'text-green-500';
+    if (score > 40) return 'text-yellow-500';
+    return 'text-red-500';
+  };
 
   return (
     <motion.div
@@ -47,16 +59,30 @@ export const WellnessScore = ({ groupId }: WellnessScoreProps) => {
       animate={{ scale: 1, opacity: 1 }}
       transition={{ duration: 0.3 }}
     >
-      <Card className="bg-white shadow-sm">
+      <Card className="bg-white shadow-sm hover:shadow-md transition-shadow">
         <CardContent className="p-4">
           <div className="flex items-center gap-3">
-            <Heart className={`h-5 w-5 ${score > 70 ? 'text-green-500' : score > 40 ? 'text-yellow-500' : 'text-red-500'}`} />
+            <div className={`p-2 rounded-full bg-opacity-10 ${getScoreColor(score)} bg-current`}>
+              <Heart className={`h-5 w-5 ${getScoreColor(score)}`} />
+            </div>
             <div className="flex-1">
               <div className="flex justify-between items-center mb-1">
                 <span className="text-sm font-medium">Wellness Score</span>
-                <span className="text-sm font-bold">{score}%</span>
+                <span className={`text-sm font-bold ${getScoreColor(score)}`}>{score}%</span>
               </div>
-              <Progress value={score} className="h-2" />
+              <Progress 
+                value={score} 
+                className="h-2"
+                indicatorClassName={getScoreColor(score)}
+              />
+              {metrics && (
+                <div className="grid grid-cols-2 gap-2 mt-3 text-xs text-gray-500">
+                  <div>Physical: {metrics.physical}%</div>
+                  <div>Mental: {metrics.mental}%</div>
+                  <div>Mood: {metrics.mood}%</div>
+                  <div>Activity: {metrics.activity}%</div>
+                </div>
+              )}
             </div>
           </div>
         </CardContent>

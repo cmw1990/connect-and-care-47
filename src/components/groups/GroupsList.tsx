@@ -1,9 +1,11 @@
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Users, ArrowRight, Trash2, Edit } from "lucide-react";
+import { Users, ArrowRight, Trash2, Edit, Clock, MapPin } from "lucide-react";
 import type { CareGroup } from "@/types/groups";
 import { useToast } from "@/hooks/use-toast";
+import { motion } from "framer-motion";
+import { format } from "date-fns";
 
 interface GroupsListProps {
   groups: CareGroup[];
@@ -32,55 +34,77 @@ export const GroupsList = ({ groups, onDelete, onEdit, showActions = true }: Gro
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {groups.map((group) => (
-        <Card key={group.id} className="hover:shadow-lg transition-shadow">
-          <CardHeader>
-            <CardTitle className="flex justify-between items-center">
-              <span className="truncate">{group.name}</span>
-              <div className="flex items-center text-sm text-gray-500">
-                <Users className="h-4 w-4 mr-1" />
-                <span>{group.member_count}</span>
+      {groups.map((group, index) => (
+        <motion.div
+          key={group.id}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: index * 0.1 }}
+        >
+          <Card className="hover:shadow-lg transition-shadow bg-white overflow-hidden">
+            <CardHeader className="bg-gradient-to-r from-primary-100 to-secondary-100">
+              <CardTitle className="flex justify-between items-center">
+                <span className="truncate text-lg font-semibold">{group.name}</span>
+                <div className="flex items-center text-sm text-gray-600 bg-white/80 px-2 py-1 rounded-full">
+                  <Users className="h-4 w-4 mr-1" />
+                  <span>{group.member_count}</span>
+                </div>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-4">
+              <div className="space-y-4">
+                <p className="text-gray-600 text-sm line-clamp-2">{group.description}</p>
+                
+                <div className="flex items-center text-sm text-gray-500 gap-2">
+                  <Clock className="h-4 w-4" />
+                  <span>Created {format(new Date(group.created_at), 'MMM d, yyyy')}</span>
+                </div>
+
+                {group.location && (
+                  <div className="flex items-center text-sm text-gray-500 gap-2">
+                    <MapPin className="h-4 w-4" />
+                    <span>{group.location}</span>
+                  </div>
+                )}
+
+                <div className="flex gap-2 pt-2">
+                  <Button 
+                    variant="default"
+                    className="flex-1 gap-2 bg-primary hover:bg-primary-600" 
+                    onClick={() => navigate(`/groups/${group.id}`)}
+                  >
+                    View Details
+                    <ArrowRight className="h-4 w-4" />
+                  </Button>
+                  {showActions && (
+                    <div className="flex gap-2">
+                      {onEdit && (
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => onEdit(group)}
+                          className="shrink-0 hover:bg-gray-50"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                      )}
+                      {onDelete && (
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => handleDelete(group.id)}
+                          className="shrink-0 hover:bg-red-50 hover:text-red-500"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-gray-600 mb-4 line-clamp-2">{group.description}</p>
-            <div className="flex gap-2">
-              <Button 
-                variant="outline" 
-                className="flex-1 gap-2" 
-                onClick={() => navigate(`/groups/${group.id}`)}
-              >
-                View Details
-                <ArrowRight className="h-4 w-4" />
-              </Button>
-              {showActions && (
-                <>
-                  {onEdit && (
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={() => onEdit(group)}
-                      className="shrink-0"
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                  )}
-                  {onDelete && (
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={() => handleDelete(group.id)}
-                      className="shrink-0"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  )}
-                </>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </motion.div>
       ))}
     </div>
   );
