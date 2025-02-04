@@ -48,7 +48,34 @@ export const CheckInManager = ({ groupId }: { groupId: string }) => {
   useEffect(() => {
     fetchCheckIns();
     subscribeToCheckIns();
+    loadCheckInSettings();
   }, [groupId]);
+
+  const loadCheckInSettings = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('check_in_settings')
+        .select('*')
+        .eq('group_id', groupId)
+        .single();
+
+      if (error) throw error;
+
+      if (data) {
+        setSettings({
+          dailyCheckIn: true,
+          checkInTime: data.check_in_frequency ? data.check_in_frequency.toString().slice(0, 5) : "09:00",
+          customQuestions: data.required_check_in_types || [],
+          activityMonitoring: data.automated_responses || false,
+          inactivityThreshold: 12,
+          medicationReminders: true,
+          emergencyContacts: true,
+        });
+      }
+    } catch (error) {
+      console.error('Error loading check-in settings:', error);
+    }
+  };
 
   const subscribeToCheckIns = () => {
     const channel = supabase
@@ -163,6 +190,38 @@ export const CheckInManager = ({ groupId }: { groupId: string }) => {
     }
   };
 
+  const saveSettings = async () => {
+    try {
+      const { error } = await supabase
+        .from('check_in_settings')
+        .upsert({
+          group_id: groupId,
+          check_in_frequency: `${settings.checkInTime}:00`,
+          required_check_in_types: settings.customQuestions,
+          automated_responses: settings.activityMonitoring,
+          notification_preferences: {
+            medicationReminders: settings.medicationReminders,
+            emergencyContacts: settings.emergencyContacts,
+          },
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Check-in settings saved successfully",
+      });
+      setIsEditing(false);
+    } catch (error) {
+      console.error('Error saving check-in settings:', error);
+      toast({
+        title: "Error",
+        description: "Failed to save settings",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="space-y-4">
       <Card>
@@ -230,7 +289,7 @@ export const CheckInManager = ({ groupId }: { groupId: string }) => {
               }
             />
           </div>
-          <Button onClick={() => setIsEditing(false)}>Save Settings</Button>
+          <Button onClick={saveSettings}>Save Settings</Button>
         </div>
       </DialogContent>
     </div>
