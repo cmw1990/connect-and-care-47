@@ -3,7 +3,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { AnimatedCareGuide } from "@/components/guides/AnimatedCareGuide";
 import { Loader2 } from "lucide-react";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 const careGuides = [
   {
@@ -66,20 +67,15 @@ export const CareGuides = () => {
     try {
       const guides = [];
       for (const guide of careGuides) {
-        const response = await fetch('/api/generate-care-image', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
+        const { data, error } = await supabase.functions.invoke('generate-care-image', {
+          body: {
             disease: guide.disease,
             description: guide.description
-          }),
+          }
         });
+
+        if (error) throw error;
         
-        if (!response.ok) throw new Error('Failed to generate image');
-        
-        const data = await response.json();
         guides.push(data.imageUrl);
         
         toast({
