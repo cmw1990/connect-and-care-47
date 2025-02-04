@@ -12,19 +12,39 @@ const Index = () => {
     navigate('/care-guides');
   };
 
-  // Development examples
   const devExamples = [
     {
       disease: "Alzheimer's Disease",
-      description: "Early stage care and management techniques"
+      description: "Early stage care and management techniques",
+      guidelines: [
+        "Establish consistent daily routines",
+        "Create a safe environment",
+        "Use clear, simple communication",
+        "Encourage social interaction",
+        "Monitor medication schedule"
+      ]
     },
     {
       disease: "Diabetes Type 2",
-      description: "Daily monitoring and lifestyle adjustments"
+      description: "Daily monitoring and lifestyle adjustments",
+      guidelines: [
+        "Check blood sugar regularly",
+        "Follow meal schedule",
+        "Take medications as prescribed",
+        "Exercise moderately",
+        "Monitor foot health"
+      ]
     },
     {
       disease: "Parkinson's Disease",
-      description: "Movement assistance and safety precautions"
+      description: "Movement assistance and safety precautions",
+      guidelines: [
+        "Practice balance exercises",
+        "Take medications on time",
+        "Make home modifications",
+        "Attend physical therapy",
+        "Monitor symptoms"
+      ]
     }
   ];
 
@@ -46,7 +66,6 @@ const Index = () => {
         <UpcomingSchedule />
       </div>
 
-      {/* Development Section */}
       <div className="mt-12 border-t pt-8">
         <h2 className="text-2xl font-semibold mb-6">Development: Generate Care Guide Videos</h2>
         <div className="grid grid-cols-1 gap-6">
@@ -55,6 +74,7 @@ const Index = () => {
               key={index}
               disease={example.disease}
               description={example.description}
+              guidelines={example.guidelines}
             />
           ))}
         </div>
