@@ -435,6 +435,39 @@ export type Database = {
           },
         ]
       }
+      care_plan_templates: {
+        Row: {
+          category: string
+          created_at: string | null
+          description: string | null
+          id: string
+          name: string
+          schedule: Json | null
+          tasks: Json
+          updated_at: string | null
+        }
+        Insert: {
+          category: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          schedule?: Json | null
+          tasks: Json
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          schedule?: Json | null
+          tasks?: Json
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       care_products: {
         Row: {
           affiliate_link: string | null
@@ -476,6 +509,41 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      care_quality_metrics: {
+        Row: {
+          group_id: string | null
+          id: string
+          metric_type: string
+          metric_value: Json
+          notes: string | null
+          recorded_at: string | null
+        }
+        Insert: {
+          group_id?: string | null
+          id?: string
+          metric_type: string
+          metric_value: Json
+          notes?: string | null
+          recorded_at?: string | null
+        }
+        Update: {
+          group_id?: string | null
+          id?: string
+          metric_type?: string
+          metric_value?: Json
+          notes?: string | null
+          recorded_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "care_quality_metrics_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "care_groups"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       care_routines: {
         Row: {
@@ -581,6 +649,51 @@ export type Database = {
             columns: ["group_id"]
             isOneToOne: false
             referencedRelation: "care_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      care_team_availability: {
+        Row: {
+          available_days: string[]
+          available_hours: Json
+          created_at: string | null
+          group_id: string | null
+          id: string
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          available_days: string[]
+          available_hours: Json
+          created_at?: string | null
+          group_id?: string | null
+          id?: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          available_days?: string[]
+          available_hours?: Json
+          created_at?: string | null
+          group_id?: string | null
+          id?: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "care_team_availability_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "care_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "care_team_availability_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -982,6 +1095,47 @@ export type Database = {
           },
         ]
       }
+      medical_device_data: {
+        Row: {
+          device_id: string | null
+          device_type: string
+          group_id: string | null
+          id: string
+          metadata: Json | null
+          readings: Json
+          recorded_at: string | null
+          status: string | null
+        }
+        Insert: {
+          device_id?: string | null
+          device_type: string
+          group_id?: string | null
+          id?: string
+          metadata?: Json | null
+          readings: Json
+          recorded_at?: string | null
+          status?: string | null
+        }
+        Update: {
+          device_id?: string | null
+          device_type?: string
+          group_id?: string | null
+          id?: string
+          metadata?: Json | null
+          readings?: Json
+          recorded_at?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "medical_device_data_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "care_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       medical_documents: {
         Row: {
           created_at: string
@@ -1029,6 +1183,56 @@ export type Database = {
           },
           {
             foreignKeyName: "medical_documents_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "care_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      medication_schedules: {
+        Row: {
+          created_at: string | null
+          dosage: string | null
+          end_date: string | null
+          frequency: string
+          group_id: string | null
+          id: string
+          instructions: string | null
+          medication_name: string
+          start_date: string | null
+          time_of_day: string[]
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          dosage?: string | null
+          end_date?: string | null
+          frequency: string
+          group_id?: string | null
+          id?: string
+          instructions?: string | null
+          medication_name: string
+          start_date?: string | null
+          time_of_day: string[]
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          dosage?: string | null
+          end_date?: string | null
+          frequency?: string
+          group_id?: string | null
+          id?: string
+          instructions?: string | null
+          medication_name?: string
+          start_date?: string | null
+          time_of_day?: string[]
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "medication_schedules_group_id_fkey"
             columns: ["group_id"]
             isOneToOne: false
             referencedRelation: "care_groups"
@@ -1338,6 +1542,54 @@ export type Database = {
           },
         ]
       }
+      progress_reports: {
+        Row: {
+          created_at: string | null
+          end_date: string | null
+          generated_by: string | null
+          group_id: string | null
+          id: string
+          report_data: Json
+          report_type: string
+          start_date: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          end_date?: string | null
+          generated_by?: string | null
+          group_id?: string | null
+          id?: string
+          report_data: Json
+          report_type: string
+          start_date?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          end_date?: string | null
+          generated_by?: string | null
+          group_id?: string | null
+          id?: string
+          report_data?: Json
+          report_type?: string
+          start_date?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "progress_reports_generated_by_fkey"
+            columns: ["generated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "progress_reports_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "care_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       resource_directory: {
         Row: {
           category: string
@@ -1374,6 +1626,45 @@ export type Database = {
           ratings?: Json | null
           updated_at?: string
           verified?: boolean | null
+        }
+        Relationships: []
+      }
+      resource_library: {
+        Row: {
+          category: string
+          content_data: Json | null
+          content_type: string
+          content_url: string | null
+          created_at: string | null
+          description: string | null
+          id: string
+          tags: string[] | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          category: string
+          content_data?: Json | null
+          content_type: string
+          content_url?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          tags?: string[] | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string
+          content_data?: Json | null
+          content_type?: string
+          content_url?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          tags?: string[] | null
+          title?: string
+          updated_at?: string | null
         }
         Relationships: []
       }
@@ -1585,6 +1876,63 @@ export type Database = {
           {
             foreignKeyName: "team_messages_sender_id_fkey"
             columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      video_consultations: {
+        Row: {
+          created_at: string | null
+          duration: number | null
+          group_id: string | null
+          host_id: string | null
+          id: string
+          meeting_url: string | null
+          notes: string | null
+          participants: Json | null
+          scheduled_time: string
+          status: string | null
+          title: string
+        }
+        Insert: {
+          created_at?: string | null
+          duration?: number | null
+          group_id?: string | null
+          host_id?: string | null
+          id?: string
+          meeting_url?: string | null
+          notes?: string | null
+          participants?: Json | null
+          scheduled_time: string
+          status?: string | null
+          title: string
+        }
+        Update: {
+          created_at?: string | null
+          duration?: number | null
+          group_id?: string | null
+          host_id?: string | null
+          id?: string
+          meeting_url?: string | null
+          notes?: string | null
+          participants?: Json | null
+          scheduled_time?: string
+          status?: string | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "video_consultations_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "care_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "video_consultations_host_id_fkey"
+            columns: ["host_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]

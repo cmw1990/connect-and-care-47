@@ -18,6 +18,11 @@ import { WellnessTracker } from "@/components/wellness/WellnessTracker";
 import { CareRoutineManager } from "@/components/routines/CareRoutineManager";
 import { CaregiverSupport } from "@/components/support/CaregiverSupport";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { MedicationScheduler } from "@/components/medications/MedicationScheduler";
+import { CareTeamCalendar } from "@/components/calendar/CareTeamCalendar";
+import { DocumentSharing } from "@/components/documents/DocumentSharing";
+
+// ... keep existing code (imports and component setup)
 
 export default function GroupDetails() {
   const { groupId } = useParams();
@@ -97,6 +102,9 @@ export default function GroupDetails() {
         <div className="md:col-span-2 space-y-6">
           <GroupStatusBar groupId={groupId} />
           <CareCircleManager groupId={groupId} />
+          <MedicationScheduler groupId={groupId} />
+          <CareTeamCalendar groupId={groupId} />
+          <DocumentSharing groupId={groupId} />
           <CareUpdates groupId={groupId} />
           <WellnessTracker groupId={groupId} />
           <CareRoutineManager groupId={groupId} />
