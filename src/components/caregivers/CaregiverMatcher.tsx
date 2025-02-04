@@ -5,6 +5,8 @@ import { Input } from "@/components/ui/input";
 import { CaregiverCard } from "./CaregiverCard";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { Heart, Search, MapPin, Clock, Shield, Star } from "lucide-react";
+import { getCurrentLocation, calculateDistance } from "@/utils/locationUtils";
 import {
   Select,
   SelectContent,
@@ -12,8 +14,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Heart, Search, MapPin, Clock, Shield, Star } from "lucide-react";
-import { getCurrentLocation, calculateDistance } from "@/utils/locationUtils";
 import { Database } from "@/integrations/supabase/types";
 
 type CaregiverProfile = Database['public']['Tables']['caregiver_profiles']['Row'] & {
@@ -28,7 +28,9 @@ type LocationData = {
   longitude: number;
 };
 
-interface CaregiverWithLocation extends CaregiverProfile {
+interface CaregiverWithLocation extends Omit<CaregiverProfile, 'certifications' | 'availability'> {
+  certifications: any[];
+  availability: any;
   location?: LocationData;
 }
 
