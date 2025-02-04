@@ -1,5 +1,9 @@
+import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { AnimatedCareGuide } from "@/components/guides/AnimatedCareGuide";
+import { Loader2 } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
 
 const careGuides = [
   {
@@ -53,15 +57,76 @@ const careGuides = [
 ];
 
 export const CareGuides = () => {
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [generatedGuides, setGeneratedGuides] = useState<string[]>([]);
+  const { toast } = useToast();
+
+  const generateAllGuides = async () => {
+    setIsGenerating(true);
+    try {
+      const guides = [];
+      for (const guide of careGuides) {
+        const response = await fetch('/api/generate-care-image', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            disease: guide.disease,
+            description: guide.description
+          }),
+        });
+        
+        if (!response.ok) throw new Error('Failed to generate image');
+        
+        const data = await response.json();
+        guides.push(data.imageUrl);
+        
+        toast({
+          title: "Guide Generated",
+          description: `Generated guide for ${guide.disease}`,
+        });
+      }
+      setGeneratedGuides(guides);
+    } catch (error) {
+      console.error('Error generating guides:', error);
+      toast({
+        title: "Error",
+        description: "Failed to generate care guides",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-primary-100 to-white">
       <main className="container mx-auto px-4 py-8">
         <Card className="mb-6">
           <CardHeader>
-            <CardTitle>Care Guides</CardTitle>
-            <CardDescription>
-              Interactive guides with step-by-step care instructions and AI-generated visual aids
-            </CardDescription>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle>Care Guides</CardTitle>
+                <CardDescription>
+                  Interactive guides with step-by-step care instructions and AI-generated visual aids
+                </CardDescription>
+              </div>
+              <Button
+                onClick={generateAllGuides}
+                disabled={isGenerating}
+                className="animate-fade-in"
+              >
+                {isGenerating ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Generating Guides...
+                  </>
+                ) : (
+                  'Generate All Guides'
+                )}
+              </Button>
+            </div>
           </CardHeader>
         </Card>
 
