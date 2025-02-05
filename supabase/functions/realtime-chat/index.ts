@@ -25,7 +25,7 @@ serve(async (req) => {
       throw new Error('OpenAI API key not configured');
     }
 
-    console.log('Making request to OpenAI API...');
+    console.log('Making request to OpenAI API with model gpt-4o-mini...');
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -76,81 +76,41 @@ serve(async (req) => {
     }
 
     // Transform the response into a readable stream
-    const stream = new ReadableStream({
-      async start(controller) {
-        const reader = response.body?.getReader();
-        if (!reader) {
-          console.error('No reader available from response');
-          controller.close();
-          return;
-        }
-
+    const transformStream = new TransformStream({
+      async transform(chunk, controller) {
         try {
-          let accumulatedMessage = '';
+          const text = new TextDecoder().decode(chunk);
+          const lines = text.split('\n').filter(line => line.trim());
           
-          while (true) {
-            const { done, value } = await reader.read();
-            
-            if (done) {
-              console.log('Stream complete. Final accumulated message:', accumulatedMessage);
-              if (accumulatedMessage) {
-                const safeMessage = accumulatedMessage
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              const data = line.slice(6);
+              if (data === '[DONE]') {
+                controller.enqueue('data: {"type":"done"}\n\n');
+                continue;
+              }
+
+              const parsed = JSON.parse(data);
+              if (parsed.choices?.[0]?.delta?.content) {
+                const content = parsed.choices[0].delta.content;
+                const safeContent = content
                   .replace(/\\/g, '\\\\')
                   .replace(/"/g, '\\"')
                   .replace(/\n/g, '\\n')
                   .replace(/\r/g, '\\r')
                   .replace(/\t/g, '\\t');
-                controller.enqueue(`data: {"type":"chunk","content":"${safeMessage}"}\n\n`);
-              }
-              controller.enqueue('data: {"type":"done"}\n\n');
-              break;
-            }
-
-            const chunk = new TextDecoder().decode(value);
-            console.log('Received raw chunk:', chunk);
-            
-            const lines = chunk.split('\n').filter(line => line.trim());
-            
-            for (const line of lines) {
-              if (line.startsWith('data: ')) {
-                try {
-                  const data = line.slice(6);
-                  if (data === '[DONE]') {
-                    console.log('Received [DONE] signal');
-                    continue;
-                  }
-
-                  const parsed = JSON.parse(data);
-                  console.log('Parsed chunk:', parsed);
-                  
-                  if (parsed.choices?.[0]?.delta?.content) {
-                    const content = parsed.choices[0].delta.content;
-                    accumulatedMessage += content;
-                    const safeContent = content
-                      .replace(/\\/g, '\\\\')
-                      .replace(/"/g, '\\"')
-                      .replace(/\n/g, '\\n')
-                      .replace(/\r/g, '\\r')
-                      .replace(/\t/g, '\\t');
-                    controller.enqueue(`data: {"type":"chunk","content":"${safeContent}"}\n\n`);
-                  }
-                } catch (e) {
-                  console.error('Error parsing chunk:', e);
-                  console.error('Problematic line:', line);
-                }
+                controller.enqueue(`data: {"type":"chunk","content":"${safeContent}"}\n\n`);
               }
             }
           }
         } catch (error) {
-          console.error('Error processing stream:', error);
+          console.error('Error processing chunk:', error);
           controller.error(error);
-        } finally {
-          reader.releaseLock();
         }
       }
     });
 
-    return new Response(stream, {
+    return new Response(response.body?.pipeThrough(transformStream), {
       headers: {
         ...corsHeaders,
         'Content-Type': 'text/event-stream',
