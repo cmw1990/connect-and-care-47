@@ -57,33 +57,19 @@ serve(async (req) => {
       const error = await response.text();
       console.error('Perplexity API error:', error);
       
-      const fallbackMessage = {
-        type: 'chunk',
-        content: "I apologize, but I'm currently unable to process your request. Here are some general care recommendations:\n\n" +
-          "1. Maintain consistent daily routines\n" +
-          "2. Keep detailed records of medications and appointments\n" +
-          "3. Ensure regular communication between care team members\n" +
-          "4. Monitor and document any changes in condition\n" +
-          "5. Take breaks and practice self-care as a caregiver\n\n" +
-          "Please try again later for more personalized guidance."
-      };
-      
-      const stream = new ReadableStream({
-        start(controller) {
-          controller.enqueue(`data: ${JSON.stringify(fallbackMessage)}\n\n`);
-          controller.enqueue('data: {"type":"done"}\n\n');
-          controller.close();
+      return new Response(
+        JSON.stringify({
+          error: 'Failed to get response from Perplexity API',
+          details: error
+        }),
+        {
+          status: response.status,
+          headers: {
+            ...corsHeaders,
+            'Content-Type': 'application/json'
+          }
         }
-      });
-
-      return new Response(stream, {
-        headers: {
-          ...corsHeaders,
-          'Content-Type': 'text/event-stream',
-          'Cache-Control': 'no-cache',
-          'Connection': 'keep-alive'
-        }
-      });
+      );
     }
 
     // Stream the response
@@ -96,10 +82,17 @@ serve(async (req) => {
         }
 
         try {
+          let accumulatedMessage = '';
+          
           while (true) {
             const { done, value } = await reader.read();
+            
             if (done) {
+              if (accumulatedMessage) {
+                controller.enqueue(`data: {"type":"chunk","content":"${accumulatedMessage}"}\n\n`);
+              }
               controller.enqueue('data: {"type":"done"}\n\n');
+              controller.close();
               break;
             }
 
@@ -109,10 +102,14 @@ serve(async (req) => {
             for (const line of lines) {
               if (line.startsWith('data: ')) {
                 try {
-                  const data = JSON.parse(line.slice(6));
-                  if (data.choices?.[0]?.delta?.content) {
-                    const content = data.choices[0].delta.content;
-                    controller.enqueue(`data: {"type":"chunk","content":"${content.replace(/"/g, '\\"')}"}\n\n`);
+                  const data = line.slice(6);
+                  if (data === '[DONE]') continue;
+
+                  const parsed = JSON.parse(data);
+                  if (parsed.choices?.[0]?.delta?.content) {
+                    const content = parsed.choices[0].delta.content;
+                    accumulatedMessage += content;
+                    controller.enqueue(`data: {"type":"chunk","content":"${content}"}\n\n`);
                   }
                 } catch (e) {
                   console.error('Error parsing chunk:', e);
@@ -125,7 +122,6 @@ serve(async (req) => {
           controller.error(error);
         } finally {
           reader.releaseLock();
-          controller.close();
         }
       }
     });
