@@ -122,6 +122,53 @@ Please provide relevant and helpful information based on this context.
     }
   };
 
+  const processStreamResponse = async (response: Response, onDone: () => void) => {
+    if (response.body) {
+      const reader = response.body.getReader();
+      let accumulatedMessage = '';
+
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          const chunk = new TextDecoder().decode(value);
+          const lines = chunk.split('\n').filter(line => line.trim());
+          
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              const data = line.slice(6);
+              if (data === '[DONE]') continue;
+
+              try {
+                const parsed = JSON.parse(data);
+                if (parsed.type === 'chunk' && parsed.content) {
+                  accumulatedMessage += parsed.content;
+                  setCurrentMessage(accumulatedMessage);
+                } else if (parsed.type === 'done') {
+                  if (accumulatedMessage.trim()) {
+                    setMessages(prev => [
+                      ...prev,
+                      { role: 'assistant', content: accumulatedMessage }
+                    ]);
+                  }
+                  setCurrentMessage('');
+                  accumulatedMessage = '';
+                  onDone();
+                }
+              } catch (e) {
+                console.error('Error parsing chunk:', e);
+              }
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error processing stream:', error);
+        throw error;
+      }
+    }
+  };
+
   const sendMessage = async () => {
     if (!input.trim()) return;
     
@@ -152,44 +199,7 @@ Please provide a clear and informative response, considering all the available i
         throw new Error(response.error.message || 'Failed to get response from function');
       }
 
-      if (response.data instanceof ReadableStream) {
-        const reader = response.data.getReader();
-        let accumulatedMessage = '';
-
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-
-          const chunk = new TextDecoder().decode(value);
-          const lines = chunk.split('\n').filter(line => line.trim());
-          
-          for (const line of lines) {
-            if (line.startsWith('data: ')) {
-              const data = line.slice(6);
-              if (data === '[DONE]') continue;
-
-              try {
-                const parsed = JSON.parse(data);
-                if (parsed.type === 'chunk' && parsed.content) {
-                  accumulatedMessage += parsed.content;
-                  setCurrentMessage(accumulatedMessage);
-                } else if (parsed.type === 'done') {
-                  if (accumulatedMessage.trim()) {
-                    setMessages(prev => [
-                      ...prev,
-                      { role: 'assistant' as const, content: accumulatedMessage }
-                    ]);
-                  }
-                  setCurrentMessage('');
-                  accumulatedMessage = '';
-                }
-              } catch (e) {
-                console.error('Error parsing chunk:', e);
-              }
-            }
-          }
-        }
-      }
+      await processStreamResponse(response.data, () => setIsLoading(false));
     } catch (error) {
       console.error('Error sending message:', error);
       toast({
@@ -197,7 +207,6 @@ Please provide a clear and informative response, considering all the available i
         description: error instanceof Error ? error.message : "Failed to get response",
         variant: "destructive",
       });
-    } finally {
       setIsLoading(false);
     }
   };
@@ -229,45 +238,7 @@ Please analyze this conversation and provide key insights and recommendations ba
         throw new Error(response.error.message || 'Failed to get insights');
       }
 
-      // Handle the response stream similar to sendMessage
-      if (response.data instanceof ReadableStream) {
-        const reader = response.data.getReader();
-        let accumulatedMessage = '';
-
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-
-          const chunk = new TextDecoder().decode(value);
-          const lines = chunk.split('\n').filter(line => line.trim());
-          
-          for (const line of lines) {
-            if (line.startsWith('data: ')) {
-              const data = line.slice(6);
-              if (data === '[DONE]') continue;
-
-              try {
-                const parsed = JSON.parse(data);
-                if (parsed.type === 'chunk' && parsed.content) {
-                  accumulatedMessage += parsed.content;
-                  setCurrentMessage(accumulatedMessage);
-                } else if (parsed.type === 'done') {
-                  if (accumulatedMessage.trim()) {
-                    setMessages(prev => [
-                      ...prev,
-                      { role: 'assistant' as const, content: accumulatedMessage }
-                    ]);
-                  }
-                  setCurrentMessage('');
-                  accumulatedMessage = '';
-                }
-              } catch (e) {
-                console.error('Error parsing chunk:', e);
-              }
-            }
-          }
-        }
-      }
+      await processStreamResponse(response.data, () => setIsLoading(false));
     } catch (error) {
       console.error('Error getting insights:', error);
       toast({
@@ -275,7 +246,6 @@ Please analyze this conversation and provide key insights and recommendations ba
         description: error instanceof Error ? error.message : "Failed to get insights",
         variant: "destructive",
       });
-    } finally {
       setIsLoading(false);
     }
   };
