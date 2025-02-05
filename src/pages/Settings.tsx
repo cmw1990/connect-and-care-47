@@ -9,22 +9,41 @@ import { supabase } from "@/integrations/supabase/client";
 import { useState, useEffect } from "react";
 import { Bell, Shield, User, Lock } from "lucide-react";
 
+interface NotificationPreferences {
+  email: boolean;
+  push: boolean;
+  sms: boolean;
+}
+
+interface PrivacyPreferences {
+  profileVisibility: string;
+  showLocation: boolean;
+  showAvailability: boolean;
+}
+
+interface Settings {
+  notifications: NotificationPreferences;
+  privacy: PrivacyPreferences;
+}
+
+const defaultSettings: Settings = {
+  notifications: {
+    email: true,
+    push: true,
+    sms: false,
+  },
+  privacy: {
+    profileVisibility: "public",
+    showLocation: false,
+    showAvailability: true,
+  },
+};
+
 const Settings = () => {
-  const [settings, setSettings] = useState({
-    notifications: {
-      email: true,
-      push: true,
-      sms: false,
-    },
-    privacy: {
-      profileVisibility: "public",
-      showLocation: false,
-      showAvailability: true,
-    },
-  });
+  const [settings, setSettings] = useState<Settings>(defaultSettings);
   const { toast } = useToast();
 
-  const updateSettings = async (newSettings: any) => {
+  const updateSettings = async (newSettings: Settings) => {
     try {
       const { error } = await supabase
         .from('profiles')
@@ -59,9 +78,25 @@ const Settings = () => {
         .single();
 
       if (profile) {
+        const notificationPrefs = typeof profile.notification_preferences === 'object' 
+          ? profile.notification_preferences as NotificationPreferences 
+          : defaultSettings.notifications;
+
+        const privacyPrefs = typeof profile.privacy_preferences === 'object'
+          ? profile.privacy_preferences as PrivacyPreferences
+          : defaultSettings.privacy;
+
         setSettings({
-          notifications: profile.notification_preferences || settings.notifications,
-          privacy: profile.privacy_preferences || settings.privacy,
+          notifications: {
+            email: Boolean(notificationPrefs.email),
+            push: Boolean(notificationPrefs.push),
+            sms: Boolean(notificationPrefs.sms),
+          },
+          privacy: {
+            profileVisibility: String(privacyPrefs.profileVisibility || 'public'),
+            showLocation: Boolean(privacyPrefs.showLocation),
+            showAvailability: Boolean(privacyPrefs.showAvailability),
+          },
         });
       }
     };
