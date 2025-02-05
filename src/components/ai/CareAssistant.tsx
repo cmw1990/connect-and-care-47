@@ -140,7 +140,7 @@ Please provide relevant and helpful information based on this context.
 
         buffer += decoder.decode(value, { stream: true });
         const lines = buffer.split('\n');
-        buffer = lines.pop() || ''; // Keep the last incomplete line in the buffer
+        buffer = lines.pop() || '';
 
         for (const line of lines) {
           const trimmedLine = line.trim();
@@ -171,7 +171,6 @@ Please provide relevant and helpful information based on this context.
         }
       }
 
-      // Process any remaining data in the buffer
       if (buffer) {
         console.log('Processing remaining buffer:', buffer);
         if (buffer.startsWith('data: ')) {
@@ -188,7 +187,6 @@ Please provide relevant and helpful information based on this context.
         }
       }
 
-      // After the stream is complete, add the message to the chat
       if (accumulatedMessage.trim()) {
         console.log('Adding complete message to chat:', accumulatedMessage);
         setMessages(prev => [...prev, {
@@ -236,7 +234,6 @@ User Question: ${userMessage.content}
 Please provide a clear and informative response, considering all the available information about the patient and care group.
           `.trim()
         },
-        signal: abortControllerRef.current.signal,
         headers: {
           'Content-Type': 'application/json',
         },
