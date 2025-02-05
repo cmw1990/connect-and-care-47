@@ -4,7 +4,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MessageSquare, Bell } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { CareGroup, GroupPrivacySettings } from "@/types/groups";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { notificationService } from "@/services/NotificationService";
 
@@ -126,38 +125,33 @@ export default function Messages() {
         },
         async (payload: any) => {
           console.log('Group update received:', payload);
-          const newPrivacySettings = payload.new.privacy_settings as unknown as GroupPrivacySettings | null;
-          const oldPrivacySettings = payload.old.privacy_settings as unknown as GroupPrivacySettings | null;
-          
-          if (newPrivacySettings?.status && (!oldPrivacySettings?.status || newPrivacySettings.status !== oldPrivacySettings.status)) {
-            const { data: group } = await supabase
-              .from('care_groups')
-              .select('name')
-              .eq('id', payload.new.id)
-              .single();
+          const { data: group } = await supabase
+            .from('care_groups')
+            .select('name')
+            .eq('id', payload.new.id)
+            .single();
 
-            if (group) {
-              const newNotification = {
-                id: payload.new.id,
-                title: "Group Status Update",
-                message: `${group.name}: Status changed to ${newPrivacySettings.status}`,
-                created_at: new Date().toISOString(),
-                type: "status",
-                read: false
-              };
+          if (group) {
+            const newNotification = {
+              id: payload.new.id,
+              title: "Group Status Update",
+              message: `${group.name}: Status updated`,
+              created_at: new Date().toISOString(),
+              type: "status",
+              read: false
+            };
 
-              setNotifications(prev => [newNotification, ...prev]);
-              
-              toast({
-                title: "Group Status Changed",
-                description: `${group.name}: Status changed to ${newPrivacySettings.status}`,
-              });
+            setNotifications(prev => [newNotification, ...prev]);
+            
+            toast({
+              title: "Group Status Changed",
+              description: `${group.name} status has been updated`,
+            });
 
-              await notificationService.scheduleLocalNotification(
-                "Group Status Changed",
-                `${group.name}: Status changed to ${newPrivacySettings.status}`
-              );
-            }
+            await notificationService.scheduleLocalNotification(
+              "Group Status Changed",
+              `${group.name} status has been updated`
+            );
           }
         }
       )
@@ -188,7 +182,6 @@ export default function Messages() {
         .select(`
           id,
           name,
-          privacy_settings,
           updated_at
         `)
         .in('id', groupIds)
@@ -197,16 +190,14 @@ export default function Messages() {
 
       if (groupsError) throw groupsError;
 
-      const newNotifications = groups
-        .filter(group => (group.privacy_settings as CareGroup['privacy_settings'])?.status)
-        .map(group => ({
-          id: group.id,
-          title: "Group Status Update",
-          message: `${group.name}: ${(group.privacy_settings as CareGroup['privacy_settings'])?.status}`,
-          created_at: group.updated_at,
-          type: "status",
-          read: false
-        }));
+      const newNotifications = groups.map(group => ({
+        id: group.id,
+        title: "Group Status",
+        message: `${group.name}`,
+        created_at: group.updated_at,
+        type: "status",
+        read: false
+      }));
 
       setNotifications(prev => page === 0 ? newNotifications : [...prev, ...newNotifications]);
       setHasMoreNotifications(groups.length === ITEMS_PER_PAGE);
