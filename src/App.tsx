@@ -14,6 +14,7 @@ import Messages from "@/pages/Messages";
 import Settings from "@/pages/Settings";
 import { MoodSupport } from "@/pages/MoodSupport";
 import More from "@/pages/More";
+import { motion, AnimatePresence } from "framer-motion";
 import "./App.css";
 
 const AppContent = () => {
@@ -22,26 +23,35 @@ const AppContent = () => {
   const showNavbar = !location.pathname.includes('/auth');
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
+    <div className="min-h-screen flex flex-col bg-background">
       {showNavbar && !isMobile && <Navbar />}
-      <main className={cn(
-        "flex-1 container mx-auto px-4 py-6",
-        isMobile && "pb-20" // Extra padding for mobile navigation
-      )}>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/groups" element={<Groups />} />
-          <Route path="/groups/:groupId" element={<GroupDetails />} />
-          <Route path="/auth" element={<Auth />} />
-          <Route path="/compare" element={<CareComparison />} />
-          <Route path="/care-guides" element={<CareGuides />} />
-          <Route path="/messages" element={<Messages />} />
-          <Route path="/settings" element={<Settings />} />
-          <Route path="/mood-support" element={<MoodSupport />} />
-          <Route path="/more" element={<More />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </main>
+      <AnimatePresence mode="wait">
+        <motion.main
+          key={location.pathname}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -20 }}
+          transition={{ duration: 0.2 }}
+          className={cn(
+            "flex-1 container mx-auto px-4 py-6 space-y-6",
+            isMobile && "pb-20" // Extra padding for mobile navigation
+          )}
+        >
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/groups" element={<Groups />} />
+            <Route path="/groups/:groupId" element={<GroupDetails />} />
+            <Route path="/auth" element={<Auth />} />
+            <Route path="/compare" element={<CareComparison />} />
+            <Route path="/care-guides" element={<CareGuides />} />
+            <Route path="/messages" element={<Messages />} />
+            <Route path="/settings" element={<Settings />} />
+            <Route path="/mood-support" element={<MoodSupport />} />
+            <Route path="/more" element={<More />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </motion.main>
+      </AnimatePresence>
       {showNavbar && isMobile && <MobileNav />}
     </div>
   );
