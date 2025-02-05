@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { motion, AnimatePresence } from "framer-motion";
 import { Play, CheckCircle2, AlertCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface AnimatedGuideProps {
   disease: string;
@@ -15,6 +16,7 @@ export const AnimatedCareGuide = ({ disease, description, guidelines }: Animated
   const [error, setError] = useState<string | null>(null);
   const [currentStep, setCurrentStep] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     const generateImage = async () => {
@@ -23,11 +25,33 @@ export const AnimatedCareGuide = ({ disease, description, guidelines }: Animated
           body: { disease, description }
         });
 
-        if (error) throw error;
+        if (error) {
+          console.error('Supabase function error:', error);
+          throw error;
+        }
+
+        if (data.error) {
+          // If we have a fallback image, use it but show a warning
+          if (data.fallbackImage) {
+            setImageUrl(data.fallbackImage);
+            toast({
+              title: "Using placeholder image",
+              description: data.details || "Image generation is temporarily unavailable",
+              variant: "destructive",
+            });
+          }
+          throw new Error(data.error);
+        }
+
         setImageUrl(data.imageUrl);
       } catch (err) {
         console.error('Error generating image:', err);
-        setError('Failed to generate care guide image');
+        setError(err.message || 'Failed to generate care guide image');
+        
+        // If no fallback image is set yet, use a generic one
+        if (!imageUrl) {
+          setImageUrl(`https://placehold.co/600x400/e2e8f0/64748b?text=${encodeURIComponent(disease)}+Care+Guide`);
+        }
       }
     };
 

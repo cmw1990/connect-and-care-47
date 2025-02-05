@@ -27,7 +27,8 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({ 
           error: "Configuration error", 
-          fallbackImage: "/placeholder.svg"
+          details: "OpenAI API key not configured",
+          fallbackImage: `https://placehold.co/600x400/e2e8f0/64748b?text=${encodeURIComponent(disease)}+Care+Guide`
         }),
         { 
           status: 500,
@@ -35,6 +36,8 @@ serve(async (req) => {
         }
       );
     }
+
+    console.log('Generating image for:', disease);
 
     const response = await fetch('https://api.openai.com/v1/images/generations', {
       method: 'POST',
@@ -60,7 +63,7 @@ serve(async (req) => {
           JSON.stringify({ 
             error: "Service temporarily unavailable",
             details: "Image generation service is currently unavailable",
-            fallbackImage: "/placeholder.svg"
+            fallbackImage: `https://placehold.co/600x400/e2e8f0/64748b?text=${encodeURIComponent(disease)}+Care+Guide`
           }),
           { 
             status: 503,
@@ -84,7 +87,7 @@ serve(async (req) => {
       JSON.stringify({ 
         error: "Failed to generate image",
         details: error.message,
-        fallbackImage: "/placeholder.svg"
+        fallbackImage: `https://placehold.co/600x400/e2e8f0/64748b?text=Care+Guide`
       }),
       { 
         status: 500,
