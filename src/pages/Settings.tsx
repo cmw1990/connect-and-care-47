@@ -46,11 +46,14 @@ const Settings = () => {
 
   const updateSettings = async (newSettings: Settings) => {
     try {
+      const notificationPrefs = newSettings.notifications as unknown as Json;
+      const privacyPrefs = newSettings.privacy as unknown as Json;
+      
       const { error } = await supabase
         .from('profiles')
         .update({
-          notification_preferences: newSettings.notifications as Json,
-          privacy_preferences: newSettings.privacy as Json,
+          notification_preferences: notificationPrefs,
+          privacy_preferences: privacyPrefs,
         })
         .single();
 
@@ -80,10 +83,10 @@ const Settings = () => {
 
       if (profile) {
         try {
-          const notificationPrefs = profile.notification_preferences as Json;
-          const privacyPrefs = profile.privacy_preferences as Json;
+          const notificationPrefs = profile.notification_preferences as { [key: string]: Json };
+          const privacyPrefs = profile.privacy_preferences as { [key: string]: Json };
 
-          if (typeof notificationPrefs === 'object' && notificationPrefs !== null) {
+          if (notificationPrefs && typeof notificationPrefs === 'object') {
             setSettings(prev => ({
               ...prev,
               notifications: {
@@ -94,7 +97,7 @@ const Settings = () => {
             }));
           }
 
-          if (typeof privacyPrefs === 'object' && privacyPrefs !== null) {
+          if (privacyPrefs && typeof privacyPrefs === 'object') {
             setSettings(prev => ({
               ...prev,
               privacy: {
