@@ -14,10 +14,12 @@ serve(async (req) => {
   try {
     const { text } = await req.json();
     const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
-
+    
     if (!openAIApiKey) {
       throw new Error('OpenAI API key not configured');
     }
+
+    console.log('Processing chat request:', text);
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -30,7 +32,7 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: 'You are a compassionate and knowledgeable care assistant, helping caregivers and families with healthcare advice, emotional support, and practical caregiving tips. Always provide clear, actionable advice while being empathetic to the challenges of caregiving.'
+            content: 'You are a helpful care assistant AI that provides support and information to caregivers and care recipients. You are part of a care team, working alongside human caregivers. You should be empathetic, clear, and always remind users that you are an AI assistant working with the human care team.'
           },
           { role: 'user', content: text }
         ],
