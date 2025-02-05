@@ -1,4 +1,7 @@
+import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+
+const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -11,45 +14,45 @@ serve(async (req) => {
   }
 
   try {
-    const perplexityApiKey = Deno.env.get('PERPLEXITY_API_KEY');
-    if (!perplexityApiKey) {
-      throw new Error('Perplexity API key not configured');
+    const { text } = await req.json();
+    console.log('Received request with text:', text);
+
+    if (!openAIApiKey) {
+      throw new Error('OpenAI API key not configured');
     }
 
-    const { text } = await req.json();
-
-    const response = await fetch('https://api.perplexity.ai/chat/completions', {
+    console.log('Making request to OpenAI API...');
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${perplexityApiKey}`,
+        'Authorization': `Bearer ${openAIApiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'llama-3.1-sonar-small-128k-online',
+        model: 'gpt-4o-mini',
         messages: [
           {
             role: 'system',
-            content: 'You are a caring and empathetic AI assistant that helps caregivers and family members manage care for their loved ones. Provide clear, practical advice while being supportive and understanding.'
+            content: 'You are a caring and knowledgeable healthcare assistant. Analyze the provided patient information and care group context to offer personalized care guidance. Focus on practical advice, daily care routines, and specific recommendations based on the patient\'s conditions and needs. Keep responses clear, actionable, and empathetic.'
           },
           {
             role: 'user',
             content: text
           }
         ],
-        temperature: 0.2,
-        top_p: 0.9,
-        max_tokens: 1000,
+        temperature: 0.7,
         stream: true
       }),
     });
 
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(`Perplexity API error: ${error.error?.message || 'Unknown error'}`);
+      const error = await response.text();
+      console.error('OpenAI API error:', error);
+      throw new Error(`OpenAI API error: ${error}`);
     }
 
     // Set up streaming response
-    const readableStream = new ReadableStream({
+    const stream = new ReadableStream({
       async start(controller) {
         const reader = response.body?.getReader();
         if (!reader) {
@@ -92,7 +95,7 @@ serve(async (req) => {
       }
     });
 
-    return new Response(readableStream, {
+    return new Response(stream, {
       headers: {
         ...corsHeaders,
         'Content-Type': 'text/event-stream',
