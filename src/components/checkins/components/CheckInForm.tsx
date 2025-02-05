@@ -1,105 +1,68 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Check } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { MoodTracker } from "../health/MoodTracker";
 import { PainLevel } from "../health/PainLevel";
 import { SleepTracker } from "../health/SleepTracker";
-import { MedicationTracker } from "../health/MedicationTracker";
-import { NutritionLog } from "../health/NutritionLog";
 import { VitalSigns } from "../health/VitalSigns";
-import { SocialInteractions } from "../social/SocialInteractions";
-import { WeatherAlert } from "../weather/WeatherAlert";
-import { VoiceInput } from "../voice/VoiceInput";
-import { PhotoVerification } from "./PhotoVerification";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
 
 interface CheckInFormProps {
   onSubmit: (data: any) => void;
-  submitting: boolean;
 }
 
-export const CheckInForm = ({ onSubmit, submitting }: CheckInFormProps) => {
-  const [moodScore, setMoodScore] = useState<number | null>(null);
-  const [painLevel, setPainLevel] = useState<number | null>(null);
-  const [sleepHours, setSleepHours] = useState<number | null>(null);
-  const [medicationTaken, setMedicationTaken] = useState(false);
-  const [nutritionLog, setNutritionLog] = useState<{ meal: string; time: string }[]>([]);
-  const [vitalSigns, setVitalSigns] = useState<{
-    bloodPressure?: string;
-    heartRate?: string;
-    temperature?: string;
-    oxygenLevel?: string;
-  }>({});
-  const [socialInteractions, setSocialInteractions] = useState<string[]>([]);
-  const [notes, setNotes] = useState("");
-  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
+export const CheckInForm = ({ onSubmit }: CheckInFormProps) => {
+  const [formData, setFormData] = useState({
+    mood_score: 5,
+    pain_level: 0,
+    sleep_hours: 8,
+    notes: "",
+    vital_signs: {},
+  });
 
-  const handleVoiceTranscription = (text: string) => {
-    setNotes(prev => prev + (prev ? "\n" : "") + text);
-  };
-
-  const handleSubmit = () => {
-    onSubmit({
-      moodScore,
-      painLevel,
-      sleepHours,
-      medicationTaken,
-      nutritionLog,
-      vitalSigns,
-      socialInteractions,
-      notes,
-      photoVerificationUrl: photoUrl,
-    });
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSubmit(formData);
   };
 
   return (
-    <div className="space-y-4">
-      <MoodTracker moodScore={moodScore} onMoodSelect={setMoodScore} />
-      <PainLevel painLevel={painLevel} onPainLevelChange={setPainLevel} />
-      <SleepTracker sleepHours={sleepHours} onSleepHoursChange={setSleepHours} />
-      <MedicationTracker 
-        medicationTaken={medicationTaken} 
-        onMedicationStatusChange={setMedicationTaken} 
-      />
-      <NutritionLog 
-        nutritionLog={nutritionLog} 
-        onNutritionLogUpdate={setNutritionLog} 
-      />
-      <VitalSigns vitalSigns={vitalSigns} onChange={setVitalSigns} />
-      <SocialInteractions 
-        interactions={socialInteractions} 
-        onInteractionAdd={(type) => setSocialInteractions([...socialInteractions, type])} 
-      />
-      <WeatherAlert conditions={{
-        temperature: 72,
-        condition: "Sunny",
-        warning: "High UV index today. Remember to wear sunscreen."
-      }} />
-      
-      <PhotoVerification onPhotoUploaded={setPhotoUrl} />
-      
-      <div className="space-y-2">
-        <Label>Additional Notes</Label>
-        <div className="flex items-start gap-2">
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="space-y-4">
+        <MoodTracker
+          value={formData.mood_score}
+          onChange={(value) => setFormData({ ...formData, mood_score: value })}
+        />
+        
+        <PainLevel
+          value={formData.pain_level}
+          onChange={(value) => setFormData({ ...formData, pain_level: value })}
+        />
+        
+        <SleepTracker
+          value={formData.sleep_hours}
+          onChange={(value) => setFormData({ ...formData, sleep_hours: value })}
+        />
+        
+        <VitalSigns
+          value={formData.vital_signs}
+          onChange={(value) => setFormData({ ...formData, vital_signs: value })}
+        />
+
+        <div className="space-y-2">
+          <Label htmlFor="notes">Additional Notes</Label>
           <Textarea
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            placeholder="Add any additional notes..."
-            className="flex-1"
+            id="notes"
+            value={formData.notes}
+            onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+            placeholder="Any additional notes about your condition..."
           />
-          <VoiceInput onTranscriptionComplete={handleVoiceTranscription} />
         </div>
       </div>
-      
-      <Button
-        className="w-full mt-4"
-        onClick={handleSubmit}
-        disabled={submitting}
-      >
-        <Check className="mr-2 h-4 w-4" />
-        Complete Check-in
+
+      <Button type="submit" className="w-full">
+        Submit Check-in
       </Button>
-    </div>
+    </form>
   );
 };
