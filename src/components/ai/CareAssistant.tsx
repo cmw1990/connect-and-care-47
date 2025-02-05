@@ -30,28 +30,65 @@ export const CareAssistant = ({ groupId }: { groupId?: string }) => {
     }
   }, [messages, currentMessage]);
 
-  const formatPatientContext = (patientInfo: any) => {
-    if (!patientInfo) return "No specific patient information available.";
+  const formatPatientContext = async () => {
+    try {
+      // Fetch patient info
+      const { data: patientInfo } = await supabase
+        .from('patient_info')
+        .select('*')
+        .eq('group_id', groupId)
+        .maybeSingle();
 
-    const basicInfo = patientInfo.basic_info || {};
-    const diseases = patientInfo.diseases || [];
-    const medicines = patientInfo.medicines || [];
-    const careTips = patientInfo.care_tips || [];
+      // Fetch care tasks
+      const { data: tasks } = await supabase
+        .from('tasks')
+        .select('*')
+        .eq('group_id', groupId)
+        .order('created_at', { ascending: false });
 
-    return `
+      // Fetch care updates
+      const { data: updates } = await supabase
+        .from('care_updates')
+        .select('*')
+        .eq('group_id', groupId)
+        .order('created_at', { ascending: false })
+        .limit(5);
+
+      // Fetch care routines
+      const { data: routines } = await supabase
+        .from('care_routines')
+        .select('*')
+        .eq('group_id', groupId);
+
+      // Format all the information
+      return `
+Care Group Context:
+
 Patient Information:
-Name: ${basicInfo.name || 'Not specified'}
-Age: ${basicInfo.age || 'Not specified'}
-Current Condition: ${basicInfo.condition || 'Not specified'}
+${patientInfo ? `
+Name: ${patientInfo.basic_info?.name || 'Not specified'}
+Age: ${patientInfo.basic_info?.age || 'Not specified'}
+Current Condition: ${patientInfo.basic_info?.condition || 'Not specified'}
+Medical Conditions: ${patientInfo.diseases?.join(', ') || 'None specified'}
+Medications: ${patientInfo.medicines ? JSON.stringify(patientInfo.medicines, null, 2) : 'None specified'}
+Care Tips: ${patientInfo.care_tips?.join(', ') || 'None specified'}
+` : 'No patient information available'}
 
-Medical Conditions: ${diseases.length > 0 ? diseases.join(', ') : 'None specified'}
+Recent Tasks:
+${tasks?.map(task => `- ${task.title} (Status: ${task.status})`).join('\n') || 'No tasks available'}
 
-Medications: ${medicines.length > 0 
-  ? medicines.map((med: any) => `${med.name} (${med.dosage}, ${med.frequency})`).join(', ') 
-  : 'None specified'}
+Recent Care Updates:
+${updates?.map(update => `- ${update.content}`).join('\n') || 'No recent updates'}
 
-Care Tips: ${careTips.length > 0 ? careTips.join(', ') : 'None specified'}
-    `.trim();
+Care Routines:
+${routines?.map(routine => `- ${routine.title}: ${routine.description}`).join('\n') || 'No routines set'}
+
+Please provide relevant and helpful information based on this context.
+`.trim();
+    } catch (error) {
+      console.error('Error fetching context:', error);
+      return "Unable to fetch complete care context. I'll do my best to help with the information available.";
+    }
   };
 
   const sendMessage = async () => {
@@ -64,36 +101,18 @@ Care Tips: ${careTips.length > 0 ? careTips.join(', ') : 'None specified'}
       
       setMessages(prev => [...prev, { role: 'user', content: userMessage }]);
 
-      // Fetch patient info for context
-      const { data: patientInfo, error: patientError } = await supabase
-        .from('patient_info')
-        .select('*')
-        .eq('group_id', groupId)
-        .maybeSingle();
-
-      if (patientError) {
-        console.error('Error fetching patient info:', patientError);
-      }
-
-      const context = formatPatientContext(patientInfo);
-
-      const { data: session } = await supabase.auth.getSession();
-      if (!session?.session?.access_token) {
-        throw new Error('No authentication token found');
-      }
-
-      console.log('Sending request to realtime-chat function...');
+      const context = await formatPatientContext();
+      console.log('Context prepared:', context);
 
       const response = await supabase.functions.invoke('realtime-chat', {
         body: { 
           text: `
-As a care assistant, use the following patient context to provide relevant and helpful information:
-
+Context:
 ${context}
 
 User Question: ${userMessage}
 
-Please provide a clear and informative response, considering the patient's specific conditions and care requirements.
+Please provide a clear and informative response, considering all the available information about the patient and care group.
           `.trim()
         },
       });
@@ -104,50 +123,46 @@ Please provide a clear and informative response, considering the patient's speci
         throw new Error('No response data received from function');
       }
 
-      // Handle non-streaming response as fallback
-      if (typeof response.data === 'string' || 'text' in response.data) {
-        const content = typeof response.data === 'string' ? response.data : response.data.text;
-        setMessages(prev => [...prev, { role: 'assistant', content }]);
-        setCurrentMessage('');
-        return;
-      }
-
       // Handle streaming response
-      const reader = new ReadableStreamDefaultReader(response.data as ReadableStream);
-      let accumulatedMessage = '';
+      if (response.data instanceof ReadableStream) {
+        const reader = new ReadableStreamDefaultReader(response.data);
+        let accumulatedMessage = '';
 
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
 
-        const chunk = new TextDecoder().decode(value);
-        console.log('Received chunk:', chunk);
-        
-        const lines = chunk.split('\n').filter(line => line.trim());
+          const chunk = new TextDecoder().decode(value);
+          const lines = chunk.split('\n').filter(line => line.trim());
 
-        for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            const data = line.slice(6);
-            if (data === '[DONE]') continue;
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              const data = line.slice(6);
+              if (data === '[DONE]') continue;
 
-            try {
-              const parsed = JSON.parse(data);
-              if (parsed.type === 'chunk') {
-                accumulatedMessage += parsed.content;
-                setCurrentMessage(accumulatedMessage);
-              } else if (parsed.type === 'done') {
-                setMessages(prev => [
-                  ...prev,
-                  { role: 'assistant', content: accumulatedMessage }
-                ]);
-                setCurrentMessage('');
-                accumulatedMessage = '';
+              try {
+                const parsed = JSON.parse(data);
+                if (parsed.type === 'chunk') {
+                  accumulatedMessage += parsed.content;
+                  setCurrentMessage(accumulatedMessage);
+                } else if (parsed.type === 'done') {
+                  setMessages(prev => [
+                    ...prev,
+                    { role: 'assistant', content: accumulatedMessage }
+                  ]);
+                  setCurrentMessage('');
+                  accumulatedMessage = '';
+                }
+              } catch (e) {
+                console.error('Error parsing chunk:', e);
               }
-            } catch (e) {
-              console.error('Error parsing chunk:', e, 'Raw data:', data);
             }
           }
         }
+      } else {
+        // Handle non-streaming response as fallback
+        const content = typeof response.data === 'string' ? response.data : response.data.text;
+        setMessages(prev => [...prev, { role: 'assistant', content }]);
       }
 
     } catch (error) {

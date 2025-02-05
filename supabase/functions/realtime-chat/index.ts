@@ -13,42 +13,40 @@ serve(async (req) => {
   }
 
   try {
-    const apiKey = Deno.env.get('PERPLEXITY_API_KEY');
+    const apiKey = Deno.env.get('OPENAI_API_KEY');
     console.log('API Key present:', !!apiKey); // Debug log
     
     if (!apiKey) {
-      throw new Error('Perplexity API key not configured');
+      throw new Error('OpenAI API key not configured');
     }
 
     const { text } = await req.json();
     console.log('Received request with text:', text);
 
-    const response = await fetch('https://api.perplexity.ai/chat/completions', {
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'llama-3.1-sonar-small-128k-online',
+        model: 'gpt-4o-mini',
         messages: [
           {
             role: 'system',
-            content: 'You are a helpful care assistant AI that provides support and information to caregivers and care recipients.'
+            content: 'You are a helpful care assistant AI that provides support and information to caregivers and care recipients. Use the provided context about the patient and care group to give relevant and personalized responses.'
           },
           { role: 'user', content: text }
         ],
-        temperature: 0.2,
-        top_p: 0.9,
-        max_tokens: 1000,
+        temperature: 0.7,
         stream: true,
       }),
     });
 
     if (!response.ok) {
       const error = await response.json().catch(() => ({}));
-      console.error('Perplexity API error:', error);
-      throw new Error(`Perplexity API error: ${error.error?.message || response.statusText}`);
+      console.error('OpenAI API error:', error);
+      throw new Error(`OpenAI API error: ${error.error?.message || response.statusText}`);
     }
 
     // Set up streaming response
