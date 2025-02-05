@@ -1,7 +1,4 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import "https://deno.land/x/xhr@0.1.0/mod.ts";
-
-const perplexityApiKey = Deno.env.get('PERPLEXITY_API_KEY');
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -10,18 +7,17 @@ const corsHeaders = {
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response('ok', { headers: corsHeaders });
   }
 
   try {
-    const { text } = await req.json();
-    console.log('Received request with text:', text);
-
+    const perplexityApiKey = Deno.env.get('PERPLEXITY_API_KEY');
     if (!perplexityApiKey) {
       throw new Error('Perplexity API key not configured');
     }
 
-    console.log('Making request to Perplexity API...');
+    const { text } = await req.json();
+
     const response = await fetch('https://api.perplexity.ai/chat/completions', {
       method: 'POST',
       headers: {
@@ -33,20 +29,23 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: 'You are a helpful care assistant AI that provides support and information to caregivers and care recipients. Use the provided context about the patient and care group to give relevant and personalized responses.'
+            content: 'You are a caring and empathetic AI assistant that helps caregivers and family members manage care for their loved ones. Provide clear, practical advice while being supportive and understanding.'
           },
-          { role: 'user', content: text }
+          {
+            role: 'user',
+            content: text
+          }
         ],
-        temperature: 0.7,
+        temperature: 0.2,
+        top_p: 0.9,
         max_tokens: 1000,
-        stream: true,
+        stream: true
       }),
     });
 
     if (!response.ok) {
-      const error = await response.text();
-      console.error('Perplexity API error:', error);
-      throw new Error(`Perplexity API error: ${error}`);
+      const error = await response.json();
+      throw new Error(`Perplexity API error: ${error.error?.message || 'Unknown error'}`);
     }
 
     // Set up streaming response
@@ -62,26 +61,20 @@ serve(async (req) => {
           while (true) {
             const { done, value } = await reader.read();
             if (done) {
-              console.log('Stream complete');
-              controller.enqueue(`data: ${JSON.stringify({ type: 'done' })}\n\n`);
-              controller.close();
+              controller.enqueue(`data: {"type":"done"}\n\n`);
               break;
             }
 
-            const text = new TextDecoder().decode(value);
-            const lines = text.split('\n').filter(line => line.trim());
-
+            const chunk = new TextDecoder().decode(value);
+            const lines = chunk.split('\n').filter(line => line.trim());
+            
             for (const line of lines) {
               if (line.startsWith('data: ')) {
-                const data = line.slice(6);
-                if (data === '[DONE]') continue;
-
                 try {
-                  const parsed = JSON.parse(data);
-                  const content = parsed.choices?.[0]?.delta?.content;
-                  if (content) {
-                    console.log('Sending chunk:', content);
-                    controller.enqueue(`data: ${JSON.stringify({ type: 'chunk', content })}\n\n`);
+                  const data = JSON.parse(line.slice(6));
+                  if (data.choices?.[0]?.delta?.content) {
+                    const content = data.choices[0].delta.content;
+                    controller.enqueue(`data: {"type":"chunk","content":"${content.replace(/"/g, '\\"')}"}\n\n`);
                   }
                 } catch (e) {
                   console.error('Error parsing chunk:', e);
@@ -92,6 +85,9 @@ serve(async (req) => {
         } catch (error) {
           console.error('Error processing stream:', error);
           controller.error(error);
+        } finally {
+          reader.releaseLock();
+          controller.close();
         }
       }
     });
@@ -109,15 +105,12 @@ serve(async (req) => {
     console.error('Error:', error);
     return new Response(
       JSON.stringify({
-        error: error.message,
-        details: 'An error occurred while processing your request.'
+        error: 'Failed to process request',
+        details: error.message
       }),
       {
         status: 500,
-        headers: {
-          ...corsHeaders,
-          'Content-Type': 'application/json',
-        },
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       }
     );
   }
