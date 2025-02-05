@@ -1,155 +1,186 @@
-import { useEffect, useState } from "react";
+import { VerificationRequest } from "@/components/verification/VerificationRequest";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Switch } from "@/components/ui/switch";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { supabase } from "@/integrations/supabase/client";
+import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { useState, useEffect } from "react";
+import { Bell, Shield, User, Lock } from "lucide-react";
 
-interface NotificationPreferences {
-  moodCheckReminder: boolean;
-  taskReminders: boolean;
-  groupActivity: boolean;
-  caregiverUpdates: boolean;
-  dailyInsights: boolean;
-  medicationReminders: boolean;
-  appointmentAlerts: boolean;
-  wellnessNotifications: boolean;
-}
-
-export default function Settings() {
-  const [preferences, setPreferences] = useState<NotificationPreferences>({
-    moodCheckReminder: true,
-    taskReminders: true,
-    groupActivity: true,
-    caregiverUpdates: true,
-    dailyInsights: true,
-    medicationReminders: true,
-    appointmentAlerts: true,
-    wellnessNotifications: true,
+const Settings = () => {
+  const [settings, setSettings] = useState({
+    notifications: {
+      email: true,
+      push: true,
+      sms: false,
+    },
+    privacy: {
+      profileVisibility: "public",
+      showLocation: false,
+      showAvailability: true,
+    },
   });
   const { toast } = useToast();
 
-  useEffect(() => {
-    fetchPreferences();
-    subscribeToNotifications();
-  }, []);
-
-  const fetchPreferences = async () => {
+  const updateSettings = async (newSettings: any) => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('profiles')
-        .select('notification_preferences')
-        .eq('id', user.id)
+        .update({
+          notification_preferences: newSettings.notifications,
+          privacy_preferences: newSettings.privacy,
+        })
         .single();
 
       if (error) throw error;
-      
-      if (data?.notification_preferences) {
-        const prefs = data.notification_preferences as Record<string, boolean>;
-        setPreferences(prev => ({
-          ...prev,
-          ...Object.fromEntries(
-            Object.entries(prefs).filter(([key]) => key in prev)
-          )
-        }));
-      }
+
+      setSettings(newSettings);
+      toast({
+        title: "Success",
+        description: "Settings updated successfully",
+      });
     } catch (error) {
-      console.error('Error fetching preferences:', error);
+      console.error('Error updating settings:', error);
       toast({
         title: "Error",
-        description: "Failed to load notification preferences",
+        description: "Failed to update settings",
         variant: "destructive",
       });
     }
   };
 
-  const subscribeToNotifications = () => {
-    // Subscribe to group posts
-    const channel = supabase
-      .channel('public:group_posts')
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'group_posts'
-        },
-        (payload) => {
-          if (preferences.groupActivity) {
-            toast({
-              title: "New Group Post",
-              description: "Someone posted in your care group",
-            });
-          }
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  };
-
-  const updatePreference = async (key: keyof NotificationPreferences, value: boolean) => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const newPreferences = { ...preferences, [key]: value };
-      setPreferences(newPreferences);
-
-      const { error } = await supabase
+  useEffect(() => {
+    const fetchSettings = async () => {
+      const { data: profile } = await supabase
         .from('profiles')
-        .update({ notification_preferences: newPreferences })
-        .eq('id', user.id);
+        .select('notification_preferences, privacy_preferences')
+        .single();
 
-      if (error) throw error;
+      if (profile) {
+        setSettings({
+          notifications: profile.notification_preferences || settings.notifications,
+          privacy: profile.privacy_preferences || settings.privacy,
+        });
+      }
+    };
 
-      toast({
-        title: "Settings Updated",
-        description: "Your notification preferences have been saved",
-      });
-    } catch (error) {
-      console.error('Error updating preferences:', error);
-      toast({
-        title: "Error",
-        description: "Failed to update notification preferences",
-        variant: "destructive",
-      });
-    }
-  };
+    fetchSettings();
+  }, []);
 
   return (
-    <div className="container py-6 space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Notification Settings</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {Object.entries(preferences).map(([key, value]) => (
-            <div key={key} className="flex items-center justify-between">
-              <Label htmlFor={key} className="flex flex-col">
-                <span className="font-medium">
-                  {key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
-                </span>
-                <span className="text-sm text-gray-500">
-                  Receive notifications about {key.toLowerCase()}
-                </span>
-              </Label>
+    <div className="space-y-6">
+      <h1 className="text-2xl font-bold">Settings</h1>
+      
+      <div className="grid gap-6">
+        <VerificationRequest />
+        
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Bell className="h-5 w-5" />
+              Notification Preferences
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="email-notifications">Email Notifications</Label>
               <Switch
-                id={key}
-                checked={value}
-                onCheckedChange={(checked) => 
-                  updatePreference(key as keyof NotificationPreferences, checked)
+                id="email-notifications"
+                checked={settings.notifications.email}
+                onCheckedChange={(checked) =>
+                  updateSettings({
+                    ...settings,
+                    notifications: { ...settings.notifications, email: checked },
+                  })
                 }
               />
             </div>
-          ))}
-        </CardContent>
-      </Card>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="push-notifications">Push Notifications</Label>
+              <Switch
+                id="push-notifications"
+                checked={settings.notifications.push}
+                onCheckedChange={(checked) =>
+                  updateSettings({
+                    ...settings,
+                    notifications: { ...settings.notifications, push: checked },
+                  })
+                }
+              />
+            </div>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="sms-notifications">SMS Notifications</Label>
+              <Switch
+                id="sms-notifications"
+                checked={settings.notifications.sms}
+                onCheckedChange={(checked) =>
+                  updateSettings({
+                    ...settings,
+                    notifications: { ...settings.notifications, sms: checked },
+                  })
+                }
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Lock className="h-5 w-5" />
+              Privacy Settings
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="profile-visibility">Show Profile Publicly</Label>
+              <Switch
+                id="profile-visibility"
+                checked={settings.privacy.profileVisibility === "public"}
+                onCheckedChange={(checked) =>
+                  updateSettings({
+                    ...settings,
+                    privacy: {
+                      ...settings.privacy,
+                      profileVisibility: checked ? "public" : "private",
+                    },
+                  })
+                }
+              />
+            </div>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="location-sharing">Share Location</Label>
+              <Switch
+                id="location-sharing"
+                checked={settings.privacy.showLocation}
+                onCheckedChange={(checked) =>
+                  updateSettings({
+                    ...settings,
+                    privacy: { ...settings.privacy, showLocation: checked },
+                  })
+                }
+              />
+            </div>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="availability-sharing">Show Availability</Label>
+              <Switch
+                id="availability-sharing"
+                checked={settings.privacy.showAvailability}
+                onCheckedChange={(checked) =>
+                  updateSettings({
+                    ...settings,
+                    privacy: { ...settings.privacy, showAvailability: checked },
+                  })
+                }
+              />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
-}
+};
+
+export default Settings;

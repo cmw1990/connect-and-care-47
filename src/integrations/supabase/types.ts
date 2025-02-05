@@ -640,6 +640,7 @@ export type Database = {
           review_text: string | null
           reviewee_id: string | null
           reviewer_id: string | null
+          verified_review: boolean | null
         }
         Insert: {
           booking_id?: string | null
@@ -649,6 +650,7 @@ export type Database = {
           review_text?: string | null
           reviewee_id?: string | null
           reviewer_id?: string | null
+          verified_review?: boolean | null
         }
         Update: {
           booking_id?: string | null
@@ -658,6 +660,7 @@ export type Database = {
           review_text?: string | null
           reviewee_id?: string | null
           reviewer_id?: string | null
+          verified_review?: boolean | null
         }
         Relationships: [
           {
@@ -1933,6 +1936,9 @@ export type Database = {
           relationship_to_patient: string | null
           updated_at: string
           user_type: Database["public"]["Enums"]["user_type"] | null
+          verification_date: string | null
+          verification_documents: Json | null
+          verification_status: Json | null
         }
         Insert: {
           availability_settings?: Json | null
@@ -1949,6 +1955,9 @@ export type Database = {
           relationship_to_patient?: string | null
           updated_at?: string
           user_type?: Database["public"]["Enums"]["user_type"] | null
+          verification_date?: string | null
+          verification_documents?: Json | null
+          verification_status?: Json | null
         }
         Update: {
           availability_settings?: Json | null
@@ -1965,6 +1974,9 @@ export type Database = {
           relationship_to_patient?: string | null
           updated_at?: string
           user_type?: Database["public"]["Enums"]["user_type"] | null
+          verification_date?: string | null
+          verification_documents?: Json | null
+          verification_status?: Json | null
         }
         Relationships: [
           {
@@ -2364,6 +2376,57 @@ export type Database = {
           {
             foreignKeyName: "team_messages_sender_id_fkey"
             columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      verification_requests: {
+        Row: {
+          documents: Json | null
+          id: string
+          notes: string | null
+          processed_at: string | null
+          processed_by: string | null
+          profile_id: string | null
+          request_type: string
+          status: string | null
+          submitted_at: string | null
+        }
+        Insert: {
+          documents?: Json | null
+          id?: string
+          notes?: string | null
+          processed_at?: string | null
+          processed_by?: string | null
+          profile_id?: string | null
+          request_type: string
+          status?: string | null
+          submitted_at?: string | null
+        }
+        Update: {
+          documents?: Json | null
+          id?: string
+          notes?: string | null
+          processed_at?: string | null
+          processed_by?: string | null
+          profile_id?: string | null
+          request_type?: string
+          status?: string | null
+          submitted_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "verification_requests_processed_by_fkey"
+            columns: ["processed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "verification_requests_profile_id_fkey"
+            columns: ["profile_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
