@@ -55,6 +55,7 @@ serve(async (req) => {
       throw new Error(error.error?.message || 'Failed to get response from OpenAI API');
     }
 
+    // Transform the response into a readable stream
     const stream = new ReadableStream({
       async start(controller) {
         const reader = response.body?.getReader();
