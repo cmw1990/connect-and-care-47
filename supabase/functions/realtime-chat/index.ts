@@ -37,8 +37,7 @@ serve(async (req) => {
           },
           { role: 'user', content: text }
         ],
-        temperature: 0.2,
-        top_p: 0.9,
+        temperature: 0.7,
         max_tokens: 1000,
         stream: true,
       }),
@@ -50,36 +49,54 @@ serve(async (req) => {
       throw new Error(`Perplexity API error: ${error}`);
     }
 
-    console.log('Received response from Perplexity API, setting up stream...');
-    const transformStream = new TransformStream({
-      async transform(chunk, controller) {
-        const text = new TextDecoder().decode(chunk);
-        const lines = text.split('\n').filter(line => line.trim());
-        
-        for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            const data = line.slice(6);
-            if (data === '[DONE]') {
+    // Set up streaming response
+    const readableStream = new ReadableStream({
+      async start(controller) {
+        const reader = response.body?.getReader();
+        if (!reader) {
+          controller.close();
+          return;
+        }
+
+        try {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) {
+              console.log('Stream complete');
               controller.enqueue(`data: ${JSON.stringify({ type: 'done' })}\n\n`);
-              return;
+              controller.close();
+              break;
             }
-            try {
-              const parsed = JSON.parse(data);
-              console.log('Parsed chunk:', parsed);
-              const content = parsed.choices?.[0]?.delta?.content;
-              if (content) {
-                console.log('Sending chunk:', content);
-                controller.enqueue(`data: ${JSON.stringify({ type: 'chunk', content })}\n\n`);
+
+            const text = new TextDecoder().decode(value);
+            const lines = text.split('\n').filter(line => line.trim());
+
+            for (const line of lines) {
+              if (line.startsWith('data: ')) {
+                const data = line.slice(6);
+                if (data === '[DONE]') continue;
+
+                try {
+                  const parsed = JSON.parse(data);
+                  const content = parsed.choices?.[0]?.delta?.content;
+                  if (content) {
+                    console.log('Sending chunk:', content);
+                    controller.enqueue(`data: ${JSON.stringify({ type: 'chunk', content })}\n\n`);
+                  }
+                } catch (e) {
+                  console.error('Error parsing chunk:', e);
+                }
               }
-            } catch (e) {
-              console.error('Error parsing chunk:', e);
             }
           }
+        } catch (error) {
+          console.error('Error processing stream:', error);
+          controller.error(error);
         }
       }
     });
 
-    return new Response(response.body?.pipeThrough(transformStream), {
+    return new Response(readableStream, {
       headers: {
         ...corsHeaders,
         'Content-Type': 'text/event-stream',
