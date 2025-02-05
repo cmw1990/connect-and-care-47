@@ -28,7 +28,7 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
+        model: 'gpt-4',
         messages: [
           {
             role: 'system',
@@ -42,70 +42,53 @@ serve(async (req) => {
 
     if (!response.ok) {
       const error = await response.json();
+      console.error('OpenAI API error:', error);
       throw new Error(error.error?.message || 'Failed to get response from OpenAI');
     }
 
-    const reader = response.body?.getReader();
-    const encoder = new TextEncoder();
-    const decoder = new TextDecoder();
-
-    return new Response(
-      new ReadableStream({
-        async start(controller) {
-          try {
-            if (!reader) {
-              controller.close();
+    // Transform the response into a readable stream
+    const transformStream = new TransformStream({
+      async transform(chunk, controller) {
+        const text = new TextDecoder().decode(chunk);
+        const lines = text.split('\n').filter(line => line.trim());
+        
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6);
+            if (data === '[DONE]') {
+              controller.enqueue(`data: ${JSON.stringify({ type: 'done' })}\n\n`);
               return;
             }
-
-            while (true) {
-              const { done, value } = await reader.read();
-              if (done) break;
-
-              const chunk = decoder.decode(value);
-              const lines = chunk.split('\n').filter(line => line.trim());
-
-              for (const line of lines) {
-                if (line.startsWith('data: ')) {
-                  const data = line.slice(6);
-                  if (data === '[DONE]') continue;
-
-                  try {
-                    const parsed = JSON.parse(data);
-                    if (parsed.choices?.[0]?.delta?.content) {
-                      controller.enqueue(encoder.encode(`data: ${JSON.stringify({
-                        type: 'chunk',
-                        content: parsed.choices[0].delta.content
-                      })}\n\n`));
-                    }
-                  } catch (e) {
-                    console.error('Error parsing chunk:', e);
-                  }
-                }
+            try {
+              const parsed = JSON.parse(data);
+              const content = parsed.choices[0]?.delta?.content;
+              if (content) {
+                controller.enqueue(`data: ${JSON.stringify({ type: 'chunk', content })}\n\n`);
               }
+            } catch (e) {
+              console.error('Error parsing chunk:', e);
             }
-            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'done' })}\n\n`));
-          } catch (error) {
-            console.error('Stream processing error:', error);
-            controller.error(error);
-          } finally {
-            controller.close();
           }
-        },
-      }),
-      {
-        headers: {
-          ...corsHeaders,
-          'Content-Type': 'text/event-stream',
-          'Cache-Control': 'no-cache',
-          'Connection': 'keep-alive',
-        },
+        }
       }
-    );
+    });
+
+    return new Response(response.body?.pipeThrough(transformStream), {
+      headers: {
+        ...corsHeaders,
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive',
+      },
+    });
+
   } catch (error) {
     console.error('Error in realtime-chat function:', error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error.message,
+        details: "The chat service is temporarily unavailable. Please try again later."
+      }),
       { 
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }

@@ -102,6 +102,7 @@ Please provide a clear and informative response, considering the patient's speci
       }
 
       const decoder = new TextDecoder();
+      let accumulatedMessage = '';
 
       while (true) {
         const { done, value } = await reader.read();
@@ -118,14 +119,15 @@ Please provide a clear and informative response, considering the patient's speci
             try {
               const parsed = JSON.parse(data);
               if (parsed.type === 'chunk') {
-                setCurrentMessage(prev => prev + parsed.content);
+                accumulatedMessage += parsed.content;
+                setCurrentMessage(accumulatedMessage);
               } else if (parsed.type === 'done') {
                 setMessages(prev => [
                   ...prev,
-                  { role: 'assistant', content: currentMessage + (parsed.content || '') }
+                  { role: 'assistant', content: accumulatedMessage }
                 ]);
                 setCurrentMessage('');
-                setIsLoading(false);
+                accumulatedMessage = '';
               }
             } catch (e) {
               console.error('Error parsing chunk:', e);
@@ -141,6 +143,7 @@ Please provide a clear and informative response, considering the patient's speci
         description: t("failedToGetResponse"),
         variant: "destructive",
       });
+    } finally {
       setIsLoading(false);
     }
   };
@@ -217,4 +220,4 @@ Please provide a clear and informative response, considering the patient's speci
       </CardContent>
     </Card>
   );
-};
+});
