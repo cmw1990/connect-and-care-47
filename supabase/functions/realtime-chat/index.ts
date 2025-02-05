@@ -1,7 +1,7 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
-const perplexityApiKey = Deno.env.get('PERPLEXITY_API_KEY');
+const openAiApiKey = Deno.env.get('OPENAI_API_KEY');
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -14,22 +14,21 @@ serve(async (req) => {
   }
 
   try {
+    if (!openAiApiKey) {
+      throw new Error('OpenAI API key not configured');
+    }
+
     const { text } = await req.json();
     console.log('Received request with text:', text);
 
-    if (!perplexityApiKey) {
-      throw new Error('Perplexity API key not configured');
-    }
-
-    console.log('Making request to Perplexity API...');
-    const response = await fetch('https://api.perplexity.ai/chat/completions', {
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${perplexityApiKey}`,
+        'Authorization': `Bearer ${openAiApiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'llama-3.1-sonar-small-128k-online',
+        model: 'gpt-4',
         messages: [
           {
             role: 'system',
@@ -40,40 +39,17 @@ serve(async (req) => {
             content: text
           }
         ],
-        temperature: 0.2,
-        top_p: 0.9,
-        max_tokens: 1000,
         stream: true,
-        return_images: false,
-        return_related_questions: false,
-        search_domain_filter: ['perplexity.ai'],
-        search_recency_filter: 'month',
-        frequency_penalty: 1,
-        presence_penalty: 0
       }),
     });
 
     if (!response.ok) {
-      console.error('Perplexity API error:', response.status, response.statusText);
       const error = await response.text();
+      console.error('OpenAI API error:', response.status, response.statusText);
       console.error('Error details:', error);
-      
-      return new Response(
-        JSON.stringify({
-          error: 'Failed to get response from Perplexity API',
-          details: error
-        }),
-        {
-          status: response.status,
-          headers: {
-            ...corsHeaders,
-            'Content-Type': 'application/json'
-          }
-        }
-      );
+      throw new Error('Failed to get response from OpenAI API');
     }
 
-    // Stream the response
     const stream = new ReadableStream({
       async start(controller) {
         const reader = response.body?.getReader();
@@ -84,7 +60,6 @@ serve(async (req) => {
 
         try {
           let accumulatedMessage = '';
-          let isFirstChunk = true;
           
           while (true) {
             const { done, value } = await reader.read();
@@ -113,27 +88,16 @@ serve(async (req) => {
                   if (data === '[DONE]') continue;
 
                   const parsed = JSON.parse(data);
-                  if (parsed.choices?.[0]?.delta?.content || 
-                      (isFirstChunk && parsed.choices?.[0]?.message?.content)) {
-                    
-                    let content = '';
-                    if (isFirstChunk && parsed.choices[0].message?.content) {
-                      content = parsed.choices[0].message.content;
-                      isFirstChunk = false;
-                    } else if (parsed.choices[0].delta?.content) {
-                      content = parsed.choices[0].delta.content;
-                    }
-
-                    if (content) {
-                      accumulatedMessage += content;
-                      const safeContent = content
-                        .replace(/\\/g, '\\\\')
-                        .replace(/"/g, '\\"')
-                        .replace(/\n/g, '\\n')
-                        .replace(/\r/g, '\\r')
-                        .replace(/\t/g, '\\t');
-                      controller.enqueue(`data: {"type":"chunk","content":"${safeContent}"}\n\n`);
-                    }
+                  if (parsed.choices?.[0]?.delta?.content) {
+                    const content = parsed.choices[0].delta.content;
+                    accumulatedMessage += content;
+                    const safeContent = content
+                      .replace(/\\/g, '\\\\')
+                      .replace(/"/g, '\\"')
+                      .replace(/\n/g, '\\n')
+                      .replace(/\r/g, '\\r')
+                      .replace(/\t/g, '\\t');
+                    controller.enqueue(`data: {"type":"chunk","content":"${safeContent}"}\n\n`);
                   }
                 } catch (e) {
                   console.error('Error parsing chunk:', e);
