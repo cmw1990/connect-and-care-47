@@ -42,7 +42,10 @@ export const GroupsList = ({ groups, onDelete, onEdit, showActions = true }: Gro
           transition={{ delay: index * 0.1 }}
           className="group"
         >
-          <Card className="hover:shadow-lg transition-shadow duration-300 bg-white overflow-hidden border border-gray-200">
+          <Card 
+            className="hover:shadow-lg transition-shadow duration-300 bg-white overflow-hidden border border-gray-200 cursor-pointer"
+            onClick={() => navigate(`/groups/${group.id}`)}
+          >
             <CardHeader className="bg-gradient-to-r from-primary-100 to-secondary-100 pb-4">
               <CardTitle className="flex justify-between items-center">
                 <span className="truncate text-lg font-semibold text-gray-800">{group.name}</span>
@@ -70,40 +73,38 @@ export const GroupsList = ({ groups, onDelete, onEdit, showActions = true }: Gro
                   </div>
                 )}
 
-                <div className="flex gap-2 pt-2">
-                  <Button 
-                    variant="default"
-                    className="flex-1 gap-2 bg-primary hover:bg-primary-600 transition-colors duration-300" 
-                    onClick={() => navigate(`/groups/${group.id}`)}
-                  >
-                    View Details
-                    <ArrowRight className="h-4 w-4" />
-                  </Button>
-                  {showActions && (
-                    <div className="flex gap-2">
-                      {onEdit && (
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          onClick={() => onEdit(group)}
-                          className="shrink-0 hover:bg-gray-50 transition-colors duration-200"
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                      )}
-                      {onDelete && (
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          onClick={() => handleDelete(group.id)}
-                          className="shrink-0 hover:bg-red-50 hover:text-red-500 transition-colors duration-200"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      )}
-                    </div>
-                  )}
-                </div>
+                {showActions && (
+                  <div className="flex gap-2 pt-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                    {onEdit && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onEdit(group);
+                        }}
+                        className="flex-1 hover:bg-gray-50 transition-colors duration-200"
+                      >
+                        <Edit className="h-4 w-4 mr-2" />
+                        Edit
+                      </Button>
+                    )}
+                    {onDelete && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDelete(group.id);
+                        }}
+                        className="flex-1 hover:bg-red-50 hover:text-red-500 transition-colors duration-200"
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Delete
+                      </Button>
+                    )}
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>

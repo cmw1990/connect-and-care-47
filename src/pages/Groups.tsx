@@ -7,13 +7,12 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Users, Search, UserPlus, UserRound, Edit } from "lucide-react";
+import { Plus, Users, Search, UserPlus, UserRound } from "lucide-react";
 import { GroupsList } from "@/components/groups/GroupsList";
 import { CaregiverCard } from "@/components/caregivers/CaregiverCard";
 import { CompanionCard } from "@/components/companions/CompanionCard";
@@ -23,7 +22,7 @@ import { CareUpdates } from "@/components/groups/CareUpdates";
 import { WellnessTracker } from "@/components/wellness/WellnessTracker";
 import { CareTeamCalendar } from "@/components/calendar/CareTeamCalendar";
 import { ConnectionManager } from "@/components/connections/ConnectionManager";
-import type { CareGroup, GroupPrivacySettings } from "@/types/groups";
+import type { CareGroup } from "@/types/groups";
 import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
@@ -239,6 +238,8 @@ const Groups = () => {
           title: "Success",
           description: "Care group created successfully",
         });
+        
+        navigate(`/groups/${group.id}`);
       }
 
       setNewGroupName("");
@@ -257,7 +258,7 @@ const Groups = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [newGroupName, newGroupDescription, isPublic, editingGroup, toast, fetchGroups]);
+  }, [newGroupName, newGroupDescription, isPublic, editingGroup, toast, fetchGroups, navigate]);
 
   const handleEdit = (group: CareGroup) => {
     setEditingGroup(group);
@@ -302,26 +303,18 @@ const Groups = () => {
             </h1>
           </div>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button className="bg-primary-600 hover:bg-primary-700 text-white shadow-lg hover:shadow-xl transition-all duration-300">
-                <Plus className="mr-2 h-4 w-4" />
-                New Group
-              </Button>
-            </DialogTrigger>
+            <Button 
+              onClick={() => setIsDialogOpen(true)}
+              className="bg-primary-600 hover:bg-primary-700 text-white shadow-lg hover:shadow-xl transition-all duration-300"
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              New Group
+            </Button>
             <DialogContent className="sm:max-w-[500px]">
               <DialogHeader>
                 <DialogTitle className="flex items-center gap-2">
-                  {editingGroup ? (
-                    <>
-                      <Edit className="h-5 w-5 text-primary-600" />
-                      Edit Care Group
-                    </>
-                  ) : (
-                    <>
-                      <Users className="h-5 w-5 text-primary-600" />
-                      Create New Care Group
-                    </>
-                  )}
+                  <Users className="h-5 w-5 text-primary-600" />
+                  {editingGroup ? 'Edit Care Group' : 'Create New Care Group'}
                 </DialogTitle>
                 <DialogDescription>
                   {editingGroup 
