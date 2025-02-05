@@ -15,10 +15,6 @@ export const CareQualityMetrics = ({ groupId }: CareQualityMetricsProps) => {
 
   useEffect(() => {
     fetchMetrics();
-    const channel = subscribeToMetrics();
-    return () => {
-      supabase.removeChannel(channel);
-    };
   }, [groupId]);
 
   const fetchMetrics = async () => {
@@ -29,7 +25,7 @@ export const CareQualityMetrics = ({ groupId }: CareQualityMetricsProps) => {
         .eq('group_id', groupId)
         .order('recorded_at', { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
       setMetrics(data?.metric_value || null);
@@ -41,25 +37,6 @@ export const CareQualityMetrics = ({ groupId }: CareQualityMetricsProps) => {
         variant: "destructive",
       });
     }
-  };
-
-  const subscribeToMetrics = () => {
-    return supabase
-      .channel('metrics_changes')
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'care_quality_metrics',
-          filter: `group_id=eq.${groupId}`,
-        },
-        (payload) => {
-          console.log('New metrics:', payload);
-          setMetrics(payload.new.metric_value);
-        }
-      )
-      .subscribe();
   };
 
   const metricItems = [

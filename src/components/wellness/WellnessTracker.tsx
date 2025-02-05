@@ -25,12 +25,22 @@ export const WellnessTracker = ({ groupId }: WellnessTrackerProps) => {
         .eq('metric_type', 'wellness')
         .order('recorded_at', { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
-      setWellnessData(data?.metric_value || null);
+      setWellnessData(data?.metric_value || {
+        physical: 'N/A',
+        mental: 'N/A',
+        mood: 'N/A',
+        activity: 'N/A'
+      });
     } catch (error) {
       console.error('Error fetching wellness data:', error);
+      toast({
+        title: "Error",
+        description: "Unable to load wellness data. Please try again later.",
+        variant: "destructive",
+      });
     }
   };
 

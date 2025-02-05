@@ -12,40 +12,35 @@ serve(async (req) => {
   }
 
   try {
-    const { disease, description } = await req.json();
-    const openaiKey = Deno.env.get('OPENAI_API_KEY');
+    const { prompt } = await req.json();
+    const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
 
-    if (!openaiKey) {
+    if (!openAIApiKey) {
       throw new Error('OpenAI API key not configured');
     }
 
     const response = await fetch('https://api.openai.com/v1/images/generations', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${openaiKey}`,
+        'Authorization': `Bearer ${openAIApiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
         model: "dall-e-3",
-        prompt: `Create a professional medical illustration for ${disease}. ${description}. Style: Clear, informative medical illustration.`,
+        prompt: prompt,
         n: 1,
-        size: "1024x1024",
-        quality: "standard",
-        response_format: "url"
+        size: "1024x1024"
       }),
     });
 
     if (!response.ok) {
       const error = await response.json();
-      console.error('OpenAI API error:', error);
-      
-      // Check if it's a billing error
       if (error.error?.message?.includes('billing')) {
         return new Response(
           JSON.stringify({ 
             error: "Image generation temporarily unavailable",
             details: "Service is currently unavailable. Please try again later.",
-            fallbackImage: "/placeholder.svg" // Provide a fallback image
+            fallbackImage: "/placeholder.svg"
           }),
           { 
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -53,29 +48,22 @@ serve(async (req) => {
           }
         );
       }
-      
-      throw new Error(`OpenAI API error: ${error.error?.message || response.statusText}`);
+      throw new Error(`OpenAI API error: ${error.error?.message || 'Unknown error'}`);
     }
 
     const data = await response.json();
-    console.log('Successfully generated image');
-
     return new Response(
-      JSON.stringify({ 
-        imageUrl: data.data[0].url,
-        prompt: `Create a professional medical illustration for ${disease}. ${description}`
-      }),
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      }
+      JSON.stringify({ url: data.data[0].url }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
+
   } catch (error) {
     console.error('Error in generate-care-image function:', error);
     return new Response(
       JSON.stringify({ 
         error: "Failed to generate image",
         details: error.message,
-        fallbackImage: "/placeholder.svg" // Provide a fallback image
+        fallbackImage: "/placeholder.svg"
       }),
       { 
         status: 500,
