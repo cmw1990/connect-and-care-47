@@ -44,7 +44,8 @@ serve(async (req) => {
         return new Response(
           JSON.stringify({ 
             error: "Image generation temporarily unavailable",
-            details: "Service is currently unavailable. Please try again later."
+            details: "Service is currently unavailable. Please try again later.",
+            fallbackImage: "/placeholder.svg" // Provide a fallback image
           }),
           { 
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -73,7 +74,8 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         error: "Failed to generate image",
-        details: error.message
+        details: error.message,
+        fallbackImage: "/placeholder.svg" // Provide a fallback image
       }),
       { 
         status: 500,

@@ -14,12 +14,14 @@ interface NotificationPreferences {
   email: boolean;
   push: boolean;
   sms: boolean;
+  [key: string]: boolean; // Add index signature
 }
 
 interface PrivacyPreferences {
   profileVisibility: string;
   showLocation: boolean;
   showAvailability: boolean;
+  [key: string]: boolean | string; // Add index signature
 }
 
 interface Settings {
@@ -46,8 +48,8 @@ const Settings = () => {
 
   const updateSettings = async (newSettings: Settings) => {
     try {
-      const notificationPrefs = newSettings.notifications as unknown as Json;
-      const privacyPrefs = newSettings.privacy as unknown as Json;
+      const notificationPrefs = newSettings.notifications as unknown as { [key: string]: Json };
+      const privacyPrefs = newSettings.privacy as unknown as { [key: string]: Json };
       
       const { error } = await supabase
         .from('profiles')
