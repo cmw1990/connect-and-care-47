@@ -7,15 +7,13 @@ export interface CareGroup {
   is_owner?: boolean;
   is_public?: boolean;
   location?: string;
-  privacy_settings?: {
-    visibility: 'public' | 'private';
-    status?: 'normal' | 'warning' | 'urgent' | 'emergency';
-    lastUpdated?: string;
-  };
+  privacy_settings?: GroupPrivacySettings;
 }
 
 export interface GroupPrivacySettings {
   visibility: 'public' | 'private';
+  status?: 'normal' | 'warning' | 'urgent' | 'emergency';
+  lastUpdated?: string;
 }
 
 export interface GroupMember {
