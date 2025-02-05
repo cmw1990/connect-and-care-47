@@ -174,10 +174,12 @@ Please provide a clear and informative response, considering all the available i
                   accumulatedMessage += parsed.content;
                   setCurrentMessage(accumulatedMessage);
                 } else if (parsed.type === 'done') {
-                  setMessages(prev => [
-                    ...prev,
-                    { role: 'assistant', content: accumulatedMessage }
-                  ]);
+                  if (accumulatedMessage.trim()) {
+                    setMessages(prev => [
+                      ...prev,
+                      { role: 'assistant', content: accumulatedMessage }
+                    ]);
+                  }
                   setCurrentMessage('');
                   accumulatedMessage = '';
                 }
@@ -189,7 +191,9 @@ Please provide a clear and informative response, considering all the available i
         }
       } else {
         const content = typeof response.data === 'string' ? response.data : response.data.text;
-        setMessages(prev => [...prev, { role: 'assistant', content }]);
+        if (content?.trim()) {
+          setMessages(prev => [...prev, { role: 'assistant', content }]);
+        }
       }
 
     } catch (error) {

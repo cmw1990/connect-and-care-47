@@ -33,7 +33,7 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: 'You are a helpful care assistant that provides clear and concise responses.'
+            content: 'You are a helpful care assistant AI that provides support and information to caregivers and care recipients. Use the provided context about the patient and care group to give relevant and personalized responses.'
           },
           { role: 'user', content: text }
         ],
@@ -78,9 +78,11 @@ serve(async (req) => {
             }
             try {
               const parsed = JSON.parse(data);
-              const content = parsed.choices[0]?.delta?.content || parsed.choices[0]?.text;
-              if (content) {
-                controller.enqueue(`data: ${JSON.stringify({ type: 'chunk', content })}\n\n`);
+              if (parsed.choices && parsed.choices.length > 0) {
+                const content = parsed.choices[0].delta?.content || parsed.choices[0].text;
+                if (content) {
+                  controller.enqueue(`data: ${JSON.stringify({ type: 'chunk', content })}\n\n`);
+                }
               }
             } catch (e) {
               console.error('Error parsing chunk:', e);
