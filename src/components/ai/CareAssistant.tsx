@@ -153,8 +153,9 @@ Please provide a clear and informative response, considering all the available i
 
       if (response.error) {
         // Check if it's a quota error
-        if (response.error.message?.includes('quota')) {
-          throw new Error('OpenAI API quota exceeded. Please check your billing details or try again later.');
+        if (response.error.message?.includes('quota') || 
+            response.error.message?.includes('insufficient_quota')) {
+          throw new Error('OpenAI API quota exceeded. The AI service is temporarily unavailable. Please try again later or contact support.');
         }
         throw new Error(response.error.message || 'Failed to get response from function');
       }
@@ -220,8 +221,8 @@ Please provide a clear and informative response, considering all the available i
       let errorMessage = t("failedToGetResponse");
       
       if (error instanceof Error) {
-        if (error.message.includes('quota')) {
-          errorMessage = "The AI service is currently unavailable due to quota limits. Please check your billing details or try again later.";
+        if (error.message.includes('quota') || error.message.includes('insufficient_quota')) {
+          errorMessage = "The AI service is currently unavailable due to quota limits. Please try again later or contact support.";
         } else if (error.message.includes('API key')) {
           errorMessage = "The AI service is not properly configured. Please contact support.";
         }

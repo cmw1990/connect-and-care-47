@@ -1,5 +1,5 @@
-import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import "https://deno.land/x/xhr@0.1.0/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -23,24 +23,6 @@ serve(async (req) => {
 
     const { text } = await req.json();
     console.log('Received request with text:', text);
-
-    // Log the request being sent to OpenAI
-    console.log('Sending request to OpenAI with configuration:', {
-      model: 'gpt-4',
-      messages: [
-        {
-          role: 'system',
-          content: 'You are a caring and knowledgeable healthcare assistant...'
-        },
-        {
-          role: 'user',
-          content: text
-        }
-      ],
-      stream: true,
-      temperature: 0.7,
-      max_tokens: 2000
-    });
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -76,7 +58,7 @@ serve(async (req) => {
       if (error.error?.code === 'insufficient_quota') {
         return new Response(
           JSON.stringify({
-            error: 'OpenAI API quota exceeded. The AI service is temporarily unavailable. Please check your OpenAI account billing status.',
+            error: 'OpenAI API quota exceeded. The AI service is temporarily unavailable.',
             details: {
               type: 'quota_exceeded',
               message: error.error.message
