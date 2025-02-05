@@ -15,12 +15,17 @@ serve(async (req) => {
     const { text } = await req.json();
     console.log('Received request with text:', text);
 
+    if (!text) {
+      throw new Error('No text provided in request');
+    }
+
     const openAiApiKey = Deno.env.get('OPENAI_API_KEY');
     if (!openAiApiKey) {
       console.error('OpenAI API key not configured');
       throw new Error('OpenAI API key not configured');
     }
 
+    console.log('Making request to OpenAI API...');
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -51,7 +56,6 @@ serve(async (req) => {
       const error = await response.json();
       console.error('OpenAI API error:', error);
       
-      // Handle quota exceeded error specifically
       if (error.error?.code === 'insufficient_quota') {
         return new Response(
           JSON.stringify({
