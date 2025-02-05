@@ -170,7 +170,7 @@ Please provide a clear and informative response, considering all the available i
 
               try {
                 const parsed = JSON.parse(data);
-                if (parsed.type === 'chunk') {
+                if (parsed.type === 'chunk' && parsed.content) {
                   accumulatedMessage += parsed.content;
                   setCurrentMessage(accumulatedMessage);
                 } else if (parsed.type === 'done') {
@@ -191,7 +191,7 @@ Please provide a clear and informative response, considering all the available i
         }
       } else {
         const content = typeof response.data === 'string' ? response.data : response.data.text;
-        if (content?.trim()) {
+        if (content && typeof content === 'string' && content.trim()) {
           setMessages(prev => [...prev, { role: 'assistant', content }]);
         }
       }

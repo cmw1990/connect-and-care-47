@@ -81,6 +81,7 @@ serve(async (req) => {
               if (parsed.choices && parsed.choices.length > 0) {
                 const content = parsed.choices[0].delta?.content || parsed.choices[0].text;
                 if (content) {
+                  console.log('Sending chunk:', content);
                   controller.enqueue(`data: ${JSON.stringify({ type: 'chunk', content })}\n\n`);
                 }
               }
