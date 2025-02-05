@@ -123,49 +123,52 @@ Please provide relevant and helpful information based on this context.
   };
 
   const processStreamResponse = async (response: Response, onDone: () => void) => {
-    if (response.body) {
-      const reader = response.body.getReader();
-      let accumulatedMessage = '';
+    if (!response.body) {
+      throw new Error('No response body');
+    }
 
-      try {
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let accumulatedMessage = '';
 
-          const chunk = new TextDecoder().decode(value);
-          const lines = chunk.split('\n').filter(line => line.trim());
-          
-          for (const line of lines) {
-            if (line.startsWith('data: ')) {
-              const data = line.slice(6);
-              if (data === '[DONE]') continue;
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
 
-              try {
-                const parsed = JSON.parse(data);
-                if (parsed.type === 'chunk' && parsed.content) {
-                  accumulatedMessage += parsed.content;
-                  setCurrentMessage(accumulatedMessage);
-                } else if (parsed.type === 'done') {
-                  if (accumulatedMessage.trim()) {
-                    setMessages(prev => [
-                      ...prev,
-                      { role: 'assistant', content: accumulatedMessage }
-                    ]);
-                  }
-                  setCurrentMessage('');
-                  accumulatedMessage = '';
-                  onDone();
+        const chunk = decoder.decode(value);
+        const lines = chunk.split('\n').filter(line => line.trim());
+        
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6);
+            if (data === '[DONE]') continue;
+
+            try {
+              const parsed = JSON.parse(data);
+              if (parsed.type === 'chunk' && parsed.content) {
+                accumulatedMessage += parsed.content;
+                setCurrentMessage(accumulatedMessage);
+              } else if (parsed.type === 'done') {
+                if (accumulatedMessage.trim()) {
+                  setMessages(prev => [...prev, { 
+                    role: 'assistant' as const, 
+                    content: accumulatedMessage 
+                  }]);
                 }
-              } catch (e) {
-                console.error('Error parsing chunk:', e);
+                setCurrentMessage('');
+                accumulatedMessage = '';
+                onDone();
               }
+            } catch (e) {
+              console.error('Error parsing chunk:', e);
             }
           }
         }
-      } catch (error) {
-        console.error('Error processing stream:', error);
-        throw error;
       }
+    } catch (error) {
+      console.error('Error processing stream:', error);
+      throw error;
     }
   };
 
