@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,15 +13,46 @@ import { Bell } from "lucide-react";
 import { CheckInForm } from "./components/CheckInForm";
 import { CheckInHistory } from "./components/CheckInHistory";
 import { NoActiveCheckIn } from "./components/NoActiveCheckIn";
+import { Tables } from "@/integrations/supabase/types";
 
 interface CheckInManagerProps {
   groupId: string;
 }
 
+type PatientCheckIn = Tables<"patient_check_ins">;
+
 export const CheckInManager = ({ groupId }: CheckInManagerProps) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [activeCheckIn, setActiveCheckIn] = useState(null);
+  const [checkIns, setCheckIns] = useState<PatientCheckIn[]>([]);
+  const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+
+  useEffect(() => {
+    fetchCheckIns();
+  }, [groupId]);
+
+  const fetchCheckIns = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('patient_check_ins')
+        .select('*')
+        .eq('group_id', groupId)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setCheckIns(data || []);
+    } catch (error) {
+      console.error('Error fetching check-ins:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load check-ins",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleCheckInSubmit = async (data: any) => {
     try {
@@ -39,6 +70,7 @@ export const CheckInManager = ({ groupId }: CheckInManagerProps) => {
         description: "Check-in submitted successfully",
       });
       setIsDialogOpen(false);
+      fetchCheckIns(); // Refresh the list after submission
     } catch (error) {
       console.error("Error submitting check-in:", error);
       toast({
@@ -59,7 +91,7 @@ export const CheckInManager = ({ groupId }: CheckInManagerProps) => {
       </CardHeader>
       <CardContent className="space-y-4">
         {activeCheckIn ? (
-          <CheckInHistory groupId={groupId} />
+          <CheckInHistory groupId={groupId} checkIns={checkIns} loading={loading} />
         ) : (
           <NoActiveCheckIn onCheckIn={() => setIsDialogOpen(true)} />
         )}
