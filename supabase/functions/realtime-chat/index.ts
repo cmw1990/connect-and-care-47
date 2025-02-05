@@ -21,6 +21,7 @@ serve(async (req) => {
       throw new Error('Perplexity API key not configured');
     }
 
+    console.log('Making request to Perplexity API...');
     const response = await fetch('https://api.perplexity.ai/chat/completions', {
       method: 'POST',
       headers: {
@@ -45,10 +46,11 @@ serve(async (req) => {
 
     if (!response.ok) {
       const error = await response.text();
-      console.error('Perplexity API error response:', error);
+      console.error('Perplexity API error:', error);
       throw new Error(`Perplexity API error: ${error}`);
     }
 
+    console.log('Received response from Perplexity API, setting up stream...');
     const transformStream = new TransformStream({
       async transform(chunk, controller) {
         const text = new TextDecoder().decode(chunk);
@@ -63,6 +65,7 @@ serve(async (req) => {
             }
             try {
               const parsed = JSON.parse(data);
+              console.log('Parsed chunk:', parsed);
               const content = parsed.choices?.[0]?.delta?.content;
               if (content) {
                 console.log('Sending chunk:', content);

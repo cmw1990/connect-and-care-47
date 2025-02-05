@@ -148,21 +148,28 @@ Please provide a clear and informative response, considering all the available i
         },
       });
 
+      console.log('Response from function:', response);
+
       if (!response.data) {
         throw new Error('No response data received from function');
       }
 
       if (response.data instanceof ReadableStream) {
+        console.log('Processing stream response...');
         const reader = response.data.getReader();
         let accumulatedMessage = '';
 
         while (true) {
           const { done, value } = await reader.read();
-          if (done) break;
+          if (done) {
+            console.log('Stream complete');
+            break;
+          }
 
           const chunk = new TextDecoder().decode(value);
+          console.log('Received raw chunk:', chunk);
+          
           const lines = chunk.split('\n').filter(line => line.trim());
-
           for (const line of lines) {
             if (line.startsWith('data: ')) {
               const data = line.slice(6);
@@ -170,7 +177,7 @@ Please provide a clear and informative response, considering all the available i
 
               try {
                 const parsed = JSON.parse(data);
-                console.log('Received chunk:', parsed);
+                console.log('Parsed chunk:', parsed);
                 
                 if (parsed.type === 'chunk' && parsed.content) {
                   accumulatedMessage += parsed.content;
