@@ -126,10 +126,10 @@ export default function Messages() {
         },
         async (payload: any) => {
           console.log('Group update received:', payload);
-          const newPrivacySettings = payload.new.privacy_settings as GroupPrivacySettings;
-          const oldPrivacySettings = payload.old.privacy_settings as GroupPrivacySettings;
+          const newPrivacySettings = payload.new.privacy_settings as unknown as GroupPrivacySettings | null;
+          const oldPrivacySettings = payload.old.privacy_settings as unknown as GroupPrivacySettings | null;
           
-          if (newPrivacySettings?.status && newPrivacySettings.status !== oldPrivacySettings?.status) {
+          if (newPrivacySettings?.status && (!oldPrivacySettings?.status || newPrivacySettings.status !== oldPrivacySettings.status)) {
             const { data: group } = await supabase
               .from('care_groups')
               .select('name')
