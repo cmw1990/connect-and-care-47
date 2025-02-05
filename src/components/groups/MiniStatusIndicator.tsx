@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { AlertTriangle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -6,7 +6,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { GroupStatusBar } from "./GroupStatusBar";
 
@@ -32,16 +31,17 @@ const statusMessages = {
 };
 
 export const MiniStatusIndicator = ({ status, groupId, isAdmin = false }: MiniStatusIndicatorProps) => {
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+
   return (
-    <Dialog>
-      <DialogTrigger asChild>
-        <Badge 
-          className={`${statusColors[status as keyof typeof statusColors]} flex items-center gap-1 px-2 py-1 cursor-pointer`}
-        >
-          <AlertTriangle className="h-3 w-3" />
-          <span className="text-xs">{statusMessages[status as keyof typeof statusMessages]}</span>
-        </Badge>
-      </DialogTrigger>
+    <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+      <Badge 
+        onClick={() => isAdmin && setIsDialogOpen(true)}
+        className={`${statusColors[status as keyof typeof statusColors]} flex items-center gap-1 px-2 py-1 cursor-pointer`}
+      >
+        <AlertTriangle className="h-3 w-3" />
+        <span className="text-xs">{statusMessages[status as keyof typeof statusMessages]}</span>
+      </Badge>
       {isAdmin && (
         <DialogContent>
           <DialogHeader>
