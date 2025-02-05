@@ -7,127 +7,107 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
-  const upgradeHeader = req.headers.get('Upgrade');
-  if (!upgradeHeader || upgradeHeader !== 'websocket') {
-    return new Response('Expected Upgrade: websocket', { status: 426 });
-  }
-
   try {
-    const { socket, response } = Deno.upgradeWebSocket(req);
+    const { text } = await req.json();
     const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
 
     if (!openAIApiKey) {
       throw new Error('OpenAI API key not configured');
     }
 
-    console.log('WebSocket connected');
-
-    socket.onopen = () => {
-      console.log('Client connected to WebSocket');
-    };
-
-    socket.onmessage = async (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        console.log('Received message:', data);
-
-        if (data.type !== 'message' || !data.text) {
-          throw new Error('Invalid message format');
-        }
-
-        const response = await fetch('https://api.openai.com/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${openAIApiKey}`,
-            'Content-Type': 'application/json',
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${openAIApiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        messages: [
+          {
+            role: 'system',
+            content: 'You are a compassionate and knowledgeable care assistant, helping caregivers and families with healthcare advice, emotional support, and practical caregiving tips. Always provide clear, actionable advice while being empathetic to the challenges of caregiving.'
           },
-          body: JSON.stringify({
-            model: 'gpt-4o-mini',
-            messages: [
-              {
-                role: 'system',
-                content: 'You are a helpful care assistant that provides support and guidance for caregivers and patients. Your responses should be empathetic, clear, and focused on healthcare and wellbeing.'
-              },
-              {
-                role: 'user',
-                content: data.text
-              }
-            ],
-            stream: true,
-          }),
-        });
+          { role: 'user', content: text }
+        ],
+        stream: true,
+      }),
+    });
 
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
-          console.error('OpenAI API error:', response.status, errorData);
-          throw new Error(`OpenAI API error: ${response.statusText}`);
-        }
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error?.message || 'Failed to get response from OpenAI');
+    }
 
-        const reader = response.body?.getReader();
-        if (!reader) {
-          throw new Error('Failed to get response reader');
-        }
+    const reader = response.body?.getReader();
+    const encoder = new TextEncoder();
+    const decoder = new TextDecoder();
 
-        let buffer = '';
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
+    return new Response(
+      new ReadableStream({
+        async start(controller) {
+          try {
+            if (!reader) {
+              controller.close();
+              return;
+            }
 
-          const chunk = new TextDecoder().decode(value);
-          buffer += chunk;
+            while (true) {
+              const { done, value } = await reader.read();
+              if (done) break;
 
-          const lines = buffer.split('\n');
-          buffer = lines.pop() || '';
+              const chunk = decoder.decode(value);
+              const lines = chunk.split('\n').filter(line => line.trim());
 
-          for (const line of lines) {
-            if (line.trim() === '') continue;
-            if (line.trim() === 'data: [DONE]') continue;
-            
-            if (line.startsWith('data: ')) {
-              try {
-                const data = JSON.parse(line.slice(6));
-                if (data.choices?.[0]?.delta?.content) {
-                  socket.send(JSON.stringify({
-                    type: 'chunk',
-                    content: data.choices[0].delta.content
-                  }));
+              for (const line of lines) {
+                if (line.startsWith('data: ')) {
+                  const data = line.slice(6);
+                  if (data === '[DONE]') continue;
+
+                  try {
+                    const parsed = JSON.parse(data);
+                    if (parsed.choices?.[0]?.delta?.content) {
+                      controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+                        type: 'chunk',
+                        content: parsed.choices[0].delta.content
+                      })}\n\n`));
+                    }
+                  } catch (e) {
+                    console.error('Error parsing chunk:', e);
+                  }
                 }
-              } catch (e) {
-                console.error('Error parsing chunk:', e);
               }
             }
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'done' })}\n\n`));
+          } catch (error) {
+            console.error('Stream processing error:', error);
+            controller.error(error);
+          } finally {
+            controller.close();
           }
-        }
-
-        socket.send(JSON.stringify({ type: 'done' }));
-      } catch (error) {
-        console.error('Error processing message:', error);
-        socket.send(JSON.stringify({
-          type: 'error',
-          error: error.message
-        }));
+        },
+      }),
+      {
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'text/event-stream',
+          'Cache-Control': 'no-cache',
+          'Connection': 'keep-alive',
+        },
       }
-    };
-
-    socket.onerror = (error) => {
-      console.error('WebSocket error:', error);
-    };
-
-    socket.onclose = () => {
-      console.log('WebSocket closed');
-    };
-
-    return response;
+    );
   } catch (error) {
     console.error('Error in realtime-chat function:', error);
-    return new Response(JSON.stringify({ error: error.message }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    return new Response(
+      JSON.stringify({ error: error.message }),
+      { 
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      }
+    );
   }
 });
