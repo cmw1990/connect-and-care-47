@@ -7,7 +7,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
@@ -18,7 +17,7 @@ interface Post {
   content: string;
   created_at: string;
   created_by: string;
-  profiles: {
+  profiles?: {
     first_name: string | null;
     last_name: string | null;
   } | null;
@@ -164,12 +163,13 @@ export const GroupPosts = ({ groupId }: GroupPostsProps) => {
             Posts
           </CardTitle>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="mr-2 h-4 w-4" />
-                New Post
-              </Button>
-            </DialogTrigger>
+            <Button onClick={() => {
+              setEditingPost(null);
+              setIsDialogOpen(true);
+            }}>
+              <Plus className="mr-2 h-4 w-4" />
+              New Post
+            </Button>
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>
@@ -210,43 +210,16 @@ export const GroupPosts = ({ groupId }: GroupPostsProps) => {
                   {post.profiles?.first_name} {post.profiles?.last_name}
                 </p>
                 <div className="flex items-center gap-2">
-                  <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                    <DialogTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => setEditingPost(post)}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                      <DialogHeader>
-                        <DialogTitle>Edit Post</DialogTitle>
-                      </DialogHeader>
-                      <div className="space-y-4">
-                        <Textarea
-                          value={editingPost?.content}
-                          onChange={(e) =>
-                            setEditingPost(
-                              editingPost
-                                ? { ...editingPost, content: e.target.value }
-                                : null
-                            )
-                          }
-                          placeholder="What's on your mind?"
-                          rows={4}
-                        />
-                        <Button
-                          onClick={handleUpdatePost}
-                          className="w-full"
-                          disabled={isLoading}
-                        >
-                          {isLoading ? "Updating..." : "Update Post"}
-                        </Button>
-                      </div>
-                    </DialogContent>
-                  </Dialog>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => {
+                      setEditingPost(post);
+                      setIsDialogOpen(true);
+                    }}
+                  >
+                    <Edit className="h-4 w-4" />
+                  </Button>
                   <Button
                     variant="ghost"
                     size="icon"
