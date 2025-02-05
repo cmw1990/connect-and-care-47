@@ -65,11 +65,15 @@ Care Tips: ${careTips.length > 0 ? careTips.join(', ') : 'None specified'}
       setMessages(prev => [...prev, { role: 'user', content: userMessage }]);
 
       // Fetch patient info for context
-      const { data: patientInfo } = await supabase
+      const { data: patientInfo, error: patientError } = await supabase
         .from('patient_info')
         .select('*')
         .eq('group_id', groupId)
         .maybeSingle();
+
+      if (patientError) {
+        console.error('Error fetching patient info:', patientError);
+      }
 
       const context = formatPatientContext(patientInfo);
 
@@ -78,6 +82,7 @@ Care Tips: ${careTips.length > 0 ? careTips.join(', ') : 'None specified'}
         throw new Error('No authentication token found');
       }
 
+      console.log('Sending request to realtime-chat function...');
       const response = await fetch('/functions/v1/realtime-chat', {
         method: 'POST',
         headers: {
@@ -101,7 +106,7 @@ Please provide a clear and informative response, considering the patient's speci
         console.error('Response not OK:', response.status, response.statusText);
         const errorData = await response.json().catch(() => ({}));
         console.error('Error data:', errorData);
-        throw new Error('Failed to get AI response');
+        throw new Error(`Failed to get AI response: ${response.statusText}`);
       }
 
       const reader = response.body?.getReader();
@@ -117,6 +122,8 @@ Please provide a clear and informative response, considering the patient's speci
         if (done) break;
 
         const chunk = decoder.decode(value);
+        console.log('Received chunk:', chunk); // Debug log
+        
         const lines = chunk.split('\n').filter(line => line.trim());
 
         for (const line of lines) {
@@ -138,7 +145,7 @@ Please provide a clear and informative response, considering the patient's speci
                 accumulatedMessage = '';
               }
             } catch (e) {
-              console.error('Error parsing chunk:', e);
+              console.error('Error parsing chunk:', e, 'Raw data:', data);
             }
           }
         }
@@ -148,7 +155,7 @@ Please provide a clear and informative response, considering the patient's speci
       console.error('Error sending message:', error);
       toast({
         title: t("error"),
-        description: t("failedToGetResponse"),
+        description: error instanceof Error ? error.message : t("failedToGetResponse"),
         variant: "destructive",
       });
     } finally {

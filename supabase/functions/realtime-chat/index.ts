@@ -16,6 +16,7 @@ serve(async (req) => {
     const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
     
     if (!openAIApiKey) {
+      console.error('OpenAI API key not configured');
       throw new Error('OpenAI API key not configured');
     }
 
@@ -41,9 +42,9 @@ serve(async (req) => {
     });
 
     if (!response.ok) {
-      const error = await response.json();
+      const error = await response.json().catch(() => ({}));
       console.error('OpenAI API error:', error);
-      throw new Error(error.error?.message || 'Failed to get response from OpenAI');
+      throw new Error(`OpenAI API error: ${error.error?.message || response.statusText}`);
     }
 
     // Transform the response into a readable stream
@@ -87,7 +88,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         error: error.message,
-        details: "The chat service is temporarily unavailable. Please try again later."
+        details: "An error occurred while processing your request. Please try again."
       }),
       { 
         status: 500,
