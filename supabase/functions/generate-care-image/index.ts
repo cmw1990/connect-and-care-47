@@ -23,7 +23,17 @@ serve(async (req) => {
     const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
 
     if (!openAIApiKey) {
-      throw new Error('OpenAI API key not configured');
+      console.error('OpenAI API key not configured');
+      return new Response(
+        JSON.stringify({ 
+          error: "Configuration error", 
+          fallbackImage: "/placeholder.svg"
+        }),
+        { 
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
     }
 
     const response = await fetch('https://api.openai.com/v1/images/generations', {
@@ -42,12 +52,29 @@ serve(async (req) => {
 
     if (!response.ok) {
       const error = await response.json();
+      console.error('OpenAI API error:', error);
+      
+      // Handle billing errors specifically
+      if (error.error?.message?.includes('billing')) {
+        return new Response(
+          JSON.stringify({ 
+            error: "Service temporarily unavailable",
+            details: "Image generation service is currently unavailable",
+            fallbackImage: "/placeholder.svg"
+          }),
+          { 
+            status: 503,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          }
+        );
+      }
+      
       throw new Error(`OpenAI API error: ${error.error?.message || 'Unknown error'}`);
     }
 
     const data = await response.json();
     return new Response(
-      JSON.stringify({ url: data.data[0].url }),
+      JSON.stringify({ imageUrl: data.data[0].url }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 

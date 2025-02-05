@@ -4,7 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MessageSquare, Bell } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { CareGroup } from "@/types/groups";
+import { CareGroup, GroupPrivacySettings } from "@/types/groups";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { notificationService } from "@/services/NotificationService";
 
@@ -126,10 +126,10 @@ export default function Messages() {
         },
         async (payload: any) => {
           console.log('Group update received:', payload);
-          const newStatus = (payload.new.privacy_settings as CareGroup['privacy_settings'])?.status;
-          const oldStatus = (payload.old.privacy_settings as CareGroup['privacy_settings'])?.status;
+          const newPrivacySettings = payload.new.privacy_settings as GroupPrivacySettings;
+          const oldPrivacySettings = payload.old.privacy_settings as GroupPrivacySettings;
           
-          if (newStatus && newStatus !== oldStatus) {
+          if (newPrivacySettings?.status && newPrivacySettings.status !== oldPrivacySettings?.status) {
             const { data: group } = await supabase
               .from('care_groups')
               .select('name')
@@ -140,7 +140,7 @@ export default function Messages() {
               const newNotification = {
                 id: payload.new.id,
                 title: "Group Status Update",
-                message: `${group.name}: Status changed to ${newStatus}`,
+                message: `${group.name}: Status changed to ${newPrivacySettings.status}`,
                 created_at: new Date().toISOString(),
                 type: "status",
                 read: false
@@ -150,12 +150,12 @@ export default function Messages() {
               
               toast({
                 title: "Group Status Changed",
-                description: `${group.name}: Status changed to ${newStatus}`,
+                description: `${group.name}: Status changed to ${newPrivacySettings.status}`,
               });
 
               await notificationService.scheduleLocalNotification(
                 "Group Status Changed",
-                `${group.name}: Status changed to ${newStatus}`
+                `${group.name}: Status changed to ${newPrivacySettings.status}`
               );
             }
           }
