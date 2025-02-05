@@ -10,11 +10,11 @@
 }
 
 .glass-card {
-  @apply bg-white/80 backdrop-blur-lg border border-gray-200/50 shadow-sm dark:bg-gray-950/80 dark:border-gray-800/50;
+  @apply bg-white/60 backdrop-blur-md border border-gray-100/50 shadow-sm dark:bg-gray-950/60 dark:border-gray-800/50;
 }
 
 .hover-scale {
-  @apply transition-transform duration-200 hover:scale-[1.02];
+  @apply transition-transform duration-300 hover:scale-[1.01];
 }
 
 .fade-in {
@@ -27,8 +27,8 @@
 
 /* Modern scrollbar styling */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
@@ -36,34 +36,34 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #d1d5db;
+  background: #e2e8f0;
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #9ca3af;
+  background: #cbd5e1;
 }
 
 /* Dark mode scrollbar */
 .dark ::-webkit-scrollbar-thumb {
-  background: #4b5563;
+  background: #334155;
 }
 
 .dark ::-webkit-scrollbar-thumb:hover {
-  background: #6b7280;
+  background: #475569;
 }
 
 /* Focus styles */
 :focus-visible {
-  @apply outline-none ring-2 ring-primary ring-offset-2 ring-offset-background;
+  @apply outline-none ring-2 ring-primary/40 ring-offset-2 ring-offset-background;
 }
 
 /* Button press effect */
 .active-scale {
-  @apply active:scale-95 transition-transform;
+  @apply active:scale-[0.98] transition-transform;
 }
 
 /* Card hover effect */
 .card-hover {
-  @apply transition-all duration-200 hover:shadow-lg hover:-translate-y-1;
+  @apply transition-all duration-300 hover:shadow-md hover:-translate-y-0.5;
 }
