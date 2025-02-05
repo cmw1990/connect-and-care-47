@@ -49,21 +49,18 @@ export const CareAssistant = ({ groupId }: { groupId?: string }) => {
 
   const formatPatientContext = async () => {
     try {
-      // Fetch patient info
       const { data: patientInfo } = await supabase
         .from('patient_info')
         .select('*')
         .eq('group_id', groupId)
         .maybeSingle();
 
-      // Fetch care tasks
       const { data: tasks } = await supabase
         .from('tasks')
         .select('*')
         .eq('group_id', groupId)
         .order('created_at', { ascending: false });
 
-      // Fetch care updates
       const { data: updates } = await supabase
         .from('care_updates')
         .select('*')
@@ -71,7 +68,6 @@ export const CareAssistant = ({ groupId }: { groupId?: string }) => {
         .order('created_at', { ascending: false })
         .limit(5);
 
-      // Fetch care routines
       const { data: routines } = await supabase
         .from('care_routines')
         .select('*')
@@ -79,7 +75,6 @@ export const CareAssistant = ({ groupId }: { groupId?: string }) => {
 
       const typedPatientInfo = patientInfo as unknown as PatientInfo;
 
-      // Format all the information
       return `
 Care Group Context:
 
@@ -118,6 +113,7 @@ Please provide relevant and helpful information based on this context.
       const userMessage = input;
       setInput('');
       
+      // Immediately add user message to the chat
       setMessages(prev => [...prev, { role: 'user', content: userMessage }]);
 
       const context = await formatPatientContext();
@@ -136,15 +132,13 @@ Please provide a clear and informative response, considering all the available i
         },
       });
 
-      console.log('Received response:', response);
-
       if (!response.data) {
         throw new Error('No response data received from function');
       }
 
       // Handle streaming response
       if (response.data instanceof ReadableStream) {
-        const reader = new ReadableStreamDefaultReader(response.data);
+        const reader = response.data.getReader();
         let accumulatedMessage = '';
 
         while (true) {
