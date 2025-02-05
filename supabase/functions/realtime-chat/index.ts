@@ -24,6 +24,24 @@ serve(async (req) => {
     const { text } = await req.json();
     console.log('Received request with text:', text);
 
+    // Log the request being sent to OpenAI
+    console.log('Sending request to OpenAI with configuration:', {
+      model: 'gpt-4',
+      messages: [
+        {
+          role: 'system',
+          content: 'You are a caring and knowledgeable healthcare assistant...'
+        },
+        {
+          role: 'user',
+          content: text
+        }
+      ],
+      stream: true,
+      temperature: 0.7,
+      max_tokens: 2000
+    });
+
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -47,6 +65,8 @@ serve(async (req) => {
         max_tokens: 2000
       }),
     });
+
+    console.log('OpenAI API response status:', response.status);
 
     if (!response.ok) {
       const error = await response.json();
@@ -86,6 +106,7 @@ serve(async (req) => {
       async start(controller) {
         const reader = response.body?.getReader();
         if (!reader) {
+          console.error('No reader available from response');
           controller.close();
           return;
         }
@@ -97,6 +118,7 @@ serve(async (req) => {
             const { done, value } = await reader.read();
             
             if (done) {
+              console.log('Stream complete. Final accumulated message:', accumulatedMessage);
               if (accumulatedMessage) {
                 const safeMessage = accumulatedMessage
                   .replace(/\\/g, '\\\\')
@@ -111,13 +133,18 @@ serve(async (req) => {
             }
 
             const chunk = new TextDecoder().decode(value);
+            console.log('Received raw chunk:', chunk);
+            
             const lines = chunk.split('\n').filter(line => line.trim());
             
             for (const line of lines) {
               if (line.startsWith('data: ')) {
                 try {
                   const data = line.slice(6);
-                  if (data === '[DONE]') continue;
+                  if (data === '[DONE]') {
+                    console.log('Received [DONE] signal');
+                    continue;
+                  }
 
                   const parsed = JSON.parse(data);
                   console.log('Parsed chunk:', parsed);
