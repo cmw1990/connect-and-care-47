@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useState, useEffect } from "react";
 import { Bell, Shield, User, Lock } from "lucide-react";
+import { Json } from "@/integrations/supabase/types";
 
 interface NotificationPreferences {
   email: boolean;
@@ -48,8 +49,8 @@ const Settings = () => {
       const { error } = await supabase
         .from('profiles')
         .update({
-          notification_preferences: newSettings.notifications,
-          privacy_preferences: newSettings.privacy,
+          notification_preferences: newSettings.notifications as Json,
+          privacy_preferences: newSettings.privacy as Json,
         })
         .single();
 
@@ -78,26 +79,35 @@ const Settings = () => {
         .single();
 
       if (profile) {
-        const notificationPrefs = typeof profile.notification_preferences === 'object' 
-          ? profile.notification_preferences as NotificationPreferences 
-          : defaultSettings.notifications;
+        try {
+          const notificationPrefs = profile.notification_preferences as Json;
+          const privacyPrefs = profile.privacy_preferences as Json;
 
-        const privacyPrefs = typeof profile.privacy_preferences === 'object'
-          ? profile.privacy_preferences as PrivacyPreferences
-          : defaultSettings.privacy;
+          if (typeof notificationPrefs === 'object' && notificationPrefs !== null) {
+            setSettings(prev => ({
+              ...prev,
+              notifications: {
+                email: Boolean(notificationPrefs.email),
+                push: Boolean(notificationPrefs.push),
+                sms: Boolean(notificationPrefs.sms),
+              }
+            }));
+          }
 
-        setSettings({
-          notifications: {
-            email: Boolean(notificationPrefs.email),
-            push: Boolean(notificationPrefs.push),
-            sms: Boolean(notificationPrefs.sms),
-          },
-          privacy: {
-            profileVisibility: String(privacyPrefs.profileVisibility || 'public'),
-            showLocation: Boolean(privacyPrefs.showLocation),
-            showAvailability: Boolean(privacyPrefs.showAvailability),
-          },
-        });
+          if (typeof privacyPrefs === 'object' && privacyPrefs !== null) {
+            setSettings(prev => ({
+              ...prev,
+              privacy: {
+                profileVisibility: String(privacyPrefs.profileVisibility || 'public'),
+                showLocation: Boolean(privacyPrefs.showLocation),
+                showAvailability: Boolean(privacyPrefs.showAvailability),
+              }
+            }));
+          }
+        } catch (error) {
+          console.error('Error parsing settings:', error);
+          setSettings(defaultSettings);
+        }
       }
     };
 
