@@ -1,13 +1,20 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Bot, Send, Sparkles, User } from "lucide-react";
+import { Bot, Send, Sparkles } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { LanguageSelector } from "@/components/ui/language-selector";
+import {
+  MainContainer,
+  ChatContainer,
+  MessageList,
+  Message,
+  MessageInput,
+  TypingIndicator
+} from "@chatscope/chat-ui-kit-react";
+import "@chatscope/chat-ui-kit-react/dist/default.min.css";
 import "@/i18n/i18n";
 
 interface Message {
@@ -38,15 +45,8 @@ export const CareAssistant = ({ groupId }: { groupId?: string }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [currentMessage, setCurrentMessage] = useState('');
   const { toast } = useToast();
-  const messagesEndRef = useRef<HTMLDivElement>(null);
   const { t } = useTranslation();
   const abortControllerRef = useRef<AbortController | null>(null);
-
-  useEffect(() => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
-    }
-  }, [messages, currentMessage]);
 
   const formatPatientContext = async () => {
     try {
@@ -148,21 +148,13 @@ Please provide relevant and helpful information based on this context.
 
           if (trimmedLine.startsWith('data: ')) {
             const data = trimmedLine.slice(6);
-            console.log('Processing data:', data);
-
-            if (data === '[DONE]') {
-              console.log('Stream complete');
-              continue;
-            }
+            if (data === '[DONE]') continue;
 
             try {
               const parsed = JSON.parse(data);
-              console.log('Parsed chunk:', parsed);
-
               if (parsed.content) {
                 accumulatedMessage += parsed.content;
                 setCurrentMessage(accumulatedMessage);
-                console.log('Updated current message:', accumulatedMessage);
               }
             } catch (e) {
               console.error('Error parsing chunk:', e, 'Raw data:', data);
@@ -171,24 +163,7 @@ Please provide relevant and helpful information based on this context.
         }
       }
 
-      if (buffer) {
-        console.log('Processing remaining buffer:', buffer);
-        if (buffer.startsWith('data: ')) {
-          const data = buffer.slice(6);
-          try {
-            const parsed = JSON.parse(data);
-            if (parsed.content) {
-              accumulatedMessage += parsed.content;
-              setCurrentMessage(accumulatedMessage);
-            }
-          } catch (e) {
-            console.error('Error parsing final buffer:', e);
-          }
-        }
-      }
-
       if (accumulatedMessage.trim()) {
-        console.log('Adding complete message to chat:', accumulatedMessage);
         setMessages(prev => [...prev, {
           role: 'assistant',
           content: accumulatedMessage
@@ -220,7 +195,6 @@ Please provide relevant and helpful information based on this context.
       abortControllerRef.current = new AbortController();
       
       const context = await formatPatientContext();
-      console.log('Context prepared:', context);
 
       const response = await supabase.functions.invoke('realtime-chat', {
         body: { 
@@ -301,13 +275,6 @@ Please analyze this conversation and provide key insights and recommendations ba
     }
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      sendMessage();
-    }
-  };
-
   return (
     <Card className="w-full max-w-2xl mx-auto">
       <CardHeader className="flex flex-row items-center justify-between">
@@ -318,72 +285,56 @@ Please analyze this conversation and provide key insights and recommendations ba
         <LanguageSelector />
       </CardHeader>
       <CardContent>
-        <ScrollArea className="h-[400px] pr-4">
-          <div className="space-y-4">
-            {messages.map((message, index) => (
-              <div
-                key={index}
-                className={`flex gap-2 ${
-                  message.role === 'assistant' ? 'items-start' : 'items-start flex-row-reverse'
-                }`}
+        <div className="h-[400px] relative">
+          <MainContainer>
+            <ChatContainer>
+              <MessageList
+                typingIndicator={isLoading ? <TypingIndicator content="AI is thinking..." /> : null}
               >
-                <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-                  {message.role === 'assistant' ? (
-                    <Bot className="h-4 w-4" />
-                  ) : (
-                    <User className="h-4 w-4" />
-                  )}
-                </div>
-                <div
-                  className={`rounded-lg px-4 py-2 max-w-[80%] ${
-                    message.role === 'assistant'
-                      ? 'bg-secondary'
-                      : 'bg-primary text-primary-foreground'
-                  }`}
+                {messages.map((message, i) => (
+                  <Message
+                    key={i}
+                    model={{
+                      message: message.content,
+                      sender: message.role === 'assistant' ? 'AI Assistant' : 'You',
+                      direction: message.role === 'assistant' ? 'incoming' : 'outgoing',
+                      position: "single"
+                    }}
+                  />
+                ))}
+                {currentMessage && (
+                  <Message
+                    model={{
+                      message: currentMessage,
+                      sender: 'AI Assistant',
+                      direction: 'incoming',
+                      position: "single"
+                    }}
+                  />
+                )}
+              </MessageList>
+              <div className="flex gap-2 p-2">
+                <MessageInput
+                  value={input}
+                  onChange={val => setInput(val)}
+                  onSend={sendMessage}
+                  placeholder={t('askAboutCare')}
+                  disabled={isLoading}
+                  attachButton={false}
+                />
+                <Button 
+                  onClick={getAIInsights} 
+                  disabled={isLoading || messages.length === 0}
+                  variant="secondary"
+                  className="gap-2 whitespace-nowrap"
+                  title={t('getAIInsights')}
                 >
-                  {message.content}
-                </div>
+                  <Sparkles className="h-4 w-4" />
+                  {t('getInsights')}
+                </Button>
               </div>
-            ))}
-            {currentMessage && (
-              <div className="flex gap-2 items-start">
-                <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-                  <Bot className="h-4 w-4" />
-                </div>
-                <div className="rounded-lg px-4 py-2 bg-secondary max-w-[80%]">
-                  {currentMessage}
-                </div>
-              </div>
-            )}
-            <div ref={messagesEndRef} />
-          </div>
-        </ScrollArea>
-        
-        <div className="flex gap-2 mt-4">
-          <Input
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder={t('askAboutCare')}
-            onKeyPress={handleKeyPress}
-            disabled={isLoading}
-          />
-          <Button 
-            onClick={sendMessage} 
-            disabled={isLoading || !input.trim()}
-            title={t('sendMessage')}
-          >
-            <Send className="h-4 w-4" />
-          </Button>
-          <Button 
-            onClick={getAIInsights} 
-            disabled={isLoading || messages.length === 0}
-            variant="secondary"
-            className="gap-2 whitespace-nowrap"
-            title={t('getAIInsights')}
-          >
-            <Sparkles className="h-4 w-4" />
-            {t('getInsights')}
-          </Button>
+            </ChatContainer>
+          </MainContainer>
         </div>
       </CardContent>
     </Card>

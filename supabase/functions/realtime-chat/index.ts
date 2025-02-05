@@ -13,7 +13,6 @@ serve(async (req) => {
 
   try {
     const { text } = await req.json();
-    console.log('Received request with text:', text);
 
     if (!text) {
       throw new Error('No text provided in request');
@@ -21,7 +20,6 @@ serve(async (req) => {
 
     const openAiApiKey = Deno.env.get('OPENAI_API_KEY');
     if (!openAiApiKey) {
-      console.error('OpenAI API key not configured');
       throw new Error('OpenAI API key not configured');
     }
 
@@ -50,15 +48,12 @@ serve(async (req) => {
       }),
     });
 
-    console.log('OpenAI API response status:', response.status);
-
     if (!response.ok) {
       const error = await response.json();
       console.error('OpenAI API error:', error);
       throw new Error(error.error?.message || 'Failed to get response from OpenAI API');
     }
 
-    // Transform the response into a readable stream
     const transformStream = new TransformStream({
       async transform(chunk, controller) {
         try {
