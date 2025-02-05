@@ -85,21 +85,20 @@ serve(async (req) => {
           for (const line of lines) {
             if (line.startsWith('data: ')) {
               const data = line.slice(6);
+              
               if (data === '[DONE]') {
                 controller.enqueue('data: {"type":"done"}\n\n');
                 continue;
               }
 
-              const parsed = JSON.parse(data);
-              if (parsed.choices?.[0]?.delta?.content) {
-                const content = parsed.choices[0].delta.content;
-                const safeContent = content
-                  .replace(/\\/g, '\\\\')
-                  .replace(/"/g, '\\"')
-                  .replace(/\n/g, '\\n')
-                  .replace(/\r/g, '\\r')
-                  .replace(/\t/g, '\\t');
-                controller.enqueue(`data: {"type":"chunk","content":"${safeContent}"}\n\n`);
+              try {
+                const parsed = JSON.parse(data);
+                if (parsed.choices?.[0]?.delta?.content) {
+                  const content = parsed.choices[0].delta.content;
+                  controller.enqueue(`data: {"type":"chunk","content":"${content}"}\n\n`);
+                }
+              } catch (error) {
+                console.error('Error parsing chunk:', error);
               }
             }
           }

@@ -122,14 +122,13 @@ Please provide relevant and helpful information based on this context.
     }
   };
 
-  const sendMessage = () => {
+  const sendMessage = async () => {
     if (!input.trim()) return;
     
-    setMessages(prev => [...prev, { role: 'user', content: input }]);
+    const userMessage = { role: 'user', content: input };
+    setMessages(prev => [...prev, userMessage]);
     setInput('');
-  };
-
-  const getAIInsights = async () => {
+    
     try {
       setIsLoading(true);
       
@@ -142,44 +141,28 @@ Please provide relevant and helpful information based on this context.
 Context:
 ${context}
 
-User Question: ${messages[messages.length - 1]?.content || 'No recent message'}
+User Question: ${userMessage.content}
 
 Please provide a clear and informative response, considering all the available information about the patient and care group.
           `.trim()
         },
       });
 
-      console.log('Response from function:', response);
-
       if (response.error) {
-        // Check if it's a quota error
-        if (response.error.message?.includes('quota') || 
-            response.error.message?.includes('insufficient_quota')) {
-          throw new Error('OpenAI API quota exceeded. The AI service is temporarily unavailable. Please try again later or contact support.');
-        }
         throw new Error(response.error.message || 'Failed to get response from function');
       }
 
-      if (!response.data) {
-        throw new Error('No response data received from function');
-      }
-
       if (response.data instanceof ReadableStream) {
-        console.log('Processing stream response...');
         const reader = response.data.getReader();
         let accumulatedMessage = '';
 
         while (true) {
           const { done, value } = await reader.read();
-          if (done) {
-            console.log('Stream complete');
-            break;
-          }
+          if (done) break;
 
           const chunk = new TextDecoder().decode(value);
-          console.log('Received raw chunk:', chunk);
-          
           const lines = chunk.split('\n').filter(line => line.trim());
+          
           for (const line of lines) {
             if (line.startsWith('data: ')) {
               const data = line.slice(6);
@@ -187,8 +170,6 @@ Please provide a clear and informative response, considering all the available i
 
               try {
                 const parsed = JSON.parse(data);
-                console.log('Parsed chunk:', parsed);
-                
                 if (parsed.type === 'chunk' && parsed.content) {
                   accumulatedMessage += parsed.content;
                   setCurrentMessage(accumulatedMessage);
@@ -208,29 +189,12 @@ Please provide a clear and informative response, considering all the available i
             }
           }
         }
-      } else {
-        console.log('Non-stream response:', response.data);
-        const content = response.data?.text || response.data;
-        if (content && typeof content === 'string' && content.trim()) {
-          setMessages(prev => [...prev, { role: 'assistant', content }]);
-        }
       }
-
     } catch (error) {
       console.error('Error sending message:', error);
-      let errorMessage = t("failedToGetResponse");
-      
-      if (error instanceof Error) {
-        if (error.message.includes('quota') || error.message.includes('insufficient_quota')) {
-          errorMessage = "The AI service is currently unavailable due to quota limits. Please try again later or contact support.";
-        } else if (error.message.includes('API key')) {
-          errorMessage = "The AI service is not properly configured. Please contact support.";
-        }
-      }
-      
       toast({
-        title: t("error"),
-        description: errorMessage,
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to get response",
         variant: "destructive",
       });
     } finally {
