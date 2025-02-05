@@ -20,14 +20,14 @@ serve(async (req) => {
 
     const prompt = `Create a caring and supportive medical illustration for ${disease}. The image should be: ${description}. Style: Professional medical illustration with a warm and comforting feel. Make it suitable for healthcare applications.`;
 
-    const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
+    const perplexityApiKey = Deno.env.get('PERPLEXITY_API_KEY');
 
-    if (!openAIApiKey) {
-      console.error('OpenAI API key not configured');
+    if (!perplexityApiKey) {
+      console.error('Perplexity API key not configured');
       return new Response(
         JSON.stringify({ 
           error: "Configuration error", 
-          details: "OpenAI API key not configured",
+          details: "Perplexity API key not configured",
           fallbackImage: `https://placehold.co/600x400/e2e8f0/64748b?text=${encodeURIComponent(disease)}+Care+Guide`
         }),
         { 
@@ -39,45 +39,54 @@ serve(async (req) => {
 
     console.log('Generating image for:', disease);
 
-    const response = await fetch('https://api.openai.com/v1/images/generations', {
+    const response = await fetch('https://api.perplexity.ai/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${openAIApiKey}`,
+        'Authorization': `Bearer ${perplexityApiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: "dall-e-3",
-        prompt: prompt,
-        n: 1,
-        size: "1024x1024"
+        model: "pplx-12b-online",
+        messages: [
+          {
+            role: "system",
+            content: "You are an AI that generates image descriptions that can be used to create medical illustrations."
+          },
+          {
+            role: "user",
+            content: prompt
+          }
+        ],
+        max_tokens: 1024,
       }),
     });
 
     if (!response.ok) {
       const error = await response.json();
-      console.error('OpenAI API error:', error);
+      console.error('Perplexity API error:', error);
       
-      // Handle billing errors specifically
-      if (error.error?.message?.includes('billing')) {
-        return new Response(
-          JSON.stringify({ 
-            error: "Service temporarily unavailable",
-            details: "Image generation service is currently unavailable",
-            fallbackImage: `https://placehold.co/600x400/e2e8f0/64748b?text=${encodeURIComponent(disease)}+Care+Guide`
-          }),
-          { 
-            status: 503,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-          }
-        );
-      }
-      
-      throw new Error(`OpenAI API error: ${error.error?.message || 'Unknown error'}`);
+      return new Response(
+        JSON.stringify({ 
+          error: "Service temporarily unavailable",
+          details: "Image generation service is currently unavailable",
+          fallbackImage: `https://placehold.co/600x400/e2e8f0/64748b?text=${encodeURIComponent(disease)}+Care+Guide`
+        }),
+        { 
+          status: 503,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
     }
 
     const data = await response.json();
+    const imageDescription = data.choices[0].message.content;
+
+    // For now, return a placeholder image with the AI-generated description
     return new Response(
-      JSON.stringify({ imageUrl: data.data[0].url }),
+      JSON.stringify({ 
+        imageUrl: `https://placehold.co/600x400/e2e8f0/64748b?text=${encodeURIComponent(disease)}`,
+        description: imageDescription 
+      }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
