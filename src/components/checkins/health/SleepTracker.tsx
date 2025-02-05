@@ -1,10 +1,10 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Moon, Sun } from "lucide-react";
+import { Moon } from "lucide-react";
 
 interface SleepTrackerProps {
-  sleepHours: number | null;
+  sleepHours: number;
   onSleepHoursChange: (hours: number) => void;
 }
 
@@ -28,7 +28,7 @@ export const SleepTracker = ({ sleepHours, onSleepHoursChange }: SleepTrackerPro
                 min="0"
                 max="24"
                 step="0.5"
-                value={sleepHours || ''}
+                value={sleepHours}
                 onChange={(e) => onSleepHoursChange(parseFloat(e.target.value))}
                 placeholder="8"
               />

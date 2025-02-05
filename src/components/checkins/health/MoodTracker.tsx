@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Smile, Meh, Frown, ThumbsUp, ThumbsDown } from "lucide-react";
 
 interface MoodTrackerProps {
-  moodScore: number | null;
+  moodScore: number;
   onMoodSelect: (score: number) => void;
 }
 

@@ -7,9 +7,10 @@ type PatientCheckIn = Tables<"patient_check_ins">;
 interface CheckInHistoryProps {
   checkIns: PatientCheckIn[];
   loading: boolean;
+  groupId: string;
 }
 
-export const CheckInHistory = ({ checkIns, loading }: CheckInHistoryProps) => {
+export const CheckInHistory = ({ checkIns, loading, groupId }: CheckInHistoryProps) => {
   if (loading) {
     return (
       <div className="flex justify-center">

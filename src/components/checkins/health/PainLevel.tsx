@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
 
 interface PainLevelProps {
-  painLevel: number | null;
+  painLevel: number;
   onPainLevelChange: (value: number) => void;
 }
 
@@ -15,7 +15,7 @@ export const PainLevel = ({ painLevel, onPainLevelChange }: PainLevelProps) => {
       <CardContent>
         <div className="space-y-4">
           <Slider
-            value={painLevel ? [painLevel] : [0]}
+            value={[painLevel]}
             onValueChange={(value) => onPainLevelChange(value[0])}
             max={10}
             step={1}

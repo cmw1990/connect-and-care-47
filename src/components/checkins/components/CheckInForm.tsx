@@ -10,15 +10,16 @@ import { VitalSigns } from "../health/VitalSigns";
 
 interface CheckInFormProps {
   onSubmit: (data: any) => void;
+  submitting?: boolean;
 }
 
-export const CheckInForm = ({ onSubmit }: CheckInFormProps) => {
+export const CheckInForm = ({ onSubmit, submitting = false }: CheckInFormProps) => {
   const [formData, setFormData] = useState({
-    mood_score: 5,
-    pain_level: 0,
-    sleep_hours: 8,
+    moodScore: 5,
+    painLevel: 0,
+    sleepHours: 8,
     notes: "",
-    vital_signs: {},
+    vitalSigns: {},
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -30,23 +31,23 @@ export const CheckInForm = ({ onSubmit }: CheckInFormProps) => {
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-4">
         <MoodTracker
-          value={formData.mood_score}
-          onChange={(value) => setFormData({ ...formData, mood_score: value })}
+          moodScore={formData.moodScore}
+          onMoodSelect={(value) => setFormData({ ...formData, moodScore: value })}
         />
         
         <PainLevel
-          value={formData.pain_level}
-          onChange={(value) => setFormData({ ...formData, pain_level: value })}
+          painLevel={formData.painLevel}
+          onPainLevelChange={(value) => setFormData({ ...formData, painLevel: value })}
         />
         
         <SleepTracker
-          value={formData.sleep_hours}
-          onChange={(value) => setFormData({ ...formData, sleep_hours: value })}
+          sleepHours={formData.sleepHours}
+          onSleepHoursChange={(value) => setFormData({ ...formData, sleepHours: value })}
         />
         
         <VitalSigns
-          value={formData.vital_signs}
-          onChange={(value) => setFormData({ ...formData, vital_signs: value })}
+          vitalSigns={formData.vitalSigns}
+          onChange={(value) => setFormData({ ...formData, vitalSigns: value })}
         />
 
         <div className="space-y-2">
@@ -60,8 +61,8 @@ export const CheckInForm = ({ onSubmit }: CheckInFormProps) => {
         </div>
       </div>
 
-      <Button type="submit" className="w-full">
-        Submit Check-in
+      <Button type="submit" className="w-full" disabled={submitting}>
+        {submitting ? "Submitting..." : "Submit Check-in"}
       </Button>
     </form>
   );

@@ -12,7 +12,14 @@ serve(async (req) => {
   }
 
   try {
-    const { prompt } = await req.json();
+    const { disease, description } = await req.json();
+
+    if (!disease || !description) {
+      throw new Error('Both disease and description are required');
+    }
+
+    const prompt = `Create a caring and supportive medical illustration for ${disease}. The image should be: ${description}. Style: Professional medical illustration with a warm and comforting feel. Make it suitable for healthcare applications.`;
+
     const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
 
     if (!openAIApiKey) {
@@ -35,19 +42,6 @@ serve(async (req) => {
 
     if (!response.ok) {
       const error = await response.json();
-      if (error.error?.message?.includes('billing')) {
-        return new Response(
-          JSON.stringify({ 
-            error: "Image generation temporarily unavailable",
-            details: "Service is currently unavailable. Please try again later.",
-            fallbackImage: "/placeholder.svg"
-          }),
-          { 
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-            status: 503
-          }
-        );
-      }
       throw new Error(`OpenAI API error: ${error.error?.message || 'Unknown error'}`);
     }
 
