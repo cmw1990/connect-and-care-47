@@ -14,7 +14,11 @@ serve(async (req) => {
   try {
     const openAiApiKey = Deno.env.get('OPENAI_API_KEY');
     if (!openAiApiKey) {
-      throw new Error('OpenAI API key not configured');
+      console.error('OpenAI API key not configured');
+      return new Response(
+        JSON.stringify({ error: 'OpenAI API key not configured' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     const { text } = await req.json();
@@ -61,7 +65,16 @@ serve(async (req) => {
         );
       }
       
-      throw new Error(error.error?.message || 'Failed to get response from OpenAI API');
+      return new Response(
+        JSON.stringify({ 
+          error: error.error?.message || 'Failed to get response from OpenAI API',
+          details: error
+        }),
+        { 
+          status: response.status, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
     }
 
     // Transform the response into a readable stream
@@ -103,6 +116,8 @@ serve(async (req) => {
                   if (data === '[DONE]') continue;
 
                   const parsed = JSON.parse(data);
+                  console.log('Parsed chunk:', parsed);
+                  
                   if (parsed.choices?.[0]?.delta?.content) {
                     const content = parsed.choices[0].delta.content;
                     accumulatedMessage += content;
