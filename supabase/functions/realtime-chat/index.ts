@@ -54,8 +54,9 @@ serve(async (req) => {
     });
 
     if (!response.ok) {
+      console.error('Perplexity API error:', response.status, response.statusText);
       const error = await response.text();
-      console.error('Perplexity API error:', error);
+      console.error('Error details:', error);
       
       return new Response(
         JSON.stringify({
@@ -89,10 +90,10 @@ serve(async (req) => {
             
             if (done) {
               if (accumulatedMessage) {
-                controller.enqueue(`data: {"type":"chunk","content":"${accumulatedMessage}"}\n\n`);
+                const safeMessage = accumulatedMessage.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\n/g, '\\n');
+                controller.enqueue(`data: {"type":"chunk","content":"${safeMessage}"}\n\n`);
               }
               controller.enqueue('data: {"type":"done"}\n\n');
-              controller.close();
               break;
             }
 
@@ -109,10 +110,13 @@ serve(async (req) => {
                   if (parsed.choices?.[0]?.delta?.content) {
                     const content = parsed.choices[0].delta.content;
                     accumulatedMessage += content;
-                    controller.enqueue(`data: {"type":"chunk","content":"${content}"}\n\n`);
+                    // Properly escape special characters in the content
+                    const safeContent = content.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\n/g, '\\n');
+                    controller.enqueue(`data: {"type":"chunk","content":"${safeContent}"}\n\n`);
                   }
                 } catch (e) {
                   console.error('Error parsing chunk:', e);
+                  console.error('Problematic line:', line);
                 }
               }
             }
