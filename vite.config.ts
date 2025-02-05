@@ -50,4 +50,5 @@ export default defineConfig(({ mode }) => ({
       localsConvention: 'camelCase'
     }
   },
+  assetsInclude: ['**/*.css']
 }));

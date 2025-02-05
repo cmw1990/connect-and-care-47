@@ -14,7 +14,6 @@ import {
   MessageInput,
   TypingIndicator
 } from "@chatscope/chat-ui-kit-react";
-import "@chatscope/chat-ui-kit-react/dist/default.min.css";
 import "@/styles/chatscope.css";
 import "@/i18n/i18n";
 
