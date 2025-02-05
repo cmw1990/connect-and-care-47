@@ -25,7 +25,7 @@ serve(async (req) => {
       throw new Error('OpenAI API key not configured');
     }
 
-    console.log('Making request to OpenAI API with model gpt-4-turbo-preview...');
+    console.log('Making request to OpenAI API...');
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -55,23 +55,6 @@ serve(async (req) => {
     if (!response.ok) {
       const error = await response.json();
       console.error('OpenAI API error:', error);
-      
-      if (error.error?.code === 'insufficient_quota') {
-        return new Response(
-          JSON.stringify({
-            error: 'OpenAI API quota exceeded. The AI service is temporarily unavailable.',
-            details: {
-              type: 'quota_exceeded',
-              message: error.error.message
-            }
-          }),
-          {
-            status: 429,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-          }
-        );
-      }
-      
       throw new Error(error.error?.message || 'Failed to get response from OpenAI API');
     }
 
@@ -95,7 +78,7 @@ serve(async (req) => {
                 const parsed = JSON.parse(data);
                 if (parsed.choices?.[0]?.delta?.content) {
                   const content = parsed.choices[0].delta.content;
-                  controller.enqueue(`data: {"type":"chunk","content":"${content}"}\n\n`);
+                  controller.enqueue(`data: {"content":"${content.replace(/"/g, '\\"')}"}\n\n`);
                 }
               } catch (error) {
                 console.error('Error parsing chunk:', error);

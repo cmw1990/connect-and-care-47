@@ -214,7 +214,6 @@ Please provide relevant and helpful information based on this context.
     try {
       setIsLoading(true);
 
-      // Cancel any existing request
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
       }
