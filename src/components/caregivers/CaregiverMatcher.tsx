@@ -140,12 +140,18 @@ export const CaregiverMatcher = () => {
 
       if (error) throw error;
 
-      let filteredCaregivers = (data || []).map(caregiver => ({
-        ...caregiver,
-        certifications: Array.isArray(caregiver.certifications) ? caregiver.certifications : [],
-        location: caregiver.availability?.location || null,
-        availability: caregiver.availability
-      }));
+      let filteredCaregivers = (data || []).map(caregiver => {
+        const availabilityData = typeof caregiver.availability === 'string' 
+          ? JSON.parse(caregiver.availability)
+          : caregiver.availability;
+
+        return {
+          ...caregiver,
+          certifications: Array.isArray(caregiver.certifications) ? caregiver.certifications : [],
+          location: availabilityData?.location || null,
+          availability: availabilityData || null
+        } as SimplifiedCaregiverProfile;
+      });
 
       if (userLocation && filters.maxDistance > 0) {
         filteredCaregivers = filteredCaregivers.filter(caregiver => {
