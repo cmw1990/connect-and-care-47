@@ -220,4 +220,4 @@ Please provide a clear and informative response, considering the patient's speci
       </CardContent>
     </Card>
   );
-});
+};
