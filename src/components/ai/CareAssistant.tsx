@@ -40,6 +40,7 @@ export const CareAssistant = ({ groupId }: { groupId?: string }) => {
   const { toast } = useToast();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { t } = useTranslation();
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
     if (messagesEndRef.current) {
@@ -130,44 +131,69 @@ Please provide relevant and helpful information based on this context.
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
     let accumulatedMessage = '';
+    let buffer = '';
 
     try {
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
 
-        const chunk = decoder.decode(value);
-        console.log('Received chunk:', chunk); // Debug log
-        
-        const lines = chunk.split('\n').filter(line => line.trim());
-        
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || ''; // Keep the last incomplete line in the buffer
+
         for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            const data = line.slice(6);
-            console.log('Parsed data:', data); // Debug log
-            
-            if (data === '[DONE]') continue;
+          const trimmedLine = line.trim();
+          if (!trimmedLine) continue;
+
+          if (trimmedLine.startsWith('data: ')) {
+            const data = trimmedLine.slice(6);
+            console.log('Processing data:', data);
+
+            if (data === '[DONE]') {
+              console.log('Stream complete');
+              continue;
+            }
 
             try {
               const parsed = JSON.parse(data);
-              console.log('Parsed JSON:', parsed); // Debug log
-              
+              console.log('Parsed chunk:', parsed);
+
               if (parsed.content) {
                 accumulatedMessage += parsed.content;
                 setCurrentMessage(accumulatedMessage);
+                console.log('Updated current message:', accumulatedMessage);
               }
             } catch (e) {
-              console.error('Error parsing chunk:', e);
+              console.error('Error parsing chunk:', e, 'Raw data:', data);
             }
           }
         }
       }
 
-      // After the stream is done, add the complete message
+      // Process any remaining data in the buffer
+      if (buffer) {
+        console.log('Processing remaining buffer:', buffer);
+        if (buffer.startsWith('data: ')) {
+          const data = buffer.slice(6);
+          try {
+            const parsed = JSON.parse(data);
+            if (parsed.content) {
+              accumulatedMessage += parsed.content;
+              setCurrentMessage(accumulatedMessage);
+            }
+          } catch (e) {
+            console.error('Error parsing final buffer:', e);
+          }
+        }
+      }
+
+      // After the stream is complete, add the message to the chat
       if (accumulatedMessage.trim()) {
-        setMessages(prev => [...prev, { 
-          role: 'assistant' as const, 
-          content: accumulatedMessage 
+        console.log('Adding complete message to chat:', accumulatedMessage);
+        setMessages(prev => [...prev, {
+          role: 'assistant',
+          content: accumulatedMessage
         }]);
         setCurrentMessage('');
       }
@@ -175,6 +201,8 @@ Please provide relevant and helpful information based on this context.
     } catch (error) {
       console.error('Error processing stream:', error);
       throw error;
+    } finally {
+      reader.releaseLock();
     }
   };
 
@@ -187,6 +215,12 @@ Please provide relevant and helpful information based on this context.
     
     try {
       setIsLoading(true);
+
+      // Cancel any existing request
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+      abortControllerRef.current = new AbortController();
       
       const context = await formatPatientContext();
       console.log('Context prepared:', context);
@@ -202,21 +236,33 @@ User Question: ${userMessage.content}
 Please provide a clear and informative response, considering all the available information about the patient and care group.
           `.trim()
         },
+        signal: abortControllerRef.current.signal,
+        headers: {
+          'Content-Type': 'application/json',
+        },
       });
 
       if (response.error) {
         throw new Error(response.error.message || 'Failed to get response from function');
       }
 
-      await processStreamResponse(response.data, () => setIsLoading(false));
-    } catch (error) {
-      console.error('Error sending message:', error);
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to get response",
-        variant: "destructive",
+      await processStreamResponse(response.data, () => {
+        setIsLoading(false);
+        abortControllerRef.current = null;
       });
+    } catch (error) {
+      if (error.name === 'AbortError') {
+        console.log('Request was cancelled');
+      } else {
+        console.error('Error sending message:', error);
+        toast({
+          title: "Error",
+          description: error instanceof Error ? error.message : "Failed to get response",
+          variant: "destructive",
+        });
+      }
       setIsLoading(false);
+      abortControllerRef.current = null;
     }
   };
 
