@@ -1,0 +1,34 @@
+/* Import chatscope styles */
+@import '@chatscope/chat-ui-kit-react/dist/default.min.css';
+
+/* Custom overrides */
+.cs-message-list {
+  background-color: transparent !important;
+}
+
+.cs-message__content {
+  background-color: hsl(var(--primary)) !important;
+  color: hsl(var(--primary-foreground)) !important;
+}
+
+.cs-message--outgoing .cs-message__content {
+  background-color: hsl(var(--muted)) !important;
+  color: hsl(var(--muted-foreground)) !important;
+}
+
+.cs-chat-container .cs-message-input {
+  border: 1px solid hsl(var(--border));
+  background-color: transparent;
+}
+
+.cs-message-input__content-editor {
+  background-color: transparent !important;
+}
+
+.cs-message-input__content-editor-wrapper {
+  background-color: transparent !important;
+}
+
+.cs-typing-indicator {
+  background-color: transparent !important;
+}

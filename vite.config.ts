@@ -20,11 +20,11 @@ export default defineConfig(({ mode }) => ({
   },
   build: {
     target: 'esnext',
-    minify: 'terser',
+    minify: mode === 'production' ? 'terser' : false,
     terserOptions: {
       compress: {
-        drop_console: true,
-        drop_debugger: true
+        drop_console: mode === 'production',
+        drop_debugger: mode === 'production'
       }
     },
     rollupOptions: {
@@ -33,10 +33,18 @@ export default defineConfig(({ mode }) => ({
           vendor: ['react', 'react-dom', 'react-router-dom'],
           ui: ['@radix-ui/react-dialog', '@radix-ui/react-popover']
         }
-      }
+      },
+      external: mode === 'development' ? [] : undefined
     }
   },
   optimizeDeps: {
-    include: ['react', 'react-dom', 'react-router-dom']
-  }
+    include: ['react', 'react-dom', 'react-router-dom', '@chatscope/chat-ui-kit-react']
+  },
+  css: {
+    preprocessorOptions: {
+      less: {
+        javascriptEnabled: true,
+      },
+    },
+  },
 }));
