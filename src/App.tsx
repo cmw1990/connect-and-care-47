@@ -15,6 +15,7 @@ import Settings from "@/pages/Settings";
 import { MoodSupport } from "@/pages/MoodSupport";
 import More from "@/pages/More";
 import { motion, AnimatePresence } from "framer-motion";
+import { ThemeSwitcher } from "@/components/ui/theme-switcher";
 import "./App.css";
 
 const AppContent = () => {
@@ -25,6 +26,7 @@ const AppContent = () => {
   return (
     <div className="min-h-screen flex flex-col bg-background">
       {showNavbar && !isMobile && <Navbar />}
+      {!location.pathname.includes('/auth') && <ThemeSwitcher />}
       <AnimatePresence mode="wait">
         <motion.main
           key={location.pathname}
