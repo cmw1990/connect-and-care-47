@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Bot, Send, User } from "lucide-react";
+import { Bot, Send, Sparkles, User } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { LanguageSelector } from "@/components/ui/language-selector";
 import "@/i18n/i18n";
@@ -122,7 +122,7 @@ Please provide relevant and helpful information based on this context.
     }
   };
 
-  const sendMessage = async () => {
+  const getAIInsights = async () => {
     if (!input.trim()) return;
 
     try {
@@ -228,6 +228,12 @@ Please provide a clear and informative response, considering all the available i
     }
   };
 
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+    }
+  };
+
   return (
     <Card className="w-full max-w-2xl mx-auto">
       <CardHeader className="flex flex-row items-center justify-between">
@@ -284,15 +290,17 @@ Please provide a clear and informative response, considering all the available i
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder={t('askAboutCare')}
-            onKeyPress={(e) => e.key === 'Enter' && !isLoading && sendMessage()}
+            onKeyPress={handleKeyPress}
             disabled={isLoading}
           />
           <Button 
-            onClick={sendMessage} 
-            disabled={isLoading}
-            title={t('sendMessage')}
+            onClick={getAIInsights} 
+            disabled={isLoading || !input.trim()}
+            className="gap-2"
+            title={t('getAIInsights')}
           >
-            <Send className="h-4 w-4" />
+            <Sparkles className="h-4 w-4" />
+            {t('getInsights')}
           </Button>
         </div>
       </CardContent>
