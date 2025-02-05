@@ -44,10 +44,15 @@ serve(async (req) => {
     });
 
     if (!response.ok) {
-      const error = await response.text();
-      console.error('OpenAI API error:', response.status, response.statusText);
-      console.error('Error details:', error);
-      throw new Error('Failed to get response from OpenAI API');
+      const error = await response.json();
+      console.error('OpenAI API error:', error);
+      
+      // Handle quota exceeded error specifically
+      if (error.error?.code === 'insufficient_quota') {
+        throw new Error('OpenAI API quota exceeded. Please check your billing details or try again later.');
+      }
+      
+      throw new Error(error.error?.message || 'Failed to get response from OpenAI API');
     }
 
     const stream = new ReadableStream({
