@@ -68,9 +68,9 @@ export const WellnessScore = ({ groupId }: WellnessScoreProps) => {
 
   const score = calculateOverallScore();
   const getScoreColor = (score: number) => {
-    if (score > 70) return 'text-green-300';
-    if (score > 40) return 'text-blue-200';
-    return 'text-rose-200';
+    if (score > 70) return 'text-secondary-500';
+    if (score > 40) return 'text-primary-500';
+    return 'text-accent-500';
   };
 
   return (
@@ -97,19 +97,19 @@ export const WellnessScore = ({ groupId }: WellnessScoreProps) => {
               {metrics && (
                 <div className="grid grid-cols-2 gap-2 mt-3">
                   <div className="text-xs text-gray-400 flex items-center gap-1">
-                    <div className="w-2 h-2 rounded-full bg-green-200"></div>
+                    <div className="w-2 h-2 rounded-full bg-secondary-200"></div>
                     Physical: {metrics.physical}%
                   </div>
                   <div className="text-xs text-gray-400 flex items-center gap-1">
-                    <div className="w-2 h-2 rounded-full bg-blue-200"></div>
+                    <div className="w-2 h-2 rounded-full bg-primary-200"></div>
                     Mental: {metrics.mental}%
                   </div>
                   <div className="text-xs text-gray-400 flex items-center gap-1">
-                    <div className="w-2 h-2 rounded-full bg-yellow-200"></div>
+                    <div className="w-2 h-2 rounded-full bg-secondary-300"></div>
                     Mood: {metrics.mood}%
                   </div>
                   <div className="text-xs text-gray-400 flex items-center gap-1">
-                    <div className="w-2 h-2 rounded-full bg-purple-200"></div>
+                    <div className="w-2 h-2 rounded-full bg-primary-300"></div>
                     Activity: {metrics.activity}%
                   </div>
                 </div>
