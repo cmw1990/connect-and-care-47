@@ -33,6 +33,7 @@ export const GroupPosts = ({ groupId }: GroupPostsProps) => {
   const [newPost, setNewPost] = React.useState("");
   const [editingPost, setEditingPost] = React.useState<Post | null>(null);
   const [isLoading, setIsLoading] = React.useState(false);
+  const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const { toast } = useToast();
 
   const fetchPosts = async () => {
@@ -81,6 +82,7 @@ export const GroupPosts = ({ groupId }: GroupPostsProps) => {
         description: "Post created successfully",
       });
       setNewPost("");
+      setIsDialogOpen(false);
       await fetchPosts();
     } catch (error) {
       console.error("Error creating post:", error);
@@ -111,6 +113,7 @@ export const GroupPosts = ({ groupId }: GroupPostsProps) => {
         description: "Post updated successfully",
       });
       setEditingPost(null);
+      setIsDialogOpen(false);
       await fetchPosts();
     } catch (error) {
       console.error("Error updating post:", error);
@@ -160,7 +163,7 @@ export const GroupPosts = ({ groupId }: GroupPostsProps) => {
             <MessageSquare className="h-5 w-5" />
             Posts
           </CardTitle>
-          <Dialog>
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
               <Button>
                 <Plus className="mr-2 h-4 w-4" />
@@ -207,7 +210,7 @@ export const GroupPosts = ({ groupId }: GroupPostsProps) => {
                   {post.profiles?.first_name} {post.profiles?.last_name}
                 </p>
                 <div className="flex items-center gap-2">
-                  <Dialog>
+                  <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                     <DialogTrigger asChild>
                       <Button
                         variant="ghost"
