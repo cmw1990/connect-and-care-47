@@ -9,7 +9,6 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -41,29 +40,15 @@ serve(async (req) => {
         top_p: 0.9,
         max_tokens: 1000,
         stream: true,
-        return_images: false,
-        return_related_questions: false,
-        search_domain_filter: ['perplexity.ai'],
-        search_recency_filter: 'month',
-        frequency_penalty: 1,
-        presence_penalty: 0
       }),
     });
 
     if (!response.ok) {
-      const error = await response.json();
-      console.error('Perplexity API error:', error);
-      
-      if (error.error?.type === 'insufficient_quota') {
-        throw new Error('Perplexity API quota exceeded. Please check your billing details.');
-      } else if (error.error?.type === 'invalid_api_key') {
-        throw new Error('Invalid Perplexity API key. Please check your configuration.');
-      }
-      
-      throw new Error(`Perplexity API error: ${error.error?.message || response.statusText}`);
+      const error = await response.text();
+      console.error('Perplexity API error response:', error);
+      throw new Error(`Perplexity API error: ${error}`);
     }
 
-    // Set up streaming response
     const transformStream = new TransformStream({
       async transform(chunk, controller) {
         const text = new TextDecoder().decode(chunk);
@@ -78,12 +63,10 @@ serve(async (req) => {
             }
             try {
               const parsed = JSON.parse(data);
-              if (parsed.choices && parsed.choices.length > 0) {
-                const content = parsed.choices[0].delta?.content || parsed.choices[0].text;
-                if (content) {
-                  console.log('Sending chunk:', content);
-                  controller.enqueue(`data: ${JSON.stringify({ type: 'chunk', content })}\n\n`);
-                }
+              const content = parsed.choices?.[0]?.delta?.content;
+              if (content) {
+                console.log('Sending chunk:', content);
+                controller.enqueue(`data: ${JSON.stringify({ type: 'chunk', content })}\n\n`);
               }
             } catch (e) {
               console.error('Error parsing chunk:', e);

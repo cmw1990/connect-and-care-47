@@ -170,6 +170,8 @@ Please provide a clear and informative response, considering all the available i
 
               try {
                 const parsed = JSON.parse(data);
+                console.log('Received chunk:', parsed);
+                
                 if (parsed.type === 'chunk' && parsed.content) {
                   accumulatedMessage += parsed.content;
                   setCurrentMessage(accumulatedMessage);
@@ -190,7 +192,8 @@ Please provide a clear and informative response, considering all the available i
           }
         }
       } else {
-        const content = typeof response.data === 'string' ? response.data : response.data.text;
+        console.log('Non-stream response:', response.data);
+        const content = response.data?.text || response.data;
         if (content && typeof content === 'string' && content.trim()) {
           setMessages(prev => [...prev, { role: 'assistant', content }]);
         }
