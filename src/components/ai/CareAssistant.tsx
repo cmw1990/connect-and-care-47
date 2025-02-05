@@ -73,11 +73,16 @@ Care Tips: ${careTips.length > 0 ? careTips.join(', ') : 'None specified'}
 
       const context = formatPatientContext(patientInfo);
 
+      const { data: session } = await supabase.auth.getSession();
+      if (!session?.session?.access_token) {
+        throw new Error('No authentication token found');
+      }
+
       const response = await fetch('/functions/v1/realtime-chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
+          'Authorization': `Bearer ${session.session.access_token}`
         },
         body: JSON.stringify({ 
           text: `
@@ -93,6 +98,9 @@ Please provide a clear and informative response, considering the patient's speci
       });
 
       if (!response.ok) {
+        console.error('Response not OK:', response.status, response.statusText);
+        const errorData = await response.json().catch(() => ({}));
+        console.error('Error data:', errorData);
         throw new Error('Failed to get AI response');
       }
 
@@ -190,10 +198,8 @@ Please provide a clear and informative response, considering the patient's speci
                 <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
                   <Bot className="h-4 w-4" />
                 </div>
-                <div className="flex flex-col gap-2 max-w-[80%]">
-                  <div className="rounded-lg px-4 py-2 bg-secondary">
-                    {currentMessage}
-                  </div>
+                <div className="rounded-lg px-4 py-2 bg-secondary max-w-[80%]">
+                  {currentMessage}
                 </div>
               </div>
             )}
@@ -206,7 +212,7 @@ Please provide a clear and informative response, considering the patient's speci
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder={t('askAboutCare')}
-            onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
+            onKeyPress={(e) => e.key === 'Enter' && !isLoading && sendMessage()}
             disabled={isLoading}
           />
           <Button 
