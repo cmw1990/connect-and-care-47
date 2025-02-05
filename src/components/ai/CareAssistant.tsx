@@ -122,16 +122,17 @@ Please provide relevant and helpful information based on this context.
     }
   };
 
-  const getAIInsights = async () => {
+  const sendMessage = () => {
     if (!input.trim()) return;
+    
+    setMessages(prev => [...prev, { role: 'user', content: input }]);
+    setInput('');
+  };
 
+  const getAIInsights = async () => {
     try {
       setIsLoading(true);
-      const userMessage = input;
-      setInput('');
       
-      setMessages(prev => [...prev, { role: 'user', content: userMessage }]);
-
       const context = await formatPatientContext();
       console.log('Context prepared:', context);
 
@@ -141,7 +142,7 @@ Please provide relevant and helpful information based on this context.
 Context:
 ${context}
 
-User Question: ${userMessage}
+User Question: ${messages[messages.length - 1]?.content || 'No recent message'}
 
 Please provide a clear and informative response, considering all the available information about the patient and care group.
           `.trim()
@@ -231,6 +232,7 @@ Please provide a clear and informative response, considering all the available i
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
+      sendMessage();
     }
   };
 
@@ -294,9 +296,17 @@ Please provide a clear and informative response, considering all the available i
             disabled={isLoading}
           />
           <Button 
-            onClick={getAIInsights} 
+            onClick={sendMessage} 
             disabled={isLoading || !input.trim()}
-            className="gap-2"
+            title={t('sendMessage')}
+          >
+            <Send className="h-4 w-4" />
+          </Button>
+          <Button 
+            onClick={getAIInsights} 
+            disabled={isLoading || messages.length === 0}
+            variant="secondary"
+            className="gap-2 whitespace-nowrap"
             title={t('getAIInsights')}
           >
             <Sparkles className="h-4 w-4" />
