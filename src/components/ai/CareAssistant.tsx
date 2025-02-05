@@ -83,10 +83,6 @@ Care Tips: ${careTips.length > 0 ? careTips.join(', ') : 'None specified'}
       }
 
       console.log('Sending request to realtime-chat function...');
-      
-      // First verify the function exists
-      const { data: functions } = await supabase.functions.listFunctions();
-      console.log('Available functions:', functions);
 
       const response = await supabase.functions.invoke('realtime-chat', {
         body: { 
@@ -101,6 +97,8 @@ Please provide a clear and informative response, considering the patient's speci
           `.trim()
         },
       });
+
+      console.log('Received response:', response);
 
       if (!response.data) {
         throw new Error('No response data received from function');
