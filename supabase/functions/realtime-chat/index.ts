@@ -1,7 +1,7 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
-const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
+const perplexityApiKey = Deno.env.get('PERPLEXITY_API_KEY');
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -17,19 +17,19 @@ serve(async (req) => {
     const { text } = await req.json();
     console.log('Received request with text:', text);
 
-    if (!openAIApiKey) {
-      throw new Error('OpenAI API key not configured');
+    if (!perplexityApiKey) {
+      throw new Error('Perplexity API key not configured');
     }
 
-    console.log('Making request to OpenAI API...');
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    console.log('Making request to Perplexity API...');
+    const response = await fetch('https://api.perplexity.ai/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${openAIApiKey}`,
+        'Authorization': `Bearer ${perplexityApiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4-1106-preview',
+        model: 'llama-3.1-sonar-small-128k-online',
         messages: [
           {
             role: 'system',
@@ -40,49 +40,53 @@ serve(async (req) => {
             content: text
           }
         ],
-        temperature: 0.7,
-        stream: true
+        temperature: 0.2,
+        top_p: 0.9,
+        max_tokens: 1000,
+        stream: true,
+        return_images: false,
+        return_related_questions: false,
+        search_domain_filter: ['perplexity.ai'],
+        search_recency_filter: 'month',
+        frequency_penalty: 1,
+        presence_penalty: 0
       }),
     });
 
     if (!response.ok) {
       const error = await response.text();
-      console.error('OpenAI API error:', error);
+      console.error('Perplexity API error:', error);
       
-      // Check if the error is due to quota limits
-      if (error.includes('quota') || error.includes('insufficient_quota')) {
-        const fallbackMessage = {
-          type: 'chunk',
-          content: "I apologize, but I'm currently unable to process your request due to high demand. Here are some general care recommendations:\n\n" +
-            "1. Maintain consistent daily routines\n" +
-            "2. Keep detailed records of medications and appointments\n" +
-            "3. Ensure regular communication between care team members\n" +
-            "4. Monitor and document any changes in condition\n" +
-            "5. Take breaks and practice self-care as a caregiver\n\n" +
-            "Please try again later for more personalized guidance."
-        };
-        
-        const stream = new ReadableStream({
-          start(controller) {
-            controller.enqueue(`data: ${JSON.stringify(fallbackMessage)}\n\n`);
-            controller.enqueue('data: {"type":"done"}\n\n');
-            controller.close();
-          }
-        });
+      const fallbackMessage = {
+        type: 'chunk',
+        content: "I apologize, but I'm currently unable to process your request. Here are some general care recommendations:\n\n" +
+          "1. Maintain consistent daily routines\n" +
+          "2. Keep detailed records of medications and appointments\n" +
+          "3. Ensure regular communication between care team members\n" +
+          "4. Monitor and document any changes in condition\n" +
+          "5. Take breaks and practice self-care as a caregiver\n\n" +
+          "Please try again later for more personalized guidance."
+      };
+      
+      const stream = new ReadableStream({
+        start(controller) {
+          controller.enqueue(`data: ${JSON.stringify(fallbackMessage)}\n\n`);
+          controller.enqueue('data: {"type":"done"}\n\n');
+          controller.close();
+        }
+      });
 
-        return new Response(stream, {
-          headers: {
-            ...corsHeaders,
-            'Content-Type': 'text/event-stream',
-            'Cache-Control': 'no-cache',
-            'Connection': 'keep-alive'
-          }
-        });
-      }
-      
-      throw new Error(`OpenAI API error: ${error}`);
+      return new Response(stream, {
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'text/event-stream',
+          'Cache-Control': 'no-cache',
+          'Connection': 'keep-alive'
+        }
+      });
     }
 
+    // Stream the response
     const stream = new ReadableStream({
       async start(controller) {
         const reader = response.body?.getReader();
