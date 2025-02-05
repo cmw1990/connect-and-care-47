@@ -84,13 +84,19 @@ serve(async (req) => {
 
         try {
           let accumulatedMessage = '';
+          let isFirstChunk = true;
           
           while (true) {
             const { done, value } = await reader.read();
             
             if (done) {
               if (accumulatedMessage) {
-                const safeMessage = accumulatedMessage.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\n/g, '\\n');
+                const safeMessage = accumulatedMessage
+                  .replace(/\\/g, '\\\\')
+                  .replace(/"/g, '\\"')
+                  .replace(/\n/g, '\\n')
+                  .replace(/\r/g, '\\r')
+                  .replace(/\t/g, '\\t');
                 controller.enqueue(`data: {"type":"chunk","content":"${safeMessage}"}\n\n`);
               }
               controller.enqueue('data: {"type":"done"}\n\n');
@@ -107,12 +113,27 @@ serve(async (req) => {
                   if (data === '[DONE]') continue;
 
                   const parsed = JSON.parse(data);
-                  if (parsed.choices?.[0]?.delta?.content) {
-                    const content = parsed.choices[0].delta.content;
-                    accumulatedMessage += content;
-                    // Properly escape special characters in the content
-                    const safeContent = content.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\n/g, '\\n');
-                    controller.enqueue(`data: {"type":"chunk","content":"${safeContent}"}\n\n`);
+                  if (parsed.choices?.[0]?.delta?.content || 
+                      (isFirstChunk && parsed.choices?.[0]?.message?.content)) {
+                    
+                    let content = '';
+                    if (isFirstChunk && parsed.choices[0].message?.content) {
+                      content = parsed.choices[0].message.content;
+                      isFirstChunk = false;
+                    } else if (parsed.choices[0].delta?.content) {
+                      content = parsed.choices[0].delta.content;
+                    }
+
+                    if (content) {
+                      accumulatedMessage += content;
+                      const safeContent = content
+                        .replace(/\\/g, '\\\\')
+                        .replace(/"/g, '\\"')
+                        .replace(/\n/g, '\\n')
+                        .replace(/\r/g, '\\r')
+                        .replace(/\t/g, '\\t');
+                      controller.enqueue(`data: {"type":"chunk","content":"${safeContent}"}\n\n`);
+                    }
                   }
                 } catch (e) {
                   console.error('Error parsing chunk:', e);
