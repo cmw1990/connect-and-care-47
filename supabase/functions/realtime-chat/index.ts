@@ -1,5 +1,5 @@
-import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import "https://deno.land/x/xhr@0.1.0/mod.ts";
 
 const perplexityApiKey = Deno.env.get('PERPLEXITY_API_KEY');
 
@@ -33,7 +33,7 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: 'You are a helpful care assistant AI that provides support and information to caregivers and care recipients. Use the provided context about the patient and care group to give relevant and personalized responses.'
+            content: 'You are a helpful care assistant that provides clear and concise responses.'
           },
           { role: 'user', content: text }
         ],
@@ -63,8 +63,34 @@ serve(async (req) => {
       throw new Error(`Perplexity API error: ${error.error?.message || response.statusText}`);
     }
 
-    // Return the streaming response
-    return new Response(response.body, {
+    // Set up streaming response
+    const transformStream = new TransformStream({
+      async transform(chunk, controller) {
+        const text = new TextDecoder().decode(chunk);
+        const lines = text.split('\n').filter(line => line.trim());
+        
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6);
+            if (data === '[DONE]') {
+              controller.enqueue(`data: ${JSON.stringify({ type: 'done' })}\n\n`);
+              return;
+            }
+            try {
+              const parsed = JSON.parse(data);
+              const content = parsed.choices[0]?.delta?.content || parsed.choices[0]?.text;
+              if (content) {
+                controller.enqueue(`data: ${JSON.stringify({ type: 'chunk', content })}\n\n`);
+              }
+            } catch (e) {
+              console.error('Error parsing chunk:', e);
+            }
+          }
+        }
+      }
+    });
+
+    return new Response(response.body?.pipeThrough(transformStream), {
       headers: {
         ...corsHeaders,
         'Content-Type': 'text/event-stream',
@@ -74,15 +100,18 @@ serve(async (req) => {
     });
 
   } catch (error) {
-    console.error('Error in realtime-chat function:', error);
+    console.error('Error:', error);
     return new Response(
       JSON.stringify({
         error: error.message,
-        details: "An error occurred while processing your request."
+        details: 'An error occurred while processing your request.'
       }),
       {
         status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'application/json',
+        },
       }
     );
   }
