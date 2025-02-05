@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,6 +20,22 @@ interface LocationData {
   longitude: number;
 }
 
+interface Availability {
+  location?: LocationData;
+  schedule?: Array<{
+    day: string;
+    times: Array<{
+      start: string;
+      end: string;
+    }>;
+  }>;
+  preferences?: {
+    virtual?: boolean;
+    inPerson?: boolean;
+    radius?: number;
+  };
+}
+
 interface SimplifiedCaregiverProfile {
   id: string;
   user_id: string;
@@ -38,9 +54,7 @@ interface SimplifiedCaregiverProfile {
     last_name: string;
   };
   certifications: any[];
-  availability: {
-    location?: LocationData;
-  } | null;
+  availability: Availability | null;
   location: LocationData | null;
   specializations: string[] | null;
 }
@@ -128,7 +142,8 @@ export const CaregiverMatcher = () => {
       let filteredCaregivers = (data || []).map(caregiver => ({
         ...caregiver,
         certifications: Array.isArray(caregiver.certifications) ? caregiver.certifications : [],
-        location: caregiver.availability?.location || null
+        location: caregiver.availability?.location || null,
+        availability: caregiver.availability as Availability | null
       })) as SimplifiedCaregiverProfile[];
 
       if (userLocation && filters.maxDistance > 0) {
