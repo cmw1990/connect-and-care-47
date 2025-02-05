@@ -22,14 +22,19 @@ export const WellnessScore = ({ groupId }: WellnessScoreProps) => {
     queryFn: async () => {
       if (!groupId) return null;
       
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('care_quality_metrics')
         .select('*')
         .eq('group_id', groupId)
         .order('recorded_at', { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle();
         
+      if (error) {
+        console.error('Error fetching metrics:', error);
+        return null;
+      }
+
       // Cast the metric_value to MetricValue type after validation
       const metricValue = data?.metric_value as unknown;
       if (isValidMetricValue(metricValue)) {

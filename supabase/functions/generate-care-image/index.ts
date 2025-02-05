@@ -12,31 +12,12 @@ serve(async (req) => {
   }
 
   try {
-    const { disease, description, userType } = await req.json();
+    const { disease, description } = await req.json();
     const openaiKey = Deno.env.get('OPENAI_API_KEY');
 
     if (!openaiKey) {
       throw new Error('OpenAI API key not configured');
     }
-
-    // Customize the prompt based on the user type and context
-    let basePrompt = `Create a professional medical illustration for ${disease}.`;
-    
-    switch (userType) {
-      case 'professional_caregiver':
-        basePrompt += ` Include detailed clinical care instructions and medical monitoring points. ${description}. Style: Clean, professional medical illustration with anatomical accuracy.`;
-        break;
-      case 'care_facility_staff':
-        basePrompt += ` Show facility-based care procedures and equipment setup. ${description}. Style: Institutional healthcare setting with clear procedural steps.`;
-        break;
-      case 'family_caregiver':
-        basePrompt += ` Focus on home care techniques and daily management. ${description}. Style: Warm, approachable illustrations with simple, clear instructions.`;
-        break;
-      default:
-        basePrompt += ` ${description}. Style: Clear, informative medical illustration.`;
-    }
-
-    console.log('Generating image with prompt:', basePrompt);
 
     const response = await fetch('https://api.openai.com/v1/images/generations', {
       method: 'POST',
@@ -46,7 +27,7 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         model: "dall-e-3",
-        prompt: basePrompt,
+        prompt: `Create a professional medical illustration for ${disease}. ${description}. Style: Clear, informative medical illustration.`,
         n: 1,
         size: "1024x1024",
         quality: "standard",
@@ -57,6 +38,21 @@ serve(async (req) => {
     if (!response.ok) {
       const error = await response.json();
       console.error('OpenAI API error:', error);
+      
+      // Check if it's a billing error
+      if (error.error?.message?.includes('billing')) {
+        return new Response(
+          JSON.stringify({ 
+            error: "Image generation temporarily unavailable",
+            details: "Service is currently unavailable. Please try again later."
+          }),
+          { 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 503
+          }
+        );
+      }
+      
       throw new Error(`OpenAI API error: ${error.error?.message || response.statusText}`);
     }
 
@@ -66,19 +62,19 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         imageUrl: data.data[0].url,
-        prompt: basePrompt // Include the prompt for reference
+        prompt: `Create a professional medical illustration for ${disease}. ${description}`
       }),
       { 
-        headers: { 
-          ...corsHeaders,
-          'Content-Type': 'application/json'
-        }
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       }
     );
   } catch (error) {
     console.error('Error in generate-care-image function:', error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: "Failed to generate image",
+        details: error.message
+      }),
       { 
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
