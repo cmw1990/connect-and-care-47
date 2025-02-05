@@ -1,7 +1,4 @@
-/* Import chatscope styles */
-@import '@chatscope/chat-ui-kit-react/dist/default.min.css';
-
-/* Custom overrides */
+/* Base chatscope styles */
 .cs-message-list {
   background-color: transparent !important;
 }

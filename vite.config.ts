@@ -46,5 +46,8 @@ export default defineConfig(({ mode }) => ({
         javascriptEnabled: true,
       },
     },
+    modules: {
+      localsConvention: 'camelCase'
+    }
   },
 }));
