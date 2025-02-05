@@ -7,19 +7,21 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
+  // Handle CORS
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
     const apiKey = Deno.env.get('PERPLEXITY_API_KEY');
+    console.log('API Key present:', !!apiKey); // Debug log
     
     if (!apiKey) {
       throw new Error('Perplexity API key not configured');
     }
 
     const { text } = await req.json();
-    console.log('Processing chat request:', text);
+    console.log('Received request with text:', text);
 
     const response = await fetch('https://api.perplexity.ai/chat/completions', {
       method: 'POST',
@@ -32,7 +34,7 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: 'You are a helpful care assistant AI that provides support and information to caregivers and care recipients. You should be empathetic, clear, and always remind users that you are an AI assistant working with the human care team.'
+            content: 'You are a helpful care assistant AI that provides support and information to caregivers and care recipients.'
           },
           { role: 'user', content: text }
         ],
@@ -40,12 +42,6 @@ serve(async (req) => {
         top_p: 0.9,
         max_tokens: 1000,
         stream: true,
-        return_images: false,
-        return_related_questions: false,
-        search_domain_filter: ['perplexity.ai'],
-        search_recency_filter: 'month',
-        frequency_penalty: 1,
-        presence_penalty: 0
       }),
     });
 
@@ -55,7 +51,7 @@ serve(async (req) => {
       throw new Error(`Perplexity API error: ${error.error?.message || response.statusText}`);
     }
 
-    // Transform the response into a readable stream
+    // Set up streaming response
     const transformStream = new TransformStream({
       async transform(chunk, controller) {
         const text = new TextDecoder().decode(chunk);
@@ -94,11 +90,11 @@ serve(async (req) => {
   } catch (error) {
     console.error('Error in realtime-chat function:', error);
     return new Response(
-      JSON.stringify({ 
+      JSON.stringify({
         error: error.message,
-        details: "An error occurred while processing your request. Please try again."
+        details: "An error occurred while processing your request."
       }),
-      { 
+      {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       }

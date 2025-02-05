@@ -83,13 +83,13 @@ Care Tips: ${careTips.length > 0 ? careTips.join(', ') : 'None specified'}
       }
 
       console.log('Sending request to realtime-chat function...');
-      const response = await fetch('/functions/v1/realtime-chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.session.access_token}`
-        },
-        body: JSON.stringify({ 
+      
+      // First verify the function exists
+      const { data: functions } = await supabase.functions.listFunctions();
+      console.log('Available functions:', functions);
+
+      const response = await supabase.functions.invoke('realtime-chat', {
+        body: { 
           text: `
 As a care assistant, use the following patient context to provide relevant and helpful information:
 
@@ -99,30 +99,31 @@ User Question: ${userMessage}
 
 Please provide a clear and informative response, considering the patient's specific conditions and care requirements.
           `.trim()
-        }),
+        },
       });
 
-      if (!response.ok) {
-        console.error('Response not OK:', response.status, response.statusText);
-        const errorData = await response.json().catch(() => ({}));
-        console.error('Error data:', errorData);
-        throw new Error(`Failed to get AI response: ${response.statusText}`);
+      if (!response.data) {
+        throw new Error('No response data received from function');
       }
 
-      const reader = response.body?.getReader();
-      if (!reader) {
-        throw new Error('Failed to get response reader');
+      // Handle non-streaming response as fallback
+      if (typeof response.data === 'string' || 'text' in response.data) {
+        const content = typeof response.data === 'string' ? response.data : response.data.text;
+        setMessages(prev => [...prev, { role: 'assistant', content }]);
+        setCurrentMessage('');
+        return;
       }
 
-      const decoder = new TextDecoder();
+      // Handle streaming response
+      const reader = new ReadableStreamDefaultReader(response.data as ReadableStream);
       let accumulatedMessage = '';
 
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
 
-        const chunk = decoder.decode(value);
-        console.log('Received chunk:', chunk); // Debug log
+        const chunk = new TextDecoder().decode(value);
+        console.log('Received chunk:', chunk);
         
         const lines = chunk.split('\n').filter(line => line.trim());
 
