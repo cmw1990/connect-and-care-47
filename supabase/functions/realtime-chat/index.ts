@@ -30,7 +30,7 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
+        model: 'gpt-4o-mini', // Fixed model name
         messages: [
           {
             role: 'system',
@@ -43,8 +43,16 @@ serve(async (req) => {
     });
 
     if (!response.ok) {
-      const error = await response.json().catch(() => ({}));
+      const error = await response.json();
       console.error('OpenAI API error:', error);
+      
+      // Provide more specific error messages
+      if (error.error?.code === 'insufficient_quota') {
+        throw new Error('OpenAI API quota exceeded. Please check your billing details.');
+      } else if (error.error?.code === 'invalid_api_key') {
+        throw new Error('Invalid OpenAI API key. Please check your configuration.');
+      }
+      
       throw new Error(`OpenAI API error: ${error.error?.message || response.statusText}`);
     }
 
