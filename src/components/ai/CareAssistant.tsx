@@ -49,29 +49,46 @@ export const CareAssistant = ({ groupId }: { groupId?: string }) => {
 
   const formatPatientContext = async () => {
     try {
-      const { data: patientInfo } = await supabase
+      const { data: patientInfo, error: patientError } = await supabase
         .from('patient_info')
         .select('*')
         .eq('group_id', groupId)
         .maybeSingle();
 
-      const { data: tasks } = await supabase
+      if (patientError) {
+        console.error('Error fetching patient info:', patientError);
+        return "Unable to fetch patient information.";
+      }
+
+      const { data: tasks, error: tasksError } = await supabase
         .from('tasks')
         .select('*')
         .eq('group_id', groupId)
         .order('created_at', { ascending: false });
 
-      const { data: updates } = await supabase
+      if (tasksError) {
+        console.error('Error fetching tasks:', tasksError);
+      }
+
+      const { data: updates, error: updatesError } = await supabase
         .from('care_updates')
         .select('*')
         .eq('group_id', groupId)
         .order('created_at', { ascending: false })
         .limit(5);
 
-      const { data: routines } = await supabase
+      if (updatesError) {
+        console.error('Error fetching updates:', updatesError);
+      }
+
+      const { data: routines, error: routinesError } = await supabase
         .from('care_routines')
         .select('*')
         .eq('group_id', groupId);
+
+      if (routinesError) {
+        console.error('Error fetching routines:', routinesError);
+      }
 
       const typedPatientInfo = patientInfo as unknown as PatientInfo;
 
@@ -113,7 +130,6 @@ Please provide relevant and helpful information based on this context.
       const userMessage = input;
       setInput('');
       
-      // Immediately add user message to the chat
       setMessages(prev => [...prev, { role: 'user', content: userMessage }]);
 
       const context = await formatPatientContext();
@@ -136,7 +152,6 @@ Please provide a clear and informative response, considering all the available i
         throw new Error('No response data received from function');
       }
 
-      // Handle streaming response
       if (response.data instanceof ReadableStream) {
         const reader = response.data.getReader();
         let accumulatedMessage = '';
@@ -173,16 +188,25 @@ Please provide a clear and informative response, considering all the available i
           }
         }
       } else {
-        // Handle non-streaming response as fallback
         const content = typeof response.data === 'string' ? response.data : response.data.text;
         setMessages(prev => [...prev, { role: 'assistant', content }]);
       }
 
     } catch (error) {
       console.error('Error sending message:', error);
+      let errorMessage = t("failedToGetResponse");
+      
+      if (error instanceof Error) {
+        if (error.message.includes('quota')) {
+          errorMessage = "The AI service is currently unavailable due to quota limits. Please try again later.";
+        } else if (error.message.includes('API key')) {
+          errorMessage = "The AI service is not properly configured. Please contact support.";
+        }
+      }
+      
       toast({
         title: t("error"),
-        description: error instanceof Error ? error.message : t("failedToGetResponse"),
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
