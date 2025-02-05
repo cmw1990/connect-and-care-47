@@ -35,7 +35,6 @@ export const WellnessScore = ({ groupId }: WellnessScoreProps) => {
         return null;
       }
 
-      // Cast the metric_value to MetricValue type after validation
       const metricValue = data?.metric_value as unknown;
       if (isValidMetricValue(metricValue)) {
         return metricValue;
@@ -45,7 +44,6 @@ export const WellnessScore = ({ groupId }: WellnessScoreProps) => {
     enabled: !!groupId
   });
 
-  // Type guard to validate metric value shape
   const isValidMetricValue = (value: unknown): value is MetricValue => {
     if (typeof value !== 'object' || value === null) return false;
     const v = value as any;
@@ -70,9 +68,9 @@ export const WellnessScore = ({ groupId }: WellnessScoreProps) => {
 
   const score = calculateOverallScore();
   const getScoreColor = (score: number) => {
-    if (score > 70) return 'text-green-500';
-    if (score > 40) return 'text-yellow-500';
-    return 'text-red-500';
+    if (score > 70) return 'text-green-300';
+    if (score > 40) return 'text-blue-200';
+    return 'text-rose-200';
   };
 
   return (
@@ -81,15 +79,15 @@ export const WellnessScore = ({ groupId }: WellnessScoreProps) => {
       animate={{ scale: 1, opacity: 1 }}
       transition={{ duration: 0.3 }}
     >
-      <Card className="bg-white shadow-sm hover:shadow-md transition-shadow">
+      <Card className="bg-white/80 backdrop-blur-sm shadow-sm hover:shadow-md transition-shadow duration-300">
         <CardContent className="p-4">
           <div className="flex items-center gap-3">
-            <div className={`p-2 rounded-full bg-opacity-10 ${getScoreColor(score)} bg-current`}>
+            <div className={`p-2 rounded-full bg-opacity-20 ${getScoreColor(score)} bg-current`}>
               <Heart className={`h-5 w-5 ${getScoreColor(score)}`} />
             </div>
             <div className="flex-1">
               <div className="flex justify-between items-center mb-1">
-                <span className="text-sm font-medium">Wellness Score</span>
+                <span className="text-sm font-medium text-gray-600">Wellness Score</span>
                 <span className={`text-sm font-bold ${getScoreColor(score)}`}>{score}%</span>
               </div>
               <Progress 
@@ -97,11 +95,23 @@ export const WellnessScore = ({ groupId }: WellnessScoreProps) => {
                 className={`h-2 ${getScoreColor(score)}`}
               />
               {metrics && (
-                <div className="grid grid-cols-2 gap-2 mt-3 text-xs text-gray-500">
-                  <div>Physical: {metrics.physical}%</div>
-                  <div>Mental: {metrics.mental}%</div>
-                  <div>Mood: {metrics.mood}%</div>
-                  <div>Activity: {metrics.activity}%</div>
+                <div className="grid grid-cols-2 gap-2 mt-3">
+                  <div className="text-xs text-gray-400 flex items-center gap-1">
+                    <div className="w-2 h-2 rounded-full bg-green-200"></div>
+                    Physical: {metrics.physical}%
+                  </div>
+                  <div className="text-xs text-gray-400 flex items-center gap-1">
+                    <div className="w-2 h-2 rounded-full bg-blue-200"></div>
+                    Mental: {metrics.mental}%
+                  </div>
+                  <div className="text-xs text-gray-400 flex items-center gap-1">
+                    <div className="w-2 h-2 rounded-full bg-yellow-200"></div>
+                    Mood: {metrics.mood}%
+                  </div>
+                  <div className="text-xs text-gray-400 flex items-center gap-1">
+                    <div className="w-2 h-2 rounded-full bg-purple-200"></div>
+                    Activity: {metrics.activity}%
+                  </div>
                 </div>
               )}
             </div>
