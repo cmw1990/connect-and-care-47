@@ -137,28 +137,24 @@ Please provide relevant and helpful information based on this context.
         if (done) break;
 
         const chunk = decoder.decode(value);
+        console.log('Received chunk:', chunk); // Debug log
+        
         const lines = chunk.split('\n').filter(line => line.trim());
         
         for (const line of lines) {
           if (line.startsWith('data: ')) {
             const data = line.slice(6);
+            console.log('Parsed data:', data); // Debug log
+            
             if (data === '[DONE]') continue;
 
             try {
               const parsed = JSON.parse(data);
-              if (parsed.type === 'chunk' && parsed.content) {
+              console.log('Parsed JSON:', parsed); // Debug log
+              
+              if (parsed.content) {
                 accumulatedMessage += parsed.content;
                 setCurrentMessage(accumulatedMessage);
-              } else if (parsed.type === 'done') {
-                if (accumulatedMessage.trim()) {
-                  setMessages(prev => [...prev, { 
-                    role: 'assistant' as const, 
-                    content: accumulatedMessage 
-                  }]);
-                }
-                setCurrentMessage('');
-                accumulatedMessage = '';
-                onDone();
               }
             } catch (e) {
               console.error('Error parsing chunk:', e);
@@ -166,6 +162,16 @@ Please provide relevant and helpful information based on this context.
           }
         }
       }
+
+      // After the stream is done, add the complete message
+      if (accumulatedMessage.trim()) {
+        setMessages(prev => [...prev, { 
+          role: 'assistant' as const, 
+          content: accumulatedMessage 
+        }]);
+        setCurrentMessage('');
+      }
+      onDone();
     } catch (error) {
       console.error('Error processing stream:', error);
       throw error;
