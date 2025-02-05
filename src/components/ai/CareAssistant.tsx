@@ -15,6 +15,23 @@ interface Message {
   content: string;
 }
 
+interface BasicInfo {
+  name?: string;
+  age?: string;
+  condition?: string;
+}
+
+interface PatientInfo {
+  basic_info?: BasicInfo;
+  diseases?: string[];
+  medicines?: {
+    name: string;
+    dosage: string;
+    frequency: string;
+  }[];
+  care_tips?: string[];
+}
+
 export const CareAssistant = ({ groupId }: { groupId?: string }) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
@@ -60,18 +77,20 @@ export const CareAssistant = ({ groupId }: { groupId?: string }) => {
         .select('*')
         .eq('group_id', groupId);
 
+      const typedPatientInfo = patientInfo as unknown as PatientInfo;
+
       // Format all the information
       return `
 Care Group Context:
 
 Patient Information:
-${patientInfo ? `
-Name: ${patientInfo.basic_info?.name || 'Not specified'}
-Age: ${patientInfo.basic_info?.age || 'Not specified'}
-Current Condition: ${patientInfo.basic_info?.condition || 'Not specified'}
-Medical Conditions: ${patientInfo.diseases?.join(', ') || 'None specified'}
-Medications: ${patientInfo.medicines ? JSON.stringify(patientInfo.medicines, null, 2) : 'None specified'}
-Care Tips: ${patientInfo.care_tips?.join(', ') || 'None specified'}
+${typedPatientInfo ? `
+Name: ${typedPatientInfo.basic_info?.name || 'Not specified'}
+Age: ${typedPatientInfo.basic_info?.age || 'Not specified'}
+Current Condition: ${typedPatientInfo.basic_info?.condition || 'Not specified'}
+Medical Conditions: ${typedPatientInfo.diseases?.join(', ') || 'None specified'}
+Medications: ${typedPatientInfo.medicines ? JSON.stringify(typedPatientInfo.medicines, null, 2) : 'None specified'}
+Care Tips: ${typedPatientInfo.care_tips?.join(', ') || 'None specified'}
 ` : 'No patient information available'}
 
 Recent Tasks:
