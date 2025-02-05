@@ -48,10 +48,41 @@ serve(async (req) => {
     if (!response.ok) {
       const error = await response.text();
       console.error('OpenAI API error:', error);
+      
+      // Check if the error is due to quota limits
+      if (error.includes('quota') || error.includes('insufficient_quota')) {
+        const fallbackMessage = {
+          type: 'chunk',
+          content: "I apologize, but I'm currently unable to process your request due to high demand. Here are some general care recommendations:\n\n" +
+            "1. Maintain consistent daily routines\n" +
+            "2. Keep detailed records of medications and appointments\n" +
+            "3. Ensure regular communication between care team members\n" +
+            "4. Monitor and document any changes in condition\n" +
+            "5. Take breaks and practice self-care as a caregiver\n\n" +
+            "Please try again later for more personalized guidance."
+        };
+        
+        const stream = new ReadableStream({
+          start(controller) {
+            controller.enqueue(`data: ${JSON.stringify(fallbackMessage)}\n\n`);
+            controller.enqueue('data: {"type":"done"}\n\n');
+            controller.close();
+          }
+        });
+
+        return new Response(stream, {
+          headers: {
+            ...corsHeaders,
+            'Content-Type': 'text/event-stream',
+            'Cache-Control': 'no-cache',
+            'Connection': 'keep-alive'
+          }
+        });
+      }
+      
       throw new Error(`OpenAI API error: ${error}`);
     }
 
-    // Set up streaming response
     const stream = new ReadableStream({
       async start(controller) {
         const reader = response.body?.getReader();
@@ -64,7 +95,7 @@ serve(async (req) => {
           while (true) {
             const { done, value } = await reader.read();
             if (done) {
-              controller.enqueue(`data: {"type":"done"}\n\n`);
+              controller.enqueue('data: {"type":"done"}\n\n');
               break;
             }
 
@@ -100,8 +131,8 @@ serve(async (req) => {
         ...corsHeaders,
         'Content-Type': 'text/event-stream',
         'Cache-Control': 'no-cache',
-        'Connection': 'keep-alive',
-      },
+        'Connection': 'keep-alive'
+      }
     });
 
   } catch (error) {
