@@ -1,8 +1,6 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
-const openAiApiKey = Deno.env.get('OPENAI_API_KEY');
-
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -14,6 +12,7 @@ serve(async (req) => {
   }
 
   try {
+    const openAiApiKey = Deno.env.get('OPENAI_API_KEY');
     if (!openAiApiKey) {
       throw new Error('OpenAI API key not configured');
     }
@@ -28,7 +27,7 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4',
+        model: 'gpt-3.5-turbo',
         messages: [
           {
             role: 'system',
@@ -40,6 +39,8 @@ serve(async (req) => {
           }
         ],
         stream: true,
+        temperature: 0.7,
+        max_tokens: 800
       }),
     });
 
@@ -47,7 +48,6 @@ serve(async (req) => {
       const error = await response.json();
       console.error('OpenAI API error:', error);
       
-      // Handle specific error cases
       if (error.error?.code === 'insufficient_quota') {
         throw new Error('OpenAI API quota exceeded. Please check your billing details or try again later.');
       }
