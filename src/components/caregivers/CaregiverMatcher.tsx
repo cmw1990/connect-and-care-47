@@ -1,8 +1,9 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CaregiverCard } from "./CaregiverCard";
+import { SpecializedCareFilters } from "../filters/SpecializedCareFilters";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Heart, Search, MapPin, Clock, Shield, Star } from "lucide-react";
@@ -118,11 +119,11 @@ export const CaregiverMatcher = () => {
       }
 
       if (filters.dementiaOnly) {
-        query = query.contains('specializations', ['dementia_care']);
+        query = query.eq('dementia_care_certified', true);
       }
 
       if (filters.mentalHealthOnly) {
-        query = query.contains('specializations', ['mental_health']);
+        query = query.eq('mental_health_certified', true);
       }
 
       if (filters.emergencyResponse) {
@@ -139,15 +140,12 @@ export const CaregiverMatcher = () => {
 
       if (error) throw error;
 
-      let filteredCaregivers = (data || []).map(caregiver => {
-        const availability = caregiver.availability as Availability | null;
-        return {
-          ...caregiver,
-          certifications: Array.isArray(caregiver.certifications) ? caregiver.certifications : [],
-          location: availability?.location || null,
-          availability: availability
-        } as SimplifiedCaregiverProfile;
-      });
+      let filteredCaregivers = (data || []).map(caregiver => ({
+        ...caregiver,
+        certifications: Array.isArray(caregiver.certifications) ? caregiver.certifications : [],
+        location: caregiver.availability?.location || null,
+        availability: caregiver.availability
+      }));
 
       if (userLocation && filters.maxDistance > 0) {
         filteredCaregivers = filteredCaregivers.filter(caregiver => {
@@ -235,6 +233,13 @@ export const CaregiverMatcher = () => {
             </Select>
           </div>
 
+          <SpecializedCareFilters
+            dementiaOnly={filters.dementiaOnly}
+            mentalHealthOnly={filters.mentalHealthOnly}
+            onDementiaChange={(value) => setFilters({ ...filters, dementiaOnly: value })}
+            onMentalHealthChange={(value) => setFilters({ ...filters, mentalHealthOnly: value })}
+          />
+
           <div className="flex flex-wrap gap-2">
             <Button
               variant="outline"
@@ -243,22 +248,6 @@ export const CaregiverMatcher = () => {
             >
               <Shield className="h-4 w-4 mr-2" />
               Verified Only
-            </Button>
-
-            <Button
-              variant="outline"
-              onClick={() => setFilters({ ...filters, dementiaOnly: !filters.dementiaOnly })}
-              className={filters.dementiaOnly ? "bg-primary-100" : ""}
-            >
-              Dementia Certified
-            </Button>
-
-            <Button
-              variant="outline"
-              onClick={() => setFilters({ ...filters, mentalHealthOnly: !filters.mentalHealthOnly })}
-              className={filters.mentalHealthOnly ? "bg-primary-100" : ""}
-            >
-              Mental Health Certified
             </Button>
 
             <Button

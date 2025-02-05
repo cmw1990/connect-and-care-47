@@ -973,11 +973,13 @@ export type Database = {
           bio: string | null
           certifications: Json | null
           created_at: string | null
+          dementia_care_certified: boolean | null
           emergency_response: boolean | null
           experience_years: number | null
           hourly_rate: number | null
           id: string
           identity_verified: boolean | null
+          mental_health_certified: boolean | null
           preferred_hours: Json | null
           rating: number | null
           reference_check_status: string | null
@@ -987,6 +989,7 @@ export type Database = {
           specializations: string[] | null
           updated_at: string | null
           user_id: string | null
+          verification_status: Json | null
         }
         Insert: {
           availability?: Json | null
@@ -995,11 +998,13 @@ export type Database = {
           bio?: string | null
           certifications?: Json | null
           created_at?: string | null
+          dementia_care_certified?: boolean | null
           emergency_response?: boolean | null
           experience_years?: number | null
           hourly_rate?: number | null
           id?: string
           identity_verified?: boolean | null
+          mental_health_certified?: boolean | null
           preferred_hours?: Json | null
           rating?: number | null
           reference_check_status?: string | null
@@ -1009,6 +1014,7 @@ export type Database = {
           specializations?: string[] | null
           updated_at?: string | null
           user_id?: string | null
+          verification_status?: Json | null
         }
         Update: {
           availability?: Json | null
@@ -1017,11 +1023,13 @@ export type Database = {
           bio?: string | null
           certifications?: Json | null
           created_at?: string | null
+          dementia_care_certified?: boolean | null
           emergency_response?: boolean | null
           experience_years?: number | null
           hourly_rate?: number | null
           id?: string
           identity_verified?: boolean | null
+          mental_health_certified?: boolean | null
           preferred_hours?: Json | null
           rating?: number | null
           reference_check_status?: string | null
@@ -1031,6 +1039,7 @@ export type Database = {
           specializations?: string[] | null
           updated_at?: string | null
           user_id?: string | null
+          verification_status?: Json | null
         }
         Relationships: [
           {
@@ -1271,6 +1280,7 @@ export type Database = {
           in_person_meeting_preference: boolean | null
           interests: string[] | null
           languages: string[] | null
+          mental_health_support: boolean | null
           preferred_activities: string[] | null
           rating: number | null
           reference_check_status: string | null
@@ -1293,6 +1303,7 @@ export type Database = {
           in_person_meeting_preference?: boolean | null
           interests?: string[] | null
           languages?: string[] | null
+          mental_health_support?: boolean | null
           preferred_activities?: string[] | null
           rating?: number | null
           reference_check_status?: string | null
@@ -1315,6 +1326,7 @@ export type Database = {
           in_person_meeting_preference?: boolean | null
           interests?: string[] | null
           languages?: string[] | null
+          mental_health_support?: boolean | null
           preferred_activities?: string[] | null
           rating?: number | null
           reference_check_status?: string | null
