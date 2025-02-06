@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { Check, Clock, X } from "lucide-react";
+import { MedicationVerificationControls } from "./MedicationVerificationControls";
 
 interface MedicationVerification {
   id: string;
@@ -92,17 +93,23 @@ export const MedicationVerificationHistory = ({ groupId }: { groupId: string }) 
                   )}
                 </div>
               </div>
-              <span
-                className={`text-xs px-2 py-1 rounded-full ${
-                  verification.status === 'verified'
-                    ? 'bg-green-100 text-green-700'
-                    : verification.status === 'rejected'
-                    ? 'bg-red-100 text-red-700'
-                    : 'bg-yellow-100 text-yellow-700'
-                }`}
-              >
-                {verification.status || 'pending'}
-              </span>
+              <div className="flex items-center gap-4">
+                <MedicationVerificationControls 
+                  verificationId={verification.id}
+                  currentStatus={verification.status}
+                />
+                <span
+                  className={`text-xs px-2 py-1 rounded-full ${
+                    verification.status === 'verified'
+                      ? 'bg-green-100 text-green-700'
+                      : verification.status === 'rejected'
+                      ? 'bg-red-100 text-red-700'
+                      : 'bg-yellow-100 text-yellow-700'
+                  }`}
+                >
+                  {verification.status || 'pending'}
+                </span>
+              </div>
             </div>
           ))}
           {verifications.length === 0 && (
