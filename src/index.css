@@ -84,7 +84,9 @@
     font-feature-settings: "ss01" on, "ss02" on, "cv01" on, "cv02" on,
       "cv03" on, "cv04" on;
   }
+}
 
+@layer components {
   /* Medical Theme Specific Styles */
   .theme-medical .card {
     @apply shadow-md rounded-lg border-medical-blue;
@@ -101,6 +103,38 @@
 
   .theme-apple .button-primary {
     @apply bg-apple-dark text-white hover:bg-apple-dark/90;
+  }
+
+  /* Modern scrollbar styling */
+  ::-webkit-scrollbar {
+    @apply w-1.5 h-1.5;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-gray-200 rounded-sm dark:bg-gray-700;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-gray-300 dark:bg-gray-600;
+  }
+
+  /* Focus styles */
+  :focus-visible {
+    @apply outline-none ring-2 ring-primary/40 ring-offset-2 ring-offset-background;
+  }
+
+  /* Button press effect */
+  .active-scale {
+    @apply active:scale-[0.98] transition-transform;
+  }
+
+  /* Card hover effect */
+  .card-hover {
+    @apply transition-all duration-300 hover:shadow-md hover:-translate-y-0.5;
   }
 }
 
