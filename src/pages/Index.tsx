@@ -17,6 +17,28 @@ import { VitalSignsMonitor } from "@/components/health/VitalSignsMonitor";
 import { MedicationReminder } from "@/components/medications/MedicationReminder";
 import { CareMetrics } from "@/components/analytics/CareMetrics";
 
+interface Appointment {
+  id: string;
+  title: string;
+  description?: string;
+  scheduled_time: string;
+  duration?: number;
+  location?: string;
+  attendees?: any;
+  group_id: string;
+}
+
+interface Notification {
+  id: string;
+  title: string;
+  message: string;
+  type: string;
+  read: boolean;
+  data?: any;
+  created_at: string;
+  user_id: string;
+}
+
 const Index = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -54,14 +76,14 @@ const Index = () => {
     }
   });
 
-  const { data: upcomingAppointments } = useQuery({
+  const { data: upcomingAppointments } = useQuery<Appointment[]>({
     queryKey: ['upcomingAppointments', primaryGroup?.id],
     enabled: !!primaryGroup?.id,
     queryFn: async () => {
       const { data, error } = await supabase
         .from('appointments')
         .select('*')
-        .eq('group_id', primaryGroup.id)
+        .eq('group_id', primaryGroup!.id)
         .gte('scheduled_time', new Date().toISOString())
         .order('scheduled_time', { ascending: true })
         .limit(3);
@@ -71,7 +93,7 @@ const Index = () => {
     }
   });
 
-  const { data: notifications } = useQuery({
+  const { data: notifications } = useQuery<Notification[]>({
     queryKey: ['notifications'],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
