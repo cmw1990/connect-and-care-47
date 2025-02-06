@@ -100,7 +100,13 @@ const Index = () => {
         <div className="grid md:grid-cols-3 gap-6">
           <div className="md:col-span-2">
             {primaryGroup?.id ? (
-              <CareOverview groupId={primaryGroup.id} />
+              <>
+                <CareOverview groupId={primaryGroup.id} />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+                  <MedicationReminder groupId={primaryGroup.id} />
+                  <CareMetrics groupId={primaryGroup.id} />
+                </div>
+              </>
             ) : (
               <motion.div 
                 className="text-center py-8 bg-white rounded-lg shadow-sm"

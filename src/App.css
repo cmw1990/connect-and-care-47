@@ -24,36 +24,4 @@
   .scale-in {
     @apply animate-scale-in;
   }
-
-  /* Modern scrollbar styling */
-  ::-webkit-scrollbar {
-    @apply w-1.5 h-1.5;
-  }
-
-  ::-webkit-scrollbar-track {
-    @apply bg-transparent;
-  }
-
-  ::-webkit-scrollbar-thumb {
-    @apply bg-gray-200 rounded-sm dark:bg-gray-700;
-  }
-
-  ::-webkit-scrollbar-thumb:hover {
-    @apply bg-gray-300 dark:bg-gray-600;
-  }
-
-  /* Focus styles */
-  :focus-visible {
-    @apply outline-none ring-2 ring-primary/40 ring-offset-2 ring-offset-background;
-  }
-
-  /* Button press effect */
-  .active-scale {
-    @apply active:scale-[0.98] transition-transform;
-  }
-
-  /* Card hover effect */
-  .card-hover {
-    @apply transition-all duration-300 hover:shadow-md hover:-translate-y-0.5;
-  }
 }
