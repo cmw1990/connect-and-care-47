@@ -1,69 +1,59 @@
-#root {
-  margin: 0 auto;
-  text-align: center;
-}
-
-@media (max-width: 768px) {
+@layer components {
   #root {
-    padding: 0;
+    @apply mx-auto text-center;
   }
-}
 
-.glass-card {
-  @apply bg-white/60 backdrop-blur-md border border-gray-100/50 shadow-sm dark:bg-gray-950/60 dark:border-gray-800/50;
-}
+  @media (max-width: 768px) {
+    #root {
+      @apply p-0;
+    }
+  }
 
-.hover-scale {
-  @apply transition-transform duration-300 hover:scale-[1.01];
-}
+  .glass-card {
+    @apply bg-white/60 backdrop-blur-md border border-gray-100/50 shadow-sm dark:bg-gray-950/60 dark:border-gray-800/50;
+  }
 
-.fade-in {
-  @apply animate-fade-in;
-}
+  .hover-scale {
+    @apply transition-transform duration-300 hover:scale-[1.01];
+  }
 
-.scale-in {
-  @apply animate-scale-in;
-}
+  .fade-in {
+    @apply animate-fade-in;
+  }
 
-/* Modern scrollbar styling */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
+  .scale-in {
+    @apply animate-scale-in;
+  }
 
-::-webkit-scrollbar-track {
-  background: transparent;
-}
+  /* Modern scrollbar styling */
+  ::-webkit-scrollbar {
+    @apply w-1.5 h-1.5;
+  }
 
-::-webkit-scrollbar-thumb {
-  background: #e2e8f0;
-  border-radius: 4px;
-}
+  ::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
 
-::-webkit-scrollbar-thumb:hover {
-  background: #cbd5e1;
-}
+  ::-webkit-scrollbar-thumb {
+    @apply bg-gray-200 rounded-sm dark:bg-gray-700;
+  }
 
-/* Dark mode scrollbar */
-.dark ::-webkit-scrollbar-thumb {
-  background: #334155;
-}
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-gray-300 dark:bg-gray-600;
+  }
 
-.dark ::-webkit-scrollbar-thumb:hover {
-  background: #475569;
-}
+  /* Focus styles */
+  :focus-visible {
+    @apply outline-none ring-2 ring-primary/40 ring-offset-2 ring-offset-background;
+  }
 
-/* Focus styles */
-:focus-visible {
-  @apply outline-none ring-2 ring-primary/40 ring-offset-2 ring-offset-background;
-}
+  /* Button press effect */
+  .active-scale {
+    @apply active:scale-[0.98] transition-transform;
+  }
 
-/* Button press effect */
-.active-scale {
-  @apply active:scale-[0.98] transition-transform;
-}
-
-/* Card hover effect */
-.card-hover {
-  @apply transition-all duration-300 hover:shadow-md hover:-translate-y-0.5;
+  /* Card hover effect */
+  .card-hover {
+    @apply transition-all duration-300 hover:shadow-md hover:-translate-y-0.5;
+  }
 }
