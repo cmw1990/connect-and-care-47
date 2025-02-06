@@ -72,9 +72,8 @@ export const TaskScheduler = ({ groupId }: TaskSchedulerProps) => {
   };
 
   useEffect(() => {
-    // Subscribe to real-time task updates
-    const channel = supabase
-      .channel('tasks_channel')
+    // Subscribe to real-time task updates using the new Supabase syntax
+    const channel = supabase.channel('tasks_channel')
       .on(
         'postgres_changes',
         {
@@ -83,16 +82,12 @@ export const TaskScheduler = ({ groupId }: TaskSchedulerProps) => {
           table: 'tasks',
           filter: `group_id=eq.${groupId}`
         },
-        (payload: { 
-          eventType: 'INSERT' | 'UPDATE' | 'DELETE';
-          new: Task;
-          old: Task | null;
-        }) => {
+        (payload) => {
           console.log('Task change received:', payload);
           refetchTasks();
           
-          const eventType = payload.eventType;
-          const newTask = payload.new;
+          const eventType = payload.eventType as 'INSERT' | 'UPDATE' | 'DELETE';
+          const newTask = payload.new as Task;
           
           // Show appropriate notification based on event type
           if (eventType === 'INSERT') {
