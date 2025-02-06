@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Check, Clock, Tag, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -13,7 +12,7 @@ interface Task {
   priority: string;
   tags?: string[];
   recurring?: boolean;
-  recurrence_pattern?: { type: string };
+  recurrence_pattern?: { type: string } | null;
   reminder_time?: string;
 }
 

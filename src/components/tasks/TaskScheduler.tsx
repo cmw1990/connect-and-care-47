@@ -21,7 +21,14 @@ export const TaskScheduler = ({ groupId }: TaskSchedulerProps) => {
         .order('due_date', { ascending: true });
 
       if (error) throw error;
-      return data;
+      
+      // Transform the data to ensure recurrence_pattern is correctly typed
+      return data?.map(task => ({
+        ...task,
+        recurrence_pattern: typeof task.recurrence_pattern === 'string' 
+          ? JSON.parse(task.recurrence_pattern)
+          : task.recurrence_pattern
+      }));
     }
   });
 
