@@ -10,8 +10,10 @@ interface Task {
   description?: string;
   due_date: string;
   status: string;
+  priority: string;
   tags?: string[];
   recurring?: boolean;
+  recurrence_pattern?: { type: string };
   reminder_time?: string;
 }
 
@@ -55,6 +57,17 @@ export const TaskList = ({ tasks, onTaskUpdated }: TaskListProps) => {
     });
   };
 
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case 'high':
+        return 'text-red-600 bg-red-50';
+      case 'low':
+        return 'text-green-600 bg-green-50';
+      default:
+        return 'text-yellow-600 bg-yellow-50';
+    }
+  };
+
   return (
     <div className="space-y-2">
       {tasks?.map((task) => (
@@ -64,7 +77,12 @@ export const TaskList = ({ tasks, onTaskUpdated }: TaskListProps) => {
         >
           <div className="flex items-start justify-between">
             <div className="space-y-1">
-              <h3 className="font-medium">{task.title}</h3>
+              <div className="flex items-center gap-2">
+                <h3 className="font-medium">{task.title}</h3>
+                <span className={`text-xs px-2 py-0.5 rounded-full ${getPriorityColor(task.priority)}`}>
+                  {task.priority}
+                </span>
+              </div>
               {task.description && (
                 <p className="text-sm text-gray-600">{task.description}</p>
               )}
@@ -121,9 +139,9 @@ export const TaskList = ({ tasks, onTaskUpdated }: TaskListProps) => {
             </div>
           )}
           
-          {task.recurring && (
+          {task.recurring && task.recurrence_pattern?.type && (
             <span className="text-xs text-primary bg-primary/10 px-2 py-1 rounded-full self-start">
-              Recurring
+              Recurring ({task.recurrence_pattern.type})
             </span>
           )}
         </div>

@@ -9,6 +9,13 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { Clock, Plus, Tag, X } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface TaskFormProps {
   groupId: string;
@@ -20,6 +27,8 @@ export const TaskForm = ({ groupId, onTaskCreated }: TaskFormProps) => {
   const [date, setDate] = useState<Date>();
   const [description, setDescription] = useState("");
   const [isRecurring, setIsRecurring] = useState(false);
+  const [recurrencePattern, setRecurrencePattern] = useState("weekly");
+  const [priority, setPriority] = useState("normal");
   const [tags, setTags] = useState<string[]>([]);
   const [currentTag, setCurrentTag] = useState("");
   const [reminderTime, setReminderTime] = useState("");
@@ -52,10 +61,10 @@ export const TaskForm = ({ groupId, onTaskCreated }: TaskFormProps) => {
         due_date: date.toISOString(),
         group_id: groupId,
         status: "pending",
-        priority: "normal",
+        priority,
         description,
         recurring: isRecurring,
-        recurrence_pattern: isRecurring ? { type: "weekly" } : { type: "none" },
+        recurrence_pattern: isRecurring ? { type: recurrencePattern } : { type: "none" },
         tags,
         reminder_time: reminderTime ? new Date(date.setHours(
           parseInt(reminderTime.split(":")[0]),
@@ -77,6 +86,8 @@ export const TaskForm = ({ groupId, onTaskCreated }: TaskFormProps) => {
       setDate(undefined);
       setDescription("");
       setIsRecurring(false);
+      setRecurrencePattern("weekly");
+      setPriority("normal");
       setTags([]);
       setCurrentTag("");
       setReminderTime("");
@@ -124,6 +135,20 @@ export const TaskForm = ({ groupId, onTaskCreated }: TaskFormProps) => {
       </div>
 
       <div className="space-y-2">
+        <Label htmlFor="priority">Priority</Label>
+        <Select value={priority} onValueChange={setPriority}>
+          <SelectTrigger>
+            <SelectValue placeholder="Select priority" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="low">Low</SelectItem>
+            <SelectItem value="normal">Normal</SelectItem>
+            <SelectItem value="high">High</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="space-y-2">
         <Label htmlFor="reminder">Reminder Time</Label>
         <Input
           id="reminder"
@@ -133,13 +158,27 @@ export const TaskForm = ({ groupId, onTaskCreated }: TaskFormProps) => {
         />
       </div>
 
-      <div className="flex items-center space-x-2">
-        <Switch
-          id="recurring"
-          checked={isRecurring}
-          onCheckedChange={setIsRecurring}
-        />
-        <Label htmlFor="recurring">Recurring Task</Label>
+      <div className="space-y-2">
+        <div className="flex items-center space-x-2">
+          <Switch
+            id="recurring"
+            checked={isRecurring}
+            onCheckedChange={setIsRecurring}
+          />
+          <Label htmlFor="recurring">Recurring Task</Label>
+        </div>
+        {isRecurring && (
+          <Select value={recurrencePattern} onValueChange={setRecurrencePattern}>
+            <SelectTrigger>
+              <SelectValue placeholder="Select recurrence pattern" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="daily">Daily</SelectItem>
+              <SelectItem value="weekly">Weekly</SelectItem>
+              <SelectItem value="monthly">Monthly</SelectItem>
+            </SelectContent>
+          </Select>
+        )}
       </div>
 
       <div className="space-y-2">
