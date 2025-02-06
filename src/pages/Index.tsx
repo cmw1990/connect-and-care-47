@@ -1,7 +1,8 @@
+
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Play, Activity } from "lucide-react";
+import { Play, Activity, Bell, Calendar, Heart, Search } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -53,6 +54,41 @@ const Index = () => {
     }
   });
 
+  const { data: upcomingAppointments } = useQuery({
+    queryKey: ['upcomingAppointments', primaryGroup?.id],
+    enabled: !!primaryGroup?.id,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('appointments')
+        .select('*')
+        .eq('group_id', primaryGroup.id)
+        .gte('scheduled_time', new Date().toISOString())
+        .order('scheduled_time', { ascending: true })
+        .limit(3);
+
+      if (error) throw error;
+      return data;
+    }
+  });
+
+  const { data: notifications } = useQuery({
+    queryKey: ['notifications'],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return [];
+
+      const { data, error } = await supabase
+        .from('notifications')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(5);
+
+      if (error) throw error;
+      return data;
+    }
+  });
+
   if (isLoadingGroup) {
     return (
       <div className="flex justify-center items-center min-h-screen">
@@ -64,6 +100,18 @@ const Index = () => {
       </div>
     );
   }
+
+  const navigateToNotifications = () => {
+    navigate('/notifications');
+  };
+
+  const navigateToAppointments = () => {
+    navigate('/appointments');
+  };
+
+  const navigateToSearch = () => {
+    navigate('/search');
+  };
 
   return (
     <AnimatePresence mode="wait">
@@ -79,6 +127,33 @@ const Index = () => {
             <p className="text-gray-600 mt-2">Your comprehensive care management platform</p>
           </div>
           <div className="flex gap-4">
+            <Button 
+              variant="outline" 
+              size="icon"
+              onClick={navigateToNotifications}
+              className="relative"
+            >
+              <Bell className="h-4 w-4" />
+              {notifications?.length > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
+                  {notifications.length}
+                </span>
+              )}
+            </Button>
+            <Button 
+              variant="outline" 
+              size="icon"
+              onClick={navigateToAppointments}
+            >
+              <Calendar className="h-4 w-4" />
+            </Button>
+            <Button 
+              variant="outline" 
+              size="icon"
+              onClick={navigateToSearch}
+            >
+              <Search className="h-4 w-4" />
+            </Button>
             <WellnessScore groupId={primaryGroup?.id} />
             <Button 
               onClick={() => navigate('/care-guides')}
@@ -95,6 +170,37 @@ const Index = () => {
             <EmergencySOSButton groupId={primaryGroup.id} />
             <VitalSignsMonitor groupId={primaryGroup.id} />
           </div>
+        )}
+
+        {upcomingAppointments && upcomingAppointments.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-white rounded-lg p-4 shadow-sm"
+          >
+            <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+              <Calendar className="h-5 w-5 text-primary" />
+              Upcoming Appointments
+            </h3>
+            <div className="space-y-2">
+              {upcomingAppointments.map((appointment) => (
+                <div 
+                  key={appointment.id}
+                  className="flex justify-between items-center p-3 bg-gray-50 rounded-md"
+                >
+                  <div>
+                    <p className="font-medium">{appointment.title}</p>
+                    <p className="text-sm text-gray-600">
+                      {new Date(appointment.scheduled_time).toLocaleString()}
+                    </p>
+                  </div>
+                  <Button variant="outline" size="sm" onClick={() => navigate(`/appointments/${appointment.id}`)}>
+                    View Details
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </motion.div>
         )}
 
         <QuickActions />
