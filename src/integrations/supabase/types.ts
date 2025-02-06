@@ -1727,6 +1727,50 @@ export type Database = {
           },
         ]
       }
+      medication_verifications: {
+        Row: {
+          created_at: string
+          group_id: string
+          id: string
+          medication_schedule_id: string | null
+          notes: string | null
+          photo_url: string | null
+          status: string | null
+          verification_time: string
+          verified_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          group_id: string
+          id?: string
+          medication_schedule_id?: string | null
+          notes?: string | null
+          photo_url?: string | null
+          status?: string | null
+          verification_time: string
+          verified_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          group_id?: string
+          id?: string
+          medication_schedule_id?: string | null
+          notes?: string | null
+          photo_url?: string | null
+          status?: string | null
+          verification_time?: string
+          verified_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "medication_verifications_medication_schedule_id_fkey"
+            columns: ["medication_schedule_id"]
+            isOneToOne: false
+            referencedRelation: "medication_schedules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notifications: {
         Row: {
           created_at: string | null
