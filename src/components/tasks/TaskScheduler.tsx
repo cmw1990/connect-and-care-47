@@ -12,6 +12,16 @@ interface TaskSchedulerProps {
   groupId: string;
 }
 
+interface Task {
+  id: string;
+  title: string;
+  description?: string;
+  due_date: string;
+  status: string;
+  priority: string;
+  group_id: string;
+}
+
 export const TaskScheduler = ({ groupId }: TaskSchedulerProps) => {
   const { toast } = useToast();
 
@@ -48,7 +58,11 @@ export const TaskScheduler = ({ groupId }: TaskSchedulerProps) => {
           table: 'tasks',
           filter: `group_id=eq.${groupId}`
         },
-        (payload) => {
+        (payload: { 
+          eventType: 'INSERT' | 'UPDATE' | 'DELETE';
+          new: Task;
+          old: Task | null;
+        }) => {
           console.log('Task change received:', payload);
           refetchTasks();
           
