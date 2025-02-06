@@ -2454,6 +2454,7 @@ export type Database = {
         Row: {
           assigned_to: string | null
           category: string | null
+          completion_notes: string | null
           created_at: string
           created_by: string | null
           description: string | null
@@ -2462,13 +2463,20 @@ export type Database = {
           id: string
           priority: string | null
           privacy_level: string | null
+          recurrence_pattern: Json | null
+          recurring: boolean | null
+          reminder_sent: boolean | null
+          reminder_time: string | null
           status: string | null
+          subtasks: Json | null
+          tags: string[] | null
           title: string
           updated_at: string
         }
         Insert: {
           assigned_to?: string | null
           category?: string | null
+          completion_notes?: string | null
           created_at?: string
           created_by?: string | null
           description?: string | null
@@ -2477,13 +2485,20 @@ export type Database = {
           id?: string
           priority?: string | null
           privacy_level?: string | null
+          recurrence_pattern?: Json | null
+          recurring?: boolean | null
+          reminder_sent?: boolean | null
+          reminder_time?: string | null
           status?: string | null
+          subtasks?: Json | null
+          tags?: string[] | null
           title: string
           updated_at?: string
         }
         Update: {
           assigned_to?: string | null
           category?: string | null
+          completion_notes?: string | null
           created_at?: string
           created_by?: string | null
           description?: string | null
@@ -2492,7 +2507,13 @@ export type Database = {
           id?: string
           priority?: string | null
           privacy_level?: string | null
+          recurrence_pattern?: Json | null
+          recurring?: boolean | null
+          reminder_sent?: boolean | null
+          reminder_time?: string | null
           status?: string | null
+          subtasks?: Json | null
+          tags?: string[] | null
           title?: string
           updated_at?: string
         }
