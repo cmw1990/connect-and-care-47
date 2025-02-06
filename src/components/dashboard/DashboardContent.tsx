@@ -11,6 +11,7 @@ import { CareGuideExamples } from "./CareGuideExamples";
 import { MedicationReminder } from "@/components/medications/MedicationReminder";
 import { CareMetrics } from "@/components/analytics/CareMetrics";
 import { EmergencySOSButton } from "@/components/emergency/EmergencySOSButton";
+import { TaskScheduler } from "@/components/tasks/TaskScheduler";
 
 interface DashboardContentProps {
   primaryGroup?: {
@@ -71,6 +72,9 @@ export const DashboardContent = ({ primaryGroup, upcomingAppointments }: Dashboa
               <CareOverview groupId={primaryGroup.id} />
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
                 <MedicationReminder groupId={primaryGroup.id} />
+                <TaskScheduler groupId={primaryGroup.id} />
+              </div>
+              <div className="mt-6">
                 <CareMetrics groupId={primaryGroup.id} />
               </div>
             </>
