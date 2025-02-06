@@ -13,6 +13,8 @@ import { RecentActivity } from "@/components/dashboard/RecentActivity";
 import { WellnessScore } from "@/components/dashboard/WellnessScore";
 import { EmergencySOSButton } from "@/components/emergency/EmergencySOSButton";
 import { VitalSignsMonitor } from "@/components/health/VitalSignsMonitor";
+import { MedicationReminder } from "@/components/medications/MedicationReminder";
+import { CareMetrics } from "@/components/analytics/CareMetrics";
 
 const Index = () => {
   const navigate = useNavigate();
