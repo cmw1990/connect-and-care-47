@@ -1,18 +1,9 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer components {
-  #root {
-    @apply mx-auto text-center;
-  }
-
-  @media (max-width: 768px) {
-    #root {
-      @apply p-0;
-    }
-  }
-
   .glass-card {
     @apply bg-white/60 backdrop-blur-md border border-gray-100/50 shadow-sm dark:bg-gray-950/60 dark:border-gray-800/50;
   }
