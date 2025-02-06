@@ -11,6 +11,8 @@ import { CareGuideExamples } from "@/components/dashboard/CareGuideExamples";
 import { motion, AnimatePresence } from "framer-motion";
 import { RecentActivity } from "@/components/dashboard/RecentActivity";
 import { WellnessScore } from "@/components/dashboard/WellnessScore";
+import { EmergencySOSButton } from "@/components/emergency/EmergencySOSButton";
+import { VitalSignsMonitor } from "@/components/health/VitalSignsMonitor";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -85,6 +87,13 @@ const Index = () => {
             </Button>
           </div>
         </div>
+
+        {primaryGroup?.id && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <EmergencySOSButton groupId={primaryGroup.id} />
+            <VitalSignsMonitor groupId={primaryGroup.id} />
+          </div>
+        )}
 
         <QuickActions />
 
