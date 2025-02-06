@@ -4,10 +4,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Camera, Check, Pill, Upload } from "lucide-react";
 import { MedicationVerificationHistory } from "./MedicationVerificationHistory";
+import { MedicationVerificationSettings } from "./MedicationVerificationSettings";
 
 interface MedicationTrackerProps {
   groupId: string;
@@ -22,6 +24,9 @@ export const MedicationTracker = ({
 }: MedicationTrackerProps) => {
   const [isVerifying, setIsVerifying] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [symptoms, setSymptoms] = useState<string[]>([]);
+  const [sideEffects, setSideEffects] = useState<string[]>([]);
+  const [notes, setNotes] = useState("");
   const { toast } = useToast();
 
   const handlePhotoVerification = async (file: File) => {
@@ -50,7 +55,10 @@ export const MedicationTracker = ({
           group_id: groupId,
           photo_url: publicUrl,
           verification_time: new Date().toISOString(),
-          status: 'pending'
+          status: 'pending',
+          symptoms: symptoms,
+          side_effects: sideEffects,
+          notes: notes
         });
 
       if (verificationError) throw verificationError;
@@ -62,6 +70,9 @@ export const MedicationTracker = ({
 
       onMedicationStatusChange(true);
       setIsVerifying(false);
+      setSymptoms([]);
+      setSideEffects([]);
+      setNotes("");
     } catch (error) {
       console.error('Error uploading verification:', error);
       toast({
@@ -113,6 +124,33 @@ export const MedicationTracker = ({
                 className="hidden"
                 id="camera-input"
               />
+              <div className="space-y-2">
+                <Label htmlFor="symptoms">Any Symptoms?</Label>
+                <Textarea
+                  id="symptoms"
+                  value={symptoms.join(", ")}
+                  onChange={(e) => setSymptoms(e.target.value.split(",").map(s => s.trim()))}
+                  placeholder="Enter symptoms separated by commas"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="sideEffects">Side Effects</Label>
+                <Textarea
+                  id="sideEffects"
+                  value={sideEffects.join(", ")}
+                  onChange={(e) => setSideEffects(e.target.value.split(",").map(s => s.trim()))}
+                  placeholder="Enter side effects separated by commas"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="notes">Additional Notes</Label>
+                <Textarea
+                  id="notes"
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  placeholder="Any additional notes..."
+                />
+              </div>
               <label htmlFor="camera-input">
                 <Button variant="outline" className="w-full" disabled={uploading}>
                   <Camera className="mr-2 h-4 w-4" />
@@ -132,6 +170,7 @@ export const MedicationTracker = ({
         </CardContent>
       </Card>
 
+      <MedicationVerificationSettings groupId={groupId} />
       <MedicationVerificationHistory groupId={groupId} />
     </div>
   );

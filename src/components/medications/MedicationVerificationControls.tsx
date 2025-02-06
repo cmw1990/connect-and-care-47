@@ -4,6 +4,15 @@ import { Button } from "@/components/ui/button";
 import { Check, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 
 interface MedicationVerificationControlsProps {
   verificationId: string;
@@ -15,14 +24,25 @@ export const MedicationVerificationControls = ({
   currentStatus,
 }: MedicationVerificationControlsProps) => {
   const [isUpdating, setIsUpdating] = useState(false);
+  const [rejectionReason, setRejectionReason] = useState("");
+  const [showRejectDialog, setShowRejectDialog] = useState(false);
   const { toast } = useToast();
 
   const updateVerificationStatus = async (status: 'verified' | 'rejected') => {
     try {
       setIsUpdating(true);
+      const updateData: any = { 
+        status,
+        verified_at: status === 'verified' ? new Date().toISOString() : null
+      };
+      
+      if (status === 'rejected') {
+        updateData.rejection_reason = rejectionReason;
+      }
+
       const { error } = await supabase
         .from('medication_verifications')
-        .update({ status })
+        .update(updateData)
         .eq('id', verificationId);
 
       if (error) throw error;
@@ -31,6 +51,11 @@ export const MedicationVerificationControls = ({
         title: "Success",
         description: `Verification ${status} successfully`,
       });
+      
+      if (status === 'rejected') {
+        setShowRejectDialog(false);
+        setRejectionReason("");
+      }
     } catch (error) {
       console.error('Error updating verification:', error);
       toast({
@@ -57,16 +82,43 @@ export const MedicationVerificationControls = ({
         <Check className="h-4 w-4 mr-1" />
         Approve
       </Button>
-      <Button
-        variant="outline"
-        size="sm"
-        className="text-red-600 hover:text-red-700"
-        onClick={() => updateVerificationStatus('rejected')}
-        disabled={isUpdating}
-      >
-        <X className="h-4 w-4 mr-1" />
-        Reject
-      </Button>
+      
+      <Dialog open={showRejectDialog} onOpenChange={setShowRejectDialog}>
+        <DialogTrigger asChild>
+          <Button
+            variant="outline"
+            size="sm"
+            className="text-red-600 hover:text-red-700"
+            disabled={isUpdating}
+          >
+            <X className="h-4 w-4 mr-1" />
+            Reject
+          </Button>
+        </DialogTrigger>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Reject Verification</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="rejectionReason">Reason for Rejection</Label>
+              <Textarea
+                id="rejectionReason"
+                value={rejectionReason}
+                onChange={(e) => setRejectionReason(e.target.value)}
+                placeholder="Please provide a reason for rejecting this verification..."
+              />
+            </div>
+            <Button 
+              className="w-full"
+              onClick={() => updateVerificationStatus('rejected')}
+              disabled={!rejectionReason.trim()}
+            >
+              Confirm Rejection
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
