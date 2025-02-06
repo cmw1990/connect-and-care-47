@@ -1,46 +1,13 @@
 
 import React from "react";
-import { useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Play, Activity, Bell, Calendar, Heart, Search } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { QuickActions } from "@/components/dashboard/QuickActions";
-import { CareOverview } from "@/components/dashboard/CareOverview";
-import { CareGuideExamples } from "@/components/dashboard/CareGuideExamples";
-import { motion, AnimatePresence } from "framer-motion";
-import { RecentActivity } from "@/components/dashboard/RecentActivity";
-import { WellnessScore } from "@/components/dashboard/WellnessScore";
-import { EmergencySOSButton } from "@/components/emergency/EmergencySOSButton";
-import { VitalSignsMonitor } from "@/components/health/VitalSignsMonitor";
-import { MedicationReminder } from "@/components/medications/MedicationReminder";
-import { CareMetrics } from "@/components/analytics/CareMetrics";
-
-interface Appointment {
-  id: string;
-  title: string;
-  description?: string;
-  scheduled_time: string;
-  duration?: number;
-  location?: string;
-  attendees?: any;
-  group_id: string;
-}
-
-interface Notification {
-  id: string;
-  title: string;
-  message: string;
-  type: string;
-  read: boolean;
-  data?: any;
-  created_at: string;
-  user_id: string;
-}
+import { AnimatePresence, motion } from "framer-motion";
+import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
+import { DashboardContent } from "@/components/dashboard/DashboardContent";
 
 const Index = () => {
-  const navigate = useNavigate();
   const { toast } = useToast();
 
   const { data: primaryGroup, isLoading: isLoadingGroup } = useQuery({
@@ -76,7 +43,7 @@ const Index = () => {
     }
   });
 
-  const { data: upcomingAppointments } = useQuery<Appointment[]>({
+  const { data: upcomingAppointments } = useQuery({
     queryKey: ['upcomingAppointments', primaryGroup?.id],
     enabled: !!primaryGroup?.id,
     queryFn: async () => {
@@ -93,7 +60,7 @@ const Index = () => {
     }
   });
 
-  const { data: notifications } = useQuery<Notification[]>({
+  const { data: notifications } = useQuery({
     queryKey: ['notifications'],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -123,18 +90,6 @@ const Index = () => {
     );
   }
 
-  const navigateToNotifications = () => {
-    navigate('/notifications');
-  };
-
-  const navigateToAppointments = () => {
-    navigate('/appointments');
-  };
-
-  const navigateToSearch = () => {
-    navigate('/search');
-  };
-
   return (
     <AnimatePresence mode="wait">
       <motion.div
@@ -143,127 +98,14 @@ const Index = () => {
         exit={{ opacity: 0, y: -20 }}
         className="container mx-auto px-4 py-8 space-y-6"
       >
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
-          <div>
-            <h1 className="text-3xl font-bold">Welcome to Care Companion</h1>
-            <p className="text-gray-600 mt-2">Your comprehensive care management platform</p>
-          </div>
-          <div className="flex gap-4">
-            <Button 
-              variant="outline" 
-              size="icon"
-              onClick={navigateToNotifications}
-              className="relative"
-            >
-              <Bell className="h-4 w-4" />
-              {notifications?.length > 0 && (
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
-                  {notifications.length}
-                </span>
-              )}
-            </Button>
-            <Button 
-              variant="outline" 
-              size="icon"
-              onClick={navigateToAppointments}
-            >
-              <Calendar className="h-4 w-4" />
-            </Button>
-            <Button 
-              variant="outline" 
-              size="icon"
-              onClick={navigateToSearch}
-            >
-              <Search className="h-4 w-4" />
-            </Button>
-            <WellnessScore groupId={primaryGroup?.id} />
-            <Button 
-              onClick={() => navigate('/care-guides')}
-              className="bg-primary hover:bg-primary/90 transition-all duration-300 transform hover:scale-105"
-            >
-              <Play className="mr-2 h-4 w-4" />
-              Generate Care Guides
-            </Button>
-          </div>
-        </div>
-
-        {primaryGroup?.id && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-            <EmergencySOSButton groupId={primaryGroup.id} />
-            <VitalSignsMonitor groupId={primaryGroup.id} />
-          </div>
-        )}
-
-        {upcomingAppointments && upcomingAppointments.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-white rounded-lg p-4 shadow-sm"
-          >
-            <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
-              <Calendar className="h-5 w-5 text-primary" />
-              Upcoming Appointments
-            </h3>
-            <div className="space-y-2">
-              {upcomingAppointments.map((appointment) => (
-                <div 
-                  key={appointment.id}
-                  className="flex justify-between items-center p-3 bg-gray-50 rounded-md"
-                >
-                  <div>
-                    <p className="font-medium">{appointment.title}</p>
-                    <p className="text-sm text-gray-600">
-                      {new Date(appointment.scheduled_time).toLocaleString()}
-                    </p>
-                  </div>
-                  <Button variant="outline" size="sm" onClick={() => navigate(`/appointments/${appointment.id}`)}>
-                    View Details
-                  </Button>
-                </div>
-              ))}
-            </div>
-          </motion.div>
-        )}
-
-        <QuickActions />
-
-        <div className="grid md:grid-cols-3 gap-6">
-          <div className="md:col-span-2">
-            {primaryGroup?.id ? (
-              <>
-                <CareOverview groupId={primaryGroup.id} />
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
-                  <MedicationReminder groupId={primaryGroup.id} />
-                  <CareMetrics groupId={primaryGroup.id} />
-                </div>
-              </>
-            ) : (
-              <motion.div 
-                className="text-center py-8 bg-white rounded-lg shadow-sm"
-                initial={{ scale: 0.95 }}
-                animate={{ scale: 1 }}
-                transition={{ duration: 0.3 }}
-              >
-                <Activity className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                <h3 className="text-lg font-medium mb-2">No Care Group Found</h3>
-                <p className="text-muted-foreground mb-4">
-                  Join a care group to access check-ins and other features
-                </p>
-                <Button 
-                  onClick={() => navigate('/groups')}
-                  className="transition-all duration-300 hover:scale-105"
-                >
-                  Find or Create a Care Group
-                </Button>
-              </motion.div>
-            )}
-          </div>
-          
-          <div className="space-y-6">
-            <RecentActivity groupId={primaryGroup?.id} />
-            <CareGuideExamples />
-          </div>
-        </div>
+        <DashboardHeader 
+          notifications={notifications} 
+          groupId={primaryGroup?.id} 
+        />
+        <DashboardContent 
+          primaryGroup={primaryGroup} 
+          upcomingAppointments={upcomingAppointments}
+        />
       </motion.div>
     </AnimatePresence>
   );
