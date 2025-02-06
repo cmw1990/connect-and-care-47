@@ -5,12 +5,16 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { TaskForm } from "./TaskForm";
 import { TaskList } from "./TaskList";
+import { useEffect } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 interface TaskSchedulerProps {
   groupId: string;
 }
 
 export const TaskScheduler = ({ groupId }: TaskSchedulerProps) => {
+  const { toast } = useToast();
+
   const { data: tasks, refetch: refetchTasks } = useQuery({
     queryKey: ['tasks', groupId],
     queryFn: async () => {
@@ -31,6 +35,52 @@ export const TaskScheduler = ({ groupId }: TaskSchedulerProps) => {
       }));
     }
   });
+
+  useEffect(() => {
+    // Subscribe to real-time task updates
+    const channel = supabase
+      .channel('tasks_channel')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'tasks',
+          filter: `group_id=eq.${groupId}`
+        },
+        (payload) => {
+          console.log('Task change received:', payload);
+          refetchTasks();
+          
+          const eventType = payload.eventType;
+          const newTask = payload.new;
+          
+          // Show appropriate notification based on event type
+          if (eventType === 'INSERT') {
+            toast({
+              title: "New Task Added",
+              description: `Task "${newTask.title}" has been added.`
+            });
+          } else if (eventType === 'UPDATE') {
+            toast({
+              title: "Task Updated",
+              description: `Task "${newTask.title}" has been updated.`
+            });
+          } else if (eventType === 'DELETE') {
+            toast({
+              title: "Task Deleted",
+              description: "A task has been removed."
+            });
+          }
+        }
+      )
+      .subscribe();
+
+    // Cleanup subscription
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [groupId, refetchTasks, toast]);
 
   return (
     <Card>
