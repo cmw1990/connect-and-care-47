@@ -1,5 +1,8 @@
 
 import { motion } from "framer-motion";
+import { Calendar, Activity } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 import { VitalSignsMonitor } from "@/components/health/VitalSignsMonitor";
 import { QuickActions } from "./QuickActions";
 import { CareOverview } from "./CareOverview";
@@ -17,6 +20,8 @@ interface DashboardContentProps {
 }
 
 export const DashboardContent = ({ primaryGroup, upcomingAppointments }: DashboardContentProps) => {
+  const navigate = useNavigate();
+
   return (
     <div className="space-y-6">
       {primaryGroup?.id && (
