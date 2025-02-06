@@ -1,149 +1,72 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+/* Tailwind directives */
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
 
-@layer base {
+/* Theme variables */
+:root {
   /* Modern Medical Theme */
-  .theme-medical {
-    --background: 210 50% 98%;
-    --foreground: 220 10% 30%;
-    --card: 0 0% 100%;
-    --card-foreground: 220 10% 30%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 220 10% 30%;
-    --primary: 213 86% 75%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 144 35% 74%;
-    --secondary-foreground: 0 0% 100%;
-    --muted: 220 5% 96%;
-    --muted-foreground: 220 5% 45%;
-    --accent: 210 80% 91%;
-    --accent-foreground: 220 10% 30%;
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 100%;
-    --border: 220 20% 92%;
-    --input: 220 20% 92%;
-    --ring: 213 86% 75%;
-    --radius: 8px;
-  }
-
-  /* Apple Theme */
-  .theme-apple {
-    --background: 240 4% 97%;
-    --foreground: 240 3% 12%;
-    --card: 0 0% 100%;
-    --card-foreground: 240 3% 12%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 240 3% 12%;
-    --primary: 240 5% 65%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 240 4% 97%;
-    --secondary-foreground: 240 3% 12%;
-    --muted: 240 4% 95%;
-    --muted-foreground: 240 3% 45%;
-    --accent: 240 4% 95%;
-    --accent-foreground: 240 3% 12%;
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 100%;
-    --border: 240 5% 90%;
-    --input: 240 5% 90%;
-    --ring: 240 5% 65%;
-    --radius: 12px;
-  }
-
-  .dark {
-    --background: 220 20% 12%;
-    --foreground: 220 10% 85%;
-    --card: 220 20% 12%;
-    --card-foreground: 220 10% 85%;
-    --popover: 220 20% 12%;
-    --popover-foreground: 220 10% 85%;
-    --primary: 213 86% 75%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 144 35% 74%;
-    --secondary-foreground: 0 0% 100%;
-    --muted: 220 15% 20%;
-    --muted-foreground: 220 10% 70%;
-    --accent: 6 100% 84%;
-    --accent-foreground: 0 0% 100%;
-    --destructive: 6 100% 84%;
-    --destructive-foreground: 220 10% 85%;
-    --border: 220 15% 20%;
-    --input: 220 15% 20%;
-    --ring: 213 86% 75%;
-  }
+  --background: 210 50% 98%;
+  --foreground: 220 10% 30%;
+  --card: 0 0% 100%;
+  --card-foreground: 220 10% 30%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 220 10% 30%;
+  --primary: 213 86% 75%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 144 35% 74%;
+  --secondary-foreground: 0 0% 100%;
+  --muted: 220 5% 96%;
+  --muted-foreground: 220 5% 45%;
+  --accent: 210 80% 91%;
+  --accent-foreground: 220 10% 30%;
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 220 20% 92%;
+  --input: 220 20% 92%;
+  --ring: 213 86% 75%;
+  --radius: 8px;
 }
 
-@layer base {
-  * {
-    @apply border-border;
-  }
-
-  body {
-    @apply bg-background text-foreground antialiased;
-    font-feature-settings: "ss01" on, "ss02" on, "cv01" on, "cv02" on,
-      "cv03" on, "cv04" on;
-  }
+/* Dark mode overrides */
+.dark {
+  --background: 220 20% 12%;
+  --foreground: 220 10% 85%;
+  --card: 220 20% 12%;
+  --card-foreground: 220 10% 85%;
+  --popover: 220 20% 12%;
+  --popover-foreground: 220 10% 85%;
+  --primary: 213 86% 75%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 144 35% 74%;
+  --secondary-foreground: 0 0% 100%;
+  --muted: 220 15% 20%;
+  --muted-foreground: 220 10% 70%;
+  --accent: 6 100% 84%;
+  --accent-foreground: 0 0% 100%;
+  --destructive: 6 100% 84%;
+  --destructive-foreground: 220 10% 85%;
+  --border: 220 15% 20%;
+  --input: 220 15% 20%;
+  --ring: 213 86% 75%;
 }
 
-@layer components {
-  /* Medical Theme Specific Styles */
-  .theme-medical .card {
-    @apply shadow-md rounded-lg border-medical-blue;
-  }
-
-  .theme-medical .button-primary {
-    @apply bg-medical-blue text-medical-dark hover:bg-medical-blue/90;
-  }
-
-  /* Apple Theme Specific Styles */
-  .theme-apple .card {
-    @apply shadow-lg rounded-2xl border-apple-light bg-white/80 backdrop-blur-sm;
-  }
-
-  .theme-apple .button-primary {
-    @apply bg-apple-dark text-white hover:bg-apple-dark/90;
-  }
-
-  /* Modern scrollbar styling */
-  ::-webkit-scrollbar {
-    @apply w-1.5 h-1.5;
-  }
-
-  ::-webkit-scrollbar-track {
-    @apply bg-transparent;
-  }
-
-  ::-webkit-scrollbar-thumb {
-    @apply bg-gray-200 rounded-sm dark:bg-gray-700;
-  }
-
-  ::-webkit-scrollbar-thumb:hover {
-    @apply bg-gray-300 dark:bg-gray-600;
-  }
-
-  /* Focus styles */
-  :focus-visible {
-    @apply outline-none ring-2 ring-primary/40 ring-offset-2 ring-offset-background;
-  }
-
-  /* Button press effect */
-  .active-scale {
-    @apply active:scale-[0.98] transition-transform;
-  }
-
-  /* Card hover effect */
-  .card-hover {
-    @apply transition-all duration-300 hover:shadow-md hover:-translate-y-0.5;
-  }
+/* Base styles */
+* {
+  @apply border-border;
 }
 
-/* Modern Medical Theme Utilities */
+body {
+  @apply bg-background text-foreground antialiased;
+  font-feature-settings: "ss01" on, "ss02" on, "cv01" on, "cv02" on,
+    "cv03" on, "cv04" on;
+}
+
+/* Component styles */
 .medical-gradient {
   @apply bg-gradient-to-br from-medical-blue/50 to-medical-gray;
 }
 
-/* Apple Theme Utilities */
 .apple-gradient {
   @apply bg-gradient-to-br from-apple-light to-white;
 }
@@ -153,5 +76,37 @@
 }
 
 .hover-card {
+  @apply transition-all duration-300 hover:shadow-md hover:-translate-y-0.5;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  @apply w-1.5 h-1.5;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-gray-200 rounded-sm dark:bg-gray-700;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-gray-300 dark:bg-gray-600;
+}
+
+/* Focus styles */
+:focus-visible {
+  @apply outline-none ring-2 ring-primary/40 ring-offset-2 ring-offset-background;
+}
+
+/* Button press effect */
+.active-scale {
+  @apply active:scale-[0.98] transition-transform;
+}
+
+/* Card hover effect */
+.card-hover {
   @apply transition-all duration-300 hover:shadow-md hover:-translate-y-0.5;
 }

@@ -1,27 +1,27 @@
-@layer components {
+/* Base styles */
+#root {
+  @apply mx-auto text-center;
+}
+
+@media (max-width: 768px) {
   #root {
-    @apply mx-auto text-center;
+    @apply p-0;
   }
+}
 
-  @media (max-width: 768px) {
-    #root {
-      @apply p-0;
-    }
-  }
+/* Component styles */
+.glass-card {
+  @apply bg-white/60 backdrop-blur-md border border-gray-100/50 shadow-sm dark:bg-gray-950/60 dark:border-gray-800/50;
+}
 
-  .glass-card {
-    @apply bg-white/60 backdrop-blur-md border border-gray-100/50 shadow-sm dark:bg-gray-950/60 dark:border-gray-800/50;
-  }
+.hover-scale {
+  @apply transition-transform duration-300 hover:scale-[1.01];
+}
 
-  .hover-scale {
-    @apply transition-transform duration-300 hover:scale-[1.01];
-  }
+.fade-in {
+  @apply animate-fade-in;
+}
 
-  .fade-in {
-    @apply animate-fade-in;
-  }
-
-  .scale-in {
-    @apply animate-scale-in;
-  }
+.scale-in {
+  @apply animate-scale-in;
 }
