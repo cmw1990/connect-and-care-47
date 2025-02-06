@@ -1,25 +1,27 @@
-#root {
-  @apply mx-auto text-center;
-}
-
-@media (max-width: 768px) {
+@layer components {
   #root {
-    @apply p-0;
+    @apply mx-auto text-center;
   }
-}
 
-.glass-card {
-  @apply bg-white/60 backdrop-blur-md border border-gray-100/50 shadow-sm dark:bg-gray-950/60 dark:border-gray-800/50;
-}
+  @media (max-width: 768px) {
+    #root {
+      @apply p-0;
+    }
+  }
 
-.hover-scale {
-  @apply transition-transform duration-300 hover:scale-[1.01];
-}
+  .glass-card {
+    @apply bg-white/60 backdrop-blur-md border border-gray-100/50 shadow-sm dark:bg-gray-950/60 dark:border-gray-800/50;
+  }
 
-.fade-in {
-  @apply animate-fade-in;
-}
+  .hover-scale {
+    @apply transition-transform duration-300 hover:scale-[1.01];
+  }
 
-.scale-in {
-  @apply animate-scale-in;
+  .fade-in {
+    @apply animate-fade-in;
+  }
+
+  .scale-in {
+    @apply animate-scale-in;
+  }
 }
