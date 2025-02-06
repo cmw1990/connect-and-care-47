@@ -1727,6 +1727,47 @@ export type Database = {
           },
         ]
       }
+      medication_verification_settings: {
+        Row: {
+          created_at: string | null
+          group_id: string | null
+          id: string
+          reminder_threshold_minutes: number | null
+          require_double_verification: boolean | null
+          require_photo: boolean | null
+          updated_at: string | null
+          verification_window_minutes: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          group_id?: string | null
+          id?: string
+          reminder_threshold_minutes?: number | null
+          require_double_verification?: boolean | null
+          require_photo?: boolean | null
+          updated_at?: string | null
+          verification_window_minutes?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          group_id?: string | null
+          id?: string
+          reminder_threshold_minutes?: number | null
+          require_double_verification?: boolean | null
+          require_photo?: boolean | null
+          updated_at?: string | null
+          verification_window_minutes?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "medication_verification_settings_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "care_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       medication_verifications: {
         Row: {
           created_at: string
@@ -1735,8 +1776,12 @@ export type Database = {
           medication_schedule_id: string | null
           notes: string | null
           photo_url: string | null
+          rejection_reason: string | null
+          side_effects: string[] | null
           status: string | null
+          symptoms: Json | null
           verification_time: string
+          verified_at: string | null
           verified_by: string | null
         }
         Insert: {
@@ -1746,8 +1791,12 @@ export type Database = {
           medication_schedule_id?: string | null
           notes?: string | null
           photo_url?: string | null
+          rejection_reason?: string | null
+          side_effects?: string[] | null
           status?: string | null
+          symptoms?: Json | null
           verification_time: string
+          verified_at?: string | null
           verified_by?: string | null
         }
         Update: {
@@ -1757,8 +1806,12 @@ export type Database = {
           medication_schedule_id?: string | null
           notes?: string | null
           photo_url?: string | null
+          rejection_reason?: string | null
+          side_effects?: string[] | null
           status?: string | null
+          symptoms?: Json | null
           verification_time?: string
+          verified_at?: string | null
           verified_by?: string | null
         }
         Relationships: [
