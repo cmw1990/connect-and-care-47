@@ -1,4 +1,3 @@
-/* Base styles */
 #root {
   @apply mx-auto text-center;
 }
@@ -9,7 +8,6 @@
   }
 }
 
-/* Component styles */
 .glass-card {
   @apply bg-white/60 backdrop-blur-md border border-gray-100/50 shadow-sm dark:bg-gray-950/60 dark:border-gray-800/50;
 }
