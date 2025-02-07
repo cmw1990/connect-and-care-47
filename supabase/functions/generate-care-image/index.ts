@@ -36,30 +36,42 @@ serve(async (req) => {
       );
     }
 
+    console.log('Starting image generation for:', disease);
     const prompt = `Create a caring and supportive medical illustration for ${disease}. The image should be: ${description}. Style: Professional medical illustration with a warm and comforting feel. Make it suitable for healthcare applications.`;
 
-    console.log('Generating image for:', disease);
+    try {
+      const response = await fetch('https://api.openai.com/v1/images/generations', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${openAIApiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: "dall-e-3",
+          prompt: prompt,
+          n: 1,
+          size: "1024x1024",
+          quality: "standard",
+          style: "natural"
+        }),
+      });
 
-    const response = await fetch('https://api.openai.com/v1/images/generations', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${openAIApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: "dall-e-3",
-        prompt: prompt,
-        n: 1,
-        size: "1024x1024",
-        quality: "standard",
-        style: "natural"
-      }),
-    });
+      if (!response.ok) {
+        const error = await response.json();
+        console.error('OpenAI API error:', error);
+        throw new Error(error.error?.message || 'OpenAI API request failed');
+      }
 
-    if (!response.ok) {
-      const error = await response.json();
-      console.error('OpenAI API error:', error);
+      const data = await response.json();
+      console.log('Successfully generated image for:', disease);
       
+      return new Response(
+        JSON.stringify({ imageUrl: data.data[0].url }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+
+    } catch (openAIError) {
+      console.error('OpenAI API error:', openAIError);
       return new Response(
         JSON.stringify({ 
           error: "Service temporarily unavailable",
@@ -72,14 +84,6 @@ serve(async (req) => {
         }
       );
     }
-
-    const data = await response.json();
-    const imageUrl = data.data[0].url;
-
-    return new Response(
-      JSON.stringify({ imageUrl }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
 
   } catch (error) {
     console.error('Error in generate-care-image function:', error);
