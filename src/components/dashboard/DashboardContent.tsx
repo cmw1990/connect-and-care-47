@@ -1,4 +1,3 @@
-
 import { motion } from "framer-motion";
 import { Calendar, Activity } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -12,6 +11,7 @@ import { MedicationReminder } from "@/components/medications/MedicationReminder"
 import { CareMetrics } from "@/components/analytics/CareMetrics";
 import { EmergencySOSButton } from "@/components/emergency/EmergencySOSButton";
 import { TaskScheduler } from "@/components/tasks/TaskScheduler";
+import { CareAnalyticsDashboard } from "@/components/analytics/CareAnalyticsDashboard";
 
 interface DashboardContentProps {
   primaryGroup?: {
@@ -26,10 +26,13 @@ export const DashboardContent = ({ primaryGroup, upcomingAppointments }: Dashboa
   return (
     <div className="space-y-6">
       {primaryGroup?.id && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-          <EmergencySOSButton groupId={primaryGroup.id} />
-          <VitalSignsMonitor groupId={primaryGroup.id} />
-        </div>
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <EmergencySOSButton groupId={primaryGroup.id} />
+            <VitalSignsMonitor groupId={primaryGroup.id} />
+          </div>
+          <CareAnalyticsDashboard groupId={primaryGroup.id} />
+        </>
       )}
 
       {upcomingAppointments && upcomingAppointments.length > 0 && (
