@@ -292,6 +292,42 @@ const Groups = () => {
     }
   };
 
+  const handleCompanionConnect = async (companionId: string) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast({
+          title: "Error",
+          description: "Please sign in to connect with companions",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const { error } = await supabase
+        .from('care_connections')
+        .insert({
+          requester_id: user.id,
+          recipient_id: companionId,
+          connection_type: 'pal',
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Connection request sent successfully",
+      });
+    } catch (error) {
+      console.error('Error connecting with companion:', error);
+      toast({
+        title: "Error",
+        description: "Failed to send connection request",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-primary-100 to-white">
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -468,6 +504,7 @@ const Groups = () => {
                 <CompanionCard
                   key={companion.id}
                   companion={companion}
+                  onConnect={handleCompanionConnect}
                 />
               ))}
             </div>

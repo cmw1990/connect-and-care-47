@@ -14,6 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { SpecializedCareFilters } from "@/components/filters/SpecializedCareFilters";
+import { Json } from "@/integrations/supabase/types";
 
 interface CompanionMatch {
   id: string;
@@ -31,8 +32,17 @@ interface CompanionMatch {
   hourly_rate: number;
   identity_verified: boolean;
   mental_health_specialties: string[];
-  support_tools_proficiency: Record<string, string>;
+  support_tools_proficiency: Json;
   virtual_meeting_tools: string[];
+  cognitive_engagement_activities?: {
+    memory_games?: string[];
+    brain_teasers?: string[];
+    social_activities?: string[];
+    creative_exercises?: string[];
+  };
+  cultural_competencies?: string[];
+  music_therapy_certified?: boolean;
+  art_therapy_certified?: boolean;
 }
 
 export const CompanionMatcher = () => {
