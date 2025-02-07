@@ -27,7 +27,21 @@ export const CareAnalyticsDashboard = ({ groupId }: CareAnalyticsDashboard) => {
         .maybeSingle();
 
       if (error) throw error;
-      return data?.metric_value as MetricValue | null;
+      
+      // Explicitly type cast the metric_value after validating its structure
+      const metricValue = data?.metric_value as unknown as MetricValue;
+      
+      // Validate the structure matches our expected interface
+      if (metricValue && typeof metricValue === 'object' &&
+          'physical' in metricValue &&
+          'mental' in metricValue &&
+          'mood' in metricValue &&
+          'activity' in metricValue) {
+        return metricValue;
+      }
+      
+      // Return null if the data doesn't match our expected structure
+      return null;
     }
   });
 
