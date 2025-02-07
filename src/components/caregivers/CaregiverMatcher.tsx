@@ -49,7 +49,6 @@ interface SimplifiedCaregiverProfile {
   background_check_status: string | null;
   identity_verified: boolean | null;
   service_radius: number | null;
-  emergency_response: boolean | null;
   user: {
     first_name: string;
     last_name: string;
@@ -57,7 +56,9 @@ interface SimplifiedCaregiverProfile {
   certifications: any[];
   availability: Availability | null;
   location: LocationData | null;
-  specializations: string[] | null;
+  age_groups_experience?: string[] | null;
+  pet_types_experience?: string[] | null;
+  special_needs_certifications?: any[] | null;
 }
 
 export const CaregiverMatcher = () => {
@@ -70,7 +71,11 @@ export const CaregiverMatcher = () => {
     dementiaOnly: false,
     mentalHealthOnly: false,
     emergencyResponse: false,
-    maxDistance: 50
+    maxDistance: 50,
+    careType: "",
+    ageGroup: "",
+    petType: "",
+    specialNeeds: ""
   });
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -110,6 +115,15 @@ export const CaregiverMatcher = () => {
           user:profiles(first_name, last_name)
         `);
 
+      // Apply care type specific filters
+      if (filters.careType === 'children') {
+        query = query.contains('age_groups_experience', [filters.ageGroup]);
+      } else if (filters.careType === 'pets') {
+        query = query.contains('pet_types_experience', [filters.petType]);
+      } else if (filters.careType === 'special-needs') {
+        query = query.contains('special_needs_certifications', [filters.specialNeeds]);
+      }
+
       if (filters.specialization) {
         query = query.contains('specializations', [filters.specialization]);
       }
@@ -140,18 +154,12 @@ export const CaregiverMatcher = () => {
 
       if (error) throw error;
 
-      let filteredCaregivers = (data || []).map(caregiver => {
-        const availabilityData = typeof caregiver.availability === 'string' 
-          ? JSON.parse(caregiver.availability)
-          : caregiver.availability;
-
-        return {
-          ...caregiver,
-          certifications: Array.isArray(caregiver.certifications) ? caregiver.certifications : [],
-          location: availabilityData?.location || null,
-          availability: availabilityData || null
-        } as SimplifiedCaregiverProfile;
-      });
+      let filteredCaregivers = (data || []).map(caregiver => ({
+        ...caregiver,
+        certifications: Array.isArray(caregiver.certifications) ? caregiver.certifications : [],
+        location: caregiver.availability?.location || null,
+        availability: caregiver.availability || null
+      }));
 
       if (userLocation && filters.maxDistance > 0) {
         filteredCaregivers = filteredCaregivers.filter(caregiver => {
@@ -192,6 +200,76 @@ export const CaregiverMatcher = () => {
       <CardContent>
         <div className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <Select
+              value={filters.careType}
+              onValueChange={(value) => setFilters({ ...filters, careType: value })}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Care Type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="elderly">Senior Care</SelectItem>
+                <SelectItem value="children">Child Care</SelectItem>
+                <SelectItem value="special-needs">Special Needs Care</SelectItem>
+                <SelectItem value="pets">Pet Care</SelectItem>
+                <SelectItem value="family">Family Care</SelectItem>
+              </SelectContent>
+            </Select>
+
+            {filters.careType === 'children' && (
+              <Select
+                value={filters.ageGroup}
+                onValueChange={(value) => setFilters({ ...filters, ageGroup: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Age Group" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="infant">Infant (0-1)</SelectItem>
+                  <SelectItem value="toddler">Toddler (1-3)</SelectItem>
+                  <SelectItem value="preschool">Preschool (3-5)</SelectItem>
+                  <SelectItem value="school-age">School Age (5-12)</SelectItem>
+                  <SelectItem value="teenager">Teenager (13+)</SelectItem>
+                </SelectContent>
+              </Select>
+            )}
+
+            {filters.careType === 'pets' && (
+              <Select
+                value={filters.petType}
+                onValueChange={(value) => setFilters({ ...filters, petType: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Pet Type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="dog">Dogs</SelectItem>
+                  <SelectItem value="cat">Cats</SelectItem>
+                  <SelectItem value="bird">Birds</SelectItem>
+                  <SelectItem value="fish">Fish</SelectItem>
+                  <SelectItem value="small-animal">Small Animals</SelectItem>
+                </SelectContent>
+              </Select>
+            )}
+
+            {filters.careType === 'special-needs' && (
+              <Select
+                value={filters.specialNeeds}
+                onValueChange={(value) => setFilters({ ...filters, specialNeeds: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Specialization" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="autism">Autism Support</SelectItem>
+                  <SelectItem value="physical">Physical Disabilities</SelectItem>
+                  <SelectItem value="developmental">Developmental Disabilities</SelectItem>
+                  <SelectItem value="behavioral">Behavioral Support</SelectItem>
+                  <SelectItem value="learning">Learning Disabilities</SelectItem>
+                </SelectContent>
+              </Select>
+            )}
+
             <Select
               value={filters.specialization}
               onValueChange={(value) => setFilters({ ...filters, specialization: value })}
@@ -245,25 +323,6 @@ export const CaregiverMatcher = () => {
             onDementiaChange={(value) => setFilters({ ...filters, dementiaOnly: value })}
             onMentalHealthChange={(value) => setFilters({ ...filters, mentalHealthOnly: value })}
           />
-
-          <div className="flex flex-wrap gap-2">
-            <Button
-              variant="outline"
-              onClick={() => setFilters({ ...filters, verifiedOnly: !filters.verifiedOnly })}
-              className={filters.verifiedOnly ? "bg-primary-100" : ""}
-            >
-              <Shield className="h-4 w-4 mr-2" />
-              Verified Only
-            </Button>
-
-            <Button
-              variant="outline"
-              onClick={() => setFilters({ ...filters, emergencyResponse: !filters.emergencyResponse })}
-              className={filters.emergencyResponse ? "bg-primary-100" : ""}
-            >
-              Emergency Response
-            </Button>
-          </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
             {isLoading ? (
