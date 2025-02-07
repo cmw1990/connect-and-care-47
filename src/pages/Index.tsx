@@ -7,7 +7,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { DashboardContent } from "@/components/dashboard/DashboardContent";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Users, Building, ShoppingCart, Heart } from "lucide-react";
+import { ArrowRight, Users, Building, ShoppingCart, Heart, CheckCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import {
   Card,
@@ -104,71 +104,113 @@ const Index = () => {
         exit={{ opacity: 0, y: -20 }}
         className="container mx-auto px-4 py-8 space-y-12"
       >
-        {/* Hero Section */}
-        <section className="text-center py-16 bg-gradient-to-b from-primary/10 to-background rounded-3xl">
-          <motion.h1 
+        {/* Hero Section with enhanced visual appeal */}
+        <section className="text-center py-24 bg-gradient-to-b from-primary/10 via-primary/5 to-background rounded-3xl border border-primary/10">
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-4xl md:text-5xl font-bold mb-6"
+            className="max-w-4xl mx-auto px-4"
           >
-            Your Complete Care Solution
-          </motion.h1>
-          <motion.p 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto"
-          >
-            Whether you need to coordinate care, find caregivers, or discover care products - 
-            we've got you covered.
-          </motion.p>
+            <motion.h1 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="text-5xl md:text-6xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/70"
+            >
+              Your Complete Care Solution
+            </motion.h1>
+            <motion.p 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="text-xl text-muted-foreground mb-8"
+            >
+              Whether you need to coordinate care, find caregivers, or discover care products - 
+              we've got you covered with our all-in-one platform.
+            </motion.p>
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.2 }}
+              className="flex flex-col sm:flex-row gap-4 justify-center"
+            >
+              <Button size="lg" onClick={() => navigate('/auth')} className="text-lg px-8">
+                Get Started
+              </Button>
+              <Button size="lg" variant="outline" onClick={() => navigate('/care-guides')} className="text-lg px-8">
+                Learn More
+              </Button>
+            </motion.div>
+          </motion.div>
         </section>
 
-        {/* Main Services Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Feature highlights */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 py-8">
+          {[
+            { icon: Users, text: "Team Collaboration" },
+            { icon: Heart, text: "Caregiver Matching" },
+            { icon: Building, text: "Facility Search" },
+            { icon: ShoppingCart, text: "Product Guide" }
+          ].map((item, index) => (
+            <motion.div
+              key={item.text}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.1 }}
+              className="flex flex-col items-center text-center p-4"
+            >
+              <div className="bg-primary/10 p-3 rounded-full mb-3">
+                <item.icon className="h-6 w-6 text-primary" />
+              </div>
+              <span className="text-sm font-medium">{item.text}</span>
+            </motion.div>
+          ))}
+        </div>
+
+        {/* Main Services Grid with enhanced cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {landingSections?.map((section, index) => (
             <motion.div
               key={section.id}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
+              className="group"
             >
-              <Card className="hover:shadow-lg transition-shadow h-full">
+              <Card className="hover:shadow-lg transition-all duration-300 hover:-translate-y-1 h-full border-primary/10 bg-gradient-to-br from-background to-primary/5">
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    {section.section_type === 'webapp_promo' && <Users className="h-5 w-5 text-primary" />}
-                    {section.section_type === 'caregiver_search' && <Heart className="h-5 w-5 text-primary" />}
-                    {section.section_type === 'facility_search' && <Building className="h-5 w-5 text-primary" />}
-                    {section.section_type === 'product_guide' && <ShoppingCart className="h-5 w-5 text-primary" />}
+                  <CardTitle className="flex items-center gap-3 text-2xl">
+                    {section.section_type === 'webapp_promo' && <Users className="h-6 w-6 text-primary" />}
+                    {section.section_type === 'caregiver_search' && <Heart className="h-6 w-6 text-primary" />}
+                    {section.section_type === 'facility_search' && <Building className="h-6 w-6 text-primary" />}
+                    {section.section_type === 'product_guide' && <ShoppingCart className="h-6 w-6 text-primary" />}
                     {section.title}
                   </CardTitle>
-                  <CardDescription>{section.description}</CardDescription>
+                  <CardDescription className="text-base">{section.description}</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-4">
+                  <div className="space-y-6">
                     {section.section_type === 'webapp_promo' && (
-                      <ul className="space-y-2">
+                      <ul className="space-y-3">
                         {section.content.features?.map((feature: string) => (
-                          <li key={feature} className="flex items-center gap-2">
-                            <ArrowRight className="h-4 w-4 text-primary" />
-                            {feature}
+                          <li key={feature} className="flex items-center gap-3 text-base">
+                            <CheckCircle className="h-5 w-5 text-primary shrink-0" />
+                            <span>{feature}</span>
                           </li>
                         ))}
                       </ul>
                     )}
                     {section.section_type === 'caregiver_search' && (
-                      <ul className="space-y-2">
+                      <ul className="space-y-3">
                         {section.content.benefits?.map((benefit: string) => (
-                          <li key={benefit} className="flex items-center gap-2">
-                            <ArrowRight className="h-4 w-4 text-primary" />
-                            {benefit}
+                          <li key={benefit} className="flex items-center gap-3 text-base">
+                            <CheckCircle className="h-5 w-5 text-primary shrink-0" />
+                            <span>{benefit}</span>
                           </li>
                         ))}
                       </ul>
                     )}
-                    {/* Add more section type specific content */}
                     <Button 
-                      className="w-full mt-4"
+                      className="w-full mt-6 group-hover:bg-primary/90 transition-colors"
                       onClick={() => {
                         switch (section.section_type) {
                           case 'webapp_promo':
@@ -186,7 +228,7 @@ const Index = () => {
                         }
                       }}
                     >
-                      Learn More <ArrowRight className="ml-2 h-4 w-4" />
+                      Explore Now <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
                     </Button>
                   </div>
                 </CardContent>
@@ -195,17 +237,49 @@ const Index = () => {
           ))}
         </div>
 
-        {/* Getting Started CTA */}
-        <section className="text-center py-12">
-          <h2 className="text-3xl font-bold mb-6">Ready to Get Started?</h2>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" onClick={() => navigate('/auth')}>
-              Sign Up Now
-            </Button>
-            <Button size="lg" variant="outline" onClick={() => navigate('/care-guides')}>
-              Browse Care Guides
-            </Button>
+        {/* Trust Indicators Section */}
+        <section className="py-16 text-center">
+          <h2 className="text-3xl font-bold mb-12">Trusted by Thousands of Families</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {[
+              { number: "10k+", label: "Active Users" },
+              { number: "98%", label: "Satisfaction Rate" },
+              { number: "24/7", label: "Support Available" }
+            ].map((stat, index) => (
+              <motion.div
+                key={stat.label}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1 }}
+                className="p-6 rounded-xl bg-primary/5 border border-primary/10"
+              >
+                <div className="text-4xl font-bold text-primary mb-2">{stat.number}</div>
+                <div className="text-muted-foreground">{stat.label}</div>
+              </motion.div>
+            ))}
           </div>
+        </section>
+
+        {/* Enhanced CTA Section */}
+        <section className="text-center py-16 bg-gradient-to-br from-primary/10 via-background to-primary/5 rounded-3xl border border-primary/10">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="max-w-2xl mx-auto px-4"
+          >
+            <h2 className="text-3xl font-bold mb-6">Ready to Get Started?</h2>
+            <p className="text-muted-foreground mb-8">
+              Join thousands of families who trust us with their care needs.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Button size="lg" onClick={() => navigate('/auth')} className="text-lg px-8">
+                Sign Up Now
+              </Button>
+              <Button size="lg" variant="outline" onClick={() => navigate('/care-guides')} className="text-lg px-8">
+                Browse Care Guides
+              </Button>
+            </div>
+          </motion.div>
         </section>
       </motion.div>
     </AnimatePresence>
