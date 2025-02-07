@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 
@@ -18,16 +19,14 @@ serve(async (req) => {
       throw new Error('Both disease and description are required');
     }
 
-    const prompt = `Create a caring and supportive medical illustration for ${disease}. The image should be: ${description}. Style: Professional medical illustration with a warm and comforting feel. Make it suitable for healthcare applications.`;
+    const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
 
-    const perplexityApiKey = Deno.env.get('PERPLEXITY_API_KEY');
-
-    if (!perplexityApiKey) {
-      console.error('Perplexity API key not configured');
+    if (!openAIApiKey) {
+      console.error('OpenAI API key not configured');
       return new Response(
         JSON.stringify({ 
           error: "Configuration error", 
-          details: "Perplexity API key not configured",
+          details: "OpenAI API key not configured",
           fallbackImage: `https://placehold.co/600x400/e2e8f0/64748b?text=${encodeURIComponent(disease)}+Care+Guide`
         }),
         { 
@@ -37,33 +36,29 @@ serve(async (req) => {
       );
     }
 
+    const prompt = `Create a caring and supportive medical illustration for ${disease}. The image should be: ${description}. Style: Professional medical illustration with a warm and comforting feel. Make it suitable for healthcare applications.`;
+
     console.log('Generating image for:', disease);
 
-    const response = await fetch('https://api.perplexity.ai/chat/completions', {
+    const response = await fetch('https://api.openai.com/v1/images/generations', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${perplexityApiKey}`,
+        'Authorization': `Bearer ${openAIApiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: "pplx-12b-online",
-        messages: [
-          {
-            role: "system",
-            content: "You are an AI that generates image descriptions that can be used to create medical illustrations."
-          },
-          {
-            role: "user",
-            content: prompt
-          }
-        ],
-        max_tokens: 1024,
+        model: "dall-e-3",
+        prompt: prompt,
+        n: 1,
+        size: "1024x1024",
+        quality: "standard",
+        style: "natural"
       }),
     });
 
     if (!response.ok) {
       const error = await response.json();
-      console.error('Perplexity API error:', error);
+      console.error('OpenAI API error:', error);
       
       return new Response(
         JSON.stringify({ 
@@ -79,14 +74,10 @@ serve(async (req) => {
     }
 
     const data = await response.json();
-    const imageDescription = data.choices[0].message.content;
+    const imageUrl = data.data[0].url;
 
-    // For now, return a placeholder image with the AI-generated description
     return new Response(
-      JSON.stringify({ 
-        imageUrl: `https://placehold.co/600x400/e2e8f0/64748b?text=${encodeURIComponent(disease)}`,
-        description: imageDescription 
-      }),
+      JSON.stringify({ imageUrl }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
