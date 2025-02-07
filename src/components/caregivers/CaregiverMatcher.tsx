@@ -15,6 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Json } from "@/integrations/supabase/types";
 
 interface LocationData {
   latitude: number;
@@ -53,12 +54,12 @@ interface SimplifiedCaregiverProfile {
     first_name: string;
     last_name: string;
   };
-  certifications: any[];
+  certifications: Json[];
   availability: Availability | null;
   location: LocationData | null;
   age_groups_experience?: string[] | null;
   pet_types_experience?: string[] | null;
-  special_needs_certifications?: any[] | null;
+  special_needs_certifications?: Json[] | null;
 }
 
 export const CaregiverMatcher = () => {
@@ -158,7 +159,7 @@ export const CaregiverMatcher = () => {
         ...caregiver,
         certifications: Array.isArray(caregiver.certifications) ? caregiver.certifications : [],
         location: caregiver.availability?.location || null,
-        availability: caregiver.availability || null
+        availability: typeof caregiver.availability === 'object' ? caregiver.availability : null
       }));
 
       if (userLocation && filters.maxDistance > 0) {
