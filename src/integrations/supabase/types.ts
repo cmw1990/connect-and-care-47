@@ -2091,6 +2091,42 @@ export type Database = {
           },
         ]
       }
+      landing_sections: {
+        Row: {
+          active: boolean | null
+          content: Json | null
+          created_at: string | null
+          description: string | null
+          display_order: number | null
+          id: string
+          section_type: string
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          active?: boolean | null
+          content?: Json | null
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          id?: string
+          section_type: string
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          active?: boolean | null
+          content?: Json | null
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          id?: string
+          section_type?: string
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       medical_device_data: {
         Row: {
           device_id: string | null
@@ -3127,6 +3163,57 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_journey: {
+        Row: {
+          completed_at: string | null
+          id: string
+          journey_step: string
+          metadata: Json | null
+          user_id: string | null
+        }
+        Insert: {
+          completed_at?: string | null
+          id?: string
+          journey_step: string
+          metadata?: Json | null
+          user_id?: string | null
+        }
+        Update: {
+          completed_at?: string | null
+          id?: string
+          journey_step?: string
+          metadata?: Json | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      user_preferences: {
+        Row: {
+          created_at: string | null
+          id: string
+          onboarding_completed: boolean | null
+          preferred_service: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          onboarding_completed?: boolean | null
+          preferred_service?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          onboarding_completed?: boolean | null
+          preferred_service?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
       }
       verification_requests: {
         Row: {
