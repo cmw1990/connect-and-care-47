@@ -27,6 +27,25 @@ export const AnimatedCareGuide = ({ disease, description, guidelines }: Animated
 
         if (error) {
           console.error('Supabase function error:', error);
+          // If we have a fallback image from the error response, use it
+          if (error.body) {
+            try {
+              const errorBody = JSON.parse(error.body);
+              if (errorBody.fallbackImage) {
+                setImageUrl(errorBody.fallbackImage);
+                if (errorBody.details) {
+                  toast({
+                    title: "Using placeholder image",
+                    description: errorBody.details,
+                    variant: "default",
+                  });
+                }
+                return;
+              }
+            } catch (e) {
+              console.error('Error parsing error body:', e);
+            }
+          }
           throw error;
         }
 
@@ -37,7 +56,7 @@ export const AnimatedCareGuide = ({ disease, description, guidelines }: Animated
             toast({
               title: "Using placeholder image",
               description: data.details || "Image generation is temporarily unavailable",
-              variant: "destructive",
+              variant: "default",
             });
           }
           throw new Error(data.error);
