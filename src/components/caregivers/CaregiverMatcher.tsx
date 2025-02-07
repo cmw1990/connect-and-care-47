@@ -22,20 +22,24 @@ interface LocationData {
   longitude: number;
 }
 
+interface Schedule {
+  day: string;
+  times: Array<{
+    start: string;
+    end: string;
+  }>;
+}
+
+interface AvailabilityPreferences {
+  virtual?: boolean;
+  inPerson?: boolean;
+  radius?: number;
+}
+
 interface Availability {
   location?: LocationData;
-  schedule?: Array<{
-    day: string;
-    times: Array<{
-      start: string;
-      end: string;
-    }>;
-  }>;
-  preferences?: {
-    virtual?: boolean;
-    inPerson?: boolean;
-    radius?: number;
-  };
+  schedule?: Schedule[];
+  preferences?: AvailabilityPreferences;
 }
 
 interface SimplifiedCaregiverProfile {
@@ -155,12 +159,17 @@ export const CaregiverMatcher = () => {
 
       if (error) throw error;
 
-      let filteredCaregivers = (data || []).map(caregiver => ({
-        ...caregiver,
-        certifications: Array.isArray(caregiver.certifications) ? caregiver.certifications : [],
-        location: caregiver.availability?.location || null,
-        availability: typeof caregiver.availability === 'object' ? caregiver.availability : null
-      }));
+      let filteredCaregivers = (data || []).map(caregiver => {
+        const availabilityData = caregiver.availability as Availability | null;
+        const locationData = availabilityData?.location || null;
+        
+        return {
+          ...caregiver,
+          certifications: Array.isArray(caregiver.certifications) ? caregiver.certifications : [],
+          location: locationData,
+          availability: availabilityData
+        };
+      });
 
       if (userLocation && filters.maxDistance > 0) {
         filteredCaregivers = filteredCaregivers.filter(caregiver => {
