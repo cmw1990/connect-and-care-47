@@ -1,105 +1,99 @@
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
-import { MessageSquare, Star, Video, Globe, Calendar } from "lucide-react";
-import { DirectMessageChat } from "@/components/chat/DirectMessageChat";
+import { Brain, Globe, Music, Palette, Star, Video } from "lucide-react";
 
 interface CompanionCardProps {
   companion: {
     id: string;
-    user_id: string;
-    bio: string;
-    interests: string[];
-    languages: string[];
-    hourly_rate: number;
-    rating: number;
-    virtual_meeting_preference: boolean;
-    in_person_meeting_preference: boolean;
-    identity_verified: boolean;
-    expertise_areas: string[];
-    dementia_experience: boolean;
     user: {
       first_name: string;
       last_name: string;
     };
+    cognitive_engagement_activities?: {
+      memory_games?: string[];
+      brain_teasers?: string[];
+      social_activities?: string[];
+      creative_exercises?: string[];
+    };
+    cultural_competencies?: string[];
+    music_therapy_certified?: boolean;
+    art_therapy_certified?: boolean;
+    rating?: number;
+    hourly_rate?: number;
   };
+  onConnect: (id: string) => void;
 }
 
-export const CompanionCard = ({ companion }: CompanionCardProps) => {
-  const fullName = `${companion.user.first_name} ${companion.user.last_name}`;
-
+export const CompanionCard = ({ companion, onConnect }: CompanionCardProps) => {
   return (
     <Card className="hover:shadow-lg transition-shadow">
-      <CardHeader>
-        <CardTitle className="flex justify-between items-center">
-          <span>{fullName}</span>
-          <div className="flex items-center gap-2">
-            <Star className="h-4 w-4 text-yellow-400" />
-            <span>{companion.rating}</span>
+      <CardContent className="p-6">
+        <div className="flex justify-between items-start mb-4">
+          <div>
+            <h3 className="text-lg font-semibold">
+              {companion.user.first_name} {companion.user.last_name}
+            </h3>
+            <div className="flex items-center gap-2 text-sm text-gray-500">
+              <Star className="h-4 w-4 text-yellow-400" />
+              <span>{companion.rating}/5</span>
+            </div>
           </div>
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
+        </div>
+
         <div className="space-y-4">
+          {companion.cognitive_engagement_activities && (
+            <div className="flex flex-wrap gap-2">
+              {Object.entries(companion.cognitive_engagement_activities).map(([key, activities]) => 
+                activities && activities.length > 0 && (
+                  <Badge key={key} variant="outline" className="flex items-center gap-1">
+                    <Brain className="h-3 w-3" />
+                    {key.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
+                  </Badge>
+                )
+              )}
+            </div>
+          )}
+
+          {companion.cultural_competencies && companion.cultural_competencies.length > 0 && (
+            <div className="flex items-center gap-2 text-sm">
+              <Globe className="h-4 w-4 text-blue-500" />
+              <div className="flex flex-wrap gap-1">
+                {companion.cultural_competencies.map((competency) => (
+                  <Badge key={competency} variant="outline">
+                    {competency}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div className="flex flex-wrap gap-2">
-            {companion.virtual_meeting_preference && (
-              <span className="flex items-center gap-1 text-sm text-gray-600">
-                <Video className="h-4 w-4" />
-                Virtual
-              </span>
+            {companion.music_therapy_certified && (
+              <Badge variant="secondary" className="flex items-center gap-1">
+                <Music className="h-3 w-3" />
+                Music Therapy
+              </Badge>
             )}
-            {companion.in_person_meeting_preference && (
-              <span className="flex items-center gap-1 text-sm text-gray-600">
-                <Globe className="h-4 w-4" />
-                In-person
-              </span>
+            {companion.art_therapy_certified && (
+              <Badge variant="secondary" className="flex items-center gap-1">
+                <Palette className="h-3 w-3" />
+                Art Therapy
+              </Badge>
             )}
           </div>
 
-          <p className="text-sm text-gray-600">{companion.bio}</p>
-
-          <div className="flex flex-wrap gap-2">
-            {companion.expertise_areas.map((area, index) => (
-              <span
-                key={index}
-                className="px-2 py-1 bg-primary/10 text-primary text-sm rounded"
-              >
-                {area}
-              </span>
-            ))}
-          </div>
-
-          <div className="flex flex-wrap gap-2">
-            {companion.languages.map((language, index) => (
-              <span
-                key={index}
-                className="px-2 py-1 bg-gray-100 text-gray-700 text-sm rounded"
-              >
-                {language}
-              </span>
-            ))}
-          </div>
-
-          <div className="flex justify-between items-center pt-4">
-            <span className="font-semibold">${companion.hourly_rate}/hr</span>
-            <div className="flex gap-2">
-              <Dialog>
-                <DialogTrigger asChild>
-                  <Button variant="outline" size="sm">
-                    <MessageSquare className="h-4 w-4 mr-2" />
-                    Message
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-[500px]">
-                  <DirectMessageChat
-                    recipientId={companion.user_id}
-                    recipientName={fullName}
-                  />
-                </DialogContent>
-              </Dialog>
-              <Button>
-                <Calendar className="h-4 w-4 mr-2" />
-                Book
+          <div className="flex justify-between items-center mt-4">
+            <span className="text-lg font-semibold">
+              ${companion.hourly_rate}/hr
+            </span>
+            <div className="space-x-2">
+              <Button variant="outline" size="sm">
+                <Video className="h-4 w-4 mr-2" />
+                Preview
+              </Button>
+              <Button onClick={() => onConnect(companion.id)}>
+                Connect
               </Button>
             </div>
           </div>

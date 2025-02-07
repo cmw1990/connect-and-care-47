@@ -571,6 +571,54 @@ export type Database = {
           },
         ]
       }
+      care_outcome_metrics: {
+        Row: {
+          activity_completion_rate: number | null
+          cognitive_improvement_score: number | null
+          companion_meeting_id: string | null
+          created_at: string
+          emotional_wellbeing_score: number | null
+          id: string
+          notes: string | null
+          social_engagement_level: number | null
+        }
+        Insert: {
+          activity_completion_rate?: number | null
+          cognitive_improvement_score?: number | null
+          companion_meeting_id?: string | null
+          created_at?: string
+          emotional_wellbeing_score?: number | null
+          id?: string
+          notes?: string | null
+          social_engagement_level?: number | null
+        }
+        Update: {
+          activity_completion_rate?: number | null
+          cognitive_improvement_score?: number | null
+          companion_meeting_id?: string | null
+          created_at?: string
+          emotional_wellbeing_score?: number | null
+          id?: string
+          notes?: string | null
+          social_engagement_level?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "care_outcome_metrics_companion_meeting_id_fkey"
+            columns: ["companion_meeting_id"]
+            isOneToOne: false
+            referencedRelation: "companion_meetings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_companion_meeting"
+            columns: ["companion_meeting_id"]
+            isOneToOne: false
+            referencedRelation: "companion_meetings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       care_plan_templates: {
         Row: {
           category: string
@@ -1027,6 +1075,8 @@ export type Database = {
           certifications: Json | null
           cognitive_assessment_certified: boolean | null
           created_at: string | null
+          crisis_intervention_certified: boolean | null
+          cultural_sensitivity_training: boolean | null
           dementia_care_certified: boolean | null
           dementia_care_level: string | null
           emergency_response: boolean | null
@@ -1043,6 +1093,7 @@ export type Database = {
           service_radius: number | null
           skills: string[] | null
           specializations: string[] | null
+          specialized_care_certifications: Json | null
           updated_at: string | null
           user_id: string | null
           verification_status: Json | null
@@ -1055,6 +1106,8 @@ export type Database = {
           certifications?: Json | null
           cognitive_assessment_certified?: boolean | null
           created_at?: string | null
+          crisis_intervention_certified?: boolean | null
+          cultural_sensitivity_training?: boolean | null
           dementia_care_certified?: boolean | null
           dementia_care_level?: string | null
           emergency_response?: boolean | null
@@ -1071,6 +1124,7 @@ export type Database = {
           service_radius?: number | null
           skills?: string[] | null
           specializations?: string[] | null
+          specialized_care_certifications?: Json | null
           updated_at?: string | null
           user_id?: string | null
           verification_status?: Json | null
@@ -1083,6 +1137,8 @@ export type Database = {
           certifications?: Json | null
           cognitive_assessment_certified?: boolean | null
           created_at?: string | null
+          crisis_intervention_certified?: boolean | null
+          cultural_sensitivity_training?: boolean | null
           dementia_care_certified?: boolean | null
           dementia_care_level?: string | null
           emergency_response?: boolean | null
@@ -1099,6 +1155,7 @@ export type Database = {
           service_radius?: number | null
           skills?: string[] | null
           specializations?: string[] | null
+          specialized_care_certifications?: Json | null
           updated_at?: string | null
           user_id?: string | null
           verification_status?: Json | null
@@ -1254,16 +1311,67 @@ export type Database = {
           },
         ]
       }
+      companion_activity_templates: {
+        Row: {
+          category: string
+          cognitive_benefits: string[] | null
+          created_at: string
+          description: string | null
+          difficulty_level: string | null
+          duration_minutes: number | null
+          emotional_benefits: string[] | null
+          id: string
+          instructions: Json | null
+          materials_needed: string[] | null
+          modifications_for_limitations: Json | null
+          name: string
+          social_benefits: string[] | null
+        }
+        Insert: {
+          category: string
+          cognitive_benefits?: string[] | null
+          created_at?: string
+          description?: string | null
+          difficulty_level?: string | null
+          duration_minutes?: number | null
+          emotional_benefits?: string[] | null
+          id?: string
+          instructions?: Json | null
+          materials_needed?: string[] | null
+          modifications_for_limitations?: Json | null
+          name: string
+          social_benefits?: string[] | null
+        }
+        Update: {
+          category?: string
+          cognitive_benefits?: string[] | null
+          created_at?: string
+          description?: string | null
+          difficulty_level?: string | null
+          duration_minutes?: number | null
+          emotional_benefits?: string[] | null
+          id?: string
+          instructions?: Json | null
+          materials_needed?: string[] | null
+          modifications_for_limitations?: Json | null
+          name?: string
+          social_benefits?: string[] | null
+        }
+        Relationships: []
+      }
       companion_meetings: {
         Row: {
+          activity_outcomes: Json | null
           companion_id: string | null
           created_at: string | null
           end_time: string | null
+          engagement_metrics: Json | null
           group_id: string | null
           id: string
           location: Json | null
           meeting_link: string | null
           meeting_type: string | null
+          mood_tracking: Json | null
           notes: string | null
           rate: number | null
           requester_id: string | null
@@ -1272,14 +1380,17 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          activity_outcomes?: Json | null
           companion_id?: string | null
           created_at?: string | null
           end_time?: string | null
+          engagement_metrics?: Json | null
           group_id?: string | null
           id?: string
           location?: Json | null
           meeting_link?: string | null
           meeting_type?: string | null
+          mood_tracking?: Json | null
           notes?: string | null
           rate?: number | null
           requester_id?: string | null
@@ -1288,14 +1399,17 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          activity_outcomes?: Json | null
           companion_id?: string | null
           created_at?: string | null
           end_time?: string | null
+          engagement_metrics?: Json | null
           group_id?: string | null
           id?: string
           location?: Json | null
           meeting_link?: string | null
           meeting_type?: string | null
+          mood_tracking?: Json | null
           notes?: string | null
           rate?: number | null
           requester_id?: string | null
@@ -1329,11 +1443,14 @@ export type Database = {
       }
       companion_profiles: {
         Row: {
+          art_therapy_certified: boolean | null
           availability: Json | null
           background_check_date: string | null
           bio: string | null
+          cognitive_engagement_activities: Json | null
           communication_preferences: string[] | null
           created_at: string | null
+          cultural_competencies: string[] | null
           dementia_experience: boolean | null
           expertise_areas: string[] | null
           hourly_rate: number | null
@@ -1344,6 +1461,7 @@ export type Database = {
           languages: string[] | null
           mental_health_specialties: string[] | null
           mental_health_support: boolean | null
+          music_therapy_certified: boolean | null
           preferred_activities: string[] | null
           rating: number | null
           reference_check_status: string | null
@@ -1355,11 +1473,14 @@ export type Database = {
           virtual_meeting_tools: string[] | null
         }
         Insert: {
+          art_therapy_certified?: boolean | null
           availability?: Json | null
           background_check_date?: string | null
           bio?: string | null
+          cognitive_engagement_activities?: Json | null
           communication_preferences?: string[] | null
           created_at?: string | null
+          cultural_competencies?: string[] | null
           dementia_experience?: boolean | null
           expertise_areas?: string[] | null
           hourly_rate?: number | null
@@ -1370,6 +1491,7 @@ export type Database = {
           languages?: string[] | null
           mental_health_specialties?: string[] | null
           mental_health_support?: boolean | null
+          music_therapy_certified?: boolean | null
           preferred_activities?: string[] | null
           rating?: number | null
           reference_check_status?: string | null
@@ -1381,11 +1503,14 @@ export type Database = {
           virtual_meeting_tools?: string[] | null
         }
         Update: {
+          art_therapy_certified?: boolean | null
           availability?: Json | null
           background_check_date?: string | null
           bio?: string | null
+          cognitive_engagement_activities?: Json | null
           communication_preferences?: string[] | null
           created_at?: string | null
+          cultural_competencies?: string[] | null
           dementia_experience?: boolean | null
           expertise_areas?: string[] | null
           hourly_rate?: number | null
@@ -1396,6 +1521,7 @@ export type Database = {
           languages?: string[] | null
           mental_health_specialties?: string[] | null
           mental_health_support?: boolean | null
+          music_therapy_certified?: boolean | null
           preferred_activities?: string[] | null
           rating?: number | null
           reference_check_status?: string | null
