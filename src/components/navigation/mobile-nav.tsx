@@ -1,6 +1,6 @@
 
 import { Link, useLocation } from "react-router-dom";
-import { Home, Users, MessageSquare, Heart, Menu, Search, Building2, ShoppingCart } from "lucide-react";
+import { Home, Search, Building2, ShoppingCart, Heart, MessageSquare, Menu } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -19,8 +19,7 @@ export const MobileNav = () => {
     { icon: Search, label: t("findCare"), path: "/caregivers" },
     { icon: Building2, label: t("facilities"), path: "/facilities" },
     { icon: ShoppingCart, label: t("products"), path: "/compare" },
-    { icon: Users, label: t("careTeam"), path: "/groups" },
-    { icon: MessageSquare, label: t("messages"), path: "/messages", badge: hasUnreadMessages },
+    { icon: Heart, label: t("saved"), path: "/saved" },
     { icon: Menu, label: t("more"), path: "/more" },
   ];
 
@@ -58,10 +57,6 @@ export const MobileNav = () => {
     checkUnreadMessages();
   }, [toast, t]);
 
-  const handleMessageClick = () => {
-    setHasUnreadMessages(false);
-  };
-
   return (
     <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 pb-safe z-50 shadow-lg">
       <div className="max-w-lg mx-auto">
@@ -70,7 +65,6 @@ export const MobileNav = () => {
             <Link
               key={item.path}
               to={item.path}
-              onClick={item.path === "/messages" ? handleMessageClick : undefined}
               className="w-full"
             >
               <motion.div
@@ -83,7 +77,7 @@ export const MobileNav = () => {
                 )}
               >
                 <item.icon className="h-5 w-5" />
-                {item.badge && (
+                {item.path === "/messages" && hasUnreadMessages && (
                   <span className="absolute top-1 right-1 h-2 w-2 bg-red-500 rounded-full animate-pulse" />
                 )}
                 <span className="text-xs font-medium">{item.label}</span>
