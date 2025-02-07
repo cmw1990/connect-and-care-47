@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -167,8 +168,11 @@ export const CaregiverMatcher = () => {
           ...caregiver,
           certifications: Array.isArray(caregiver.certifications) ? caregiver.certifications : [],
           location: locationData,
-          availability: availabilityData
-        };
+          availability: availabilityData,
+          special_needs_certifications: Array.isArray(caregiver.special_needs_certifications) 
+            ? caregiver.special_needs_certifications 
+            : []
+        } as SimplifiedCaregiverProfile;
       });
 
       if (userLocation && filters.maxDistance > 0) {
