@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 
 interface SearchParams {
@@ -6,6 +7,10 @@ interface SearchParams {
     lng: number
   }
   radius?: number // in meters
+  country?: string
+  city?: string
+  state?: string
+  types?: string[]
 }
 
 const corsHeaders = {
@@ -26,14 +31,24 @@ serve(async (req) => {
     }
 
     // Get search parameters from request body
-    const { location, radius = 5000 }: SearchParams = await req.json()
+    const { location, radius = 5000, country, city, state, types = [] }: SearchParams = await req.json()
 
-    // Convert radius from meters to degrees (approximate)
-    const radiusDegrees = radius / 111000 // 1 degree is approximately 111km
+    // Construct Overpass API query with country-specific filters
+    let areaQuery = '';
+    if (country) {
+      const countryCode = getCountryCode(country);
+      areaQuery = `area["ISO3166-1"="${countryCode}"]->.searchArea;`;
+      if (state) {
+        areaQuery += `area["admin_level"="4"]["name"="${state}"]->.searchArea;`;
+      }
+      if (city) {
+        areaQuery += `area["place"="city"]["name"="${city}"]->.searchArea;`;
+      }
+    }
 
-    // Construct Overpass API query
     const query = `
       [out:json][timeout:25];
+      ${areaQuery}
       (
         node["amenity"="nursing_home"](around:${radius},${location.lat},${location.lng});
         way["amenity"="nursing_home"](around:${radius},${location.lat},${location.lng});
@@ -41,6 +56,8 @@ serve(async (req) => {
         way["healthcare"="nursing_home"](around:${radius},${location.lat},${location.lng});
         node["social_facility"="nursing_home"](around:${radius},${location.lat},${location.lng});
         way["social_facility"="nursing_home"](around:${radius},${location.lat},${location.lng});
+        node["healthcare"="residential_care"](around:${radius},${location.lat},${location.lng});
+        way["healthcare"="residential_care"](around:${radius},${location.lat},${location.lng});
       );
       out body;
       >;
@@ -72,7 +89,8 @@ serve(async (req) => {
           place.tags?.['addr:street'],
           place.tags?.['addr:housenumber'],
           place.tags?.['addr:city'],
-          place.tags?.['addr:postcode']
+          place.tags?.['addr:postcode'],
+          place.tags?.['addr:country']
         ].filter(Boolean).join(', ') || 'Address not available',
         location: {
           lat: place.lat || (place.center?.lat),
@@ -81,6 +99,9 @@ serve(async (req) => {
         rating: place.tags?.stars || null,
         user_ratings_total: null,
         types: ['nursing_home'],
+        country: place.tags?.['addr:country'] || country || null,
+        state: place.tags?.['addr:state'] || state || null,
+        city: place.tags?.['addr:city'] || city || null,
       }))
 
     console.log('Transformed facilities:', facilities)
@@ -108,3 +129,14 @@ serve(async (req) => {
     )
   }
 })
+
+function getCountryCode(country: string): string {
+  const countryMap: Record<string, string> = {
+    'United States': 'US',
+    'USA': 'US',
+    'Canada': 'CA',
+    'United Kingdom': 'GB',
+    'UK': 'GB'
+  }
+  return countryMap[country] || country
+}
