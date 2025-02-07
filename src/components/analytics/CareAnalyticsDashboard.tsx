@@ -7,6 +7,13 @@ interface CareAnalyticsDashboard {
   groupId: string;
 }
 
+interface MetricValue {
+  physical: number;
+  mental: number;
+  mood: number;
+  activity: number;
+}
+
 export const CareAnalyticsDashboard = ({ groupId }: CareAnalyticsDashboard) => {
   const { data: analytics } = useQuery({
     queryKey: ['careAnalytics', groupId],
@@ -20,15 +27,15 @@ export const CareAnalyticsDashboard = ({ groupId }: CareAnalyticsDashboard) => {
         .maybeSingle();
 
       if (error) throw error;
-      return data?.metric_value || null;
+      return data?.metric_value as MetricValue | null;
     }
   });
 
   const metrics = [
-    { icon: Heart, label: "Physical Health", value: analytics?.physical || 'N/A', color: "text-red-500" },
-    { icon: Brain, label: "Mental Health", value: analytics?.mental || 'N/A', color: "text-blue-500" },
-    { icon: Sun, label: "Mood", value: analytics?.mood || 'N/A', color: "text-yellow-500" },
-    { icon: Activity, label: "Activity", value: analytics?.activity || 'N/A', color: "text-green-500" },
+    { icon: Heart, label: "Physical Health", value: analytics?.physical ?? 'N/A', color: "text-red-500" },
+    { icon: Brain, label: "Mental Health", value: analytics?.mental ?? 'N/A', color: "text-blue-500" },
+    { icon: Sun, label: "Mood", value: analytics?.mood ?? 'N/A', color: "text-yellow-500" },
+    { icon: Activity, label: "Activity", value: analytics?.activity ?? 'N/A', color: "text-green-500" },
   ];
 
   return (
