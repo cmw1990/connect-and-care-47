@@ -33,7 +33,23 @@ serve(async (req) => {
     // Get search parameters from request body
     const { location, radius = 5000, country, city, state, types = [] }: SearchParams = await req.json()
 
-    // Construct Overpass API query with country-specific filters
+    // If no location provided, try OSM Nominatim geocoding for city/state/country
+    let searchLocation = location;
+    if (!location && (city || state || country)) {
+      const searchQuery = [city, state, country].filter(Boolean).join(', ');
+      const nominatimUrl = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(searchQuery)}&format=json&limit=1`;
+      const response = await fetch(nominatimUrl);
+      const data = await response.json();
+      
+      if (data && data[0]) {
+        searchLocation = {
+          lat: parseFloat(data[0].lat),
+          lng: parseFloat(data[0].lon)
+        };
+      }
+    }
+
+    // Construct Overpass API query with specific filters
     let areaQuery = '';
     if (country) {
       const countryCode = getCountryCode(country);
@@ -50,14 +66,14 @@ serve(async (req) => {
       [out:json][timeout:25];
       ${areaQuery}
       (
-        node["amenity"="nursing_home"](around:${radius},${location.lat},${location.lng});
-        way["amenity"="nursing_home"](around:${radius},${location.lat},${location.lng});
-        node["healthcare"="nursing_home"](around:${radius},${location.lat},${location.lng});
-        way["healthcare"="nursing_home"](around:${radius},${location.lat},${location.lng});
-        node["social_facility"="nursing_home"](around:${radius},${location.lat},${location.lng});
-        way["social_facility"="nursing_home"](around:${radius},${location.lat},${location.lng});
-        node["healthcare"="residential_care"](around:${radius},${location.lat},${location.lng});
-        way["healthcare"="residential_care"](around:${radius},${location.lat},${location.lng});
+        node["amenity"="nursing_home"](around:${radius},${searchLocation.lat},${searchLocation.lng});
+        way["amenity"="nursing_home"](around:${radius},${searchLocation.lat},${searchLocation.lng});
+        node["healthcare"="nursing_home"](around:${radius},${searchLocation.lat},${searchLocation.lng});
+        way["healthcare"="nursing_home"](around:${radius},${searchLocation.lat},${searchLocation.lng});
+        node["social_facility"="nursing_home"](around:${radius},${searchLocation.lat},${searchLocation.lng});
+        way["social_facility"="nursing_home"](around:${radius},${searchLocation.lat},${searchLocation.lng});
+        node["healthcare"="residential_care"](around:${radius},${searchLocation.lat},${searchLocation.lng});
+        way["healthcare"="residential_care"](around:${radius},${searchLocation.lat},${searchLocation.lng});
       );
       out body;
       >;
@@ -94,14 +110,16 @@ serve(async (req) => {
         ].filter(Boolean).join(', ') || 'Address not available',
         location: {
           lat: place.lat || (place.center?.lat),
-          lng: place.lon || (place.center?.lon)
+          lng: place.lon || (place.center?.lon),
+          country: place.tags?.['addr:country'] || country || null,
+          city: place.tags?.['addr:city'] || city || null,
+          region: place.tags?.['addr:state'] || state || null
         },
         rating: place.tags?.stars || null,
         user_ratings_total: null,
         types: ['nursing_home'],
-        country: place.tags?.['addr:country'] || country || null,
-        state: place.tags?.['addr:state'] || state || null,
-        city: place.tags?.['addr:city'] || city || null,
+        description: place.tags?.description || null,
+        verified: false
       }))
 
     console.log('Transformed facilities:', facilities)

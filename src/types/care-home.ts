@@ -1,3 +1,4 @@
+
 export interface CareHomeMetric {
   id: string;
   facility_id: string;
@@ -29,4 +30,16 @@ export interface CareHomeStaffSchedule {
   department: string;
   status?: string;
   notes?: string;
+}
+
+export interface GeoCoordinates {
+  type: 'Point';
+  coordinates: [number, number]; // [longitude, latitude]
+}
+
+export interface CareFacilityLocation {
+  country: string;
+  region: string;
+  city: string;
+  coordinates?: GeoCoordinates;
 }

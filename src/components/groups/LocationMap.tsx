@@ -12,8 +12,9 @@ interface LocationMapProps {
     lat: number;
     lng: number;
     title?: string;
+    description?: string;
   }>;
-  onMarkerClick?: (marker: { lat: number; lng: number; title?: string }) => void;
+  onMarkerClick?: (marker: { lat: number; lng: number; title?: string; description?: string }) => void;
 }
 
 export const LocationMap = ({ 
@@ -46,6 +47,16 @@ export const LocationMap = ({
         }),
         'top-right'
       );
+
+      // Add geocoding control for searching locations
+      const geocoder = new mapboxgl.GeolocateControl({
+        positionOptions: {
+          enableHighAccuracy: true
+        },
+        trackUserLocation: true,
+        showUserHeading: true
+      });
+      map.current.addControl(geocoder);
     } else {
       map.current.setCenter([longitude, latitude]);
     }
@@ -54,7 +65,7 @@ export const LocationMap = ({
     markersRef.current.forEach(marker => marker.remove());
     markersRef.current = [];
 
-    // Add new markers
+    // Add new markers with popups
     markers.forEach(marker => {
       const el = document.createElement('div');
       el.className = 'marker';
@@ -68,8 +79,15 @@ export const LocationMap = ({
         el.title = marker.title;
       }
 
+      // Create popup
+      const popup = new mapboxgl.Popup({ offset: 25 }).setHTML(
+        `<h3 class="font-semibold">${marker.title || 'Unnamed Location'}</h3>
+         ${marker.description ? `<p class="text-sm">${marker.description}</p>` : ''}`
+      );
+
       const mapMarker = new mapboxgl.Marker(el)
         .setLngLat([marker.lng, marker.lat])
+        .setPopup(popup)
         .addTo(map.current!);
 
       if (onMarkerClick) {
