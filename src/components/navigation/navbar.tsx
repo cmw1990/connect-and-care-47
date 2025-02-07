@@ -1,3 +1,4 @@
+
 import { Link, useNavigate } from "react-router-dom";
 import { ButtonPrimary } from "../ui/button-primary";
 import { supabase } from "@/integrations/supabase/client";
@@ -5,15 +6,26 @@ import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
 import { LanguageSelector } from "../ui/language-selector";
 import { useTranslation } from "react-i18next";
-import { Home, Users, MessageSquare, Heart, Settings, Bell, Menu, LogOut } from "lucide-react";
+import { Home, Search, Building2, ShoppingCart, Users, Settings, Bell, LogOut } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuGroup,
+  DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
+import {
+  NavigationMenu,
+  NavigationMenuContent,
+  NavigationMenuItem,
+  NavigationMenuLink,
+  NavigationMenuList,
+  NavigationMenuTrigger,
+} from "@/components/ui/navigation-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export const Navbar = () => {
@@ -61,14 +73,6 @@ export const Navbar = () => {
     }
   };
 
-  const navItems = [
-    { icon: Home, label: t("home"), path: "/" },
-    { icon: Users, label: t("careGroups"), path: "/groups" },
-    { icon: Heart, label: t("moodSupport"), path: "/mood-support" },
-    { icon: MessageSquare, label: t("messages"), path: "/messages" },
-    { icon: Settings, label: t("settings"), path: "/settings" },
-  ];
-
   return (
     <nav className="bg-white shadow-sm sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -82,31 +86,170 @@ export const Navbar = () => {
                 {t("appName")}
               </motion.span>
             </Link>
-            {isAuthenticated && (
-              <div className="hidden md:flex items-center space-x-1">
-                {navItems.map((item) => (
-                  <Link
-                    key={item.path}
-                    to={item.path}
-                    className="group"
-                  >
-                    <motion.div
-                      whileHover={{ scale: 1.05 }}
-                      className={cn(
-                        "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors",
-                        location.pathname === item.path
-                          ? "bg-primary-100 text-primary"
-                          : "text-gray-600 hover:bg-gray-50"
-                      )}
-                    >
-                      <item.icon className="h-4 w-4" />
-                      <span>{item.label}</span>
-                    </motion.div>
-                  </Link>
-                ))}
-              </div>
-            )}
+            
+            <NavigationMenu>
+              <NavigationMenuList>
+                {/* Find Care Services */}
+                <NavigationMenuItem>
+                  <NavigationMenuTrigger>Find Care</NavigationMenuTrigger>
+                  <NavigationMenuContent>
+                    <div className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px]">
+                      <div className="space-y-4">
+                        <NavigationMenuLink asChild>
+                          <Link
+                            className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                            to="/caregivers"
+                          >
+                            <div className="text-sm font-medium leading-none">Find Caregivers</div>
+                            <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+                              Search and connect with qualified caregivers in your area
+                            </p>
+                          </Link>
+                        </NavigationMenuLink>
+                        <NavigationMenuLink asChild>
+                          <Link
+                            className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                            to="/facilities"
+                          >
+                            <div className="text-sm font-medium leading-none">Care Facilities</div>
+                            <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+                              Browse and compare top-rated care facilities
+                            </p>
+                          </Link>
+                        </NavigationMenuLink>
+                      </div>
+                      <div className="space-y-4">
+                        <NavigationMenuLink asChild>
+                          <Link
+                            className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                            to="/compare"
+                          >
+                            <div className="text-sm font-medium leading-none">Compare Care</div>
+                            <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+                              Compare different care options and make informed decisions
+                            </p>
+                          </Link>
+                        </NavigationMenuLink>
+                        <NavigationMenuLink asChild>
+                          <Link
+                            className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                            to="/products"
+                          >
+                            <div className="text-sm font-medium leading-none">Care Products</div>
+                            <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+                              Essential care products and equipment
+                            </p>
+                          </Link>
+                        </NavigationMenuLink>
+                      </div>
+                    </div>
+                  </NavigationMenuContent>
+                </NavigationMenuItem>
+
+                {/* Resources & Guides */}
+                <NavigationMenuItem>
+                  <NavigationMenuTrigger>Resources</NavigationMenuTrigger>
+                  <NavigationMenuContent>
+                    <div className="grid gap-3 p-4 w-[400px]">
+                      <NavigationMenuLink asChild>
+                        <Link
+                          className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                          to="/care-guides"
+                        >
+                          <div className="text-sm font-medium leading-none">Care Guides</div>
+                          <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+                            Expert advice and comprehensive care guides
+                          </p>
+                        </Link>
+                      </NavigationMenuLink>
+                      <NavigationMenuLink asChild>
+                        <Link
+                          className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                          to="/blogs"
+                        >
+                          <div className="text-sm font-medium leading-none">Blog & Articles</div>
+                          <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+                            Latest insights and tips on caregiving
+                          </p>
+                        </Link>
+                      </NavigationMenuLink>
+                    </div>
+                  </NavigationMenuContent>
+                </NavigationMenuItem>
+
+                {/* Care Team Platform */}
+                <NavigationMenuItem>
+                  <NavigationMenuTrigger>Care Team Platform</NavigationMenuTrigger>
+                  <NavigationMenuContent>
+                    <div className="grid gap-3 p-6 w-[400px]">
+                      <div className="space-y-3">
+                        <h4 className="text-sm font-medium leading-none">Care Team Collaboration</h4>
+                        <p className="text-sm text-muted-foreground">
+                          Our advanced platform for coordinating care with your team
+                        </p>
+                        <div className="space-y-4">
+                          <NavigationMenuLink asChild>
+                            <Link
+                              className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                              to="/groups"
+                            >
+                              <div className="text-sm font-medium leading-none">Get Started</div>
+                              <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+                                Create or join a care team to coordinate care
+                              </p>
+                            </Link>
+                          </NavigationMenuLink>
+                          <NavigationMenuLink asChild>
+                            <Link
+                              className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                              to="/demo"
+                            >
+                              <div className="text-sm font-medium leading-none">Watch Demo</div>
+                              <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+                                See how our care team platform works
+                              </p>
+                            </Link>
+                          </NavigationMenuLink>
+                        </div>
+                      </div>
+                    </div>
+                  </NavigationMenuContent>
+                </NavigationMenuItem>
+
+                {/* About */}
+                <NavigationMenuItem>
+                  <NavigationMenuTrigger>About</NavigationMenuTrigger>
+                  <NavigationMenuContent>
+                    <div className="grid gap-3 p-4 w-[400px]">
+                      <NavigationMenuLink asChild>
+                        <Link
+                          className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                          to="/about"
+                        >
+                          <div className="text-sm font-medium leading-none">About Us</div>
+                          <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+                            Learn about our mission and values
+                          </p>
+                        </Link>
+                      </NavigationMenuLink>
+                      <NavigationMenuLink asChild>
+                        <Link
+                          className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                          to="/contact"
+                        >
+                          <div className="text-sm font-medium leading-none">Contact</div>
+                          <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+                            Get in touch with our support team
+                          </p>
+                        </Link>
+                      </NavigationMenuLink>
+                    </div>
+                  </NavigationMenuContent>
+                </NavigationMenuItem>
+              </NavigationMenuList>
+            </NavigationMenu>
           </div>
+
           <div className="flex items-center gap-4">
             <LanguageSelector />
             {isAuthenticated ? (
