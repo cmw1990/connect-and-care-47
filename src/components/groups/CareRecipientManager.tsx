@@ -11,13 +11,14 @@ import { supabase } from "@/integrations/supabase/client";
 interface CareRecipient {
   id: string;
   first_name: string;
-  last_name: string;
+  last_name: string | null;
   date_of_birth: string | null;
   care_needs: string[];
   special_requirements: string[];
   medical_conditions: string[];
   allergies: string[];
   preferences: Record<string, any>;
+  group_id: string;
 }
 
 interface CareRecipientManagerProps {
@@ -44,7 +45,14 @@ export const CareRecipientManager = ({ groupId }: CareRecipientManagerProps) => 
         .order('created_at', { ascending: true });
 
       if (error) throw error;
-      setRecipients(data || []);
+
+      // Cast the preferences to Record<string, any>
+      const formattedData = (data || []).map(recipient => ({
+        ...recipient,
+        preferences: recipient.preferences as Record<string, any>
+      }));
+
+      setRecipients(formattedData);
     } catch (error) {
       console.error('Error fetching recipients:', error);
       toast({
@@ -57,7 +65,7 @@ export const CareRecipientManager = ({ groupId }: CareRecipientManagerProps) => 
     }
   };
 
-  const handleAddNew = async () => {
+  const handleAddNew = () => {
     setIsEditing('new');
     setEditForm({
       first_name: '',
@@ -67,7 +75,8 @@ export const CareRecipientManager = ({ groupId }: CareRecipientManagerProps) => 
       special_requirements: [],
       medical_conditions: [],
       allergies: [],
-      preferences: {}
+      preferences: {},
+      group_id: groupId
     });
   };
 
@@ -82,13 +91,16 @@ export const CareRecipientManager = ({ groupId }: CareRecipientManagerProps) => 
         return;
       }
 
+      const recipientData = {
+        ...editForm,
+        group_id: groupId,
+        preferences: editForm.preferences || {}
+      };
+
       if (isEditing === 'new') {
         const { error } = await supabase
           .from('care_recipients')
-          .insert({
-            ...editForm,
-            group_id: groupId
-          });
+          .insert(recipientData);
 
         if (error) throw error;
 
@@ -99,7 +111,7 @@ export const CareRecipientManager = ({ groupId }: CareRecipientManagerProps) => 
       } else {
         const { error } = await supabase
           .from('care_recipients')
-          .update(editForm)
+          .update(recipientData)
           .eq('id', isEditing);
 
         if (error) throw error;
