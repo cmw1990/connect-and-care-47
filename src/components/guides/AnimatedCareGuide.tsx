@@ -27,47 +27,42 @@ export const AnimatedCareGuide = ({ disease, description, guidelines }: Animated
 
         if (error) {
           console.error('Supabase function error:', error);
-          // If we have a fallback image from the error response, use it
-          if (error.body) {
-            try {
-              const errorBody = JSON.parse(error.body);
-              if (errorBody.fallbackImage) {
-                setImageUrl(errorBody.fallbackImage);
-                if (errorBody.details) {
-                  toast({
-                    title: "Using placeholder image",
-                    description: errorBody.details,
-                    variant: "default",
-                  });
-                }
-                return;
+          // Try to parse the error body to get the fallback image
+          try {
+            const errorBody = JSON.parse(error.body);
+            if (errorBody.fallbackImage) {
+              setImageUrl(errorBody.fallbackImage);
+              if (errorBody.details) {
+                toast({
+                  title: "Using placeholder image",
+                  description: errorBody.details,
+                  variant: "default",
+                });
               }
-            } catch (e) {
-              console.error('Error parsing error body:', e);
+              return;
             }
+          } catch (parseError) {
+            console.error('Error parsing error body:', parseError);
           }
           throw error;
         }
 
-        if (data.error) {
-          // If we have a fallback image, use it but show a warning
-          if (data.fallbackImage) {
-            setImageUrl(data.fallbackImage);
-            toast({
-              title: "Using placeholder image",
-              description: data.details || "Image generation is temporarily unavailable",
-              variant: "default",
-            });
-          }
-          throw new Error(data.error);
+        // Handle successful response
+        if (data.imageUrl) {
+          setImageUrl(data.imageUrl);
+        } else if (data.fallbackImage) {
+          setImageUrl(data.fallbackImage);
+          toast({
+            title: "Using placeholder image",
+            description: data.details || "Image generation is temporarily unavailable",
+            variant: "default",
+          });
         }
-
-        setImageUrl(data.imageUrl);
       } catch (err) {
         console.error('Error generating image:', err);
         setError(err.message || 'Failed to generate care guide image');
         
-        // If no fallback image is set yet, use a generic one
+        // Set a generic fallback image if no image is set yet
         if (!imageUrl) {
           setImageUrl(`https://placehold.co/600x400/e2e8f0/64748b?text=${encodeURIComponent(disease)}+Care+Guide`);
         }
