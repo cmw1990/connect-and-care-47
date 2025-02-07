@@ -1,11 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Activity, Brain, Heart, Sun } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-
-interface CareAnalyticsDashboard {
-  groupId: string;
-}
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { useToast } from "@/hooks/use-toast";
 
 interface MetricValue {
   physical: number;
@@ -14,13 +11,19 @@ interface MetricValue {
   activity: number;
 }
 
-export const CareAnalyticsDashboard = ({ groupId }: CareAnalyticsDashboard) => {
-  const { data: analytics } = useQuery({
-    queryKey: ['careAnalytics', groupId],
+interface CareAnalyticsDashboardProps {
+  groupId: string;
+}
+
+export const CareAnalyticsDashboard = ({ groupId }: CareAnalyticsDashboardProps) => {
+  const { toast } = useToast();
+
+  const { data: latestMetrics } = useQuery({
+    queryKey: ['latestCareMetrics', groupId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('care_analytics')
-        .select('*')
+        .select('metric_value')
         .eq('group_id', groupId)
         .order('recorded_at', { ascending: false })
         .limit(1)
@@ -45,27 +48,69 @@ export const CareAnalyticsDashboard = ({ groupId }: CareAnalyticsDashboard) => {
     }
   });
 
-  const metrics = [
-    { icon: Heart, label: "Physical Health", value: analytics?.physical ?? 'N/A', color: "text-red-500" },
-    { icon: Brain, label: "Mental Health", value: analytics?.mental ?? 'N/A', color: "text-blue-500" },
-    { icon: Sun, label: "Mood", value: analytics?.mood ?? 'N/A', color: "text-yellow-500" },
-    { icon: Activity, label: "Activity", value: analytics?.activity ?? 'N/A', color: "text-green-500" },
-  ];
+  const { data: historicalMetrics } = useQuery({
+    queryKey: ['historicalCareMetrics', groupId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('care_analytics')
+        .select('metric_value, recorded_at')
+        .eq('group_id', groupId)
+        .order('recorded_at', { ascending: true })
+        .limit(30);
+
+      if (error) throw error;
+
+      return data?.map(record => {
+        const metricValue = record.metric_value as unknown as MetricValue;
+        
+        // Validate and transform each record
+        if (metricValue && typeof metricValue === 'object' &&
+            'physical' in metricValue &&
+            'mental' in metricValue &&
+            'mood' in metricValue &&
+            'activity' in metricValue) {
+          return {
+            ...metricValue,
+            date: new Date(record.recorded_at).toLocaleDateString()
+          };
+        }
+        return null;
+      }).filter(Boolean) || [];
+    }
+  });
+
+  if (!latestMetrics) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Care Analytics</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-muted-foreground">No analytics data available</p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Care Analytics Overview</CardTitle>
+        <CardTitle>Care Analytics</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {metrics.map((metric, index) => (
-            <div key={index} className="text-center p-4 border rounded-lg">
-              <metric.icon className={`h-8 w-8 mx-auto mb-2 ${metric.color}`} />
-              <h3 className="text-sm font-medium">{metric.label}</h3>
-              <p className="text-2xl font-bold">{metric.value}</p>
-            </div>
-          ))}
+        <div className="h-[300px]">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={historicalMetrics}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="date" />
+              <YAxis />
+              <Tooltip />
+              <Line type="monotone" dataKey="physical" stroke="#8884d8" name="Physical Health" />
+              <Line type="monotone" dataKey="mental" stroke="#82ca9d" name="Mental Health" />
+              <Line type="monotone" dataKey="mood" stroke="#ffc658" name="Mood" />
+              <Line type="monotone" dataKey="activity" stroke="#ff7300" name="Activity Level" />
+            </LineChart>
+          </ResponsiveContainer>
         </div>
       </CardContent>
     </Card>
