@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Heart, Video, Phone, MapPin, Clock, Shield, Star } from "lucide-react";
+import { Heart, Video, Phone, MapPin, Clock, Shield, Star, Brain, Sparkles } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -13,6 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { SpecializedCareFilters } from "@/components/filters/SpecializedCareFilters";
 
 interface CompanionMatch {
   id: string;
@@ -29,6 +30,9 @@ interface CompanionMatch {
   rating: number;
   hourly_rate: number;
   identity_verified: boolean;
+  mental_health_specialties: string[];
+  support_tools_proficiency: Record<string, string>;
+  virtual_meeting_tools: string[];
 }
 
 export const CompanionMatcher = () => {
@@ -37,7 +41,9 @@ export const CompanionMatcher = () => {
     expertiseArea: "",
     communicationType: "",
     dementiaExperience: false,
+    mentalHealthSupport: false,
     maxRate: 100,
+    supportTools: [] as string[],
   });
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
@@ -63,10 +69,18 @@ export const CompanionMatcher = () => {
         query = query.eq('dementia_experience', true);
       }
 
+      if (filters.mentalHealthSupport) {
+        query = query.eq('mental_health_support', true);
+      }
+
       if (filters.communicationType === 'virtual') {
         query = query.eq('virtual_meeting_preference', true);
       } else if (filters.communicationType === 'in-person') {
         query = query.eq('in_person_meeting_preference', true);
+      }
+
+      if (filters.supportTools.length > 0) {
+        query = query.contains('support_tools_proficiency', filters.supportTools);
       }
 
       query = query.lte('hourly_rate', filters.maxRate);
@@ -173,14 +187,12 @@ export const CompanionMatcher = () => {
               />
             </div>
 
-            <Button
-              variant="outline"
-              onClick={() => setFilters({ ...filters, dementiaExperience: !filters.dementiaExperience })}
-              className={filters.dementiaExperience ? "bg-primary-100" : ""}
-            >
-              <Shield className="h-4 w-4 mr-2" />
-              Dementia Experience
-            </Button>
+            <SpecializedCareFilters
+              dementiaOnly={filters.dementiaExperience}
+              mentalHealthOnly={filters.mentalHealthSupport}
+              onDementiaChange={(value) => setFilters({ ...filters, dementiaExperience: value })}
+              onMentalHealthChange={(value) => setFilters({ ...filters, mentalHealthSupport: value })}
+            />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
@@ -222,6 +234,20 @@ export const CompanionMatcher = () => {
                           </Badge>
                         ))}
                       </div>
+
+                      {companion.mental_health_specialties?.length > 0 && (
+                        <div className="flex items-center gap-2 text-sm">
+                          <Brain className="h-4 w-4 text-purple-500" />
+                          <span>Mental Health Specialist</span>
+                        </div>
+                      )}
+
+                      {companion.support_tools_proficiency && Object.keys(companion.support_tools_proficiency).length > 0 && (
+                        <div className="flex items-center gap-2 text-sm">
+                          <Sparkles className="h-4 w-4 text-blue-500" />
+                          <span>Support Tools Expert</span>
+                        </div>
+                      )}
 
                       <div className="flex items-center gap-4 text-sm text-gray-500">
                         {companion.virtual_meeting_preference && (

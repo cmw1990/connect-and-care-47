@@ -1025,13 +1025,16 @@ export type Database = {
           background_check_status: string | null
           bio: string | null
           certifications: Json | null
+          cognitive_assessment_certified: boolean | null
           created_at: string | null
           dementia_care_certified: boolean | null
+          dementia_care_level: string | null
           emergency_response: boolean | null
           experience_years: number | null
           hourly_rate: number | null
           id: string
           identity_verified: boolean | null
+          memory_support_tools: Json | null
           mental_health_certified: boolean | null
           preferred_hours: Json | null
           rating: number | null
@@ -1050,13 +1053,16 @@ export type Database = {
           background_check_status?: string | null
           bio?: string | null
           certifications?: Json | null
+          cognitive_assessment_certified?: boolean | null
           created_at?: string | null
           dementia_care_certified?: boolean | null
+          dementia_care_level?: string | null
           emergency_response?: boolean | null
           experience_years?: number | null
           hourly_rate?: number | null
           id?: string
           identity_verified?: boolean | null
+          memory_support_tools?: Json | null
           mental_health_certified?: boolean | null
           preferred_hours?: Json | null
           rating?: number | null
@@ -1075,13 +1081,16 @@ export type Database = {
           background_check_status?: string | null
           bio?: string | null
           certifications?: Json | null
+          cognitive_assessment_certified?: boolean | null
           created_at?: string | null
           dementia_care_certified?: boolean | null
+          dementia_care_level?: string | null
           emergency_response?: boolean | null
           experience_years?: number | null
           hourly_rate?: number | null
           id?: string
           identity_verified?: boolean | null
+          memory_support_tools?: Json | null
           mental_health_certified?: boolean | null
           preferred_hours?: Json | null
           rating?: number | null
@@ -1333,14 +1342,17 @@ export type Database = {
           in_person_meeting_preference: boolean | null
           interests: string[] | null
           languages: string[] | null
+          mental_health_specialties: string[] | null
           mental_health_support: boolean | null
           preferred_activities: string[] | null
           rating: number | null
           reference_check_status: string | null
           reviews_count: number | null
+          support_tools_proficiency: Json | null
           updated_at: string | null
           user_id: string | null
           virtual_meeting_preference: boolean | null
+          virtual_meeting_tools: string[] | null
         }
         Insert: {
           availability?: Json | null
@@ -1356,14 +1368,17 @@ export type Database = {
           in_person_meeting_preference?: boolean | null
           interests?: string[] | null
           languages?: string[] | null
+          mental_health_specialties?: string[] | null
           mental_health_support?: boolean | null
           preferred_activities?: string[] | null
           rating?: number | null
           reference_check_status?: string | null
           reviews_count?: number | null
+          support_tools_proficiency?: Json | null
           updated_at?: string | null
           user_id?: string | null
           virtual_meeting_preference?: boolean | null
+          virtual_meeting_tools?: string[] | null
         }
         Update: {
           availability?: Json | null
@@ -1379,14 +1394,17 @@ export type Database = {
           in_person_meeting_preference?: boolean | null
           interests?: string[] | null
           languages?: string[] | null
+          mental_health_specialties?: string[] | null
           mental_health_support?: boolean | null
           preferred_activities?: string[] | null
           rating?: number | null
           reference_check_status?: string | null
           reviews_count?: number | null
+          support_tools_proficiency?: Json | null
           updated_at?: string | null
           user_id?: string | null
           virtual_meeting_preference?: boolean | null
+          virtual_meeting_tools?: string[] | null
         }
         Relationships: [
           {
@@ -1823,6 +1841,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      memory_assistance_tools: {
+        Row: {
+          category: string
+          cognitive_areas: string[] | null
+          created_at: string
+          description: string | null
+          difficulty_level: string | null
+          id: string
+          instructions: Json | null
+          name: string
+        }
+        Insert: {
+          category: string
+          cognitive_areas?: string[] | null
+          created_at?: string
+          description?: string | null
+          difficulty_level?: string | null
+          id?: string
+          instructions?: Json | null
+          name: string
+        }
+        Update: {
+          category?: string
+          cognitive_areas?: string[] | null
+          created_at?: string
+          description?: string | null
+          difficulty_level?: string | null
+          id?: string
+          instructions?: Json | null
+          name?: string
+        }
+        Relationships: []
       }
       notifications: {
         Row: {
@@ -2693,6 +2744,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      virtual_meeting_templates: {
+        Row: {
+          activity_type: string
+          created_at: string
+          description: string | null
+          duration_minutes: number | null
+          id: string
+          instructions: Json | null
+          materials_needed: string[] | null
+          name: string
+          suitable_for: string[] | null
+        }
+        Insert: {
+          activity_type: string
+          created_at?: string
+          description?: string | null
+          duration_minutes?: number | null
+          id?: string
+          instructions?: Json | null
+          materials_needed?: string[] | null
+          name: string
+          suitable_for?: string[] | null
+        }
+        Update: {
+          activity_type?: string
+          created_at?: string
+          description?: string | null
+          duration_minutes?: number | null
+          id?: string
+          instructions?: Json | null
+          materials_needed?: string[] | null
+          name?: string
+          suitable_for?: string[] | null
+        }
+        Relationships: []
       }
       wishes: {
         Row: {
