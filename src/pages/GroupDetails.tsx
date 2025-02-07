@@ -1,3 +1,4 @@
+
 import { useParams } from "react-router-dom";
 import { CareOverview } from "@/components/dashboard/CareOverview";
 import { CareAssistant } from "@/components/ai/CareAssistant";
