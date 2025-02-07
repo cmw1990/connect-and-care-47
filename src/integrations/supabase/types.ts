@@ -378,6 +378,8 @@ export type Database = {
       }
       care_groups: {
         Row: {
+          care_recipients: Json | null
+          care_type: string[] | null
           created_at: string
           created_by: string | null
           description: string | null
@@ -387,6 +389,8 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          care_recipients?: Json | null
+          care_type?: string[] | null
           created_at?: string
           created_by?: string | null
           description?: string | null
@@ -396,6 +400,8 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          care_recipients?: Json | null
+          care_type?: string[] | null
           created_at?: string
           created_by?: string | null
           description?: string | null
@@ -1068,11 +1074,13 @@ export type Database = {
       }
       caregiver_profiles: {
         Row: {
+          age_groups_experience: string[] | null
           availability: Json | null
           background_check_date: string | null
           background_check_status: string | null
           bio: string | null
           certifications: Json | null
+          child_care_certifications: Json | null
           cognitive_assessment_certified: boolean | null
           created_at: string | null
           crisis_intervention_certified: boolean | null
@@ -1086,12 +1094,15 @@ export type Database = {
           identity_verified: boolean | null
           memory_support_tools: Json | null
           mental_health_certified: boolean | null
+          pet_care_certifications: Json | null
+          pet_types_experience: string[] | null
           preferred_hours: Json | null
           rating: number | null
           reference_check_status: string | null
           reviews_count: number | null
           service_radius: number | null
           skills: string[] | null
+          special_needs_certifications: Json | null
           specializations: string[] | null
           specialized_care_certifications: Json | null
           updated_at: string | null
@@ -1099,11 +1110,13 @@ export type Database = {
           verification_status: Json | null
         }
         Insert: {
+          age_groups_experience?: string[] | null
           availability?: Json | null
           background_check_date?: string | null
           background_check_status?: string | null
           bio?: string | null
           certifications?: Json | null
+          child_care_certifications?: Json | null
           cognitive_assessment_certified?: boolean | null
           created_at?: string | null
           crisis_intervention_certified?: boolean | null
@@ -1117,12 +1130,15 @@ export type Database = {
           identity_verified?: boolean | null
           memory_support_tools?: Json | null
           mental_health_certified?: boolean | null
+          pet_care_certifications?: Json | null
+          pet_types_experience?: string[] | null
           preferred_hours?: Json | null
           rating?: number | null
           reference_check_status?: string | null
           reviews_count?: number | null
           service_radius?: number | null
           skills?: string[] | null
+          special_needs_certifications?: Json | null
           specializations?: string[] | null
           specialized_care_certifications?: Json | null
           updated_at?: string | null
@@ -1130,11 +1146,13 @@ export type Database = {
           verification_status?: Json | null
         }
         Update: {
+          age_groups_experience?: string[] | null
           availability?: Json | null
           background_check_date?: string | null
           background_check_status?: string | null
           bio?: string | null
           certifications?: Json | null
+          child_care_certifications?: Json | null
           cognitive_assessment_certified?: boolean | null
           created_at?: string | null
           crisis_intervention_certified?: boolean | null
@@ -1148,12 +1166,15 @@ export type Database = {
           identity_verified?: boolean | null
           memory_support_tools?: Json | null
           mental_health_certified?: boolean | null
+          pet_care_certifications?: Json | null
+          pet_types_experience?: string[] | null
           preferred_hours?: Json | null
           rating?: number | null
           reference_check_status?: string | null
           reviews_count?: number | null
           service_radius?: number | null
           skills?: string[] | null
+          special_needs_certifications?: Json | null
           specializations?: string[] | null
           specialized_care_certifications?: Json | null
           updated_at?: string | null
@@ -1447,6 +1468,7 @@ export type Database = {
           availability: Json | null
           background_check_date: string | null
           bio: string | null
+          child_engagement_activities: Json | null
           cognitive_engagement_activities: Json | null
           communication_preferences: string[] | null
           created_at: string | null
@@ -1462,10 +1484,12 @@ export type Database = {
           mental_health_specialties: string[] | null
           mental_health_support: boolean | null
           music_therapy_certified: boolean | null
+          pet_care_experience: string[] | null
           preferred_activities: string[] | null
           rating: number | null
           reference_check_status: string | null
           reviews_count: number | null
+          special_needs_experience: Json | null
           support_tools_proficiency: Json | null
           updated_at: string | null
           user_id: string | null
@@ -1477,6 +1501,7 @@ export type Database = {
           availability?: Json | null
           background_check_date?: string | null
           bio?: string | null
+          child_engagement_activities?: Json | null
           cognitive_engagement_activities?: Json | null
           communication_preferences?: string[] | null
           created_at?: string | null
@@ -1492,10 +1517,12 @@ export type Database = {
           mental_health_specialties?: string[] | null
           mental_health_support?: boolean | null
           music_therapy_certified?: boolean | null
+          pet_care_experience?: string[] | null
           preferred_activities?: string[] | null
           rating?: number | null
           reference_check_status?: string | null
           reviews_count?: number | null
+          special_needs_experience?: Json | null
           support_tools_proficiency?: Json | null
           updated_at?: string | null
           user_id?: string | null
@@ -1507,6 +1534,7 @@ export type Database = {
           availability?: Json | null
           background_check_date?: string | null
           bio?: string | null
+          child_engagement_activities?: Json | null
           cognitive_engagement_activities?: Json | null
           communication_preferences?: string[] | null
           created_at?: string | null
@@ -1522,10 +1550,12 @@ export type Database = {
           mental_health_specialties?: string[] | null
           mental_health_support?: boolean | null
           music_therapy_certified?: boolean | null
+          pet_care_experience?: string[] | null
           preferred_activities?: string[] | null
           rating?: number | null
           reference_check_status?: string | null
           reviews_count?: number | null
+          special_needs_experience?: Json | null
           support_tools_proficiency?: Json | null
           updated_at?: string | null
           user_id?: string | null
@@ -2972,6 +3002,9 @@ export type Database = {
         | "professional_caregiver"
         | "care_facility_staff"
         | "doctor"
+        | "child_caregiver"
+        | "pet_caregiver"
+        | "special_needs_caregiver"
     }
     CompositeTypes: {
       [_ in never]: never

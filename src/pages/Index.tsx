@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
@@ -6,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { AnimatePresence, motion } from "framer-motion";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { DashboardContent } from "@/components/dashboard/DashboardContent";
+import { CareTypeSelector } from "@/components/care-types/CareTypeSelector";
 
 const Index = () => {
   const { toast } = useToast();
@@ -98,14 +98,28 @@ const Index = () => {
         exit={{ opacity: 0, y: -20 }}
         className="container mx-auto px-4 py-8 space-y-6"
       >
-        <DashboardHeader 
-          notifications={notifications} 
-          groupId={primaryGroup?.id} 
-        />
-        <DashboardContent 
-          primaryGroup={primaryGroup} 
-          upcomingAppointments={upcomingAppointments}
-        />
+        {!primaryGroup && (
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold text-center mb-6">Welcome to Care Connect</h1>
+            <p className="text-center text-gray-600 mb-8">
+              Choose the type of care you're looking for to get started
+            </p>
+            <CareTypeSelector />
+          </div>
+        )}
+        
+        {primaryGroup && (
+          <>
+            <DashboardHeader 
+              notifications={notifications} 
+              groupId={primaryGroup?.id} 
+            />
+            <DashboardContent 
+              primaryGroup={primaryGroup} 
+              upcomingAppointments={upcomingAppointments}
+            />
+          </>
+        )}
       </motion.div>
     </AnimatePresence>
   );
