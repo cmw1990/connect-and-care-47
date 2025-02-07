@@ -328,45 +328,66 @@ export type Database = {
       care_facilities: {
         Row: {
           address: string | null
+          amenities: Json | null
+          awards: Json | null
           cost_range: Json | null
           created_at: string
           description: string | null
+          featured_until: string | null
           id: string
           listing_expires_at: string | null
           listing_type: string | null
           location: Json | null
           name: string
           ratings: Json | null
+          response_rate: number | null
           services: Json | null
+          subscription_tier: string | null
           updated_at: string
+          verified: boolean | null
+          virtual_tour_url: string | null
         }
         Insert: {
           address?: string | null
+          amenities?: Json | null
+          awards?: Json | null
           cost_range?: Json | null
           created_at?: string
           description?: string | null
+          featured_until?: string | null
           id?: string
           listing_expires_at?: string | null
           listing_type?: string | null
           location?: Json | null
           name: string
           ratings?: Json | null
+          response_rate?: number | null
           services?: Json | null
+          subscription_tier?: string | null
           updated_at?: string
+          verified?: boolean | null
+          virtual_tour_url?: string | null
         }
         Update: {
           address?: string | null
+          amenities?: Json | null
+          awards?: Json | null
           cost_range?: Json | null
           created_at?: string
           description?: string | null
+          featured_until?: string | null
           id?: string
           listing_expires_at?: string | null
           listing_type?: string | null
           location?: Json | null
           name?: string
           ratings?: Json | null
+          response_rate?: number | null
           services?: Json | null
+          subscription_tier?: string | null
           updated_at?: string
+          verified?: boolean | null
+          virtual_tour_url?: string | null
         }
         Relationships: []
       }
@@ -1806,6 +1827,186 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: []
+      }
+      facility_review_metrics: {
+        Row: {
+          activities_rating: number | null
+          amenities_rating: number | null
+          care_quality_rating: number | null
+          cleanliness_rating: number | null
+          created_at: string | null
+          facility_id: string | null
+          id: string
+          review_id: string | null
+          staff_rating: number | null
+          value_rating: number | null
+        }
+        Insert: {
+          activities_rating?: number | null
+          amenities_rating?: number | null
+          care_quality_rating?: number | null
+          cleanliness_rating?: number | null
+          created_at?: string | null
+          facility_id?: string | null
+          id?: string
+          review_id?: string | null
+          staff_rating?: number | null
+          value_rating?: number | null
+        }
+        Update: {
+          activities_rating?: number | null
+          amenities_rating?: number | null
+          care_quality_rating?: number | null
+          cleanliness_rating?: number | null
+          created_at?: string | null
+          facility_id?: string | null
+          id?: string
+          review_id?: string | null
+          staff_rating?: number | null
+          value_rating?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "facility_review_metrics_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "care_facilities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "facility_review_metrics_review_id_fkey"
+            columns: ["review_id"]
+            isOneToOne: true
+            referencedRelation: "care_reviews"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      facility_review_responses: {
+        Row: {
+          created_at: string | null
+          facility_id: string | null
+          id: string
+          responded_by: string | null
+          response_text: string
+          review_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          facility_id?: string | null
+          id?: string
+          responded_by?: string | null
+          response_text: string
+          review_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          facility_id?: string | null
+          id?: string
+          responded_by?: string | null
+          response_text?: string
+          review_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "facility_review_responses_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "care_facilities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "facility_review_responses_review_id_fkey"
+            columns: ["review_id"]
+            isOneToOne: false
+            referencedRelation: "care_reviews"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      facility_subscription_plans: {
+        Row: {
+          created_at: string | null
+          duration: unknown
+          features: Json
+          id: string
+          name: string
+          price: number
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          duration: unknown
+          features?: Json
+          id?: string
+          name: string
+          price: number
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          duration?: unknown
+          features?: Json
+          id?: string
+          name?: string
+          price?: number
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      facility_subscriptions: {
+        Row: {
+          created_at: string | null
+          end_date: string
+          facility_id: string | null
+          id: string
+          payment_status: string | null
+          plan_id: string | null
+          start_date: string
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          end_date: string
+          facility_id?: string | null
+          id?: string
+          payment_status?: string | null
+          plan_id?: string | null
+          start_date?: string
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          end_date?: string
+          facility_id?: string | null
+          id?: string
+          payment_status?: string | null
+          plan_id?: string | null
+          start_date?: string
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "facility_subscriptions_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "care_facilities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "facility_subscriptions_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "facility_subscription_plans"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       group_posts: {
         Row: {

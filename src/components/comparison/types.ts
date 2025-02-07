@@ -1,4 +1,3 @@
-
 export interface Location {
   country: string;
   state: string;
@@ -14,6 +13,60 @@ export interface CareFacility {
   ratings?: Record<string, number> | null;
   cost_range?: { min: number; max: number } | null;
   services?: string[];
+  subscription_tier?: string;
+  featured_until?: string;
+  verified?: boolean;
+  response_rate?: number;
+  virtual_tour_url?: string;
+  amenities?: string[];
+  awards?: Array<{
+    name: string;
+    year: number;
+    issuer: string;
+  }>;
+}
+
+export interface DetailedReviewMetrics {
+  staff_rating: number;
+  cleanliness_rating: number;
+  care_quality_rating: number;
+  amenities_rating: number;
+  activities_rating: number;
+  value_rating: number;
+}
+
+export interface FacilityReview {
+  id: string;
+  facility_id: string;
+  reviewer_id: string;
+  rating: number;
+  review_text: string;
+  verified_review: boolean;
+  created_at: string;
+  metrics?: DetailedReviewMetrics;
+  response?: {
+    response_text: string;
+    responded_by: string;
+    created_at: string;
+  };
+}
+
+export interface SubscriptionPlan {
+  id: string;
+  name: string;
+  price: number;
+  duration: string;
+  features: string[];
+}
+
+export interface FacilitySubscription {
+  id: string;
+  facility_id: string;
+  plan_id: string;
+  start_date: string;
+  end_date: string;
+  status: 'active' | 'cancelled' | 'expired';
+  payment_status: 'pending' | 'paid' | 'failed';
 }
 
 export interface CareProduct {
