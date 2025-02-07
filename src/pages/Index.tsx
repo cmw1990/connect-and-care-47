@@ -6,7 +6,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { AnimatePresence, motion } from "framer-motion";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { DashboardContent } from "@/components/dashboard/DashboardContent";
-import { CareTypeSelector } from "@/components/care-types/CareTypeSelector";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Users, Building, ShoppingCart, Heart } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -17,6 +16,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { LandingSection } from "@/types/landing";
 
 const Index = () => {
   const { toast } = useToast();
@@ -58,7 +58,7 @@ const Index = () => {
         .order('display_order', { ascending: true });
 
       if (error) throw error;
-      return data;
+      return data as LandingSection[];
     }
   });
 
@@ -148,7 +148,7 @@ const Index = () => {
                   <div className="space-y-4">
                     {section.section_type === 'webapp_promo' && (
                       <ul className="space-y-2">
-                        {section.content.features.map((feature: string) => (
+                        {section.content.features?.map((feature: string) => (
                           <li key={feature} className="flex items-center gap-2">
                             <ArrowRight className="h-4 w-4 text-primary" />
                             {feature}
@@ -158,7 +158,7 @@ const Index = () => {
                     )}
                     {section.section_type === 'caregiver_search' && (
                       <ul className="space-y-2">
-                        {section.content.benefits.map((benefit: string) => (
+                        {section.content.benefits?.map((benefit: string) => (
                           <li key={benefit} className="flex items-center gap-2">
                             <ArrowRight className="h-4 w-4 text-primary" />
                             {benefit}
