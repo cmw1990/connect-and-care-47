@@ -46,7 +46,6 @@ export const CareRecipientManager = ({ groupId }: CareRecipientManagerProps) => 
 
       if (error) throw error;
 
-      // Cast the preferences to Record<string, any>
       const formattedData = (data || []).map(recipient => ({
         ...recipient,
         preferences: recipient.preferences as Record<string, any>
@@ -93,6 +92,7 @@ export const CareRecipientManager = ({ groupId }: CareRecipientManagerProps) => 
 
       const recipientData = {
         ...editForm,
+        first_name: editForm.first_name.trim(), // Ensure first_name is provided and trimmed
         group_id: groupId,
         preferences: editForm.preferences || {}
       };
@@ -100,7 +100,7 @@ export const CareRecipientManager = ({ groupId }: CareRecipientManagerProps) => 
       if (isEditing === 'new') {
         const { error } = await supabase
           .from('care_recipients')
-          .insert(recipientData);
+          .insert([recipientData]); // Pass as array to match the overload type
 
         if (error) throw error;
 
@@ -321,3 +321,4 @@ export const CareRecipientManager = ({ groupId }: CareRecipientManagerProps) => 
     </Card>
   );
 };
+
