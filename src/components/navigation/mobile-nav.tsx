@@ -1,6 +1,6 @@
 
 import { Link, useLocation } from "react-router-dom";
-import { Home, Users, MessageSquare, Heart, Menu } from "lucide-react";
+import { Home, Users, MessageSquare, Heart, Menu, Search, Building2, ShoppingCart } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -16,14 +16,11 @@ export const MobileNav = () => {
 
   const navItems = [
     { icon: Home, label: t("home"), path: "/" },
-    { icon: Users, label: t("careGroups"), path: "/groups" },
-    { icon: Heart, label: t("moodSupport"), path: "/mood-support" },
-    {
-      icon: MessageSquare,
-      label: t("messages"),
-      path: "/messages",
-      badge: hasUnreadMessages,
-    },
+    { icon: Search, label: t("findCare"), path: "/caregivers" },
+    { icon: Building2, label: t("facilities"), path: "/facilities" },
+    { icon: ShoppingCart, label: t("products"), path: "/compare" },
+    { icon: Users, label: t("careTeam"), path: "/groups" },
+    { icon: MessageSquare, label: t("messages"), path: "/messages", badge: hasUnreadMessages },
     { icon: Menu, label: t("more"), path: "/more" },
   ];
 
