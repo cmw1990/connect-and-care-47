@@ -98,7 +98,21 @@ export const CompanionMatcher = () => {
       const { data, error } = await query;
 
       if (error) throw error;
-      setMatches(data || []);
+
+      // Parse the JSON fields before setting state
+      const parsedData = (data || []).map(companion => ({
+        ...companion,
+        cognitive_engagement_activities: typeof companion.cognitive_engagement_activities === 'string' 
+          ? JSON.parse(companion.cognitive_engagement_activities)
+          : companion.cognitive_engagement_activities || {
+              memory_games: [],
+              brain_teasers: [],
+              social_activities: [],
+              creative_exercises: []
+            }
+      })) as CompanionMatch[];
+
+      setMatches(parsedData);
     } catch (error) {
       console.error('Error fetching companions:', error);
       toast({
