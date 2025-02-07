@@ -1,6 +1,12 @@
+
 import { Button } from "@/components/ui/button";
-import { Brain } from "lucide-react";
+import { Brain, DollarSign, Star, Tags } from "lucide-react";
 import { CareProduct } from "./types";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { formatCurrency } from "@/utils/formatUtils";
 
 interface ProductsComparisonProps {
   products: CareProduct[];
@@ -15,38 +21,110 @@ export const ProductsComparison = ({
   onCompare,
   onAffiliateClick,
 }: ProductsComparisonProps) => {
+  const { toast } = useToast();
+
+  const handleAffiliateClick = async (product: CareProduct) => {
+    if (!product.affiliate_link) return;
+
+    try {
+      // Track affiliate interaction
+      const { error } = await supabase
+        .from('affiliate_interactions')
+        .insert({
+          product_id: product.id,
+          interaction_type: 'click',
+          affiliate_link: product.affiliate_link,
+        });
+
+      if (error) throw error;
+
+      // Open affiliate link
+      onAffiliateClick(product.affiliate_link);
+    } catch (error) {
+      console.error('Error tracking affiliate click:', error);
+      // Still open the link even if tracking fails
+      onAffiliateClick(product.affiliate_link);
+    }
+  };
+
+  const getAverageRating = (ratings?: Record<string, number> | null) => {
+    if (!ratings) return 0;
+    const values = Object.values(ratings);
+    return values.length ? values.reduce((a, b) => a + b, 0) / values.length : 0;
+  };
+
   return (
-    <div>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {products.map((product) => (
-          <div key={product.id} className="p-4 border rounded">
-            <h3 className="font-semibold">{product.name}</h3>
-            <p className="text-sm text-gray-600">{product.description}</p>
-            {product.affiliate_link && (
-              <Button
-                variant="outline"
-                size="sm"
-                className="mt-2"
-                onClick={() => onAffiliateClick(product.affiliate_link!)}
-              >
-                View on Amazon
-              </Button>
-            )}
-          </div>
+          <Card key={product.id} className="h-full">
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                <span className="text-lg">{product.name}</span>
+                {product.ratings && (
+                  <span className="flex items-center text-yellow-500">
+                    <Star className="h-4 w-4 mr-1 fill-current" />
+                    {getAverageRating(product.ratings).toFixed(1)}
+                  </span>
+                )}
+              </CardTitle>
+              {product.price_range && (
+                <CardDescription>
+                  <span className="flex items-center text-green-600">
+                    <DollarSign className="h-4 w-4 mr-1" />
+                    {formatCurrency(product.price_range.min)} - {formatCurrency(product.price_range.max)}
+                  </span>
+                </CardDescription>
+              )}
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-sm text-gray-600">{product.description}</p>
+              
+              {product.specifications && (
+                <div className="space-y-2">
+                  <h4 className="text-sm font-medium">Key Features:</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {Object.entries(product.specifications).map(([key, value]) => (
+                      <Badge key={key} variant="secondary" className="text-xs">
+                        <Tags className="h-3 w-3 mr-1" />
+                        {key}: {value}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
+              {product.affiliate_link && (
+                <Button
+                  variant="default"
+                  size="sm"
+                  className="w-full mt-4"
+                  onClick={() => handleAffiliateClick(product)}
+                >
+                  View Best Price
+                </Button>
+              )}
+            </CardContent>
+          </Card>
         ))}
       </div>
+      
       <Button 
         onClick={() => onCompare(products)}
-        className="mt-4"
+        className="w-full mt-6"
+        size="lg"
         disabled={isAnalyzing}
       >
         {isAnalyzing ? (
           <>
-            <Brain className="mr-2 h-4 w-4 animate-pulse" />
-            Analyzing...
+            <Brain className="mr-2 h-5 w-5 animate-pulse" />
+            Analyzing Products...
           </>
         ) : (
-          'Compare Products'
+          <>
+            <Brain className="mr-2 h-5 w-5" />
+            Compare Products
+          </>
         )}
       </Button>
     </div>

@@ -9,6 +9,42 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      affiliate_interactions: {
+        Row: {
+          affiliate_link: string | null
+          clicked_at: string | null
+          converted_at: string | null
+          created_at: string | null
+          id: string
+          interaction_type: string
+          product_id: string
+          revenue_amount: number | null
+          user_id: string | null
+        }
+        Insert: {
+          affiliate_link?: string | null
+          clicked_at?: string | null
+          converted_at?: string | null
+          created_at?: string | null
+          id?: string
+          interaction_type: string
+          product_id: string
+          revenue_amount?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          affiliate_link?: string | null
+          clicked_at?: string | null
+          converted_at?: string | null
+          created_at?: string | null
+          id?: string
+          interaction_type?: string
+          product_id?: string
+          revenue_amount?: number | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       appointments: {
         Row: {
           attendees: Json | null
@@ -1725,6 +1761,51 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      facility_leads: {
+        Row: {
+          contact_preference: string | null
+          contacted_at: string | null
+          created_at: string | null
+          email: string | null
+          facility_id: string
+          id: string
+          is_contacted: boolean | null
+          lead_status: string
+          notes: string | null
+          phone_number: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          contact_preference?: string | null
+          contacted_at?: string | null
+          created_at?: string | null
+          email?: string | null
+          facility_id: string
+          id?: string
+          is_contacted?: boolean | null
+          lead_status?: string
+          notes?: string | null
+          phone_number?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          contact_preference?: string | null
+          contacted_at?: string | null
+          created_at?: string | null
+          email?: string | null
+          facility_id?: string
+          id?: string
+          is_contacted?: boolean | null
+          lead_status?: string
+          notes?: string | null
+          phone_number?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
       }
       group_posts: {
         Row: {
