@@ -20,6 +20,7 @@ export default defineConfig(({ mode }) => ({
   css: {
     postcss: {
       plugins: [
+        require('tailwindcss/nesting'),
         require('tailwindcss'),
         require('autoprefixer'),
       ],
