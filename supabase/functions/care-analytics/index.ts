@@ -20,26 +20,8 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    let analysisResult;
-    let recommendations;
-
-    switch (userType) {
-      case 'professional_caregiver':
-        analysisResult = await analyzeProfessionalMetrics(data);
-        recommendations = generateProfessionalRecommendations(analysisResult);
-        break;
-      case 'care_facility_staff':
-        analysisResult = await analyzeFacilityMetrics(data);
-        recommendations = generateFacilityRecommendations(analysisResult);
-        break;
-      case 'family_caregiver':
-        analysisResult = await analyzeFamilyMetrics(data);
-        recommendations = generateFamilyRecommendations(analysisResult);
-        break;
-      default:
-        analysisResult = await analyzeGeneralMetrics(data);
-        recommendations = generateGeneralRecommendations(analysisResult);
-    }
+    // Calculate metrics based on input data
+    const metrics = calculateMetrics(data);
 
     // Store analytics results
     const { error } = await supabase
@@ -47,23 +29,14 @@ serve(async (req) => {
       .insert({
         group_id: groupId,
         metric_type: metricType,
-        metric_value: {
-          analysis: analysisResult,
-          recommendations,
-          timestamp: new Date().toISOString()
-        }
+        metric_value: metrics,
+        recorded_at: new Date().toISOString()
       });
 
     if (error) throw error;
 
-    console.log('Successfully processed care analytics for:', userType);
-
     return new Response(
-      JSON.stringify({ 
-        success: true,
-        analysis: analysisResult,
-        recommendations 
-      }),
+      JSON.stringify({ success: true, metrics }),
       { 
         headers: { 
           ...corsHeaders,
@@ -87,224 +60,152 @@ serve(async (req) => {
   }
 });
 
-// Professional caregiver specific analysis
-async function analyzeProfessionalMetrics(data: any) {
+function calculateMetrics(data: any) {
+  const physical = calculatePhysicalHealth(data);
+  const mental = calculateMentalHealth(data);
+  const mood = calculateMoodScore(data);
+  const activity = calculateActivityLevel(data);
+
   return {
-    clinicalAssessment: analyzeClinicalData(data),
-    treatmentEffectiveness: evaluateTreatmentProgress(data),
-    patientStability: assessPatientStability(data)
+    physical,
+    mental,
+    mood,
+    activity
   };
 }
 
-// Facility staff specific analysis
-async function analyzeFacilityMetrics(data: any) {
-  return {
-    facilityResources: analyzeFacilityResources(data),
-    staffWorkload: evaluateStaffWorkload(data),
-    careQualityMetrics: assessCareQuality(data)
-  };
+function calculatePhysicalHealth(data: any): number {
+  const {
+    vitalSigns = {},
+    sleepHours = 0,
+    exerciseMinutes = 0,
+    medicationAdherence = 0
+  } = data;
+
+  // Normalize each component to a 0-100 scale
+  const vitalScore = calculateVitalScore(vitalSigns);
+  const sleepScore = (sleepHours / 8) * 100; // Assuming 8 hours is optimal
+  const exerciseScore = (exerciseMinutes / 30) * 100; // Assuming 30 minutes is target
+  const medicationScore = medicationAdherence;
+
+  // Weight the components
+  return Math.round(
+    (vitalScore * 0.4) +
+    (sleepScore * 0.2) +
+    (exerciseScore * 0.2) +
+    (medicationScore * 0.2)
+  );
 }
 
-// Family caregiver specific analysis
-async function analyzeFamilyMetrics(data: any) {
-  return {
-    dailyCareProgress: analyzeDailyCare(data),
-    patientComfort: evaluateComfortLevels(data),
-    familySupport: assessSupportNeeds(data)
-  };
+function calculateMentalHealth(data: any): number {
+  const {
+    cognitiveScore = 0,
+    socialInteractions = [],
+    stressLevel = 50,
+    moodStability = 50
+  } = data;
+
+  const socialScore = calculateSocialScore(socialInteractions);
+  const stressScore = 100 - stressLevel; // Invert stress level
+  
+  return Math.round(
+    (cognitiveScore * 0.3) +
+    (socialScore * 0.3) +
+    (stressScore * 0.2) +
+    (moodStability * 0.2)
+  );
 }
 
-// General metrics analysis
-async function analyzeGeneralMetrics(data: any) {
-  return {
-    overallProgress: analyzeProgress(data),
-    generalWellbeing: evaluateWellbeing(data)
-  };
+function calculateMoodScore(data: any): number {
+  const {
+    reportedMood = 50,
+    activityEngagement = 0,
+    socialConnections = 0,
+    sleepQuality = 0
+  } = data;
+
+  return Math.round(
+    (reportedMood * 0.4) +
+    (activityEngagement * 0.2) +
+    (socialConnections * 0.2) +
+    (sleepQuality * 0.2)
+  );
 }
 
-// Helper functions for specific analyses
-function analyzeClinicalData(data: any) {
-  // Implement clinical data analysis logic
-  return {
-    vitalSigns: data.vitals || {},
-    medicationAdherence: data.medications || {},
-    clinicalNotes: data.notes || []
-  };
+function calculateActivityLevel(data: any): number {
+  const {
+    dailySteps = 0,
+    exerciseMinutes = 0,
+    activeHours = 0,
+    mobilityScore = 0
+  } = data;
+
+  const stepScore = Math.min((dailySteps / 10000) * 100, 100);
+  const exerciseScore = Math.min((exerciseMinutes / 30) * 100, 100);
+  const activeScore = (activeHours / 12) * 100;
+
+  return Math.round(
+    (stepScore * 0.3) +
+    (exerciseScore * 0.3) +
+    (activeScore * 0.2) +
+    (mobilityScore * 0.2)
+  );
 }
 
-function evaluateTreatmentProgress(data: any) {
-  // Implement treatment progress evaluation
-  return {
-    effectiveness: data.effectiveness || 0,
-    adherence: data.adherence || 0,
-    improvements: data.improvements || []
-  };
+function calculateVitalScore(vitalSigns: any): number {
+  const {
+    heartRate = 75,
+    bloodPressure = { systolic: 120, diastolic: 80 },
+    temperature = 98.6,
+    oxygenLevel = 98
+  } = vitalSigns;
+
+  // Normalize each vital sign to a 0-100 scale
+  const heartRateScore = calculateHeartRateScore(heartRate);
+  const bpScore = calculateBloodPressureScore(bloodPressure);
+  const tempScore = calculateTemperatureScore(temperature);
+  const oxygenScore = calculateOxygenScore(oxygenLevel);
+
+  return Math.round(
+    (heartRateScore * 0.25) +
+    (bpScore * 0.25) +
+    (tempScore * 0.25) +
+    (oxygenScore * 0.25)
+  );
 }
 
-function assessPatientStability(data: any) {
-  // Implement patient stability assessment
-  return {
-    stabilityScore: data.stability || 0,
-    riskFactors: data.risks || [],
-    recommendations: data.recommendations || []
-  };
+function calculateHeartRateScore(hr: number): number {
+  // Optimal range: 60-100 bpm
+  if (hr >= 60 && hr <= 100) return 100;
+  if (hr < 60) return Math.max(0, (hr / 60) * 100);
+  return Math.max(0, 100 - ((hr - 100) / 40) * 100);
 }
 
-function analyzeFacilityResources(data: any) {
-  // Implement facility resource analysis
-  return {
-    availability: data.resources || {},
-    utilization: data.utilization || {},
-    needs: data.needs || []
-  };
+function calculateBloodPressureScore(bp: { systolic: number; diastolic: number }): number {
+  // Optimal: 120/80
+  const systolicScore = 100 - Math.abs(bp.systolic - 120) / 1.2;
+  const diastolicScore = 100 - Math.abs(bp.diastolic - 80) / 0.8;
+  return Math.round((systolicScore + diastolicScore) / 2);
 }
 
-function evaluateStaffWorkload(data: any) {
-  // Implement staff workload evaluation
-  return {
-    workloadDistribution: data.workload || {},
-    efficiency: data.efficiency || 0,
-    recommendations: data.staffing || []
-  };
+function calculateTemperatureScore(temp: number): number {
+  // Optimal: 98.6°F
+  return Math.max(0, 100 - Math.abs(temp - 98.6) * 10);
 }
 
-function assessCareQuality(data: any) {
-  // Implement care quality assessment
-  return {
-    qualityMetrics: data.quality || {},
-    patientSatisfaction: data.satisfaction || 0,
-    improvements: data.improvements || []
-  };
+function calculateOxygenScore(oxygen: number): number {
+  // Optimal: >= 95%
+  return oxygen >= 95 ? 100 : Math.max(0, (oxygen / 95) * 100);
 }
 
-function analyzeDailyCare(data: any) {
-  // Implement daily care analysis
-  return {
-    routineAdherence: data.routine || {},
-    challenges: data.challenges || [],
-    successes: data.successes || []
-  };
-}
+function calculateSocialScore(interactions: any[]): number {
+  if (!interactions.length) return 0;
+  
+  const totalScore = interactions.reduce((sum, interaction) => {
+    const quality = interaction.quality || 0;
+    const duration = interaction.duration || 0;
+    return sum + (quality * duration);
+  }, 0);
 
-function evaluateComfortLevels(data: any) {
-  // Implement comfort level evaluation
-  return {
-    comfortScore: data.comfort || 0,
-    painLevels: data.pain || {},
-    mood: data.mood || {}
-  };
-}
-
-function assessSupportNeeds(data: any) {
-  // Implement support needs assessment
-  return {
-    requiredSupport: data.support || [],
-    resourcesNeeded: data.resources || [],
-    familyEngagement: data.engagement || {}
-  };
-}
-
-function analyzeProgress(data: any) {
-  // Implement general progress analysis
-  return {
-    progressMetrics: data.progress || {},
-    goals: data.goals || [],
-    achievements: data.achievements || []
-  };
-}
-
-function evaluateWellbeing(data: any) {
-  // Implement wellbeing evaluation
-  return {
-    wellbeingScore: data.wellbeing || 0,
-    factors: data.factors || [],
-    trends: data.trends || {}
-  };
-}
-
-// Recommendation generators
-function generateProfessionalRecommendations(analysis: any) {
-  return {
-    clinicalActions: generateClinicalRecommendations(analysis),
-    treatmentAdjustments: suggestTreatmentChanges(analysis),
-    monitoringPlan: createMonitoringPlan(analysis)
-  };
-}
-
-function generateFacilityRecommendations(analysis: any) {
-  return {
-    resourceOptimization: optimizeResources(analysis),
-    staffingAdjustments: adjustStaffing(analysis),
-    qualityImprovements: improveQuality(analysis)
-  };
-}
-
-function generateFamilyRecommendations(analysis: any) {
-  return {
-    dailyCareAdjustments: adjustDailyCare(analysis),
-    supportResources: findSupportResources(analysis),
-    educationalMaterial: provideEducation(analysis)
-  };
-}
-
-function generateGeneralRecommendations(analysis: any) {
-  return {
-    generalCare: generateGeneralCare(analysis),
-    wellbeingImprovements: improveWellbeing(analysis)
-  };
-}
-
-// Helper functions for generating recommendations
-function generateClinicalRecommendations(analysis: any) {
-  return analysis.clinicalAssessment?.recommendations || [];
-}
-
-function suggestTreatmentChanges(analysis: any) {
-  return analysis.treatmentEffectiveness?.recommendations || [];
-}
-
-function createMonitoringPlan(analysis: any) {
-  return {
-    frequency: "daily",
-    metrics: ["vitals", "medication", "symptoms"],
-    alerts: analysis.patientStability?.riskFactors || []
-  };
-}
-
-function optimizeResources(analysis: any) {
-  return analysis.facilityResources?.recommendations || [];
-}
-
-function adjustStaffing(analysis: any) {
-  return analysis.staffWorkload?.recommendations || [];
-}
-
-function improveQuality(analysis: any) {
-  return analysis.careQualityMetrics?.improvements || [];
-}
-
-function adjustDailyCare(analysis: any) {
-  return {
-    routineChanges: analysis.dailyCareProgress?.recommendations || [],
-    comfortMeasures: analysis.patientComfort?.recommendations || []
-  };
-}
-
-function findSupportResources(analysis: any) {
-  return analysis.familySupport?.requiredSupport || [];
-}
-
-function provideEducation(analysis: any) {
-  return {
-    topics: ["daily care", "emergency response", "medication management"],
-    resources: analysis.familySupport?.resourcesNeeded || []
-  };
-}
-
-function generateGeneralCare(analysis: any) {
-  return analysis.overallProgress?.recommendations || [];
-}
-
-function improveWellbeing(analysis: any) {
-  return analysis.generalWellbeing?.recommendations || [];
+  return Math.min(100, (totalScore / (interactions.length * 100)) * 100);
 }
