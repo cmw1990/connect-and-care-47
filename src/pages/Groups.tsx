@@ -473,6 +473,7 @@ const Groups = () => {
                       onEdit={handleEdit}
                     />
                     <div className="mt-4 space-y-4">
+                      <CareRecipientManager groupId={group.id} />
                       <CareTeamPresence groupId={group.id} />
                       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                         <CareUpdates groupId={group.id} />

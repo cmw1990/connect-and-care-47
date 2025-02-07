@@ -735,6 +735,59 @@ export type Database = {
           },
         ]
       }
+      care_recipients: {
+        Row: {
+          allergies: string[] | null
+          care_needs: string[] | null
+          created_at: string | null
+          date_of_birth: string | null
+          first_name: string
+          group_id: string | null
+          id: string
+          last_name: string | null
+          medical_conditions: string[] | null
+          preferences: Json | null
+          special_requirements: string[] | null
+          updated_at: string | null
+        }
+        Insert: {
+          allergies?: string[] | null
+          care_needs?: string[] | null
+          created_at?: string | null
+          date_of_birth?: string | null
+          first_name: string
+          group_id?: string | null
+          id?: string
+          last_name?: string | null
+          medical_conditions?: string[] | null
+          preferences?: Json | null
+          special_requirements?: string[] | null
+          updated_at?: string | null
+        }
+        Update: {
+          allergies?: string[] | null
+          care_needs?: string[] | null
+          created_at?: string | null
+          date_of_birth?: string | null
+          first_name?: string
+          group_id?: string | null
+          id?: string
+          last_name?: string | null
+          medical_conditions?: string[] | null
+          preferences?: Json | null
+          special_requirements?: string[] | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "care_recipients_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "care_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       care_reviews: {
         Row: {
           booking_id: string | null
