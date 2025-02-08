@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -30,7 +29,7 @@ import {
   CommandSeparator,
 } from "@/components/ui/command";
 
-interface Coordinates {
+interface GeoPoint {
   type: string;
   coordinates: [number, number];
 }
@@ -48,10 +47,7 @@ interface Region {
   population: number | null;
 }
 
-interface QueryResult<T> {
-  data: T[];
-  error: Error | null;
-}
+type RegionResponse = Region[];
 
 const Index = () => {
   const navigate = useNavigate();
@@ -64,7 +60,7 @@ const Index = () => {
   const [mapCenter, setMapCenter] = useState({ latitude: 40, longitude: -95 });
   const [selectedCareType, setSelectedCareType] = useState<string>("");
 
-  const fetchCountries = async (): Promise<Region[]> => {
+  const fetchCountries = async (): Promise<RegionResponse> => {
     const { data, error } = await supabase
       .from('regions')
       .select('*')
@@ -75,7 +71,7 @@ const Index = () => {
     return data;
   };
 
-  const fetchRegions = async (): Promise<Region[]> => {
+  const fetchRegions = async (): Promise<RegionResponse> => {
     if (!selectedCountry) return [];
     const { data, error } = await supabase
       .from('regions')
@@ -87,7 +83,7 @@ const Index = () => {
     return data;
   };
 
-  const fetchCities = async (): Promise<Region[]> => {
+  const fetchCities = async (): Promise<RegionResponse> => {
     if (!selectedRegion) return [];
     const { data, error } = await supabase
       .from('regions')
@@ -100,7 +96,7 @@ const Index = () => {
     return data;
   };
 
-  const fetchSearchResults = async (): Promise<Region[]> => {
+  const fetchSearchResults = async (): Promise<RegionResponse> => {
     if (searchQuery.length < 2) return [];
     const { data, error } = await supabase
       .from('regions')
@@ -128,24 +124,24 @@ const Index = () => {
     return data;
   };
 
-  const { data: countries = [], isLoading: isLoadingCountries } = useQuery<Region[], Error>({
+  const { data: countries = [], isLoading: isLoadingCountries } = useQuery<RegionResponse, Error>({
     queryKey: ['regions', 'countries'],
     queryFn: fetchCountries
   });
 
-  const { data: regions = [], isLoading: isLoadingRegions } = useQuery<Region[], Error>({
+  const { data: regions = [], isLoading: isLoadingRegions } = useQuery<RegionResponse, Error>({
     queryKey: ['regions', selectedCountry],
     queryFn: fetchRegions,
     enabled: !!selectedCountry
   });
 
-  const { data: cities = [], isLoading: isLoadingCities } = useQuery<Region[], Error>({
+  const { data: cities = [], isLoading: isLoadingCities } = useQuery<RegionResponse, Error>({
     queryKey: ['regions', selectedCountry, selectedRegion],
     queryFn: fetchCities,
     enabled: !!selectedRegion
   });
 
-  const { data: searchResults = [] } = useQuery<Region[], Error>({
+  const { data: searchResults = [] } = useQuery<RegionResponse, Error>({
     queryKey: ['regions', 'search', searchQuery],
     queryFn: fetchSearchResults,
     enabled: searchQuery.length >= 2
@@ -167,7 +163,7 @@ const Index = () => {
       const country = countries.find(c => c.name === value);
       if (country?.coordinates) {
         try {
-          const point = JSON.parse(country.coordinates) as Coordinates;
+          const point = JSON.parse(country.coordinates) as GeoPoint;
           setMapCenter({
             latitude: point.coordinates[1],
             longitude: point.coordinates[0]
@@ -183,7 +179,7 @@ const Index = () => {
       const region = regions.find(r => r.name === value);
       if (region?.coordinates) {
         try {
-          const point = JSON.parse(region.coordinates) as Coordinates;
+          const point = JSON.parse(region.coordinates) as GeoPoint;
           setMapCenter({
             latitude: point.coordinates[1],
             longitude: point.coordinates[0]
@@ -198,7 +194,7 @@ const Index = () => {
       const city = cities.find(c => c.name === value);
       if (city?.coordinates) {
         try {
-          const point = JSON.parse(city.coordinates) as Coordinates;
+          const point = JSON.parse(city.coordinates) as GeoPoint;
           setMapCenter({
             latitude: point.coordinates[1],
             longitude: point.coordinates[0]
@@ -352,7 +348,7 @@ const Index = () => {
                     zoom={selectedCity ? 12 : selectedRegion ? 8 : 4}
                     markers={cities?.filter(city => city.coordinates).map(city => {
                       try {
-                        const coords = JSON.parse(city.coordinates!) as Coordinates;
+                        const coords = JSON.parse(city.coordinates!) as GeoPoint;
                         return {
                           lat: coords.coordinates[1],
                           lng: coords.coordinates[0],
