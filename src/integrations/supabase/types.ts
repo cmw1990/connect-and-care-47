@@ -2847,6 +2847,47 @@ export type Database = {
           },
         ]
       }
+      regions: {
+        Row: {
+          coordinates: unknown | null
+          country: string
+          created_at: string
+          id: number
+          name: string
+          parent_id: number | null
+          population: number | null
+          type: string
+        }
+        Insert: {
+          coordinates?: unknown | null
+          country: string
+          created_at?: string
+          id?: number
+          name: string
+          parent_id?: number | null
+          population?: number | null
+          type: string
+        }
+        Update: {
+          coordinates?: unknown | null
+          country?: string
+          created_at?: string
+          id?: number
+          name?: string
+          parent_id?: number | null
+          population?: number | null
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "regions_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "regions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       resource_directory: {
         Row: {
           category: string
@@ -4323,11 +4364,24 @@ export type Database = {
         }
         Returns: unknown
       }
+      get_country_id: {
+        Args: {
+          country_name: string
+        }
+        Returns: number
+      }
       get_proj4_from_srid: {
         Args: {
           "": number
         }
         Returns: string
+      }
+      get_state_id: {
+        Args: {
+          state_name: string
+          country_name: string
+        }
+        Returns: number
       }
       gettransactionid: {
         Args: Record<PropertyKey, never>
