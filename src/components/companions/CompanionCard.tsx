@@ -1,7 +1,9 @@
+
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Brain, Globe, Music, Palette, Star, Video } from "lucide-react";
+import { LegalDisclaimer } from "@/components/disclaimers/LegalDisclaimer";
 
 interface CompanionCardProps {
   companion: {
@@ -82,6 +84,8 @@ export const CompanionCard = ({ companion, onConnect }: CompanionCardProps) => {
               </Badge>
             )}
           </div>
+
+          <LegalDisclaimer type="platform_disclaimer" />
 
           <div className="flex justify-between items-center mt-4">
             <span className="text-lg font-semibold">

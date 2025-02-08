@@ -1,8 +1,10 @@
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { MessageSquare, Star, Clock, Shield, Calendar, Baby, Dog, Brain, Heart } from "lucide-react";
 import { DirectMessageChat } from "@/components/chat/DirectMessageChat";
+import { LegalDisclaimer } from "@/components/disclaimers/LegalDisclaimer";
 
 interface CaregiverCardProps {
   caregiver: {
@@ -96,6 +98,8 @@ export const CaregiverCard = ({ caregiver }: CaregiverCardProps) => {
               </span>
             ))}
           </div>
+
+          <LegalDisclaimer type="platform_disclaimer" />
 
           <div className="flex justify-between items-center pt-4">
             <span className="font-semibold">${caregiver.hourly_rate}/hr</span>

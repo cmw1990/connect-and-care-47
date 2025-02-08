@@ -2177,6 +2177,33 @@ export type Database = {
         }
         Relationships: []
       }
+      legal_disclaimers: {
+        Row: {
+          content: string
+          created_at: string | null
+          id: string
+          title: string
+          type: string
+          updated_at: string | null
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          id?: string
+          title: string
+          type: string
+          updated_at?: string | null
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          id?: string
+          title?: string
+          type?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       medical_device_data: {
         Row: {
           device_id: string | null
