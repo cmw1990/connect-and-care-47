@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -29,12 +30,21 @@ import {
   CommandSeparator,
 } from "@/components/ui/command";
 
+interface Coordinates {
+  type: string;
+  coordinates: [number, number];
+}
+
 interface Region {
   id: number;
   name: string;
   type: string;
   country: string;
   coordinates: string | null;
+  created_at: string;
+  parent_id: number | null;
+  population: number | null;
+  state?: string;
 }
 
 const Index = () => {
@@ -47,7 +57,7 @@ const Index = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [mapCenter, setMapCenter] = useState({ latitude: 40, longitude: -95 });
 
-  const { data: countries, isLoading: isLoadingCountries } = useQuery<Region[]>({
+  const { data: countries = [], isLoading: isLoadingCountries } = useQuery<Region[]>({
     queryKey: ['regions', 'countries'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -60,7 +70,7 @@ const Index = () => {
     }
   });
 
-  const { data: regions, isLoading: isLoadingRegions } = useQuery<Region[]>({
+  const { data: regions = [], isLoading: isLoadingRegions } = useQuery<Region[]>({
     queryKey: ['regions', selectedCountry],
     queryFn: async () => {
       if (!selectedCountry) return [];
@@ -76,7 +86,7 @@ const Index = () => {
     enabled: !!selectedCountry
   });
 
-  const { data: cities, isLoading: isLoadingCities } = useQuery<Region[]>({
+  const { data: cities = [], isLoading: isLoadingCities } = useQuery<Region[]>({
     queryKey: ['regions', selectedCountry, selectedRegion],
     queryFn: async () => {
       if (!selectedRegion) return [];
@@ -92,7 +102,7 @@ const Index = () => {
     enabled: !!selectedRegion
   });
 
-  const { data: searchResults } = useQuery<Region[]>({
+  const { data: searchResults = [] } = useQuery<Region[]>({
     queryKey: ['regions', 'search', searchQuery],
     queryFn: async () => {
       if (searchQuery.length < 2) return [];
@@ -121,9 +131,9 @@ const Index = () => {
       setSelectedRegion('');
       setSelectedCity('');
       
-      const country = countries?.find(c => c.name === value);
+      const country = countries.find(c => c.name === value);
       if (country?.coordinates) {
-        const point = JSON.parse(country.coordinates);
+        const point = JSON.parse(country.coordinates) as Coordinates;
         setMapCenter({
           latitude: point.coordinates[1],
           longitude: point.coordinates[0]
@@ -133,9 +143,9 @@ const Index = () => {
       setSelectedRegion(value);
       setSelectedCity('');
       
-      const region = regions?.find(r => r.name === value);
+      const region = regions.find(r => r.name === value);
       if (region?.coordinates) {
-        const point = JSON.parse(region.coordinates);
+        const point = JSON.parse(region.coordinates) as Coordinates;
         setMapCenter({
           latitude: point.coordinates[1],
           longitude: point.coordinates[0]
@@ -144,9 +154,9 @@ const Index = () => {
     } else if (type === 'city') {
       setSelectedCity(value);
       
-      const city = cities?.find(c => c.name === value);
+      const city = cities.find(c => c.name === value);
       if (city?.coordinates) {
-        const point = JSON.parse(city.coordinates);
+        const point = JSON.parse(city.coordinates) as Coordinates;
         setMapCenter({
           latitude: point.coordinates[1],
           longitude: point.coordinates[0]
@@ -169,7 +179,7 @@ const Index = () => {
     } else if (result.type === 'city') {
       setSelectedCountry(result.country);
       // Find and set the region for this city
-      const cityRegion = regions?.find(r => r.name === result.state);
+      const cityRegion = regions.find(r => r.name === result.state);
       if (cityRegion) {
         handleLocationSelect('region', cityRegion.name);
       }
@@ -238,7 +248,7 @@ const Index = () => {
                       />
                       <CommandList>
                         <CommandEmpty>No results found.</CommandEmpty>
-                        {searchResults?.length ? (
+                        {searchResults.length ? (
                           <CommandGroup heading="Locations">
                             {searchResults.map((result) => (
                               <CommandItem
@@ -272,7 +282,7 @@ const Index = () => {
                       )}
                     </SelectTrigger>
                     <SelectContent>
-                      {regions?.map((region) => (
+                      {regions.map((region) => (
                         <SelectItem key={region.id} value={region.name}>
                           {region.name}
                         </SelectItem>
@@ -293,7 +303,7 @@ const Index = () => {
                       )}
                     </SelectTrigger>
                     <SelectContent>
-                      {cities?.map((city) => (
+                      {cities.map((city) => (
                         <SelectItem key={city.id} value={city.name}>
                           {city.name}
                         </SelectItem>
@@ -320,9 +330,9 @@ const Index = () => {
                     latitude={mapCenter.latitude}
                     longitude={mapCenter.longitude}
                     zoom={selectedCity ? 12 : selectedRegion ? 8 : 4}
-                    markers={cities?.filter(city => city.coordinates).map(city => ({
-                      lat: JSON.parse(city.coordinates).coordinates[1],
-                      lng: JSON.parse(city.coordinates).coordinates[0],
+                    markers={cities.filter(city => city.coordinates).map(city => ({
+                      lat: JSON.parse(city.coordinates!).coordinates[1],
+                      lng: JSON.parse(city.coordinates!).coordinates[0],
                       title: city.name
                     })) || []}
                   />
