@@ -20,3 +20,4 @@ export interface Region {
 export interface DatabaseRegion extends Omit<Region, 'state'> {
   state?: string | null;
 }
+
