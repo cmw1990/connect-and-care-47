@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -30,6 +29,14 @@ import {
   CommandSeparator,
 } from "@/components/ui/command";
 
+interface Region {
+  id: number;
+  name: string;
+  type: string;
+  country: string;
+  coordinates: string | null;
+}
+
 const Index = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -40,8 +47,7 @@ const Index = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [mapCenter, setMapCenter] = useState({ latitude: 40, longitude: -95 });
 
-  // Fetch countries
-  const { data: countries, isLoading: isLoadingCountries } = useQuery({
+  const { data: countries, isLoading: isLoadingCountries } = useQuery<Region[]>({
     queryKey: ['regions', 'countries'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -54,8 +60,7 @@ const Index = () => {
     }
   });
 
-  // Fetch regions based on selected country
-  const { data: regions, isLoading: isLoadingRegions } = useQuery({
+  const { data: regions, isLoading: isLoadingRegions } = useQuery<Region[]>({
     queryKey: ['regions', selectedCountry],
     queryFn: async () => {
       if (!selectedCountry) return [];
@@ -71,8 +76,7 @@ const Index = () => {
     enabled: !!selectedCountry
   });
 
-  // Fetch cities based on selected country and region
-  const { data: cities, isLoading: isLoadingCities } = useQuery({
+  const { data: cities, isLoading: isLoadingCities } = useQuery<Region[]>({
     queryKey: ['regions', selectedCountry, selectedRegion],
     queryFn: async () => {
       if (!selectedRegion) return [];
@@ -88,8 +92,7 @@ const Index = () => {
     enabled: !!selectedRegion
   });
 
-  // Search functionality across all location types
-  const { data: searchResults } = useQuery({
+  const { data: searchResults } = useQuery<Region[]>({
     queryKey: ['regions', 'search', searchQuery],
     queryFn: async () => {
       if (searchQuery.length < 2) return [];
@@ -118,7 +121,6 @@ const Index = () => {
       setSelectedRegion('');
       setSelectedCity('');
       
-      // Update map center based on country
       const country = countries?.find(c => c.name === value);
       if (country?.coordinates) {
         const point = JSON.parse(country.coordinates);
@@ -131,7 +133,6 @@ const Index = () => {
       setSelectedRegion(value);
       setSelectedCity('');
       
-      // Update map for region
       const region = regions?.find(r => r.name === value);
       if (region?.coordinates) {
         const point = JSON.parse(region.coordinates);
@@ -143,7 +144,6 @@ const Index = () => {
     } else if (type === 'city') {
       setSelectedCity(value);
       
-      // Update map for city
       const city = cities?.find(c => c.name === value);
       if (city?.coordinates) {
         const point = JSON.parse(city.coordinates);
@@ -160,8 +160,7 @@ const Index = () => {
     }
   };
 
-  // Handle search result selection
-  const handleSearchSelect = (result: any) => {
+  const handleSearchSelect = (result: Region) => {
     if (result.type === 'country') {
       handleLocationSelect('country', result.name);
     } else if (result.type === 'state' || result.type === 'province') {
@@ -187,7 +186,6 @@ const Index = () => {
         exit={{ opacity: 0, y: -20 }}
         className="min-h-screen"
       >
-        {/* Hero Section with Search */}
         <section className="relative bg-gradient-to-b from-primary/10 via-background to-background py-16 lg:py-24">
           <div className="container mx-auto px-4">
             <div className="max-w-4xl mx-auto text-center">
@@ -207,7 +205,6 @@ const Index = () => {
                 Compare caregivers, facilities, and care products all in one place
               </motion.p>
 
-              {/* Main Search Bar */}
               <Card className="p-6 shadow-lg mb-8">
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                   <Select>
@@ -317,7 +314,6 @@ const Index = () => {
                 </div>
               </Card>
 
-              {/* Map Display */}
               {selectedCountry && (
                 <Card className="mb-8 overflow-hidden">
                   <LocationMap
@@ -333,7 +329,6 @@ const Index = () => {
                 </Card>
               )}
 
-              {/* Quick Action Cards */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
                 <Card 
                   className="p-6 cursor-pointer hover:shadow-lg transition-shadow"
@@ -372,7 +367,6 @@ const Index = () => {
           </div>
         </section>
 
-        {/* Features Section */}
         <section className="py-16 bg-gray-50">
           <div className="container mx-auto px-4">
             <div className="max-w-4xl mx-auto">
@@ -397,7 +391,6 @@ const Index = () => {
           </div>
         </section>
 
-        {/* Care Team Platform CTA */}
         <section className="py-16 bg-primary/5">
           <div className="container mx-auto px-4">
             <div className="max-w-4xl mx-auto text-center">
