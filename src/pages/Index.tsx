@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
@@ -7,16 +7,28 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { Search, MapPin, Star, Shield, Heart, Building2, ShoppingCart, Users, ArrowRight } from "lucide-react";
+import { Search, MapPin, Star, Shield, Heart, Building2, ShoppingCart, Users, ArrowRight, Loader2 } from "lucide-react";
 import { LocationMap } from "@/components/groups/LocationMap";
 import { useToast } from "@/hooks/use-toast";
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Command,
+  CommandDialog,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+  CommandSeparator,
+} from "@/components/ui/command";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -24,21 +36,26 @@ const Index = () => {
   const [selectedCountry, setSelectedCountry] = useState<string>("");
   const [selectedRegion, setSelectedRegion] = useState<string>("");
   const [selectedCity, setSelectedCity] = useState<string>("");
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const [mapCenter, setMapCenter] = useState({ latitude: 40, longitude: -95 });
 
-  const { data: countries } = useQuery({
+  // Fetch countries
+  const { data: countries, isLoading: isLoadingCountries } = useQuery({
     queryKey: ['regions', 'countries'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('regions')
         .select('*')
-        .eq('type', 'country');
+        .eq('type', 'country')
+        .order('name');
       if (error) throw error;
       return data;
     }
   });
 
-  const { data: regions } = useQuery({
+  // Fetch regions based on selected country
+  const { data: regions, isLoading: isLoadingRegions } = useQuery({
     queryKey: ['regions', selectedCountry],
     queryFn: async () => {
       if (!selectedCountry) return [];
@@ -46,14 +63,16 @@ const Index = () => {
         .from('regions')
         .select('*')
         .eq('country', selectedCountry)
-        .in('type', ['state', 'province']);
+        .in('type', ['state', 'province'])
+        .order('name');
       if (error) throw error;
       return data;
     },
     enabled: !!selectedCountry
   });
 
-  const { data: cities } = useQuery({
+  // Fetch cities based on selected country and region
+  const { data: cities, isLoading: isLoadingCities } = useQuery({
     queryKey: ['regions', selectedCountry, selectedRegion],
     queryFn: async () => {
       if (!selectedRegion) return [];
@@ -61,11 +80,29 @@ const Index = () => {
         .from('regions')
         .select('*')
         .eq('type', 'city')
-        .eq('country', selectedCountry);
+        .eq('country', selectedCountry)
+        .order('name');
       if (error) throw error;
       return data;
     },
     enabled: !!selectedRegion
+  });
+
+  // Search functionality across all location types
+  const { data: searchResults } = useQuery({
+    queryKey: ['regions', 'search', searchQuery],
+    queryFn: async () => {
+      if (searchQuery.length < 2) return [];
+      const { data, error } = await supabase
+        .from('regions')
+        .select('*')
+        .ilike('name', `%${searchQuery}%`)
+        .order('name')
+        .limit(10);
+      if (error) throw error;
+      return data;
+    },
+    enabled: searchQuery.length >= 2
   });
 
   const careTypes = [
@@ -80,16 +117,66 @@ const Index = () => {
       setSelectedCountry(value);
       setSelectedRegion('');
       setSelectedCity('');
+      
+      // Update map center based on country
+      const country = countries?.find(c => c.name === value);
+      if (country?.coordinates) {
+        const point = JSON.parse(country.coordinates);
+        setMapCenter({
+          latitude: point.coordinates[1],
+          longitude: point.coordinates[0]
+        });
+      }
     } else if (type === 'region') {
       setSelectedRegion(value);
       setSelectedCity('');
+      
+      // Update map for region
+      const region = regions?.find(r => r.name === value);
+      if (region?.coordinates) {
+        const point = JSON.parse(region.coordinates);
+        setMapCenter({
+          latitude: point.coordinates[1],
+          longitude: point.coordinates[0]
+        });
+      }
     } else if (type === 'city') {
       setSelectedCity(value);
+      
+      // Update map for city
+      const city = cities?.find(c => c.name === value);
+      if (city?.coordinates) {
+        const point = JSON.parse(city.coordinates);
+        setMapCenter({
+          latitude: point.coordinates[1],
+          longitude: point.coordinates[0]
+        });
+      }
+
       toast({
         title: "Location Selected",
         description: `Selected location: ${value}, ${selectedRegion}, ${selectedCountry}`,
       });
     }
+  };
+
+  // Handle search result selection
+  const handleSearchSelect = (result: any) => {
+    if (result.type === 'country') {
+      handleLocationSelect('country', result.name);
+    } else if (result.type === 'state' || result.type === 'province') {
+      setSelectedCountry(result.country);
+      handleLocationSelect('region', result.name);
+    } else if (result.type === 'city') {
+      setSelectedCountry(result.country);
+      // Find and set the region for this city
+      const cityRegion = regions?.find(r => r.name === result.state);
+      if (cityRegion) {
+        handleLocationSelect('region', cityRegion.name);
+      }
+      handleLocationSelect('city', result.name);
+    }
+    setSearchOpen(false);
   };
 
   return (
@@ -136,29 +223,56 @@ const Index = () => {
                     </SelectContent>
                   </Select>
 
-                  <Select
-                    value={selectedCountry}
-                    onValueChange={(value) => handleLocationSelect('country', value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select Country" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {countries?.map((country) => (
-                        <SelectItem key={country.id} value={country.name}>
-                          {country.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <div className="relative">
+                    <Button 
+                      variant="outline" 
+                      className="w-full justify-start text-left font-normal"
+                      onClick={() => setSearchOpen(true)}
+                    >
+                      <Search className="mr-2 h-4 w-4" />
+                      {selectedCity || selectedRegion || selectedCountry || "Search location..."}
+                    </Button>
+
+                    <CommandDialog open={searchOpen} onOpenChange={setSearchOpen}>
+                      <CommandInput 
+                        placeholder="Search locations..." 
+                        value={searchQuery}
+                        onValueChange={setSearchQuery}
+                      />
+                      <CommandList>
+                        <CommandEmpty>No results found.</CommandEmpty>
+                        {searchResults?.length ? (
+                          <CommandGroup heading="Locations">
+                            {searchResults.map((result) => (
+                              <CommandItem
+                                key={result.id}
+                                value={result.name}
+                                onSelect={() => handleSearchSelect(result)}
+                              >
+                                <MapPin className="mr-2 h-4 w-4" />
+                                {result.name}
+                                <span className="ml-2 text-muted-foreground">
+                                  ({result.type})
+                                </span>
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        ) : null}
+                      </CommandList>
+                    </CommandDialog>
+                  </div>
 
                   <Select
                     value={selectedRegion}
                     onValueChange={(value) => handleLocationSelect('region', value)}
-                    disabled={!selectedCountry}
+                    disabled={!selectedCountry || isLoadingRegions}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Select Region" />
+                      {isLoadingRegions ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <SelectValue placeholder="Select Region" />
+                      )}
                     </SelectTrigger>
                     <SelectContent>
                       {regions?.map((region) => (
@@ -172,10 +286,14 @@ const Index = () => {
                   <Select
                     value={selectedCity}
                     onValueChange={(value) => handleLocationSelect('city', value)}
-                    disabled={!selectedRegion}
+                    disabled={!selectedRegion || isLoadingCities}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Select City" />
+                      {isLoadingCities ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <SelectValue placeholder="Select City" />
+                      )}
                     </SelectTrigger>
                     <SelectContent>
                       {cities?.map((city) => (
@@ -192,6 +310,7 @@ const Index = () => {
                     size="lg" 
                     className="w-full"
                     onClick={() => navigate('/caregivers')}
+                    disabled={!selectedCity}
                   >
                     Find Care <Search className="ml-2 h-4 w-4" />
                   </Button>
@@ -200,12 +319,16 @@ const Index = () => {
 
               {/* Map Display */}
               {selectedCountry && (
-                <Card className="mb-8">
+                <Card className="mb-8 overflow-hidden">
                   <LocationMap
                     latitude={mapCenter.latitude}
                     longitude={mapCenter.longitude}
-                    zoom={4}
-                    markers={[]}
+                    zoom={selectedCity ? 12 : selectedRegion ? 8 : 4}
+                    markers={cities?.filter(city => city.coordinates).map(city => ({
+                      lat: JSON.parse(city.coordinates).coordinates[1],
+                      lng: JSON.parse(city.coordinates).coordinates[0],
+                      title: city.name
+                    })) || []}
                   />
                 </Card>
               )}
