@@ -68,7 +68,7 @@ const Index = () => {
       .or('continent.eq.Asia,continent.eq.South America,continent.eq.North America,continent.eq.Central America')
       .order('name');
     if (error) throw error;
-    return data;
+    return data as RegionResponse;
   };
 
   const fetchRegions = async (): Promise<RegionResponse> => {
@@ -80,7 +80,7 @@ const Index = () => {
       .in('type', ['state', 'province', 'prefecture', 'region', 'department', 'distrito'])
       .order('name');
     if (error) throw error;
-    return data;
+    return data as RegionResponse;
   };
 
   const fetchCities = async (): Promise<RegionResponse> => {
@@ -93,7 +93,7 @@ const Index = () => {
       .eq('state', selectedRegion)
       .order('name');
     if (error) throw error;
-    return data;
+    return data as RegionResponse;
   };
 
   const fetchSearchResults = async (): Promise<RegionResponse> => {
@@ -121,7 +121,7 @@ const Index = () => {
       .order('name')
       .limit(10);
     if (error) throw error;
-    return data;
+    return data as RegionResponse;
   };
 
   const { data: countries = [], isLoading: isLoadingCountries } = useQuery<RegionResponse, Error>({
