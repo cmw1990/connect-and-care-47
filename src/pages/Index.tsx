@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -65,7 +66,7 @@ const Index = () => {
         .eq('type', 'country')
         .order('name');
       if (error) throw error;
-      return data as Region[];
+      return data;
     }
   });
 
@@ -80,7 +81,7 @@ const Index = () => {
         .in('type', ['state', 'province', 'prefecture'])
         .order('name');
       if (error) throw error;
-      return data as Region[];
+      return data;
     },
     enabled: !!selectedCountry
   });
@@ -97,7 +98,7 @@ const Index = () => {
         .eq('state', selectedRegion)
         .order('name');
       if (error) throw error;
-      return data as Region[];
+      return data;
     },
     enabled: !!selectedRegion
   });
@@ -114,7 +115,7 @@ const Index = () => {
         .order('name')
         .limit(10);
       if (error) throw error;
-      return data as Region[];
+      return data;
     },
     enabled: searchQuery.length >= 2
   });
