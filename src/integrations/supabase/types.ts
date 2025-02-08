@@ -782,6 +782,9 @@ export type Database = {
           ratings: Json | null
           specifications: Json | null
           updated_at: string
+          verification_status:
+            | Database["public"]["Enums"]["verification_status"]
+            | null
         }
         Insert: {
           affiliate_link?: string | null
@@ -795,6 +798,9 @@ export type Database = {
           ratings?: Json | null
           specifications?: Json | null
           updated_at?: string
+          verification_status?:
+            | Database["public"]["Enums"]["verification_status"]
+            | null
         }
         Update: {
           affiliate_link?: string | null
@@ -808,6 +814,9 @@ export type Database = {
           ratings?: Json | null
           specifications?: Json | null
           updated_at?: string
+          verification_status?:
+            | Database["public"]["Enums"]["verification_status"]
+            | null
         }
         Relationships: []
       }
