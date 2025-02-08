@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -47,7 +48,18 @@ interface Region {
   population: number | null;
 }
 
-type DatabaseRegion = Region;
+type DatabaseRegion = {
+  id: number;
+  name: string;
+  type: string;
+  country: string;
+  state: string | null;
+  continent: string | null;
+  coordinates: string | null;
+  created_at: string;
+  parent_id: number | null;
+  population: number | null;
+};
 
 const Index = () => {
   const navigate = useNavigate();
