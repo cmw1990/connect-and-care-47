@@ -83,7 +83,10 @@ const Index = () => {
         .order('price');
       
       if (error) throw error;
-      return data;
+      return data.map(plan => ({
+        ...plan,
+        features: Array.isArray(plan.features) ? plan.features : JSON.parse(plan.features as string)
+      }));
     },
   });
 
@@ -98,7 +101,8 @@ const Index = () => {
     if (error) throw new Error(error.message);
     return (data || []).map(region => ({
       ...region,
-      state: null
+      state: null,
+      coordinates: region.coordinates ? String(region.coordinates) : null
     }));
   };
 
@@ -115,7 +119,8 @@ const Index = () => {
     if (error) throw new Error(error.message);
     return (data || []).map(region => ({
       ...region,
-      state: region.state || null
+      state: region.state || null,
+      coordinates: region.coordinates ? String(region.coordinates) : null
     }));
   };
 
@@ -133,7 +138,8 @@ const Index = () => {
     if (error) throw new Error(error.message);
     return (data || []).map(region => ({
       ...region,
-      state: region.state || null
+      state: region.state || null,
+      coordinates: region.coordinates ? String(region.coordinates) : null
     }));
   };
 
@@ -166,7 +172,8 @@ const Index = () => {
     if (error) throw new Error(error.message);
     return (data || []).map(region => ({
       ...region,
-      state: region.state || null
+      state: region.state || null,
+      coordinates: region.coordinates ? String(region.coordinates) : null
     }));
   };
 
