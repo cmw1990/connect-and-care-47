@@ -1,12 +1,13 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { BarChart2, Brain } from "lucide-react";
+import { BarChart2, Brain, Shield } from "lucide-react";
 import { ComparisonResult } from "./types";
 import { ComparisonChart } from "./ComparisonChart";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { VerificationBadge } from "@/components/verification/VerificationBadge";
+import { Button } from "../ui/button";
 
 interface ComparisonResultsProps {
   results: Record<string, ComparisonResult>;
@@ -15,6 +16,7 @@ interface ComparisonResultsProps {
 export const ComparisonResults = ({ results }: ComparisonResultsProps) => {
   const [aiAnalysis, setAiAnalysis] = useState<string>("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isVerifying, setIsVerifying] = useState<Record<string, boolean>>({});
   const { toast } = useToast();
 
   useEffect(() => {
@@ -31,7 +33,7 @@ export const ComparisonResults = ({ results }: ComparisonResultsProps) => {
           body: {
             items,
             type: 'facilities',
-            userType: 'family_caregiver', // This could be dynamic based on user role
+            userType: 'family_caregiver',
           },
         });
 
@@ -53,7 +55,62 @@ export const ComparisonResults = ({ results }: ComparisonResultsProps) => {
     if (Object.keys(results).length > 0) {
       getAIAnalysis();
     }
-  }, [results]);
+  }, [results, toast]);
+
+  const handleVerificationCheck = async (id: string) => {
+    try {
+      setIsVerifying(prev => ({ ...prev, [id]: true }));
+      
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast({
+          title: "Error",
+          description: "You must be logged in to request verification.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Create verification request
+      const { error: verificationError } = await supabase
+        .from('verification_requests')
+        .insert({
+          user_id: user.id,
+          product_id: id,
+          status: 'pending',
+          request_type: 'background_check'
+        });
+
+      if (verificationError) throw verificationError;
+
+      // Create background check entry
+      const { error: backgroundCheckError } = await supabase
+        .from('background_checks')
+        .insert({
+          user_id: user.id,
+          check_type: 'standard',
+          status: 'pending'
+        });
+
+      if (backgroundCheckError) throw backgroundCheckError;
+
+      toast({
+        title: "Success",
+        description: "Background check request submitted successfully.",
+      });
+
+    } catch (error) {
+      console.error('Error initiating verification:', error);
+      toast({
+        title: "Error",
+        description: "Failed to initiate verification process.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsVerifying(prev => ({ ...prev, [id]: false }));
+    }
+  };
 
   return (
     <Card>
@@ -83,12 +140,23 @@ export const ComparisonResults = ({ results }: ComparisonResultsProps) => {
             <div key={id} className="p-4 border rounded">
               <div className="flex items-center justify-between mb-2">
                 <h3 className="font-semibold">{data.name}</h3>
-                {data.specifications?.verification_status && (
+                {data.specifications?.verification_status ? (
                   <VerificationBadge 
                     status={data.specifications.verification_status as any} 
                     size="sm"
                     showLabel={false}
                   />
+                ) : (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleVerificationCheck(id)}
+                    disabled={isVerifying[id]}
+                    className="flex items-center gap-1"
+                  >
+                    <Shield className="h-4 w-4" />
+                    {isVerifying[id] ? 'Verifying...' : 'Verify'}
+                  </Button>
                 )}
               </div>
               <p className="text-sm text-gray-600 mt-2">
