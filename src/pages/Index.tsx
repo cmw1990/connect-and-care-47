@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -7,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { Search, MapPin, Star, Shield, Heart, Building2, ShoppingCart, Users, ArrowRight, Loader2 } from "lucide-react";
+import { Search, MapPin, Star, Shield, Heart, Building2, ShoppingCart, Users, ArrowRight, Loader2, Baby, Brain } from "lucide-react";
 import { LocationMap } from "@/components/groups/LocationMap";
 import { useToast } from "@/hooks/use-toast";
 import {
