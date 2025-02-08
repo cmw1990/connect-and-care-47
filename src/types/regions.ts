@@ -9,7 +9,7 @@ export interface Region {
   name: string;
   type: string;
   country: string;
-  state: string | null;
+  state?: string | null;
   continent: string | null;
   coordinates: string | null;
   created_at: string;
@@ -20,4 +20,3 @@ export interface Region {
 export interface DatabaseRegion extends Omit<Region, 'state'> {
   state?: string | null;
 }
-
