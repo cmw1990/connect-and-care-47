@@ -2849,6 +2849,7 @@ export type Database = {
       }
       regions: {
         Row: {
+          continent: string | null
           coordinates: unknown | null
           country: string
           created_at: string
@@ -2859,6 +2860,7 @@ export type Database = {
           type: string
         }
         Insert: {
+          continent?: string | null
           coordinates?: unknown | null
           country: string
           created_at?: string
@@ -2869,6 +2871,7 @@ export type Database = {
           type: string
         }
         Update: {
+          continent?: string | null
           coordinates?: unknown | null
           country?: string
           created_at?: string
