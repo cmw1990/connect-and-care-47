@@ -61,7 +61,7 @@ const Index = () => {
   const [mapCenter, setMapCenter] = useState({ latitude: 40, longitude: -95 });
   const [selectedCareType, setSelectedCareType] = useState<string>("");
 
-  const { data: countries = [], isLoading: isLoadingCountries } = useQuery<RegionQueryResponse>({
+  const { data: countries = [], isLoading: isLoadingCountries } = useQuery<RegionQueryResponse, Error>({
     queryKey: ['regions', 'countries'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -71,11 +71,11 @@ const Index = () => {
         .or('continent.eq.Asia,continent.eq.South America,continent.eq.North America,continent.eq.Central America')
         .order('name');
       if (error) throw error;
-      return data || [];
+      return data as RegionQueryResponse;
     }
   });
 
-  const { data: regions = [], isLoading: isLoadingRegions } = useQuery<RegionQueryResponse>({
+  const { data: regions = [], isLoading: isLoadingRegions } = useQuery<RegionQueryResponse, Error>({
     queryKey: ['regions', selectedCountry],
     queryFn: async () => {
       if (!selectedCountry) return [];
@@ -86,12 +86,12 @@ const Index = () => {
         .in('type', ['state', 'province', 'prefecture', 'region', 'department', 'distrito'])
         .order('name');
       if (error) throw error;
-      return data || [];
+      return data as RegionQueryResponse;
     },
     enabled: !!selectedCountry
   });
 
-  const { data: cities = [], isLoading: isLoadingCities } = useQuery<RegionQueryResponse>({
+  const { data: cities = [], isLoading: isLoadingCities } = useQuery<RegionQueryResponse, Error>({
     queryKey: ['regions', selectedCountry, selectedRegion],
     queryFn: async () => {
       if (!selectedRegion) return [];
@@ -103,12 +103,12 @@ const Index = () => {
         .eq('state', selectedRegion)
         .order('name');
       if (error) throw error;
-      return data || [];
+      return data as RegionQueryResponse;
     },
     enabled: !!selectedRegion
   });
 
-  const { data: searchResults = [] } = useQuery<RegionQueryResponse>({
+  const { data: searchResults = [] } = useQuery<RegionQueryResponse, Error>({
     queryKey: ['regions', 'search', searchQuery],
     queryFn: async () => {
       if (searchQuery.length < 2) return [];
@@ -135,7 +135,7 @@ const Index = () => {
         .order('name')
         .limit(10);
       if (error) throw error;
-      return data || [];
+      return data as RegionQueryResponse;
     },
     enabled: searchQuery.length >= 2
   });
@@ -153,7 +153,7 @@ const Index = () => {
       setSelectedRegion('');
       setSelectedCity('');
       
-      const country = countries.find(c => c.name === value);
+      const country = (countries as Region[]).find(c => c.name === value);
       if (country?.coordinates) {
         try {
           const point = JSON.parse(country.coordinates) as Coordinates;
@@ -169,7 +169,7 @@ const Index = () => {
       setSelectedRegion(value);
       setSelectedCity('');
       
-      const region = regions.find(r => r.name === value);
+      const region = (regions as Region[]).find(r => r.name === value);
       if (region?.coordinates) {
         try {
           const point = JSON.parse(region.coordinates) as Coordinates;
@@ -184,7 +184,7 @@ const Index = () => {
     } else if (type === 'city') {
       setSelectedCity(value);
       
-      const city = cities.find(c => c.name === value);
+      const city = (cities as Region[]).find(c => c.name === value);
       if (city?.coordinates) {
         try {
           const point = JSON.parse(city.coordinates) as Coordinates;
