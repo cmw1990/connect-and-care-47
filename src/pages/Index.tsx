@@ -48,8 +48,10 @@ interface Region {
   population: number | null;
 }
 
-type RegionQueryFn = () => Promise<Region[]>;
-type RegionQueryResponse = Region[];
+interface QueryResult<T> {
+  data: T[];
+  error: Error | null;
+}
 
 const Index = () => {
   const navigate = useNavigate();
@@ -62,82 +64,90 @@ const Index = () => {
   const [mapCenter, setMapCenter] = useState({ latitude: 40, longitude: -95 });
   const [selectedCareType, setSelectedCareType] = useState<string>("");
 
+  const fetchCountries = async (): Promise<Region[]> => {
+    const { data, error } = await supabase
+      .from('regions')
+      .select('*')
+      .eq('type', 'country')
+      .or('continent.eq.Asia,continent.eq.South America,continent.eq.North America,continent.eq.Central America')
+      .order('name');
+    if (error) throw error;
+    return data;
+  };
+
+  const fetchRegions = async (): Promise<Region[]> => {
+    if (!selectedCountry) return [];
+    const { data, error } = await supabase
+      .from('regions')
+      .select('*')
+      .eq('country', selectedCountry)
+      .in('type', ['state', 'province', 'prefecture', 'region', 'department', 'distrito'])
+      .order('name');
+    if (error) throw error;
+    return data;
+  };
+
+  const fetchCities = async (): Promise<Region[]> => {
+    if (!selectedRegion) return [];
+    const { data, error } = await supabase
+      .from('regions')
+      .select('*')
+      .eq('type', 'city')
+      .eq('country', selectedCountry)
+      .eq('state', selectedRegion)
+      .order('name');
+    if (error) throw error;
+    return data;
+  };
+
+  const fetchSearchResults = async (): Promise<Region[]> => {
+    if (searchQuery.length < 2) return [];
+    const { data, error } = await supabase
+      .from('regions')
+      .select('*')
+      .ilike('name', `%${searchQuery}%`)
+      .in('type', [
+        'country',
+        'state',
+        'province',
+        'prefecture',
+        'region',
+        'department',
+        'distrito',
+        'city',
+        'town',
+        'village',
+        'district',
+        'municipality',
+        'township',
+        'ward'
+      ])
+      .order('name')
+      .limit(10);
+    if (error) throw error;
+    return data;
+  };
+
   const { data: countries = [], isLoading: isLoadingCountries } = useQuery<Region[], Error>({
     queryKey: ['regions', 'countries'],
-    queryFn: async (): Promise<Region[]> => {
-      const { data, error } = await supabase
-        .from('regions')
-        .select('*')
-        .eq('type', 'country')
-        .or('continent.eq.Asia,continent.eq.South America,continent.eq.North America,continent.eq.Central America')
-        .order('name');
-      if (error) throw error;
-      return data as Region[];
-    }
+    queryFn: fetchCountries
   });
 
   const { data: regions = [], isLoading: isLoadingRegions } = useQuery<Region[], Error>({
     queryKey: ['regions', selectedCountry],
-    queryFn: async (): Promise<Region[]> => {
-      if (!selectedCountry) return [];
-      const { data, error } = await supabase
-        .from('regions')
-        .select('*')
-        .eq('country', selectedCountry)
-        .in('type', ['state', 'province', 'prefecture', 'region', 'department', 'distrito'])
-        .order('name');
-      if (error) throw error;
-      return data as Region[];
-    },
+    queryFn: fetchRegions,
     enabled: !!selectedCountry
   });
 
   const { data: cities = [], isLoading: isLoadingCities } = useQuery<Region[], Error>({
     queryKey: ['regions', selectedCountry, selectedRegion],
-    queryFn: async (): Promise<Region[]> => {
-      if (!selectedRegion) return [];
-      const { data, error } = await supabase
-        .from('regions')
-        .select('*')
-        .eq('type', 'city')
-        .eq('country', selectedCountry)
-        .eq('state', selectedRegion)
-        .order('name');
-      if (error) throw error;
-      return data as Region[];
-    },
+    queryFn: fetchCities,
     enabled: !!selectedRegion
   });
 
   const { data: searchResults = [] } = useQuery<Region[], Error>({
     queryKey: ['regions', 'search', searchQuery],
-    queryFn: async (): Promise<Region[]> => {
-      if (searchQuery.length < 2) return [];
-      const { data, error } = await supabase
-        .from('regions')
-        .select('*')
-        .ilike('name', `%${searchQuery}%`)
-        .in('type', [
-          'country',
-          'state',
-          'province',
-          'prefecture',
-          'region',
-          'department',
-          'distrito',
-          'city',
-          'town',
-          'village',
-          'district',
-          'municipality',
-          'township',
-          'ward'
-        ])
-        .order('name')
-        .limit(10);
-      if (error) throw error;
-      return data as Region[];
-    },
+    queryFn: fetchSearchResults,
     enabled: searchQuery.length >= 2
   });
 
@@ -154,7 +164,7 @@ const Index = () => {
       setSelectedRegion('');
       setSelectedCity('');
       
-      const country = (countries as Region[]).find(c => c.name === value);
+      const country = countries.find(c => c.name === value);
       if (country?.coordinates) {
         try {
           const point = JSON.parse(country.coordinates) as Coordinates;
@@ -170,7 +180,7 @@ const Index = () => {
       setSelectedRegion(value);
       setSelectedCity('');
       
-      const region = (regions as Region[]).find(r => r.name === value);
+      const region = regions.find(r => r.name === value);
       if (region?.coordinates) {
         try {
           const point = JSON.parse(region.coordinates) as Coordinates;
@@ -185,7 +195,7 @@ const Index = () => {
     } else if (type === 'city') {
       setSelectedCity(value);
       
-      const city = (cities as Region[]).find(c => c.name === value);
+      const city = cities.find(c => c.name === value);
       if (city?.coordinates) {
         try {
           const point = JSON.parse(city.coordinates) as Coordinates;
