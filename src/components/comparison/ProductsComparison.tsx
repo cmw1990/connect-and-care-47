@@ -27,6 +27,13 @@ export const ProductsComparison = ({
     if (!product.affiliate_link) return;
 
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        console.warn('User not authenticated, skipping affiliate tracking');
+        onAffiliateClick(product.affiliate_link);
+        return;
+      }
+
       // Track affiliate interaction
       const { error } = await supabase
         .from('affiliate_interactions')
@@ -34,9 +41,12 @@ export const ProductsComparison = ({
           product_id: product.id,
           interaction_type: 'click',
           affiliate_link: product.affiliate_link,
+          user_id: user.id
         });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error tracking affiliate click:', error);
+      }
 
       // Open affiliate link
       onAffiliateClick(product.affiliate_link);
