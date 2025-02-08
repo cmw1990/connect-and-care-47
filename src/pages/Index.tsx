@@ -30,7 +30,7 @@ import {
 } from "@/components/ui/command";
 
 interface GeoPoint {
-  type: string;
+  type: 'Point';
   coordinates: [number, number];
 }
 
@@ -39,7 +39,7 @@ interface Region {
   name: string;
   type: string;
   country: string;
-  state?: string | null;
+  state: string | null;
   continent: string | null;
   coordinates: string | null;
   created_at: string;
@@ -47,7 +47,8 @@ interface Region {
   population: number | null;
 }
 
-type RegionResponse = Region[];
+type DatabaseRegion = Region;
+type RegionResponse = DatabaseRegion[];
 
 const Index = () => {
   const navigate = useNavigate();
@@ -67,24 +68,32 @@ const Index = () => {
       .eq('type', 'country')
       .or('continent.eq.Asia,continent.eq.South America,continent.eq.North America,continent.eq.Central America')
       .order('name');
-    if (error) throw error;
+    
+    if (error) throw new Error(error.message);
+    if (!data) return [];
+    
     return data as RegionResponse;
   };
 
   const fetchRegions = async (): Promise<RegionResponse> => {
     if (!selectedCountry) return [];
+    
     const { data, error } = await supabase
       .from('regions')
       .select('*')
       .eq('country', selectedCountry)
       .in('type', ['state', 'province', 'prefecture', 'region', 'department', 'distrito'])
       .order('name');
-    if (error) throw error;
+    
+    if (error) throw new Error(error.message);
+    if (!data) return [];
+    
     return data as RegionResponse;
   };
 
   const fetchCities = async (): Promise<RegionResponse> => {
     if (!selectedRegion) return [];
+    
     const { data, error } = await supabase
       .from('regions')
       .select('*')
@@ -92,12 +101,16 @@ const Index = () => {
       .eq('country', selectedCountry)
       .eq('state', selectedRegion)
       .order('name');
-    if (error) throw error;
+    
+    if (error) throw new Error(error.message);
+    if (!data) return [];
+    
     return data as RegionResponse;
   };
 
   const fetchSearchResults = async (): Promise<RegionResponse> => {
     if (searchQuery.length < 2) return [];
+    
     const { data, error } = await supabase
       .from('regions')
       .select('*')
@@ -120,31 +133,38 @@ const Index = () => {
       ])
       .order('name')
       .limit(10);
-    if (error) throw error;
+    
+    if (error) throw new Error(error.message);
+    if (!data) return [];
+    
     return data as RegionResponse;
   };
 
-  const { data: countries = [], isLoading: isLoadingCountries } = useQuery<RegionResponse, Error>({
+  const { data: countries = [], isLoading: isLoadingCountries } = useQuery({
     queryKey: ['regions', 'countries'],
-    queryFn: fetchCountries
+    queryFn: fetchCountries,
+    staleTime: 5 * 60 * 1000,
   });
 
-  const { data: regions = [], isLoading: isLoadingRegions } = useQuery<RegionResponse, Error>({
+  const { data: regions = [], isLoading: isLoadingRegions } = useQuery({
     queryKey: ['regions', selectedCountry],
     queryFn: fetchRegions,
-    enabled: !!selectedCountry
+    enabled: !!selectedCountry,
+    staleTime: 5 * 60 * 1000,
   });
 
-  const { data: cities = [], isLoading: isLoadingCities } = useQuery<RegionResponse, Error>({
+  const { data: cities = [], isLoading: isLoadingCities } = useQuery({
     queryKey: ['regions', selectedCountry, selectedRegion],
     queryFn: fetchCities,
-    enabled: !!selectedRegion
+    enabled: !!selectedRegion,
+    staleTime: 5 * 60 * 1000,
   });
 
-  const { data: searchResults = [] } = useQuery<RegionResponse, Error>({
+  const { data: searchResults = [] } = useQuery({
     queryKey: ['regions', 'search', searchQuery],
     queryFn: fetchSearchResults,
-    enabled: searchQuery.length >= 2
+    enabled: searchQuery.length >= 2,
+    staleTime: 1 * 60 * 1000,
   });
 
   const careTypes = [
