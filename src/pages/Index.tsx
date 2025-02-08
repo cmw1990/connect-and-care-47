@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from "react";
+
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
@@ -47,6 +48,8 @@ interface Region {
   population: number | null;
 }
 
+type RegionQueryResponse = Region[];
+
 const Index = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -58,7 +61,7 @@ const Index = () => {
   const [mapCenter, setMapCenter] = useState({ latitude: 40, longitude: -95 });
   const [selectedCareType, setSelectedCareType] = useState<string>("");
 
-  const { data: countries = [], isLoading: isLoadingCountries } = useQuery<Region[], Error>({
+  const { data: countries = [], isLoading: isLoadingCountries } = useQuery<RegionQueryResponse>({
     queryKey: ['regions', 'countries'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -68,11 +71,11 @@ const Index = () => {
         .or('continent.eq.Asia,continent.eq.South America,continent.eq.North America,continent.eq.Central America')
         .order('name');
       if (error) throw error;
-      return data as Region[];
+      return data || [];
     }
   });
 
-  const { data: regions = [], isLoading: isLoadingRegions } = useQuery<Region[], Error>({
+  const { data: regions = [], isLoading: isLoadingRegions } = useQuery<RegionQueryResponse>({
     queryKey: ['regions', selectedCountry],
     queryFn: async () => {
       if (!selectedCountry) return [];
@@ -83,12 +86,12 @@ const Index = () => {
         .in('type', ['state', 'province', 'prefecture', 'region', 'department', 'distrito'])
         .order('name');
       if (error) throw error;
-      return data as Region[];
+      return data || [];
     },
     enabled: !!selectedCountry
   });
 
-  const { data: cities = [], isLoading: isLoadingCities } = useQuery<Region[], Error>({
+  const { data: cities = [], isLoading: isLoadingCities } = useQuery<RegionQueryResponse>({
     queryKey: ['regions', selectedCountry, selectedRegion],
     queryFn: async () => {
       if (!selectedRegion) return [];
@@ -100,12 +103,12 @@ const Index = () => {
         .eq('state', selectedRegion)
         .order('name');
       if (error) throw error;
-      return data as Region[];
+      return data || [];
     },
     enabled: !!selectedRegion
   });
 
-  const { data: searchResults = [] } = useQuery<Region[], Error>({
+  const { data: searchResults = [] } = useQuery<RegionQueryResponse>({
     queryKey: ['regions', 'search', searchQuery],
     queryFn: async () => {
       if (searchQuery.length < 2) return [];
@@ -132,7 +135,7 @@ const Index = () => {
         .order('name')
         .limit(10);
       if (error) throw error;
-      return data as Region[];
+      return data || [];
     },
     enabled: searchQuery.length >= 2
   });
