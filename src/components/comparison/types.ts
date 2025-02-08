@@ -77,6 +77,7 @@ export interface CareProduct {
   price_range?: { min: number; max: number } | null;
   ratings?: Record<string, number> | null;
   specifications?: Record<string, any> | null;
+  verification_status?: 'pending' | 'in_progress' | 'verified' | 'failed' | 'expired' | null;
 }
 
 export interface ComparisonResult {

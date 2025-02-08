@@ -136,6 +136,48 @@ export type Database = {
           },
         ]
       }
+      background_checks: {
+        Row: {
+          check_type: string
+          created_at: string
+          expires_at: string | null
+          external_reference_id: string | null
+          id: string
+          provider: string
+          result: Json | null
+          status: Database["public"]["Enums"]["verification_status"]
+          updated_at: string
+          user_id: string
+          verification_url: string | null
+        }
+        Insert: {
+          check_type: string
+          created_at?: string
+          expires_at?: string | null
+          external_reference_id?: string | null
+          id?: string
+          provider?: string
+          result?: Json | null
+          status?: Database["public"]["Enums"]["verification_status"]
+          updated_at?: string
+          user_id: string
+          verification_url?: string | null
+        }
+        Update: {
+          check_type?: string
+          created_at?: string
+          expires_at?: string | null
+          external_reference_id?: string | null
+          id?: string
+          provider?: string
+          result?: Json | null
+          status?: Database["public"]["Enums"]["verification_status"]
+          updated_at?: string
+          user_id?: string
+          verification_url?: string | null
+        }
+        Relationships: []
+      }
       care_analytics: {
         Row: {
           created_by: string | null
@@ -6870,6 +6912,12 @@ export type Database = {
         | "child_caregiver"
         | "pet_caregiver"
         | "special_needs_caregiver"
+      verification_status:
+        | "pending"
+        | "in_progress"
+        | "verified"
+        | "failed"
+        | "expired"
     }
     CompositeTypes: {
       geometry_dump: {

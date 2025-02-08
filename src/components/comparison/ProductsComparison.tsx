@@ -1,6 +1,6 @@
 
 import { Button } from "@/components/ui/button";
-import { Brain, DollarSign, Star, Tags } from "lucide-react";
+import { Brain, DollarSign, Shield, Star, Tags } from "lucide-react";
 import { CareProduct } from "./types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -63,29 +63,62 @@ export const ProductsComparison = ({
     return values.length ? values.reduce((a, b) => a + b, 0) / values.length : 0;
   };
 
+  const getVerificationBadge = (status?: string | null) => {
+    if (!status) return null;
+    
+    const statusColors = {
+      pending: "bg-yellow-100 text-yellow-800",
+      in_progress: "bg-blue-100 text-blue-800",
+      verified: "bg-green-100 text-green-800",
+      failed: "bg-red-100 text-red-800",
+      expired: "bg-gray-100 text-gray-800"
+    };
+
+    const statusText = {
+      pending: "Verification Pending",
+      in_progress: "Verification In Progress",
+      verified: "Verified",
+      failed: "Verification Failed",
+      expired: "Verification Expired"
+    };
+
+    return (
+      <Badge 
+        variant="secondary" 
+        className={`flex items-center gap-1 ${statusColors[status as keyof typeof statusColors]}`}
+      >
+        <Shield className="h-3 w-3" />
+        {statusText[status as keyof typeof statusText]}
+      </Badge>
+    );
+  };
+
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {products.map((product) => (
           <Card key={product.id} className="h-full">
             <CardHeader>
-              <CardTitle className="flex items-center justify-between">
-                <span className="text-lg">{product.name}</span>
-                {product.ratings && (
-                  <span className="flex items-center text-yellow-500">
-                    <Star className="h-4 w-4 mr-1 fill-current" />
-                    {getAverageRating(product.ratings).toFixed(1)}
-                  </span>
+              <div className="flex flex-col gap-2">
+                <CardTitle className="flex items-center justify-between">
+                  <span className="text-lg">{product.name}</span>
+                  {product.ratings && (
+                    <span className="flex items-center text-yellow-500">
+                      <Star className="h-4 w-4 mr-1 fill-current" />
+                      {getAverageRating(product.ratings).toFixed(1)}
+                    </span>
+                  )}
+                </CardTitle>
+                {getVerificationBadge(product.verification_status)}
+                {product.price_range && (
+                  <CardDescription>
+                    <span className="flex items-center text-green-600">
+                      <DollarSign className="h-4 w-4 mr-1" />
+                      {formatCurrency(product.price_range.min)} - {formatCurrency(product.price_range.max)}
+                    </span>
+                  </CardDescription>
                 )}
-              </CardTitle>
-              {product.price_range && (
-                <CardDescription>
-                  <span className="flex items-center text-green-600">
-                    <DollarSign className="h-4 w-4 mr-1" />
-                    {formatCurrency(product.price_range.min)} - {formatCurrency(product.price_range.max)}
-                  </span>
-                </CardDescription>
-              )}
+              </div>
             </CardHeader>
             <CardContent className="space-y-4">
               <p className="text-sm text-gray-600">{product.description}</p>
