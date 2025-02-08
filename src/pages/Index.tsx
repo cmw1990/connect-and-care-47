@@ -64,6 +64,7 @@ const Index = () => {
         .from('regions')
         .select('*')
         .eq('type', 'country')
+        .or('continent.eq.Asia,continent.eq.South America,continent.eq.North America,continent.eq.Central America')
         .order('name');
       if (error) throw error;
       return data;
@@ -78,7 +79,7 @@ const Index = () => {
         .from('regions')
         .select('*')
         .eq('country', selectedCountry)
-        .in('type', ['state', 'province', 'prefecture'])
+        .in('type', ['state', 'province', 'prefecture', 'region', 'department', 'distrito'])
         .order('name');
       if (error) throw error;
       return data;
@@ -111,7 +112,22 @@ const Index = () => {
         .from('regions')
         .select('*')
         .ilike('name', `%${searchQuery}%`)
-        .in('type', ['country', 'state', 'province', 'prefecture', 'city', 'town', 'village', 'district', 'municipality', 'township', 'ward'])
+        .in('type', [
+          'country',
+          'state',
+          'province',
+          'prefecture',
+          'region',
+          'department',
+          'distrito',
+          'city',
+          'town',
+          'village',
+          'district',
+          'municipality',
+          'township',
+          'ward'
+        ])
         .order('name')
         .limit(10);
       if (error) throw error;
