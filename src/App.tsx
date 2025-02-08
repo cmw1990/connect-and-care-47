@@ -1,3 +1,4 @@
+
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -5,6 +6,7 @@ import Index from "@/pages/Index";
 import Groups from "@/pages/Groups";
 import GroupDetails from "@/pages/GroupDetails";
 import Auth from "@/pages/Auth";
+import Subscribe from "@/pages/Subscribe";
 import NotFound from "@/pages/NotFound";
 import { CareComparison } from "@/components/comparison/CareComparison";
 import { CareGuides } from "@/pages/CareGuides";
@@ -46,6 +48,7 @@ const AppContent = () => {
             <Route path="/groups" element={<Groups />} />
             <Route path="/groups/:groupId" element={<GroupDetails />} />
             <Route path="/auth" element={<Auth />} />
+            <Route path="/subscribe" element={<Subscribe />} />
             <Route path="/compare" element={<CareComparison />} />
             <Route path="/care-guides" element={<CareGuides />} />
             <Route path="/messages" element={<Messages />} />
