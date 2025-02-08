@@ -1410,6 +1410,44 @@ export type Database = {
           },
         ]
       }
+      chinese_regions: {
+        Row: {
+          created_at: string | null
+          id: string
+          name_en: string | null
+          name_zh: string
+          parent_id: string | null
+          type: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          name_en?: string | null
+          name_zh: string
+          parent_id?: string | null
+          type: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          name_en?: string | null
+          name_zh?: string
+          parent_id?: string | null
+          type?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chinese_regions_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "chinese_regions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       community_posts: {
         Row: {
           author_id: string | null
