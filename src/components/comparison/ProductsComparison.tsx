@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { formatCurrency } from "@/utils/formatUtils";
+import { VerificationBadge } from "@/components/verification/VerificationBadge";
 
 interface ProductsComparisonProps {
   products: CareProduct[];
@@ -63,36 +64,6 @@ export const ProductsComparison = ({
     return values.length ? values.reduce((a, b) => a + b, 0) / values.length : 0;
   };
 
-  const getVerificationBadge = (status?: string | null) => {
-    if (!status) return null;
-    
-    const statusColors = {
-      pending: "bg-yellow-100 text-yellow-800",
-      in_progress: "bg-blue-100 text-blue-800",
-      verified: "bg-green-100 text-green-800",
-      failed: "bg-red-100 text-red-800",
-      expired: "bg-gray-100 text-gray-800"
-    };
-
-    const statusText = {
-      pending: "Verification Pending",
-      in_progress: "Verification In Progress",
-      verified: "Verified",
-      failed: "Verification Failed",
-      expired: "Verification Expired"
-    };
-
-    return (
-      <Badge 
-        variant="secondary" 
-        className={`flex items-center gap-1 ${statusColors[status as keyof typeof statusColors]}`}
-      >
-        <Shield className="h-3 w-3" />
-        {statusText[status as keyof typeof statusText]}
-      </Badge>
-    );
-  };
-
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -109,7 +80,11 @@ export const ProductsComparison = ({
                     </span>
                   )}
                 </CardTitle>
-                {getVerificationBadge(product.verification_status)}
+                {product.verification_status && (
+                  <div className="mt-1">
+                    <VerificationBadge status={product.verification_status} />
+                  </div>
+                )}
                 {product.price_range && (
                   <CardDescription>
                     <span className="flex items-center text-green-600">

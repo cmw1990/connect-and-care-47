@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart2, Brain } from "lucide-react";
 import { ComparisonResult } from "./types";
@@ -5,6 +6,7 @@ import { ComparisonChart } from "./ComparisonChart";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { VerificationBadge } from "@/components/verification/VerificationBadge";
 
 interface ComparisonResultsProps {
   results: Record<string, ComparisonResult>;
@@ -79,7 +81,16 @@ export const ComparisonResults = ({ results }: ComparisonResultsProps) => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
           {Object.entries(results).map(([id, data]) => (
             <div key={id} className="p-4 border rounded">
-              <h3 className="font-semibold">{data.name}</h3>
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="font-semibold">{data.name}</h3>
+                {data.specifications?.verification_status && (
+                  <VerificationBadge 
+                    status={data.specifications.verification_status as any} 
+                    size="sm"
+                    showLabel={false}
+                  />
+                )}
+              </div>
               <p className="text-sm text-gray-600 mt-2">
                 Rating: {data.averageRating.toFixed(1)}
               </p>
