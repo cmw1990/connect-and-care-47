@@ -2676,6 +2676,80 @@ export type Database = {
           },
         ]
       }
+      payment_history: {
+        Row: {
+          amount: number
+          created_at: string | null
+          currency: string
+          id: string
+          payment_method: string | null
+          status: string
+          subscription_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          currency: string
+          id?: string
+          payment_method?: string | null
+          status: string
+          subscription_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          currency?: string
+          id?: string
+          payment_method?: string | null
+          status?: string
+          subscription_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_history_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      premium_content: {
+        Row: {
+          content_type: string
+          content_url: string | null
+          created_at: string | null
+          description: string | null
+          id: string
+          required_plan: string
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          content_type: string
+          content_url?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          required_plan: string
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          content_type?: string
+          content_url?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          required_plan?: string
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       private_messages: {
         Row: {
           content: string
@@ -3099,6 +3173,66 @@ export type Database = {
           proj4text?: string | null
           srid?: number
           srtext?: string | null
+        }
+        Relationships: []
+      }
+      subscription_features: {
+        Row: {
+          created_at: string | null
+          feature_description: string | null
+          feature_name: string
+          id: string
+          is_active: boolean | null
+          plan_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          feature_description?: string | null
+          feature_name: string
+          id?: string
+          is_active?: boolean | null
+          plan_id: string
+        }
+        Update: {
+          created_at?: string | null
+          feature_description?: string | null
+          feature_name?: string
+          id?: string
+          is_active?: boolean | null
+          plan_id?: string
+        }
+        Relationships: []
+      }
+      subscriptions: {
+        Row: {
+          created_at: string | null
+          current_period_end: string | null
+          current_period_start: string | null
+          id: string
+          plan_id: string
+          status: string
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          plan_id: string
+          status: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          plan_id?: string
+          status?: string
+          updated_at?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }
