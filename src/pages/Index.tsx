@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -49,7 +48,6 @@ interface Region {
 }
 
 type DatabaseRegion = Region;
-type RegionResponse = Array<DatabaseRegion>;
 
 const Index = () => {
   const navigate = useNavigate();
@@ -62,7 +60,7 @@ const Index = () => {
   const [mapCenter, setMapCenter] = useState({ latitude: 40, longitude: -95 });
   const [selectedCareType, setSelectedCareType] = useState<string>("");
 
-  const fetchCountries = async () => {
+  const fetchCountries = async (): Promise<DatabaseRegion[]> => {
     const { data, error } = await supabase
       .from('regions')
       .select('*')
@@ -71,13 +69,11 @@ const Index = () => {
       .order('name');
     
     if (error) throw new Error(error.message);
-    if (!data) return [] as RegionResponse;
-    
-    return data as RegionResponse;
+    return data || [];
   };
 
-  const fetchRegions = async () => {
-    if (!selectedCountry) return [] as RegionResponse;
+  const fetchRegions = async (): Promise<DatabaseRegion[]> => {
+    if (!selectedCountry) return [];
     
     const { data, error } = await supabase
       .from('regions')
@@ -87,13 +83,11 @@ const Index = () => {
       .order('name');
     
     if (error) throw new Error(error.message);
-    if (!data) return [] as RegionResponse;
-    
-    return data as RegionResponse;
+    return data || [];
   };
 
-  const fetchCities = async () => {
-    if (!selectedRegion) return [] as RegionResponse;
+  const fetchCities = async (): Promise<DatabaseRegion[]> => {
+    if (!selectedRegion) return [];
     
     const { data, error } = await supabase
       .from('regions')
@@ -104,13 +98,11 @@ const Index = () => {
       .order('name');
     
     if (error) throw new Error(error.message);
-    if (!data) return [] as RegionResponse;
-    
-    return data as RegionResponse;
+    return data || [];
   };
 
-  const fetchSearchResults = async () => {
-    if (searchQuery.length < 2) return [] as RegionResponse;
+  const fetchSearchResults = async (): Promise<DatabaseRegion[]> => {
+    if (searchQuery.length < 2) return [];
     
     const { data, error } = await supabase
       .from('regions')
@@ -136,9 +128,7 @@ const Index = () => {
       .limit(10);
     
     if (error) throw new Error(error.message);
-    if (!data) return [] as RegionResponse;
-    
-    return data as RegionResponse;
+    return data || [];
   };
 
   const { data: countries = [], isLoading: isLoadingCountries } = useQuery({
