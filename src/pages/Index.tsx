@@ -1,67 +1,18 @@
+
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { Search, MapPin, Star, Shield, Heart, Building2, ShoppingCart, Users, ArrowRight, Loader2, Baby, Brain } from "lucide-react";
+import { Heart, Building2, ShoppingCart, Shield, Star, Users, Search, ArrowRight } from "lucide-react";
 import { LocationMap } from "@/components/groups/LocationMap";
 import { useToast } from "@/hooks/use-toast";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Command,
-  CommandDialog,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-  CommandSeparator,
-} from "@/components/ui/command";
-
-interface GeoPoint {
-  type: 'Point';
-  coordinates: [number, number];
-}
-
-interface Region {
-  id: number;
-  name: string;
-  type: string;
-  country: string;
-  state: string | null;
-  continent: string | null;
-  coordinates: string | null;
-  created_at: string;
-  parent_id: number | null;
-  population: number | null;
-}
-
-interface DatabaseRegion extends Omit<Region, 'state'> {
-  state?: string | null;
-}
-
-type SubscriptionPlan = {
-  id: string;
-  name: string;
-  description: string | null;
-  tier: 'basic' | 'pro' | 'enterprise';
-  price: number;
-  billing_interval: string;
-  features: string[];
-  created_at: string;
-  updated_at: string;
-};
+import { LocationSearch } from "@/components/landing/LocationSearch";
+import { CareTypeSelector } from "@/components/landing/CareTypeSelector";
+import { SubscriptionPlans } from "@/components/landing/SubscriptionPlans";
+import { Region, GeoPoint } from "@/types/regions";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -73,75 +24,6 @@ const Index = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [mapCenter, setMapCenter] = useState({ latitude: 40, longitude: -95 });
   const [selectedCareType, setSelectedCareType] = useState<string>("");
-
-  const { data: subscriptionPlans = [] } = useQuery<SubscriptionPlan[]>({
-    queryKey: ['subscriptionPlans'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('subscription_plans')
-        .select('*')
-        .order('price');
-      
-      if (error) throw error;
-      return data.map(plan => ({
-        ...plan,
-        features: Array.isArray(plan.features) ? plan.features : JSON.parse(plan.features as string)
-      }));
-    },
-  });
-
-  const fetchCountries = async (): Promise<Region[]> => {
-    const { data, error } = await supabase
-      .from('regions')
-      .select('*')
-      .eq('type', 'country')
-      .or('continent.eq.Asia,continent.eq.South America,continent.eq.North America,continent.eq.Central America')
-      .order('name');
-    
-    if (error) throw new Error(error.message);
-    return (data || []).map(region => ({
-      ...region,
-      state: null,
-      coordinates: region.coordinates ? String(region.coordinates) : null
-    }));
-  };
-
-  const fetchRegions = async (): Promise<Region[]> => {
-    if (!selectedCountry) return [];
-    
-    const { data, error } = await supabase
-      .from('regions')
-      .select('*')
-      .eq('country', selectedCountry)
-      .in('type', ['state', 'province', 'prefecture', 'region', 'department', 'distrito'])
-      .order('name');
-    
-    if (error) throw new Error(error.message);
-    return (data || []).map(region => ({
-      ...region,
-      state: region.state || null,
-      coordinates: region.coordinates ? String(region.coordinates) : null
-    }));
-  };
-
-  const fetchCities = async (): Promise<Region[]> => {
-    if (!selectedRegion) return [];
-    
-    const { data, error } = await supabase
-      .from('regions')
-      .select('*')
-      .eq('type', 'city')
-      .eq('country', selectedCountry)
-      .eq('state', selectedRegion)
-      .order('name');
-    
-    if (error) throw new Error(error.message);
-    return (data || []).map(region => ({
-      ...region,
-      state: region.state || null,
-      coordinates: region.coordinates ? String(region.coordinates) : null
-    }));
-  };
 
   const fetchSearchResults = async (): Promise<Region[]> => {
     if (searchQuery.length < 2) return [];
@@ -177,26 +59,6 @@ const Index = () => {
     }));
   };
 
-  const { data: countries = [], isLoading: isLoadingCountries } = useQuery({
-    queryKey: ['regions', 'countries'],
-    queryFn: fetchCountries,
-    staleTime: 5 * 60 * 1000,
-  });
-
-  const { data: regions = [], isLoading: isLoadingRegions } = useQuery({
-    queryKey: ['regions', selectedCountry],
-    queryFn: fetchRegions,
-    enabled: !!selectedCountry,
-    staleTime: 5 * 60 * 1000,
-  });
-
-  const { data: cities = [], isLoading: isLoadingCities } = useQuery({
-    queryKey: ['regions', selectedCountry, selectedRegion],
-    queryFn: fetchCities,
-    enabled: !!selectedRegion,
-    staleTime: 5 * 60 * 1000,
-  });
-
   const { data: searchResults = [] } = useQuery({
     queryKey: ['regions', 'search', searchQuery],
     queryFn: fetchSearchResults,
@@ -204,20 +66,13 @@ const Index = () => {
     staleTime: 1 * 60 * 1000,
   });
 
-  const careTypes = [
-    { value: "senior", label: "Senior Care", icon: Heart },
-    { value: "child", label: "Child Care", icon: Baby },
-    { value: "special", label: "Special Needs Care", icon: Brain },
-    { value: "respite", label: "Respite Care", icon: Users },
-  ];
-
   const handleLocationSelect = (type: string, value: string) => {
     if (type === 'country') {
       setSelectedCountry(value);
       setSelectedRegion('');
       setSelectedCity('');
       
-      const country = countries.find(c => c.name === value);
+      const country = searchResults.find(c => c.name === value);
       if (country?.coordinates) {
         try {
           const point = JSON.parse(country.coordinates) as GeoPoint;
@@ -233,7 +88,7 @@ const Index = () => {
       setSelectedRegion(value);
       setSelectedCity('');
       
-      const region = regions.find(r => r.name === value);
+      const region = searchResults.find(r => r.name === value);
       if (region?.coordinates) {
         try {
           const point = JSON.parse(region.coordinates) as GeoPoint;
@@ -248,7 +103,7 @@ const Index = () => {
     } else if (type === 'city') {
       setSelectedCity(value);
       
-      const city = cities.find(c => c.name === value);
+      const city = searchResults.find(c => c.name === value);
       if (city?.coordinates) {
         try {
           const point = JSON.parse(city.coordinates) as GeoPoint;
@@ -325,63 +180,22 @@ const Index = () => {
 
               <Card className="p-6 shadow-lg mb-8 hover:shadow-xl transition-shadow duration-300">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <Select value={selectedCareType} onValueChange={setSelectedCareType}>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Type of Care" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {careTypes.map((type) => (
-                        <SelectItem key={type.value} value={type.value}>
-                          <div className="flex items-center gap-2">
-                            <type.icon className="h-4 w-4" />
-                            {type.label}
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <CareTypeSelector 
+                    selectedCareType={selectedCareType}
+                    onCareTypeChange={setSelectedCareType}
+                  />
 
-                  <div className="relative">
-                    <Button 
-                      variant="outline" 
-                      className="w-full justify-start text-left font-normal hover:bg-primary/5"
-                      onClick={() => setSearchOpen(true)}
-                    >
-                      <Search className="mr-2 h-4 w-4" />
-                      {selectedCity || selectedRegion || selectedCountry || "Search location..."}
-                    </Button>
-
-                    <CommandDialog open={searchOpen} onOpenChange={setSearchOpen}>
-                      <CommandInput 
-                        placeholder="Search locations..." 
-                        value={searchQuery}
-                        onValueChange={setSearchQuery}
-                      />
-                      <CommandList>
-                        <CommandEmpty>No results found.</CommandEmpty>
-                        {searchResults.length > 0 && (
-                          <CommandGroup heading="Locations">
-                            {searchResults.map((result) => (
-                              <CommandItem
-                                key={result.id}
-                                value={result.name}
-                                onSelect={() => handleSearchSelect(result)}
-                                className="flex items-center gap-2 cursor-pointer hover:bg-primary/5"
-                              >
-                                <MapPin className="h-4 w-4 text-primary" />
-                                <div>
-                                  <div>{result.name}</div>
-                                  <div className="text-sm text-muted-foreground">
-                                    {result.type}
-                                  </div>
-                                </div>
-                              </CommandItem>
-                            ))}
-                          </CommandGroup>
-                        )}
-                      </CommandList>
-                    </CommandDialog>
-                  </div>
+                  <LocationSearch 
+                    searchOpen={searchOpen}
+                    setSearchOpen={setSearchOpen}
+                    searchQuery={searchQuery}
+                    setSearchQuery={setSearchQuery}
+                    searchResults={searchResults}
+                    handleSearchSelect={handleSearchSelect}
+                    selectedCity={selectedCity}
+                    selectedRegion={selectedRegion}
+                    selectedCountry={selectedCountry}
+                  />
                 </div>
 
                 <div className="mt-4">
@@ -403,7 +217,7 @@ const Index = () => {
                     latitude={mapCenter.latitude}
                     longitude={mapCenter.longitude}
                     zoom={selectedCity ? 12 : selectedRegion ? 8 : 4}
-                    markers={cities?.filter(city => city.coordinates).map(city => {
+                    markers={searchResults?.filter(city => city.coordinates).map(city => {
                       try {
                         const coords = JSON.parse(city.coordinates!) as GeoPoint;
                         return {
@@ -542,48 +356,7 @@ const Index = () => {
           </div>
         </section>
 
-        <section className="py-16 bg-background">
-          <div className="container mx-auto px-4">
-            <div className="max-w-5xl mx-auto">
-              <h2 className="text-3xl font-bold text-center mb-12">Choose Your Plan</h2>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                {subscriptionPlans.map((plan) => (
-                  <motion.div
-                    key={plan.id}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                  >
-                    <Card className="p-6 h-full flex flex-col justify-between">
-                      <div>
-                        <h3 className="text-2xl font-semibold mb-2">{plan.name}</h3>
-                        <p className="text-muted-foreground mb-4">{plan.description}</p>
-                        <div className="text-3xl font-bold mb-6">
-                          ${plan.price}
-                          <span className="text-base font-normal text-muted-foreground">/{plan.billing_interval}</span>
-                        </div>
-                        <ul className="space-y-3 mb-8">
-                          {plan.features.map((feature, index) => (
-                            <li key={index} className="flex items-center gap-2">
-                              <Shield className="h-5 w-5 text-primary" />
-                              <span>{feature}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                      <Button 
-                        className="w-full"
-                        variant={plan.tier === 'pro' ? 'default' : 'outline'}
-                        onClick={() => navigate('/subscribe')}
-                      >
-                        Get Started
-                      </Button>
-                    </Card>
-                  </motion.div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </section>
+        <SubscriptionPlans />
       </motion.div>
     </AnimatePresence>
   );
