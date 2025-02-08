@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -66,7 +65,7 @@ const Index = () => {
         .eq('type', 'country')
         .order('name');
       if (error) throw error;
-      return data;
+      return data as Region[];
     }
   });
 
@@ -78,10 +77,10 @@ const Index = () => {
         .from('regions')
         .select('*')
         .eq('country', selectedCountry)
-        .in('type', ['state', 'province'])
+        .in('type', ['state', 'province', 'prefecture'])
         .order('name');
       if (error) throw error;
-      return data;
+      return data as Region[];
     },
     enabled: !!selectedCountry
   });
@@ -95,9 +94,10 @@ const Index = () => {
         .select('*')
         .eq('type', 'city')
         .eq('country', selectedCountry)
+        .eq('state', selectedRegion)
         .order('name');
       if (error) throw error;
-      return data;
+      return data as Region[];
     },
     enabled: !!selectedRegion
   });
@@ -110,10 +110,11 @@ const Index = () => {
         .from('regions')
         .select('*')
         .ilike('name', `%${searchQuery}%`)
+        .in('type', ['country', 'state', 'province', 'prefecture', 'city', 'town', 'village', 'district', 'municipality', 'township', 'ward'])
         .order('name')
         .limit(10);
       if (error) throw error;
-      return data;
+      return data as Region[];
     },
     enabled: searchQuery.length >= 2
   });
@@ -173,17 +174,15 @@ const Index = () => {
   const handleSearchSelect = (result: Region) => {
     if (result.type === 'country') {
       handleLocationSelect('country', result.name);
-    } else if (result.type === 'state' || result.type === 'province') {
+    } else if (['state', 'province', 'prefecture'].includes(result.type)) {
       setSelectedCountry(result.country);
       handleLocationSelect('region', result.name);
-    } else if (result.type === 'city') {
+    } else if (['city', 'town', 'village', 'district', 'municipality', 'township', 'ward'].includes(result.type)) {
       setSelectedCountry(result.country);
-      // Find and set the region for this city
-      const cityRegion = regions.find(r => r.name === result.state);
-      if (cityRegion) {
-        handleLocationSelect('region', cityRegion.name);
+      if (result.state) {
+        setSelectedRegion(result.state);
+        handleLocationSelect('city', result.name);
       }
-      handleLocationSelect('city', result.name);
     }
     setSearchOpen(false);
   };
