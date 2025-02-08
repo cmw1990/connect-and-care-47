@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -40,6 +39,7 @@ interface Region {
   name: string;
   type: string;
   country: string;
+  continent: string | null;
   coordinates: string | null;
   created_at: string;
   parent_id: number | null;
@@ -149,7 +149,7 @@ const Index = () => {
       setSelectedRegion('');
       setSelectedCity('');
       
-      const country = countries.find(c => c.name === value);
+      const country = countries?.find(c => c.name === value);
       if (country?.coordinates) {
         const point = JSON.parse(country.coordinates) as Coordinates;
         setMapCenter({
@@ -161,7 +161,7 @@ const Index = () => {
       setSelectedRegion(value);
       setSelectedCity('');
       
-      const region = regions.find(r => r.name === value);
+      const region = regions?.find(r => r.name === value);
       if (region?.coordinates) {
         const point = JSON.parse(region.coordinates) as Coordinates;
         setMapCenter({
@@ -172,7 +172,7 @@ const Index = () => {
     } else if (type === 'city') {
       setSelectedCity(value);
       
-      const city = cities.find(c => c.name === value);
+      const city = cities?.find(c => c.name === value);
       if (city?.coordinates) {
         const point = JSON.parse(city.coordinates) as Coordinates;
         setMapCenter({
