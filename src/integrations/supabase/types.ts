@@ -2958,6 +2958,7 @@ export type Database = {
           name: string
           parent_id: number | null
           population: number | null
+          state: string | null
           type: string
         }
         Insert: {
@@ -2969,6 +2970,7 @@ export type Database = {
           name: string
           parent_id?: number | null
           population?: number | null
+          state?: string | null
           type: string
         }
         Update: {
@@ -2980,6 +2982,7 @@ export type Database = {
           name?: string
           parent_id?: number | null
           population?: number | null
+          state?: string | null
           type?: string
         }
         Relationships: [
