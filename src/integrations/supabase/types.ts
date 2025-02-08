@@ -136,6 +136,44 @@ export type Database = {
           },
         ]
       }
+      background_check_history: {
+        Row: {
+          changed_by: string | null
+          check_id: string | null
+          created_at: string | null
+          id: string
+          notes: string | null
+          status: Database["public"]["Enums"]["verification_status"]
+          updated_at: string | null
+        }
+        Insert: {
+          changed_by?: string | null
+          check_id?: string | null
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          status: Database["public"]["Enums"]["verification_status"]
+          updated_at?: string | null
+        }
+        Update: {
+          changed_by?: string | null
+          check_id?: string | null
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          status?: Database["public"]["Enums"]["verification_status"]
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "background_check_history_check_id_fkey"
+            columns: ["check_id"]
+            isOneToOne: false
+            referencedRelation: "background_checks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       background_checks: {
         Row: {
           check_type: string
@@ -3581,6 +3619,30 @@ export type Database = {
           preferred_service?: string | null
           updated_at?: string | null
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string | null
+          id: string
+          role: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          role: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          role?: string
+          updated_at?: string | null
+          user_id?: string
         }
         Relationships: []
       }
