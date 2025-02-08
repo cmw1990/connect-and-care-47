@@ -37,9 +37,17 @@ serve(async (req) => {
     let searchLocation = location;
     if (!location && (city || state || country)) {
       const searchQuery = [city, state, country].filter(Boolean).join(', ');
-      const nominatimUrl = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(searchQuery)}&format=json&limit=1`;
-      const response = await fetch(nominatimUrl);
+      // Use accept-language header to help with Chinese character handling
+      const nominatimUrl = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(searchQuery)}&format=json&limit=1&accept-language=zh`;
+      console.log('Geocoding request URL:', nominatimUrl);
+      
+      const response = await fetch(nominatimUrl, {
+        headers: {
+          'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8'
+        }
+      });
       const data = await response.json();
+      console.log('Geocoding response:', data);
       
       if (data && data[0]) {
         searchLocation = {
@@ -55,10 +63,12 @@ serve(async (req) => {
       const countryCode = getCountryCode(country);
       areaQuery = `area["ISO3166-1"="${countryCode}"]->.searchArea;`;
       if (state) {
-        areaQuery += `area["admin_level"="4"]["name"="${state}"]->.searchArea;`;
+        // For China, use different admin levels depending on the region type
+        const adminLevel = country === 'China' || country === '中国' ? '4|5|6' : '4';
+        areaQuery += `area["admin_level"~"${adminLevel}"]["name"~"${state}"]->.searchArea;`;
       }
       if (city) {
-        areaQuery += `area["place"="city"]["name"="${city}"]->.searchArea;`;
+        areaQuery += `area["place"="city"]["name"~"${city}"]->.searchArea;`;
       }
     }
 
@@ -74,6 +84,11 @@ serve(async (req) => {
         way["social_facility"="nursing_home"](around:${radius},${searchLocation.lat},${searchLocation.lng});
         node["healthcare"="residential_care"](around:${radius},${searchLocation.lat},${searchLocation.lng});
         way["healthcare"="residential_care"](around:${radius},${searchLocation.lat},${searchLocation.lng});
+        // Add Chinese-specific tags
+        node["amenity"="elderly_nursing_home"](around:${radius},${searchLocation.lat},${searchLocation.lng});
+        way["amenity"="elderly_nursing_home"](around:${radius},${searchLocation.lat},${searchLocation.lng});
+        node["healthcare"="elderly_care"](around:${radius},${searchLocation.lat},${searchLocation.lng});
+        way["healthcare"="elderly_care"](around:${radius},${searchLocation.lat},${searchLocation.lng});
       );
       out body;
       >;
@@ -100,13 +115,13 @@ serve(async (req) => {
       .filter(element => element.type === 'node' || element.type === 'way')
       .map((place) => ({
         id: place.id.toString(),
-        name: place.tags?.name || 'Unnamed Facility',
+        name: place.tags?.name || place.tags?.['name:zh'] || place.tags?.['name:en'] || 'Unnamed Facility',
         address: [
-          place.tags?.['addr:street'],
+          place.tags?.['addr:street'] || place.tags?.['addr:street:zh'] || place.tags?.['addr:street:en'],
           place.tags?.['addr:housenumber'],
-          place.tags?.['addr:city'],
+          place.tags?.['addr:city'] || place.tags?.['addr:city:zh'] || place.tags?.['addr:city:en'],
           place.tags?.['addr:postcode'],
-          place.tags?.['addr:country']
+          place.tags?.['addr:country'] || place.tags?.['addr:country:zh'] || place.tags?.['addr:country:en']
         ].filter(Boolean).join(', ') || 'Address not available',
         location: {
           lat: place.lat || (place.center?.lat),
@@ -154,7 +169,9 @@ function getCountryCode(country: string): string {
     'USA': 'US',
     'Canada': 'CA',
     'United Kingdom': 'GB',
-    'UK': 'GB'
+    'UK': 'GB',
+    'China': 'CN',
+    '中国': 'CN'
   }
   return countryMap[country] || country
 }
