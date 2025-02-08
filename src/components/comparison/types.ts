@@ -1,3 +1,4 @@
+
 export interface Location {
   country: string;
   state: string;
@@ -110,3 +111,10 @@ export interface FacilityLead {
   email?: string;
   notes?: string;
 }
+
+export interface VerificationStatus {
+  identity: boolean;
+  background: boolean;
+  references: boolean;
+}
+
