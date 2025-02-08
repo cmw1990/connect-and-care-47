@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Search, MapPin, Star, Shield, Heart, Building2, ShoppingCart, Users, ArrowRight } from "lucide-react";
+import { LocationMap } from "@/components/groups/LocationMap";
+import { useToast } from "@/hooks/use-toast";
 import {
   Select,
   SelectContent,
@@ -18,6 +20,53 @@ import {
 
 const Index = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const [selectedCountry, setSelectedCountry] = useState<string>("");
+  const [selectedRegion, setSelectedRegion] = useState<string>("");
+  const [selectedCity, setSelectedCity] = useState<string>("");
+  const [mapCenter, setMapCenter] = useState({ latitude: 40, longitude: -95 });
+
+  const { data: countries } = useQuery({
+    queryKey: ['regions', 'countries'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('regions')
+        .select('*')
+        .eq('type', 'country');
+      if (error) throw error;
+      return data;
+    }
+  });
+
+  const { data: regions } = useQuery({
+    queryKey: ['regions', selectedCountry],
+    queryFn: async () => {
+      if (!selectedCountry) return [];
+      const { data, error } = await supabase
+        .from('regions')
+        .select('*')
+        .eq('country', selectedCountry)
+        .in('type', ['state', 'province']);
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!selectedCountry
+  });
+
+  const { data: cities } = useQuery({
+    queryKey: ['regions', selectedCountry, selectedRegion],
+    queryFn: async () => {
+      if (!selectedRegion) return [];
+      const { data, error } = await supabase
+        .from('regions')
+        .select('*')
+        .eq('type', 'city')
+        .eq('country', selectedCountry);
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!selectedRegion
+  });
 
   const careTypes = [
     { value: "senior", label: "Senior Care" },
@@ -25,6 +74,23 @@ const Index = () => {
     { value: "special", label: "Special Needs Care" },
     { value: "respite", label: "Respite Care" },
   ];
+
+  const handleLocationSelect = (type: string, value: string) => {
+    if (type === 'country') {
+      setSelectedCountry(value);
+      setSelectedRegion('');
+      setSelectedCity('');
+    } else if (type === 'region') {
+      setSelectedRegion(value);
+      setSelectedCity('');
+    } else if (type === 'city') {
+      setSelectedCity(value);
+      toast({
+        title: "Location Selected",
+        description: `Selected location: ${value}, ${selectedRegion}, ${selectedCountry}`,
+      });
+    }
+  };
 
   return (
     <AnimatePresence mode="wait">
@@ -56,7 +122,7 @@ const Index = () => {
 
               {/* Main Search Bar */}
               <Card className="p-6 shadow-lg mb-8">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                   <Select>
                     <SelectTrigger>
                       <SelectValue placeholder="Type of Care" />
@@ -69,14 +135,59 @@ const Index = () => {
                       ))}
                     </SelectContent>
                   </Select>
-                  <div className="relative">
-                    <MapPin className="absolute left-3 top-3 text-gray-400" />
-                    <Input 
-                      type="text" 
-                      placeholder="Enter your location" 
-                      className="pl-10"
-                    />
-                  </div>
+
+                  <Select
+                    value={selectedCountry}
+                    onValueChange={(value) => handleLocationSelect('country', value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Country" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {countries?.map((country) => (
+                        <SelectItem key={country.id} value={country.name}>
+                          {country.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+
+                  <Select
+                    value={selectedRegion}
+                    onValueChange={(value) => handleLocationSelect('region', value)}
+                    disabled={!selectedCountry}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Region" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {regions?.map((region) => (
+                        <SelectItem key={region.id} value={region.name}>
+                          {region.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+
+                  <Select
+                    value={selectedCity}
+                    onValueChange={(value) => handleLocationSelect('city', value)}
+                    disabled={!selectedRegion}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select City" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {cities?.map((city) => (
+                        <SelectItem key={city.id} value={city.name}>
+                          {city.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="mt-4">
                   <Button 
                     size="lg" 
                     className="w-full"
@@ -86,6 +197,18 @@ const Index = () => {
                   </Button>
                 </div>
               </Card>
+
+              {/* Map Display */}
+              {selectedCountry && (
+                <Card className="mb-8">
+                  <LocationMap
+                    latitude={mapCenter.latitude}
+                    longitude={mapCenter.longitude}
+                    zoom={4}
+                    markers={[]}
+                  />
+                </Card>
+              )}
 
               {/* Quick Action Cards */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
