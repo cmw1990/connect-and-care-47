@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -9,13 +10,18 @@ import { Progress } from "@/components/ui/progress";
 import { 
   Heart, Building2, ShoppingCart, Shield, Star, 
   Users, Search, ArrowRight, ChartBar, Brain,
-  Sparkles, Scale, History, TrendingUp
+  Sparkles, Scale, History, TrendingUp, Info
 } from "lucide-react";
 import { LocationMap } from "@/components/groups/LocationMap";
 import { useToast } from "@/hooks/use-toast";
 import { LocationSearch } from "@/components/landing/LocationSearch";
 import { CareTypeSelector } from "@/components/landing/CareTypeSelector";
 import { SubscriptionPlans } from "@/components/landing/SubscriptionPlans";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
 import { Region, GeoPoint } from "@/types/regions";
 
 const Index = () => {
@@ -200,6 +206,25 @@ const Index = () => {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="text-lg font-semibold">Care Options</h3>
+                      <HoverCard>
+                        <HoverCardTrigger asChild>
+                          <Button variant="ghost" size="icon">
+                            <Info className="h-4 w-4" />
+                          </Button>
+                        </HoverCardTrigger>
+                        <HoverCardContent className="w-80">
+                          <div className="space-y-2">
+                            <h4 className="text-sm font-semibold">Smart Care Selection</h4>
+                            <p className="text-sm">
+                              Choose your care type and enable AI insights for personalized recommendations based on your specific needs.
+                            </p>
+                          </div>
+                        </HoverCardContent>
+                      </HoverCard>
+                    </div>
+                    
                     <CareTypeSelector 
                       selectedCareType={selectedCareType}
                       onCareTypeChange={(type) => {
@@ -212,6 +237,21 @@ const Index = () => {
                       <div className="flex items-center gap-2">
                         <ChartBar className="h-5 w-5 text-primary" />
                         <span className="text-sm">Advanced Analytics</span>
+                        <HoverCard>
+                          <HoverCardTrigger asChild>
+                            <Button variant="ghost" size="icon">
+                              <Info className="h-4 w-4" />
+                            </Button>
+                          </HoverCardTrigger>
+                          <HoverCardContent className="w-80">
+                            <div className="space-y-2">
+                              <h4 className="text-sm font-semibold">Analytics Features</h4>
+                              <p className="text-sm">
+                                Get detailed cost comparisons, quality metrics, and historical performance data.
+                              </p>
+                            </div>
+                          </HoverCardContent>
+                        </HoverCard>
                       </div>
                       <Button
                         variant={analyticsEnabled ? "default" : "outline"}
@@ -227,6 +267,21 @@ const Index = () => {
                       <div className="flex items-center gap-2">
                         <Brain className="h-5 w-5 text-primary" />
                         <span className="text-sm">AI Insights</span>
+                        <HoverCard>
+                          <HoverCardTrigger asChild>
+                            <Button variant="ghost" size="icon">
+                              <Info className="h-4 w-4" />
+                            </Button>
+                          </HoverCardTrigger>
+                          <HoverCardContent className="w-80">
+                            <div className="space-y-2">
+                              <h4 className="text-sm font-semibold">AI-Powered Recommendations</h4>
+                              <p className="text-sm">
+                                Receive personalized suggestions and insights based on your specific care requirements.
+                              </p>
+                            </div>
+                          </HoverCardContent>
+                        </HoverCard>
                       </div>
                       <Button
                         variant={aiInsightsEnabled ? "default" : "outline"}
