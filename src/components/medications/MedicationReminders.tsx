@@ -43,6 +43,14 @@ interface PortalSettings {
   accessibility_settings: AccessibilitySettings;
 }
 
+interface MedicationSchedule {
+  id: string;
+  medication_name: string;
+  dosage: string;
+  time_of_day: string[];
+  group_id: string;
+}
+
 const defaultSettings: PortalSettings = {
   reminder_preferences: {
     preferred_channels: []
@@ -56,7 +64,7 @@ export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
   const { toast } = useToast();
   
   const { data: dbSettings, isLoading: settingsLoading, error: settingsError } = useQuery({
-    queryKey: ['portal-settings', groupId] as const,
+    queryKey: ['portal-settings', groupId],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return null;
@@ -68,17 +76,17 @@ export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
         .single();
 
       if (error && error.code !== 'PGRST116') throw error;
-      return data;
+      return data as DatabasePortalSettings | null;
     }
   });
 
   const settings: PortalSettings = dbSettings ? {
-    reminder_preferences: dbSettings.reminder_preferences as unknown as ReminderPreferences,
-    accessibility_settings: dbSettings.accessibility_settings as unknown as AccessibilitySettings
+    reminder_preferences: dbSettings.reminder_preferences as ReminderPreferences,
+    accessibility_settings: dbSettings.accessibility_settings as AccessibilitySettings
   } : defaultSettings;
 
   const { data: overdueCount, isLoading: overdueLoading } = useQuery({
-    queryKey: ['overduemedications', groupId] as const,
+    queryKey: ['overduemedications', groupId],
     queryFn: async () => {
       const { count, error } = await supabase
         .from('medication_logs')
@@ -87,13 +95,13 @@ export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
         .eq('status', 'overdue');
 
       if (error) throw error;
-      return count;
+      return count ?? 0;
     },
     refetchInterval: 60000
   });
 
   const { data: schedules, isLoading: schedulesLoading } = useQuery({
-    queryKey: ['medicationSchedules', groupId] as const,
+    queryKey: ['medicationSchedules', groupId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('medication_schedules')
@@ -101,7 +109,7 @@ export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
         .eq('group_id', groupId);
 
       if (error) throw error;
-      return data;
+      return data as MedicationSchedule[];
     }
   });
 
@@ -118,8 +126,8 @@ export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
       }
 
       const sanitizedUpdates: Partial<DatabasePortalSettings> = {
-        reminder_preferences: updates.reminder_preferences as unknown as Json,
-        accessibility_settings: updates.accessibility_settings as unknown as Json
+        reminder_preferences: updates.reminder_preferences as Json,
+        accessibility_settings: updates.accessibility_settings as Json
       };
 
       if (dbSettings) {
@@ -273,12 +281,12 @@ export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
                 </h4>
 
                 <div className="space-y-4">
-                  {schedules?.length === 0 ? (
+                  {!schedules?.length ? (
                     <p className="text-muted-foreground text-center py-4">
                       No upcoming medication reminders
                     </p>
                   ) : (
-                    schedules?.map((schedule) => (
+                    schedules.map((schedule) => (
                       <div
                         key={schedule.id}
                         className="flex items-center justify-between pb-4 border-b last:border-0 hover:bg-muted/50 p-2 rounded-lg transition-colors group"
