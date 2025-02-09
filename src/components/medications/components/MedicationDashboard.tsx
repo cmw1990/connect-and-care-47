@@ -9,8 +9,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { VoiceReminder } from "./VoiceReminder";
 import { SupervisorPanel } from "./SupervisorPanel";
 import { AdherenceChart } from "./AdherenceChart";
-import { UpcomingReminders } from "./UpcomingReminders";
+import { UpcomingReminders } from "./UpcomingReminders"; 
 import { Loader2, Bell, Activity, ShieldCheck } from "lucide-react";
+import type { MedicationAdherenceTrend, MedicationSupervisionSummary, MedicationPortalSettings } from "@/types/medication";
 
 interface MedicationDashboardProps {
   groupId: string;
@@ -30,7 +31,7 @@ export const MedicationDashboard = ({ groupId }: MedicationDashboardProps) => {
         .limit(30);
 
       if (error) throw error;
-      return data;
+      return data as MedicationAdherenceTrend[];
     }
   });
 
@@ -44,7 +45,7 @@ export const MedicationDashboard = ({ groupId }: MedicationDashboardProps) => {
         .single();
 
       if (error) throw error;
-      return data;
+      return data as MedicationSupervisionSummary;
     }
   });
 
@@ -58,7 +59,7 @@ export const MedicationDashboard = ({ groupId }: MedicationDashboardProps) => {
         .single();
 
       if (error) throw error;
-      return data;
+      return data as MedicationPortalSettings;
     }
   });
 
@@ -127,7 +128,7 @@ export const MedicationDashboard = ({ groupId }: MedicationDashboardProps) => {
         </TabsList>
 
         <TabsContent value="schedule" className="space-y-4">
-          <UpcomingReminders groupId={groupId} />
+          <UpcomingReminders schedules={[]} />
         </TabsContent>
 
         <TabsContent value="analytics" className="space-y-4">

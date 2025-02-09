@@ -4,10 +4,21 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { Check, X, AlertCircle } from "lucide-react";
+import type { MedicationSupervisionSummary } from "@/types/medication";
 
 interface SupervisorPanelProps {
   groupId: string;
-  data: any;
+  data: MedicationSupervisionSummary | null;
+}
+
+interface MedicationLog {
+  id: string;
+  medication_schedules: {
+    medication_name: string;
+    dosage: string;
+  };
+  taken_at: string;
+  status: string;
 }
 
 export const SupervisorPanel = ({ groupId, data }: SupervisorPanelProps) => {
@@ -28,7 +39,7 @@ export const SupervisorPanel = ({ groupId, data }: SupervisorPanelProps) => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data;
+      return data as MedicationLog[];
     }
   });
 

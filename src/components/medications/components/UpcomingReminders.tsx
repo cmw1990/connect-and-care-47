@@ -2,13 +2,15 @@
 import { BellRing, Clock } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 
+interface Schedule {
+  id: string;
+  medication_name: string;
+  dosage: string;
+  time_of_day: string[];
+}
+
 interface UpcomingRemindersProps {
-  schedules: Array<{
-    id: string;
-    medication_name: string;
-    dosage: string;
-    time_of_day: string[];
-  }>;
+  schedules: Schedule[];
 }
 
 export const UpcomingReminders = ({ schedules }: UpcomingRemindersProps) => {

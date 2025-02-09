@@ -14,6 +14,10 @@ interface VoiceReminderProps {
   };
 }
 
+interface TextToSpeechResponse {
+  audioContent: string;
+}
+
 export const VoiceReminder = ({ groupId, settings }: VoiceReminderProps) => {
   const { toast } = useToast();
   const [isPlaying, setIsPlaying] = useState(false);
