@@ -23,10 +23,12 @@ type Json = string | number | boolean | null | { [key: string]: Json } | Json[];
 
 interface ReminderPreferences {
   preferred_channels: string[];
+  [key: string]: Json;
 }
 
 interface AccessibilitySettings {
   voice_reminders: boolean;
+  [key: string]: Json;
 }
 
 interface DatabasePortalSettings {
@@ -126,8 +128,8 @@ export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
       }
 
       const sanitizedUpdates: Partial<DatabasePortalSettings> = {
-        reminder_preferences: updates.reminder_preferences as Json,
-        accessibility_settings: updates.accessibility_settings as Json
+        reminder_preferences: updates.reminder_preferences as unknown as Json,
+        accessibility_settings: updates.accessibility_settings as unknown as Json
       };
 
       if (dbSettings) {
@@ -319,3 +321,4 @@ export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
     </div>
   );
 };
+
