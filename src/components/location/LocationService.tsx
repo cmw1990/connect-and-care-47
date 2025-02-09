@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { calculateDistance } from "@/utils/locationUtils";
 import { useToast } from "@/hooks/use-toast";
@@ -63,7 +64,7 @@ export class LocationService {
         .from('care_group_members')
         .select('role')
         .eq('group_id', groupId)
-        .eq('user_id', supabase.auth.getUser())
+        .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
         .single();
 
       if (!membership) {
@@ -201,7 +202,7 @@ export class LocationService {
   static async checkGeofences(location: LocationUpdate, groupId: string) {
     try {
       // Get active geofences for the group
-      const { data: geofences, error } = await supabase
+      const { data: fences, error } = await supabase
         .from('geofences')
         .select('*')
         .eq('group_id', groupId)
@@ -215,7 +216,7 @@ export class LocationService {
         dangerZone?: string;
       }> = [];
 
-      for (const fence of geofences || []) {
+      for (const fence of fences || []) {
         let isOutside = true;
 
         if (fence.boundary_type === 'circle') {
@@ -251,11 +252,11 @@ export class LocationService {
           }
         }
 
-        const fenceNotifications = ((fence.notification_settings as unknown) as NotificationSettings) || DEFAULT_NOTIFICATION_SETTINGS;
+        const fenceNotificationSettings = ((fence.notification_settings as unknown as Json) as NotificationSettings) || DEFAULT_NOTIFICATION_SETTINGS;
 
         // Check if user has crossed the geofence boundary or entered danger zone
-        if ((isOutside && fenceNotifications.exitAlert) || 
-            (!isOutside && fenceNotifications.enterAlert) || 
+        if ((isOutside && fenceNotificationSettings.exitAlert) || 
+            (!isOutside && fenceNotificationSettings.enterAlert) || 
             inDangerZone) {
           violations.push({
             fenceId: fence.id,
@@ -272,7 +273,7 @@ export class LocationService {
           violation.fenceId,
           location,
           violation.isExit,
-          fenceNotifications.smsAlert,
+          DEFAULT_NOTIFICATION_SETTINGS.smsAlert,
           violation.dangerZone
         );
       }
@@ -314,7 +315,7 @@ export class LocationService {
     try {
       const { data: group } = await supabase
         .from('care_groups')
-        .select('name, emergency_contacts')
+        .select('name')
         .eq('id', groupId)
         .single();
 
@@ -348,12 +349,6 @@ export class LocationService {
               triggered_at: new Date().toISOString()
             } as unknown as Json
           });
-
-        // Notify emergency contacts if configured
-        if (group?.emergency_contacts) {
-          // Here you would integrate with your notification service
-          console.log('Notifying emergency contacts:', group.emergency_contacts);
-        }
 
         // Send SMS if enabled
         if (sendSms) {
@@ -425,7 +420,7 @@ export class LocationService {
       const { data, error } = await query;
       if (error) throw error;
 
-      let history = data?.location_history || [];
+      let history = (data?.location_history || []) as LocationUpdate[];
 
       if (startDate || endDate) {
         history = history.filter((loc: LocationUpdate) => {
@@ -451,7 +446,7 @@ export class LocationService {
         .eq('active', true);
 
       if (error) throw error;
-      return data as GeofenceConfig[];
+      return data as unknown as GeofenceConfig[];
     } catch (error) {
       console.error('Error fetching geofences:', error);
       return [];
