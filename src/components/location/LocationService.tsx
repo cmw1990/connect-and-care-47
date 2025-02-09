@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { calculateDistance } from "@/utils/locationUtils";
 import { useToast } from "@/hooks/use-toast";
@@ -252,7 +251,9 @@ export class LocationService {
           }
         }
 
-        const fenceNotificationSettings = ((fence.notification_settings as unknown as Json) as NotificationSettings) || DEFAULT_NOTIFICATION_SETTINGS;
+        // Properly cast notification settings with intermediate unknown cast
+        const rawSettings = fence.notification_settings as unknown;
+        const fenceNotificationSettings = (rawSettings as NotificationSettings) || DEFAULT_NOTIFICATION_SETTINGS;
 
         // Check if user has crossed the geofence boundary or entered danger zone
         if ((isOutside && fenceNotificationSettings.exitAlert) || 
@@ -420,7 +421,9 @@ export class LocationService {
       const { data, error } = await query;
       if (error) throw error;
 
-      let history = (data?.location_history || []) as LocationUpdate[];
+      // Properly cast location history with intermediate unknown cast
+      const rawHistory = data?.location_history as unknown;
+      let history = (rawHistory as LocationUpdate[]) || [];
 
       if (startDate || endDate) {
         history = history.filter((loc: LocationUpdate) => {
@@ -446,7 +449,10 @@ export class LocationService {
         .eq('active', true);
 
       if (error) throw error;
-      return data as unknown as GeofenceConfig[];
+      
+      // Properly cast geofence data with intermediate unknown cast
+      const rawGeofences = data as unknown;
+      return rawGeofences as GeofenceConfig[];
     } catch (error) {
       console.error('Error fetching geofences:', error);
       return [];
