@@ -2147,6 +2147,110 @@ export type Database = {
           },
         ]
       }
+      geofence_alerts: {
+        Row: {
+          created_at: string | null
+          geofence_id: string | null
+          group_id: string | null
+          id: string
+          location: Json
+          resolution_notes: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          geofence_id?: string | null
+          group_id?: string | null
+          id?: string
+          location: Json
+          resolution_notes?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          geofence_id?: string | null
+          group_id?: string | null
+          id?: string
+          location?: Json
+          resolution_notes?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "geofence_alerts_geofence_id_fkey"
+            columns: ["geofence_id"]
+            isOneToOne: false
+            referencedRelation: "geofences"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "geofence_alerts_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "care_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      geofences: {
+        Row: {
+          active: boolean | null
+          center_lat: number
+          center_lng: number
+          created_at: string | null
+          description: string | null
+          group_id: string | null
+          id: string
+          name: string
+          notification_type: string | null
+          radius: number
+          updated_at: string | null
+        }
+        Insert: {
+          active?: boolean | null
+          center_lat: number
+          center_lng: number
+          created_at?: string | null
+          description?: string | null
+          group_id?: string | null
+          id?: string
+          name: string
+          notification_type?: string | null
+          radius: number
+          updated_at?: string | null
+        }
+        Update: {
+          active?: boolean | null
+          center_lat?: number
+          center_lng?: number
+          created_at?: string | null
+          description?: string | null
+          group_id?: string | null
+          id?: string
+          name?: string
+          notification_type?: string | null
+          radius?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "geofences_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "care_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       group_posts: {
         Row: {
           content: string
