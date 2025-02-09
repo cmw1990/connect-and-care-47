@@ -20,6 +20,15 @@ interface MedicationRemindersProps {
   groupId: string;
 }
 
+interface PortalSettings {
+  reminder_preferences?: {
+    preferred_channels?: string[];
+  };
+  accessibility_settings?: {
+    voice_reminders?: boolean;
+  };
+}
+
 export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
   const { data: settings } = useQuery({
     queryKey: ['medicationPortalSettings', groupId],
@@ -34,7 +43,7 @@ export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
         .single();
 
       if (error && error.code !== 'PGRST116') throw error;
-      return data;
+      return data as PortalSettings | null;
     }
   });
 
@@ -51,7 +60,7 @@ export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
     }
   });
 
-  const updateSettings = async (updates: any) => {
+  const updateSettings = async (updates: Partial<PortalSettings>) => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 

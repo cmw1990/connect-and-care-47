@@ -18,6 +18,26 @@ interface MedicationVerificationPanelProps {
   groupId: string;
 }
 
+interface MedicationLog {
+  id: string;
+  medication_schedules: {
+    medication_name: string;
+    dosage: string;
+  };
+  administered_by_profile: {
+    first_name: string;
+    last_name: string;
+  };
+  verified_by_profile: {
+    first_name: string;
+    last_name: string;
+  } | null;
+  administered_at: string;
+  status: string;
+  photo_verification_url: string | null;
+  symptoms: string[];
+}
+
 export const MedicationVerificationPanel = ({ groupId }: MedicationVerificationPanelProps) => {
   const { data: verifications, isLoading } = useQuery({
     queryKey: ['medicationVerifications', groupId],
@@ -43,7 +63,7 @@ export const MedicationVerificationPanel = ({ groupId }: MedicationVerificationP
         .order('administered_at', { ascending: false });
 
       if (error) throw error;
-      return data;
+      return data as MedicationLog[];
     }
   });
 
@@ -105,7 +125,7 @@ export const MedicationVerificationPanel = ({ groupId }: MedicationVerificationP
                 </div>
               </div>
 
-              {verification.symptoms?.length > 0 && (
+              {verification.symptoms && verification.symptoms.length > 0 && (
                 <div className="mt-4">
                   <h5 className="text-sm font-medium mb-2">Reported Symptoms:</h5>
                   <div className="flex flex-wrap gap-2">

@@ -6,7 +6,7 @@ import { MedicationScheduleManager } from "./MedicationScheduleManager";
 import { MedicationVerificationPanel } from "./MedicationVerificationPanel";
 import { MedicationInventoryManager } from "./MedicationInventoryManager";
 import { MedicationReminders } from "./MedicationReminders";
-import { Pills, ClipboardCheck, PackageSearch, Bell } from "lucide-react";
+import { Pill, ClipboardCheck, PackageSearch, Bell } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface MedicationDashboardProps {
@@ -21,7 +21,7 @@ export const MedicationDashboard = ({ groupId }: MedicationDashboardProps) => {
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Pills className="h-5 w-5" />
+          <Pill className="h-5 w-5" />
           Medication Management
         </CardTitle>
       </CardHeader>
@@ -29,7 +29,7 @@ export const MedicationDashboard = ({ groupId }: MedicationDashboardProps) => {
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="grid w-full grid-cols-4 mb-4">
             <TabsTrigger value="schedule" className="flex items-center gap-2">
-              <Pills className="h-4 w-4" />
+              <Pill className="h-4 w-4" />
               Schedule
             </TabsTrigger>
             <TabsTrigger value="verification" className="flex items-center gap-2">
