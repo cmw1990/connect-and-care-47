@@ -2856,6 +2856,137 @@ export type Database = {
           },
         ]
       }
+      medication_inventory: {
+        Row: {
+          created_at: string | null
+          current_quantity: number
+          group_id: string | null
+          id: string
+          last_refill_date: string | null
+          next_refill_date: string | null
+          pharmacy_info: Json | null
+          reorder_threshold: number | null
+          schedule_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          current_quantity: number
+          group_id?: string | null
+          id?: string
+          last_refill_date?: string | null
+          next_refill_date?: string | null
+          pharmacy_info?: Json | null
+          reorder_threshold?: number | null
+          schedule_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          current_quantity?: number
+          group_id?: string | null
+          id?: string
+          last_refill_date?: string | null
+          next_refill_date?: string | null
+          pharmacy_info?: Json | null
+          reorder_threshold?: number | null
+          schedule_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "medication_inventory_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "care_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "medication_inventory_schedule_id_fkey"
+            columns: ["schedule_id"]
+            isOneToOne: false
+            referencedRelation: "medication_schedules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      medication_logs: {
+        Row: {
+          administered_at: string
+          administered_by: string | null
+          created_at: string | null
+          id: string
+          notes: string | null
+          photo_verification_url: string | null
+          schedule_id: string | null
+          side_effects: Json | null
+          status: string | null
+          symptoms: Json | null
+          verified_by: string | null
+        }
+        Insert: {
+          administered_at: string
+          administered_by?: string | null
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          photo_verification_url?: string | null
+          schedule_id?: string | null
+          side_effects?: Json | null
+          status?: string | null
+          symptoms?: Json | null
+          verified_by?: string | null
+        }
+        Update: {
+          administered_at?: string
+          administered_by?: string | null
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          photo_verification_url?: string | null
+          schedule_id?: string | null
+          side_effects?: Json | null
+          status?: string | null
+          symptoms?: Json | null
+          verified_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "medication_logs_schedule_id_fkey"
+            columns: ["schedule_id"]
+            isOneToOne: false
+            referencedRelation: "medication_schedules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      medication_portal_settings: {
+        Row: {
+          accessibility_settings: Json | null
+          created_at: string | null
+          id: string
+          reminder_preferences: Json | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          accessibility_settings?: Json | null
+          created_at?: string | null
+          id?: string
+          reminder_preferences?: Json | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          accessibility_settings?: Json | null
+          created_at?: string | null
+          id?: string
+          reminder_preferences?: Json | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       medication_schedules: {
         Row: {
           created_at: string | null
@@ -2902,6 +3033,54 @@ export type Database = {
             columns: ["group_id"]
             isOneToOne: false
             referencedRelation: "care_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      medication_supervision: {
+        Row: {
+          created_at: string | null
+          group_id: string | null
+          id: string
+          notification_preferences: Json | null
+          schedule_id: string | null
+          supervision_level: string | null
+          supervisor_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          group_id?: string | null
+          id?: string
+          notification_preferences?: Json | null
+          schedule_id?: string | null
+          supervision_level?: string | null
+          supervisor_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          group_id?: string | null
+          id?: string
+          notification_preferences?: Json | null
+          schedule_id?: string | null
+          supervision_level?: string | null
+          supervisor_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "medication_supervision_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "care_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "medication_supervision_schedule_id_fkey"
+            columns: ["schedule_id"]
+            isOneToOne: false
+            referencedRelation: "medication_schedules"
             referencedColumns: ["id"]
           },
         ]
