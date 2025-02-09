@@ -11,8 +11,8 @@ interface MedicationRemindersProps {
   groupId: string;
 }
 
-// Define the exact structure from the database
-interface DBMedicationPortalSettings {
+// Database types
+type DBMedicationPortalSettings = {
   id: string;
   group_id: string;
   reminder_preferences: {
@@ -25,21 +25,21 @@ interface DBMedicationPortalSettings {
   updated_at: string;
 }
 
-// Separate interfaces for our processed data
-interface ReminderPreferences {
+// Simple flat types to avoid recursion
+type ReminderPreferences = {
   preferred_channels: string[];
 }
 
-interface AccessibilitySettings {
+type AccessibilitySettings = {
   voice_reminders: boolean;
 }
 
-interface PortalSettings {
+type PortalSettings = {
   reminder_preferences: ReminderPreferences;
   accessibility_settings: AccessibilitySettings;
 }
 
-// Default settings object
+// Default settings
 const defaultSettings: PortalSettings = {
   reminder_preferences: {
     preferred_channels: []
@@ -67,7 +67,6 @@ export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
       
       if (!data) return defaultSettings;
 
-      // Explicitly type the data and provide defaults
       const dbSettings = data as DBMedicationPortalSettings;
       
       return {
@@ -144,4 +143,3 @@ export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
     </div>
   );
 };
-
