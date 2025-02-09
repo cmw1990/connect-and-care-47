@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -10,7 +9,9 @@ import { Progress } from "@/components/ui/progress";
 import { 
   Heart, Building2, ShoppingCart, Shield, Star, 
   Users, Search, ArrowRight, ChartBar, Brain,
-  Sparkles, Scale, History, TrendingUp, Info
+  Sparkles, Scale, History, TrendingUp, Info,
+  Activity, DeviceMobile, Stethoscope, AiFill,
+  UserCheck
 } from "lucide-react";
 import { LocationMap } from "@/components/groups/LocationMap";
 import { useToast } from "@/hooks/use-toast";
@@ -353,7 +354,7 @@ const Index = () => {
                     <div className="flex flex-col items-center text-center space-y-4">
                       <Heart className="h-10 w-10 text-primary" />
                       <h3 className="text-xl font-semibold">Find Caregivers</h3>
-                      <p className="text-muted-foreground">Connect with qualified, background-checked caregivers</p>
+                      <p className="text-muted-foreground">AI-powered caregiver matching based on preferences</p>
                     </div>
                   </Card>
                 </motion.div>
@@ -364,28 +365,12 @@ const Index = () => {
                 >
                   <Card 
                     className="p-6 cursor-pointer hover:shadow-lg transition-all duration-300 bg-gradient-to-br from-background to-primary/5"
-                    onClick={() => navigate('/facilities')}
+                    onClick={() => navigate('/monitoring')}
                   >
                     <div className="flex flex-col items-center text-center space-y-4">
-                      <Building2 className="h-10 w-10 text-primary" />
-                      <h3 className="text-xl font-semibold">Compare Facilities</h3>
-                      <p className="text-muted-foreground">Find and compare top-rated care facilities</p>
-                    </div>
-                  </Card>
-                </motion.div>
-
-                <motion.div
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  <Card 
-                    className="p-6 cursor-pointer hover:shadow-lg transition-all duration-300 bg-gradient-to-br from-background to-primary/5"
-                    onClick={() => navigate('/products')}
-                  >
-                    <div className="flex flex-col items-center text-center space-y-4">
-                      <ShoppingCart className="h-10 w-10 text-primary" />
-                      <h3 className="text-xl font-semibold">Care Products</h3>
-                      <p className="text-muted-foreground">Browse and compare essential care products</p>
+                      <Activity className="h-10 w-10 text-primary" />
+                      <h3 className="text-xl font-semibold">Real-time Monitoring</h3>
+                      <p className="text-muted-foreground">Live health metrics and device integration</p>
                     </div>
                   </Card>
                 </motion.div>
@@ -399,9 +384,25 @@ const Index = () => {
                     onClick={() => navigate('/insights')}
                   >
                     <div className="flex flex-col items-center text-center space-y-4">
-                      <Sparkles className="h-10 w-10 text-primary" />
-                      <h3 className="text-xl font-semibold">Smart Insights</h3>
-                      <p className="text-muted-foreground">Get personalized care recommendations</p>
+                      <Brain className="h-10 w-10 text-primary" />
+                      <h3 className="text-xl font-semibold">AI Insights</h3>
+                      <p className="text-muted-foreground">Personalized care recommendations</p>
+                    </div>
+                  </Card>
+                </motion.div>
+
+                <motion.div
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  <Card 
+                    className="p-6 cursor-pointer hover:shadow-lg transition-all duration-300 bg-gradient-to-br from-background to-primary/5"
+                    onClick={() => navigate('/analytics')}
+                  >
+                    <div className="flex flex-col items-center text-center space-y-4">
+                      <ChartBar className="h-10 w-10 text-primary" />
+                      <h3 className="text-xl font-semibold">Advanced Analytics</h3>
+                      <p className="text-muted-foreground">Comprehensive care analytics and trends</p>
                     </div>
                   </Card>
                 </motion.div>
@@ -413,31 +414,31 @@ const Index = () => {
         <section className="py-16 bg-primary/5">
           <div className="container mx-auto px-4">
             <div className="max-w-4xl mx-auto text-center">
-              <ChartBar className="h-12 w-12 mx-auto mb-6 text-primary" />
-              <h2 className="text-3xl font-bold mb-4">Advanced Analytics & AI Insights</h2>
+              <DeviceMobile className="h-12 w-12 mx-auto mb-6 text-primary" />
+              <h2 className="text-3xl font-bold mb-4">Smart Device Integration</h2>
               <p className="text-lg text-muted-foreground mb-8">
-                Make informed decisions with our comprehensive analytics and AI-powered recommendations.
+                Connect medical devices for real-time monitoring and insights
               </p>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                 <Card className="p-6">
+                  <Stethoscope className="h-8 w-8 mb-4 text-primary" />
+                  <h3 className="text-xl font-semibold mb-2">Health Monitoring</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Real-time vital signs and health metrics tracking
+                  </p>
+                </Card>
+                <Card className="p-6">
                   <Brain className="h-8 w-8 mb-4 text-primary" />
-                  <h3 className="text-xl font-semibold mb-2">Smart Analysis</h3>
+                  <h3 className="text-xl font-semibold mb-2">AI Analysis</h3>
                   <p className="text-sm text-muted-foreground">
-                    AI-powered insights to help you make the best choice
+                    Predictive health insights and early warning system
                   </p>
                 </Card>
                 <Card className="p-6">
-                  <Scale className="h-8 w-8 mb-4 text-primary" />
-                  <h3 className="text-xl font-semibold mb-2">Cost Analysis</h3>
+                  <UserCheck className="h-8 w-8 mb-4 text-primary" />
+                  <h3 className="text-xl font-semibold mb-2">Care Matching</h3>
                   <p className="text-sm text-muted-foreground">
-                    Comprehensive cost-benefit analysis for better decisions
-                  </p>
-                </Card>
-                <Card className="p-6">
-                  <History className="h-8 w-8 mb-4 text-primary" />
-                  <h3 className="text-xl font-semibold mb-2">Historical Data</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Track trends and make data-driven choices
+                    Advanced caregiver matching based on needs
                   </p>
                 </Card>
               </div>
@@ -449,17 +450,17 @@ const Index = () => {
           <div className="container mx-auto px-4">
             <div className="max-w-4xl mx-auto text-center">
               <TrendingUp className="h-12 w-12 mx-auto mb-6 text-primary" />
-              <h2 className="text-3xl font-bold mb-4">Market Analysis & Insights</h2>
+              <h2 className="text-3xl font-bold mb-4">Comprehensive Analytics</h2>
               <p className="text-lg text-muted-foreground mb-8">
-                Stay informed with real-time market trends and competitive analysis
+                Make informed decisions with our advanced analytics platform
               </p>
               <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                 <Button 
                   size="lg" 
-                  onClick={() => navigate('/market-insights')}
+                  onClick={() => navigate('/analytics')}
                   className="gap-2 group"
                 >
-                  View Market Insights
+                  View Analytics Dashboard
                   <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
                 </Button>
               </motion.div>
