@@ -21,17 +21,15 @@ interface MedicationRemindersProps {
   groupId: string;
 }
 
-interface ReminderPreferences {
-  preferred_channels?: string[];
-}
-
-interface AccessibilitySettings {
-  voice_reminders?: boolean;
-}
+type Json = string | number | boolean | null | { [key: string]: Json } | Json[];
 
 interface PortalSettings {
-  reminder_preferences?: ReminderPreferences;
-  accessibility_settings?: AccessibilitySettings;
+  reminder_preferences?: {
+    preferred_channels?: string[];
+  };
+  accessibility_settings?: {
+    voice_reminders?: boolean;
+  };
 }
 
 export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
@@ -74,17 +72,24 @@ export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
+      // Cast the updates to match Supabase's expected Json type
+      const sanitizedUpdates = {
+        ...updates,
+        reminder_preferences: updates.reminder_preferences as Json,
+        accessibility_settings: updates.accessibility_settings as Json
+      };
+
       if (settings) {
         const { error } = await supabase
           .from('medication_portal_settings')
-          .update(updates)
+          .update(sanitizedUpdates)
           .eq('user_id', user.id);
 
         if (error) throw error;
       } else {
         const { error } = await supabase
           .from('medication_portal_settings')
-          .insert([{ user_id: user.id, ...updates }]);
+          .insert([{ user_id: user.id, ...sanitizedUpdates }]);
 
         if (error) throw error;
       }
