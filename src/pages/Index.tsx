@@ -11,7 +11,7 @@ import {
   Users, Search, ArrowRight, ChartBar, Brain,
   Sparkles, Scale, History, TrendingUp, Info,
   Activity, Smartphone, Stethoscope, Bot,
-  UserCheck
+  UserCheck, Baby, Dog
 } from "lucide-react";
 import { LocationMap } from "@/components/groups/LocationMap";
 import { useToast } from "@/hooks/use-toast";
@@ -24,6 +24,65 @@ import {
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
 import { Region, GeoPoint } from "@/types/regions";
+
+const careTypes = [
+  {
+    id: 'elderly',
+    title: 'Senior Care',
+    description: 'Compassionate caregivers for elderly care and companionship',
+    icon: Heart,
+    color: 'text-red-500',
+  },
+  {
+    id: 'child',
+    title: 'Child Care',
+    description: 'Expert child care professionals and babysitters',
+    icon: Baby,
+    color: 'text-blue-500',
+  },
+  {
+    id: 'special-needs',
+    title: 'Special Needs',
+    description: 'Specialized care for individuals with unique requirements',
+    icon: Brain,
+    color: 'text-purple-500',
+  },
+  {
+    id: 'partner',
+    title: 'Partner Care',
+    description: 'Supportive care for spouses and partners',
+    icon: Users,
+    color: 'text-pink-500',
+  },
+  {
+    id: 'pet',
+    title: 'Pet Care',
+    description: 'Professional pet sitting and animal care',
+    icon: Dog,
+    color: 'text-green-500',
+  },
+  {
+    id: 'rehabilitation',
+    title: 'Rehabilitation',
+    description: 'Recovery and rehabilitation support services',
+    icon: Activity,
+    color: 'text-orange-500',
+  },
+  {
+    id: 'mental-health',
+    title: 'Mental Health',
+    description: 'Mental health support and companionship',
+    icon: Sparkles,
+    color: 'text-indigo-500',
+  },
+  {
+    id: 'postoperative',
+    title: 'Post-Op Care',
+    description: 'Post-surgery recovery and medical care',
+    icon: Stethoscope,
+    color: 'text-cyan-500',
+  }
+];
 
 const Index = () => {
   const navigate = useNavigate();
@@ -217,9 +276,10 @@ const Index = () => {
                         </HoverCardTrigger>
                         <HoverCardContent className="w-80">
                           <div className="space-y-2">
-                            <h4 className="text-sm font-semibold">Smart Care Selection</h4>
+                            <h4 className="text-sm font-semibold">Comprehensive Care Selection</h4>
                             <p className="text-sm">
-                              Choose your care type and enable AI insights for personalized recommendations based on your specific needs.
+                              Choose from a wide range of care services including elderly care, 
+                              childcare, pet care, and specialized support services.
                             </p>
                           </div>
                         </HoverCardContent>

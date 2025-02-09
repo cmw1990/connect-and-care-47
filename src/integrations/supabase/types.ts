@@ -1043,6 +1043,50 @@ export type Database = {
           },
         ]
       }
+      care_requirements: {
+        Row: {
+          created_at: string | null
+          id: string
+          medical_requirements: Json | null
+          needs: Json
+          recipient_id: string | null
+          schedule_preferences: Json | null
+          special_instructions: string | null
+          type: Database["public"]["Enums"]["care_recipient_type"]
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          medical_requirements?: Json | null
+          needs?: Json
+          recipient_id?: string | null
+          schedule_preferences?: Json | null
+          special_instructions?: string | null
+          type: Database["public"]["Enums"]["care_recipient_type"]
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          medical_requirements?: Json | null
+          needs?: Json
+          recipient_id?: string | null
+          schedule_preferences?: Json | null
+          special_instructions?: string | null
+          type?: Database["public"]["Enums"]["care_recipient_type"]
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "care_requirements_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: false
+            referencedRelation: "care_recipients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       care_reviews: {
         Row: {
           booking_id: string | null
@@ -1198,6 +1242,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      care_specializations: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          guidelines: Json | null
+          id: string
+          name: string
+          required_certifications: string[] | null
+          skill_requirements: string[] | null
+          type: Database["public"]["Enums"]["care_recipient_type"]
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          guidelines?: Json | null
+          id?: string
+          name: string
+          required_certifications?: string[] | null
+          skill_requirements?: string[] | null
+          type: Database["public"]["Enums"]["care_recipient_type"]
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          guidelines?: Json | null
+          id?: string
+          name?: string
+          required_certifications?: string[] | null
+          skill_requirements?: string[] | null
+          type?: Database["public"]["Enums"]["care_recipient_type"]
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       care_team_availability: {
         Row: {
@@ -3220,6 +3300,65 @@ export type Database = {
             columns: ["subscription_id"]
             isOneToOne: false
             referencedRelation: "subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pet_profiles: {
+        Row: {
+          age: number | null
+          behavioral_notes: string | null
+          breed: string | null
+          care_instructions: string | null
+          created_at: string | null
+          dietary_requirements: string[] | null
+          exercise_needs: string | null
+          group_id: string | null
+          id: string
+          medical_conditions: string[] | null
+          name: string
+          species: string
+          updated_at: string | null
+          veterinarian_contact: Json | null
+        }
+        Insert: {
+          age?: number | null
+          behavioral_notes?: string | null
+          breed?: string | null
+          care_instructions?: string | null
+          created_at?: string | null
+          dietary_requirements?: string[] | null
+          exercise_needs?: string | null
+          group_id?: string | null
+          id?: string
+          medical_conditions?: string[] | null
+          name: string
+          species: string
+          updated_at?: string | null
+          veterinarian_contact?: Json | null
+        }
+        Update: {
+          age?: number | null
+          behavioral_notes?: string | null
+          breed?: string | null
+          care_instructions?: string | null
+          created_at?: string | null
+          dietary_requirements?: string[] | null
+          exercise_needs?: string | null
+          group_id?: string | null
+          id?: string
+          medical_conditions?: string[] | null
+          name?: string
+          species?: string
+          updated_at?: string | null
+          veterinarian_contact?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pet_profiles_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "care_groups"
             referencedColumns: ["id"]
           },
         ]
@@ -7410,6 +7549,15 @@ export type Database = {
       }
     }
     Enums: {
+      care_recipient_type:
+        | "elderly"
+        | "child"
+        | "partner"
+        | "pet"
+        | "special_needs"
+        | "rehabilitation"
+        | "mental_health"
+        | "postoperative"
       connection_type: "carer" | "pal"
       device_type:
         | "vital_signs"
