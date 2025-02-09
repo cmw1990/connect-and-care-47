@@ -24,11 +24,9 @@ interface PortalSettings {
   accessibility_settings: AccessibilitySettings;
 }
 
-interface DatabasePortalSettings {
+interface DatabasePortalSettings extends PortalSettings {
   id?: string;
   user_id?: string;
-  reminder_preferences: ReminderPreferences;
-  accessibility_settings: AccessibilitySettings;
   created_at?: string;
   updated_at?: string;
 }
@@ -74,7 +72,7 @@ export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
       if (error) throw error;
       return count ?? 0;
     },
-    refetchInterval: 60000
+    refetchInterval: 60000 // Refresh every minute
   });
 
   const { data: schedules = [], isLoading: schedulesLoading } = useQuery({
