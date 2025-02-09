@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -7,6 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Upload, CheckCircle, AlertCircle, Shield, FileText, Fingerprint } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
+import { BackgroundCheckStatus } from "./BackgroundCheckStatus";
 
 export const VerificationRequest = () => {
   const [uploading, setUploading] = useState(false);
@@ -121,6 +121,7 @@ export const VerificationRequest = () => {
         <Progress value={progress} className="h-2" />
       </CardHeader>
       <CardContent className="space-y-6">
+        {/* Identity Verification Section */}
         <div className="space-y-4">
           <div className="space-y-2">
             <div className="flex items-center justify-between">
@@ -156,6 +157,7 @@ export const VerificationRequest = () => {
             </Button>
           </div>
 
+          {/* References Section */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <Label className="flex items-center gap-2">
@@ -190,6 +192,7 @@ export const VerificationRequest = () => {
             </Button>
           </div>
 
+          {/* Background Check Section */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <Label className="flex items-center gap-2">
@@ -215,6 +218,9 @@ export const VerificationRequest = () => {
             </Button>
           </div>
         </div>
+
+        {/* Background Check Status */}
+        <BackgroundCheckStatus />
 
         <div className="rounded-lg bg-muted p-4 text-sm space-y-2">
           <h4 className="font-medium">Why verify?</h4>

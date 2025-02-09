@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart2, Brain, Shield } from "lucide-react";
 import { ComparisonResult } from "./types";
@@ -61,7 +60,6 @@ export const ComparisonResults = ({ results }: ComparisonResultsProps) => {
     try {
       setIsVerifying(prev => ({ ...prev, [id]: true }));
       
-      // Get current user
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         toast({
@@ -97,7 +95,7 @@ export const ComparisonResults = ({ results }: ComparisonResultsProps) => {
 
       toast({
         title: "Success",
-        description: "Background check request submitted successfully.",
+        description: "Background check request submitted. View status in your profile.",
       });
 
     } catch (error) {
@@ -137,7 +135,7 @@ export const ComparisonResults = ({ results }: ComparisonResultsProps) => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
           {Object.entries(results).map(([id, data]) => (
-            <div key={id} className="p-4 border rounded">
+            <div key={id} className="p-4 border rounded hover:shadow-md transition-all">
               <div className="flex items-center justify-between mb-2">
                 <h3 className="font-semibold">{data.name}</h3>
                 {data.specifications?.verification_status ? (
@@ -152,7 +150,7 @@ export const ComparisonResults = ({ results }: ComparisonResultsProps) => {
                     size="sm"
                     onClick={() => handleVerificationCheck(id)}
                     disabled={isVerifying[id]}
-                    className="flex items-center gap-1"
+                    className="flex items-center gap-1 hover:bg-primary/5"
                   >
                     <Shield className="h-4 w-4" />
                     {isVerifying[id] ? 'Verifying...' : 'Verify'}
