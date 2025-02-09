@@ -24,30 +24,39 @@ interface MedicationRemindersProps {
 type Json = string | number | boolean | null | { [key: string]: Json } | Json[];
 
 interface ReminderPreferences {
-  preferred_channels?: string[];
+  preferred_channels: string[];
 }
 
 interface AccessibilitySettings {
-  voice_reminders?: boolean;
+  voice_reminders: boolean;
 }
 
 interface DatabasePortalSettings {
   id?: string;
   user_id?: string;
-  reminder_preferences?: Json;
-  accessibility_settings?: Json;
+  reminder_preferences: Json;
+  accessibility_settings: Json;
   created_at?: string;
   updated_at?: string;
 }
 
 interface PortalSettings {
-  reminder_preferences?: ReminderPreferences;
-  accessibility_settings?: AccessibilitySettings;
+  reminder_preferences: ReminderPreferences;
+  accessibility_settings: AccessibilitySettings;
 }
+
+const defaultSettings: PortalSettings = {
+  reminder_preferences: {
+    preferred_channels: []
+  },
+  accessibility_settings: {
+    voice_reminders: false
+  }
+};
 
 export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
   const { toast } = useToast();
-  const { data: settings } = useQuery({
+  const { data: dbSettings } = useQuery({
     queryKey: ['medicationPortalSettings', groupId],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -63,6 +72,12 @@ export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
       return data as DatabasePortalSettings | null;
     }
   });
+
+  // Convert database settings to frontend format
+  const settings: PortalSettings = dbSettings ? {
+    reminder_preferences: dbSettings.reminder_preferences as ReminderPreferences || defaultSettings.reminder_preferences,
+    accessibility_settings: dbSettings.accessibility_settings as AccessibilitySettings || defaultSettings.accessibility_settings
+  } : defaultSettings;
 
   const { data: overdueCount } = useQuery({
     queryKey: ['overduemedications', groupId],
@@ -89,7 +104,7 @@ export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
         accessibility_settings: updates.accessibility_settings as Json
       };
 
-      if (settings) {
+      if (dbSettings) {
         const { error } = await supabase
           .from('medication_portal_settings')
           .update(sanitizedUpdates)
@@ -169,9 +184,9 @@ export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
                   </div>
                 </div>
                 <Switch
-                  checked={settings?.reminder_preferences?.preferred_channels?.includes('push')}
+                  checked={settings.reminder_preferences.preferred_channels.includes('push')}
                   onCheckedChange={(checked) => {
-                    const channels = (settings?.reminder_preferences as ReminderPreferences)?.preferred_channels || [];
+                    const channels = settings.reminder_preferences.preferred_channels;
                     updateSettings({
                       reminder_preferences: {
                         preferred_channels: checked
@@ -191,9 +206,9 @@ export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
                   </div>
                 </div>
                 <Switch
-                  checked={settings?.reminder_preferences?.preferred_channels?.includes('sms')}
+                  checked={settings.reminder_preferences.preferred_channels.includes('sms')}
                   onCheckedChange={(checked) => {
-                    const channels = (settings?.reminder_preferences as ReminderPreferences)?.preferred_channels || [];
+                    const channels = settings.reminder_preferences.preferred_channels;
                     updateSettings({
                       reminder_preferences: {
                         preferred_channels: checked
@@ -213,7 +228,7 @@ export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
                   </div>
                 </div>
                 <Switch
-                  checked={(settings?.accessibility_settings as AccessibilitySettings)?.voice_reminders}
+                  checked={settings.accessibility_settings.voice_reminders}
                   onCheckedChange={(checked) => {
                     updateSettings({
                       accessibility_settings: {
