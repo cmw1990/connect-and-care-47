@@ -2764,6 +2764,7 @@ export type Database = {
           group_id: string | null
           id: string
           location_enabled: boolean | null
+          location_history: Json[] | null
           updated_at: string
         }
         Insert: {
@@ -2772,6 +2773,7 @@ export type Database = {
           group_id?: string | null
           id?: string
           location_enabled?: boolean | null
+          location_history?: Json[] | null
           updated_at?: string
         }
         Update: {
@@ -2780,6 +2782,7 @@ export type Database = {
           group_id?: string | null
           id?: string
           location_enabled?: boolean | null
+          location_history?: Json[] | null
           updated_at?: string
         }
         Relationships: [
