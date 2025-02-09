@@ -4620,6 +4620,7 @@ export type Database = {
           description: string | null
           features: Json
           id: string
+          is_active: boolean | null
           name: string
           price: number
           tier: Database["public"]["Enums"]["subscription_tier"]
@@ -4631,6 +4632,7 @@ export type Database = {
           description?: string | null
           features?: Json
           id?: string
+          is_active?: boolean | null
           name: string
           price: number
           tier: Database["public"]["Enums"]["subscription_tier"]
@@ -4642,6 +4644,7 @@ export type Database = {
           description?: string | null
           features?: Json
           id?: string
+          is_active?: boolean | null
           name?: string
           price?: number
           tier?: Database["public"]["Enums"]["subscription_tier"]
