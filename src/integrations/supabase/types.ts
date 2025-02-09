@@ -258,6 +258,60 @@ export type Database = {
           },
         ]
       }
+      care_assessments: {
+        Row: {
+          adl_scores: Json | null
+          assessment_date: string | null
+          assessor_id: string | null
+          care_needs: Json | null
+          created_at: string | null
+          group_id: string | null
+          id: string
+          recommendations: string[] | null
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          adl_scores?: Json | null
+          assessment_date?: string | null
+          assessor_id?: string | null
+          care_needs?: Json | null
+          created_at?: string | null
+          group_id?: string | null
+          id?: string
+          recommendations?: string[] | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          adl_scores?: Json | null
+          assessment_date?: string | null
+          assessor_id?: string | null
+          care_needs?: Json | null
+          created_at?: string | null
+          group_id?: string | null
+          id?: string
+          recommendations?: string[] | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "care_assessments_assessor_id_fkey"
+            columns: ["assessor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "care_assessments_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "care_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       care_assignments: {
         Row: {
           assignment_type: Database["public"]["Enums"]["user_type"]
@@ -442,6 +496,74 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      care_cost_estimates: {
+        Row: {
+          care_hours: number | null
+          care_type: string | null
+          created_at: string | null
+          group_id: string | null
+          id: string
+          location: string | null
+          total_estimate: number
+          updated_at: string | null
+        }
+        Insert: {
+          care_hours?: number | null
+          care_type?: string | null
+          created_at?: string | null
+          group_id?: string | null
+          id?: string
+          location?: string | null
+          total_estimate: number
+          updated_at?: string | null
+        }
+        Update: {
+          care_hours?: number | null
+          care_type?: string | null
+          created_at?: string | null
+          group_id?: string | null
+          id?: string
+          location?: string | null
+          total_estimate?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "care_cost_estimates_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "care_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      care_cost_factors: {
+        Row: {
+          base_rate: number
+          created_at: string | null
+          id: string
+          region: string | null
+          service_type: string
+          updated_at: string | null
+        }
+        Insert: {
+          base_rate: number
+          created_at?: string | null
+          id?: string
+          region?: string | null
+          service_type: string
+          updated_at?: string | null
+        }
+        Update: {
+          base_rate?: number
+          created_at?: string | null
+          id?: string
+          region?: string | null
+          service_type?: string
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       care_facilities: {
         Row: {
@@ -1888,6 +2010,57 @@ export type Database = {
           },
         ]
       }
+      cognitive_assessments: {
+        Row: {
+          assessment_date: string | null
+          assessor_id: string | null
+          created_at: string | null
+          group_id: string | null
+          id: string
+          notes: string | null
+          score: number | null
+          test_type: string
+          updated_at: string | null
+        }
+        Insert: {
+          assessment_date?: string | null
+          assessor_id?: string | null
+          created_at?: string | null
+          group_id?: string | null
+          id?: string
+          notes?: string | null
+          score?: number | null
+          test_type: string
+          updated_at?: string | null
+        }
+        Update: {
+          assessment_date?: string | null
+          assessor_id?: string | null
+          created_at?: string | null
+          group_id?: string | null
+          id?: string
+          notes?: string | null
+          score?: number | null
+          test_type?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cognitive_assessments_assessor_id_fkey"
+            columns: ["assessor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cognitive_assessments_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "care_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       community_posts: {
         Row: {
           author_id: string | null
@@ -2638,6 +2811,50 @@ export type Database = {
           },
         ]
       }
+      grocery_orders: {
+        Row: {
+          created_at: string | null
+          delivery_address: string | null
+          delivery_instructions: string | null
+          delivery_status: string | null
+          group_id: string | null
+          id: string
+          items: Json | null
+          order_date: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          delivery_address?: string | null
+          delivery_instructions?: string | null
+          delivery_status?: string | null
+          group_id?: string | null
+          id?: string
+          items?: Json | null
+          order_date?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          delivery_address?: string | null
+          delivery_instructions?: string | null
+          delivery_status?: string | null
+          group_id?: string | null
+          id?: string
+          items?: Json | null
+          order_date?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "grocery_orders_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "care_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       group_posts: {
         Row: {
           content: string
@@ -2783,6 +3000,57 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      meal_plans: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          dietary_restrictions: string[] | null
+          end_date: string
+          group_id: string | null
+          id: string
+          meals: Json | null
+          start_date: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          dietary_restrictions?: string[] | null
+          end_date: string
+          group_id?: string | null
+          id?: string
+          meals?: Json | null
+          start_date: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          dietary_restrictions?: string[] | null
+          end_date?: string
+          group_id?: string | null
+          id?: string
+          meals?: Json | null
+          start_date?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meal_plans_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meal_plans_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "care_groups"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       medical_device_data: {
         Row: {
@@ -3311,6 +3579,45 @@ export type Database = {
           id?: string
           instructions?: Json | null
           name?: string
+        }
+        Relationships: []
+      }
+      memory_care_activities: {
+        Row: {
+          benefits: string[] | null
+          category: string | null
+          created_at: string | null
+          description: string | null
+          difficulty_level: string | null
+          id: string
+          instructions: string | null
+          materials_needed: string[] | null
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          benefits?: string[] | null
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          difficulty_level?: string | null
+          id?: string
+          instructions?: string | null
+          materials_needed?: string[] | null
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          benefits?: string[] | null
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          difficulty_level?: string | null
+          id?: string
+          instructions?: string | null
+          materials_needed?: string[] | null
+          name?: string
+          updated_at?: string | null
         }
         Relationships: []
       }
@@ -4025,6 +4332,60 @@ export type Database = {
           },
         ]
       }
+      respite_care_requests: {
+        Row: {
+          assigned_caregiver: string | null
+          care_needs: string[] | null
+          created_at: string | null
+          end_date: string
+          group_id: string | null
+          id: string
+          notes: string | null
+          start_date: string
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          assigned_caregiver?: string | null
+          care_needs?: string[] | null
+          created_at?: string | null
+          end_date: string
+          group_id?: string | null
+          id?: string
+          notes?: string | null
+          start_date: string
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          assigned_caregiver?: string | null
+          care_needs?: string[] | null
+          created_at?: string | null
+          end_date?: string
+          group_id?: string | null
+          id?: string
+          notes?: string | null
+          start_date?: string
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "respite_care_requests_assigned_caregiver_fkey"
+            columns: ["assigned_caregiver"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "respite_care_requests_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "care_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       safety_incidents: {
         Row: {
           actions_taken: string | null
@@ -4080,6 +4441,72 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      senior_living_facilities: {
+        Row: {
+          address: string
+          amenities: string[] | null
+          city: string
+          created_at: string | null
+          description: string | null
+          email: string | null
+          facility_type: string
+          id: string
+          images: string[] | null
+          name: string
+          phone: string | null
+          price_range: Json | null
+          ratings: number | null
+          state: string
+          total_reviews: number | null
+          updated_at: string | null
+          virtual_tour_url: string | null
+          website: string | null
+          zip: string
+        }
+        Insert: {
+          address: string
+          amenities?: string[] | null
+          city: string
+          created_at?: string | null
+          description?: string | null
+          email?: string | null
+          facility_type: string
+          id?: string
+          images?: string[] | null
+          name: string
+          phone?: string | null
+          price_range?: Json | null
+          ratings?: number | null
+          state: string
+          total_reviews?: number | null
+          updated_at?: string | null
+          virtual_tour_url?: string | null
+          website?: string | null
+          zip: string
+        }
+        Update: {
+          address?: string
+          amenities?: string[] | null
+          city?: string
+          created_at?: string | null
+          description?: string | null
+          email?: string | null
+          facility_type?: string
+          id?: string
+          images?: string[] | null
+          name?: string
+          phone?: string | null
+          price_range?: Json | null
+          ratings?: number | null
+          state?: string
+          total_reviews?: number | null
+          updated_at?: string | null
+          virtual_tour_url?: string | null
+          website?: string | null
+          zip?: string
+        }
+        Relationships: []
       }
       service_reviews: {
         Row: {
@@ -4431,6 +4858,53 @@ export type Database = {
             columns: ["sender_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      transportation_requests: {
+        Row: {
+          created_at: string | null
+          dropoff_location: string
+          group_id: string | null
+          id: string
+          pickup_location: string
+          pickup_time: string
+          service_provider: string | null
+          special_instructions: string | null
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          dropoff_location: string
+          group_id?: string | null
+          id?: string
+          pickup_location: string
+          pickup_time: string
+          service_provider?: string | null
+          special_instructions?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          dropoff_location?: string
+          group_id?: string | null
+          id?: string
+          pickup_location?: string
+          pickup_time?: string
+          service_provider?: string | null
+          special_instructions?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transportation_requests_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "care_groups"
             referencedColumns: ["id"]
           },
         ]
