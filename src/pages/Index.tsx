@@ -5,7 +5,12 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Heart, Building2, ShoppingCart, Shield, Star, Users, Search, ArrowRight, ChartBar, Brain } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
+import { 
+  Heart, Building2, ShoppingCart, Shield, Star, 
+  Users, Search, ArrowRight, ChartBar, Brain,
+  Sparkles, Scale, History, TrendingUp
+} from "lucide-react";
 import { LocationMap } from "@/components/groups/LocationMap";
 import { useToast } from "@/hooks/use-toast";
 import { LocationSearch } from "@/components/landing/LocationSearch";
@@ -25,6 +30,7 @@ const Index = () => {
   const [selectedCareType, setSelectedCareType] = useState<string>("");
   const [analyticsEnabled, setAnalyticsEnabled] = useState(true);
   const [aiInsightsEnabled, setAiInsightsEnabled] = useState(true);
+  const [comparisonProgress, setComparisonProgress] = useState(0);
 
   const fetchSearchResults = async (): Promise<Region[]> => {
     if (searchQuery.length < 2) return [];
@@ -72,6 +78,7 @@ const Index = () => {
       setSelectedCountry(value);
       setSelectedRegion('');
       setSelectedCity('');
+      setComparisonProgress(20);
       
       const country = searchResults.find(c => c.name === value);
       if (country?.coordinates) {
@@ -88,6 +95,7 @@ const Index = () => {
     } else if (type === 'region') {
       setSelectedRegion(value);
       setSelectedCity('');
+      setComparisonProgress(40);
       
       const region = searchResults.find(r => r.name === value);
       if (region?.coordinates) {
@@ -103,6 +111,7 @@ const Index = () => {
       }
     } else if (type === 'city') {
       setSelectedCity(value);
+      setComparisonProgress(60);
       
       const city = searchResults.find(c => c.name === value);
       if (city?.coordinates) {
@@ -180,11 +189,55 @@ const Index = () => {
               </motion.p>
 
               <Card className="p-6 shadow-lg mb-8 hover:shadow-xl transition-shadow duration-300">
+                {comparisonProgress > 0 && (
+                  <div className="mb-4">
+                    <Progress value={comparisonProgress} className="h-2" />
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Comparison setup progress: {comparisonProgress}%
+                    </p>
+                  </div>
+                )}
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <CareTypeSelector 
-                    selectedCareType={selectedCareType}
-                    onCareTypeChange={setSelectedCareType}
-                  />
+                  <div className="space-y-4">
+                    <CareTypeSelector 
+                      selectedCareType={selectedCareType}
+                      onCareTypeChange={(type) => {
+                        setSelectedCareType(type);
+                        setComparisonProgress(prev => type ? Math.max(prev, 80) : prev);
+                      }}
+                    />
+                    
+                    <div className="flex items-center justify-between px-2">
+                      <div className="flex items-center gap-2">
+                        <ChartBar className="h-5 w-5 text-primary" />
+                        <span className="text-sm">Advanced Analytics</span>
+                      </div>
+                      <Button
+                        variant={analyticsEnabled ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setAnalyticsEnabled(!analyticsEnabled)}
+                        className="relative"
+                      >
+                        {analyticsEnabled ? "Enabled" : "Disabled"}
+                      </Button>
+                    </div>
+
+                    <div className="flex items-center justify-between px-2">
+                      <div className="flex items-center gap-2">
+                        <Brain className="h-5 w-5 text-primary" />
+                        <span className="text-sm">AI Insights</span>
+                      </div>
+                      <Button
+                        variant={aiInsightsEnabled ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setAiInsightsEnabled(!aiInsightsEnabled)}
+                        className="relative"
+                      >
+                        {aiInsightsEnabled ? "Enabled" : "Disabled"}
+                      </Button>
+                    </div>
+                  </div>
 
                   <LocationSearch 
                     searchOpen={searchOpen}
@@ -199,51 +252,15 @@ const Index = () => {
                   />
                 </div>
 
-                <div className="mt-4 flex flex-col gap-4">
-                  <div className="flex items-center justify-between px-2">
-                    <div className="flex items-center gap-2">
-                      <ChartBar className="h-5 w-5 text-primary" />
-                      <span className="text-sm">Advanced Analytics</span>
-                    </div>
-                    <div className="flex items-center">
-                      <Button
-                        variant={analyticsEnabled ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => setAnalyticsEnabled(!analyticsEnabled)}
-                        className="relative"
-                      >
-                        {analyticsEnabled ? "Enabled" : "Disabled"}
-                      </Button>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between px-2">
-                    <div className="flex items-center gap-2">
-                      <Brain className="h-5 w-5 text-primary" />
-                      <span className="text-sm">AI Insights</span>
-                    </div>
-                    <div className="flex items-center">
-                      <Button
-                        variant={aiInsightsEnabled ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => setAiInsightsEnabled(!aiInsightsEnabled)}
-                        className="relative"
-                      >
-                        {aiInsightsEnabled ? "Enabled" : "Disabled"}
-                      </Button>
-                    </div>
-                  </div>
-
-                  <Button 
-                    size="lg" 
-                    className="w-full group"
-                    onClick={handleCompareOptions}
-                    disabled={!selectedCity || !selectedCareType}
-                  >
-                    Compare Options
-                    <Search className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
-                  </Button>
-                </div>
+                <Button 
+                  size="lg" 
+                  className="w-full mt-4 group"
+                  onClick={handleCompareOptions}
+                  disabled={!selectedCity || !selectedCareType}
+                >
+                  Compare Options
+                  <Search className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                </Button>
               </Card>
 
               {selectedCountry && (
@@ -269,7 +286,7 @@ const Index = () => {
                 </Card>
               )}
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
                 <motion.div
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
@@ -308,12 +325,28 @@ const Index = () => {
                 >
                   <Card 
                     className="p-6 cursor-pointer hover:shadow-lg transition-all duration-300 bg-gradient-to-br from-background to-primary/5"
-                    onClick={() => navigate('/compare')}
+                    onClick={() => navigate('/products')}
                   >
                     <div className="flex flex-col items-center text-center space-y-4">
                       <ShoppingCart className="h-10 w-10 text-primary" />
                       <h3 className="text-xl font-semibold">Care Products</h3>
                       <p className="text-muted-foreground">Browse and compare essential care products</p>
+                    </div>
+                  </Card>
+                </motion.div>
+
+                <motion.div
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  <Card 
+                    className="p-6 cursor-pointer hover:shadow-lg transition-all duration-300 bg-gradient-to-br from-background to-primary/5"
+                    onClick={() => navigate('/insights')}
+                  >
+                    <div className="flex flex-col items-center text-center space-y-4">
+                      <Sparkles className="h-10 w-10 text-primary" />
+                      <h3 className="text-xl font-semibold">Smart Insights</h3>
+                      <p className="text-muted-foreground">Get personalized care recommendations</p>
                     </div>
                   </Card>
                 </motion.div>
@@ -339,17 +372,17 @@ const Index = () => {
                   </p>
                 </Card>
                 <Card className="p-6">
-                  <ChartBar className="h-8 w-8 mb-4 text-primary" />
-                  <h3 className="text-xl font-semibold mb-2">Quality Metrics</h3>
+                  <Scale className="h-8 w-8 mb-4 text-primary" />
+                  <h3 className="text-xl font-semibold mb-2">Cost Analysis</h3>
                   <p className="text-sm text-muted-foreground">
-                    Compare detailed quality and performance metrics
+                    Comprehensive cost-benefit analysis for better decisions
                   </p>
                 </Card>
                 <Card className="p-6">
-                  <Shield className="h-8 w-8 mb-4 text-primary" />
-                  <h3 className="text-xl font-semibold mb-2">Verified Data</h3>
+                  <History className="h-8 w-8 mb-4 text-primary" />
+                  <h3 className="text-xl font-semibold mb-2">Historical Data</h3>
                   <p className="text-sm text-muted-foreground">
-                    Trust our verified and up-to-date information
+                    Track trends and make data-driven choices
                   </p>
                 </Card>
               </div>
@@ -360,18 +393,18 @@ const Index = () => {
         <section className="py-16 bg-primary/5">
           <div className="container mx-auto px-4">
             <div className="max-w-4xl mx-auto text-center">
-              <Users className="h-12 w-12 mx-auto mb-6 text-primary" />
-              <h2 className="text-3xl font-bold mb-4">Care Team Collaboration Platform</h2>
+              <TrendingUp className="h-12 w-12 mx-auto mb-6 text-primary" />
+              <h2 className="text-3xl font-bold mb-4">Market Analysis & Insights</h2>
               <p className="text-lg text-muted-foreground mb-8">
-                Looking to coordinate care with your team? Try our Care Team Platform to streamline communication and care management.
+                Stay informed with real-time market trends and competitive analysis
               </p>
               <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                 <Button 
                   size="lg" 
-                  onClick={() => navigate('/groups')}
+                  onClick={() => navigate('/market-insights')}
                   className="gap-2 group"
                 >
-                  Explore Care Team Platform
+                  View Market Insights
                   <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
                 </Button>
               </motion.div>
