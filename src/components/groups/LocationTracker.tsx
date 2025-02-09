@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -152,8 +153,8 @@ export const LocationTracker: React.FC<LocationTrackerProps> = ({ groupId }) => 
           boundary_type: zone.boundaryType,
           polygon_coordinates: zone.polygonCoordinates,
           active: true,
-          notification_settings: zone.notifications as Json,
-          danger_zones: zone.dangerZones as unknown as Json[]
+          notification_settings: zone.notifications as unknown as Json,
+          danger_zones: (zone.dangerZones || []) as unknown as Json[]
         });
 
       if (error) throw error;
