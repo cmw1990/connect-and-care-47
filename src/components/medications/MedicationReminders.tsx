@@ -60,7 +60,26 @@ export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
       if (error && error.code !== 'PGRST116') throw error;
       
       if (data) {
-        return data as DatabasePortalSettings;
+        // Cast the raw data to unknown first
+        const rawData = data as unknown;
+        
+        // Now safely transform to our expected type
+        const validated: DatabasePortalSettings = {
+          id: (rawData as any).id,
+          user_id: (rawData as any).user_id,
+          reminder_preferences: {
+            preferred_channels: Array.isArray((rawData as any).reminder_preferences?.preferred_channels) 
+              ? (rawData as any).reminder_preferences.preferred_channels 
+              : []
+          },
+          accessibility_settings: {
+            voice_reminders: Boolean((rawData as any).accessibility_settings?.voice_reminders)
+          },
+          created_at: (rawData as any).created_at,
+          updated_at: (rawData as any).updated_at
+        };
+        
+        return validated;
       }
       
       return null;
