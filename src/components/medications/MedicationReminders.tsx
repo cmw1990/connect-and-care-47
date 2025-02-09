@@ -57,9 +57,9 @@ const defaultSettings: PortalSettings = {
 export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
   const { toast } = useToast();
   
-  // Simplified query key to avoid deep nesting
-  const { data: dbSettings } = useQuery<DatabasePortalSettings | null>({
-    queryKey: ['portal-settings', groupId],
+  // Specify explicit types for the query
+  const { data: dbSettings, isLoading } = useQuery({
+    queryKey: ['portal-settings', groupId] as const,
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return null;
@@ -71,7 +71,7 @@ export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
         .single();
 
       if (error && error.code !== 'PGRST116') throw error;
-      return data as DatabasePortalSettings | null;
+      return data;
     }
   });
 
@@ -82,7 +82,7 @@ export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
   } : defaultSettings;
 
   const { data: overdueCount } = useQuery({
-    queryKey: ['overduemedications', groupId],
+    queryKey: ['overduemedications', groupId] as const,
     queryFn: async () => {
       const { count, error } = await supabase
         .from('medication_logs')
@@ -139,7 +139,7 @@ export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
   };
 
   const { data: schedules } = useQuery({
-    queryKey: ['medicationSchedules', groupId],
+    queryKey: ['medicationSchedules', groupId] as const,
     queryFn: async () => {
       const { data, error } = await supabase
         .from('medication_schedules')
