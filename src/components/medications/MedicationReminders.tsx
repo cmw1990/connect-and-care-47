@@ -45,10 +45,10 @@ interface PortalSettings {
 }
 
 export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
-  // Query portal settings with explicit type annotations
-  const { data: portalSettings, isLoading: settingsLoading, error: settingsError } = useQuery<PortalSettings>({
+  // Query portal settings with fixed types
+  const portalSettingsQuery = useQuery({
     queryKey: ['portal-settings', groupId],
-    queryFn: async (): Promise<PortalSettings> => {
+    queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return defaultSettings;
 
@@ -79,7 +79,7 @@ export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
   });
 
   // Overdue medications count 
-  const { data: overdueCount = 0, isLoading: overdueLoading } = useQuery({
+  const overdueQuery = useQuery({
     queryKey: ['overduemedications', groupId],
     queryFn: async () => {
       const { count, error } = await supabase
@@ -95,7 +95,7 @@ export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
   });
 
   // Medication schedules 
-  const { data: schedules = [], isLoading: schedulesLoading } = useQuery({
+  const schedulesQuery = useQuery({
     queryKey: ['medicationSchedules', groupId],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -108,7 +108,7 @@ export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
     }
   });
 
-  if (settingsError) {
+  if (portalSettingsQuery.error) {
     return (
       <div className="p-4 bg-destructive/10 rounded-lg text-destructive">
         Error loading settings. Please try again later.
@@ -118,21 +118,21 @@ export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
 
   return (
     <div className="space-y-4">
-      {settingsLoading || overdueLoading || schedulesLoading ? (
+      {portalSettingsQuery.isLoading || overdueQuery.isLoading || schedulesQuery.isLoading ? (
         <div className="flex items-center justify-center p-8">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
       ) : (
         <>
-          <OverdueAlert overdueCount={overdueCount} />
+          <OverdueAlert overdueCount={overdueQuery.data ?? 0} />
           
           <div className="grid gap-4 md:grid-cols-2">
             <ReminderSettings 
-              settings={portalSettings || defaultSettings} 
+              settings={portalSettingsQuery.data || defaultSettings} 
               groupId={groupId} 
             />
             <UpcomingReminders 
-              schedules={schedules} 
+              schedules={schedulesQuery.data ?? []} 
             />
           </div>
         </>
