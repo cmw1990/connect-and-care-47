@@ -2211,6 +2211,7 @@ export type Database = {
           group_id: string | null
           id: string
           name: string
+          notification_settings: Json | null
           notification_type: string | null
           radius: number
           updated_at: string | null
@@ -2224,6 +2225,7 @@ export type Database = {
           group_id?: string | null
           id?: string
           name: string
+          notification_settings?: Json | null
           notification_type?: string | null
           radius: number
           updated_at?: string | null
@@ -2237,6 +2239,7 @@ export type Database = {
           group_id?: string | null
           id?: string
           name?: string
+          notification_settings?: Json | null
           notification_type?: string | null
           radius?: number
           updated_at?: string | null
