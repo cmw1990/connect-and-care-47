@@ -1,9 +1,17 @@
-
 import React, { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { MapPin, Settings, AlertTriangle, Shield } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { 
+  MapPin, 
+  Settings, 
+  AlertTriangle, 
+  Shield, 
+  Battery, 
+  BatteryCharging,
+  Activity
+} from "lucide-react";
 import { LocationMap } from "./LocationMap";
 import { SafetyZoneSelector } from "./SafetyZoneSelector";
 import { LocationService } from "../location/LocationService";
@@ -30,13 +38,50 @@ interface PatientLocation {
   location_enabled: boolean;
 }
 
+interface DangerZone {
+  name: string;
+  radius: number;
+  center: { lat: number; lng: number };
+  notifications: {
+    exitAlert: boolean;
+    enterAlert: boolean;
+    smsAlert: boolean;
+  };
+  boundaryType: 'circle' | 'polygon';
+  polygonCoordinates?: number[][];
+  dangerZones?: DangerZone[];
+}
+
 export const LocationTracker: React.FC<LocationTrackerProps> = ({ groupId }) => {
   const [isTracking, setIsTracking] = useState(false);
   const [currentLocation, setCurrentLocation] = useState<LocationData | null>(null);
   const [locationHistory, setLocationHistory] = useState<LocationData[]>([]);
   const [showHistory, setShowHistory] = useState(false);
   const [showSafetyZone, setShowSafetyZone] = useState(false);
+  const [batteryWarning, setBatteryWarning] = useState<string | null>(null);
+  const [batteryLevel, setBatteryLevel] = useState<number | null>(null);
+  const [isCharging, setIsCharging] = useState(false);
   const { toast } = useToast();
+
+  useEffect(() => {
+    const updateBatteryInfo = async () => {
+      if ('getBattery' in navigator) {
+        const battery: any = await (navigator as any).getBattery();
+        setBatteryLevel(battery.level * 100);
+        setIsCharging(battery.charging);
+        
+        battery.addEventListener('levelchange', () => {
+          setBatteryLevel(battery.level * 100);
+        });
+        
+        battery.addEventListener('chargingchange', () => {
+          setIsCharging(battery.charging);
+        });
+      }
+    };
+    
+    updateBatteryInfo();
+  }, []);
 
   useEffect(() => {
     const channel = supabase
@@ -96,6 +141,9 @@ export const LocationTracker: React.FC<LocationTrackerProps> = ({ groupId }) => 
       enterAlert: boolean;
       smsAlert: boolean;
     };
+    boundaryType: 'circle' | 'polygon';
+    polygonCoordinates?: number[][];
+    dangerZones?: DangerZone[];
   }) => {
     try {
       const { error } = await supabase
@@ -106,8 +154,11 @@ export const LocationTracker: React.FC<LocationTrackerProps> = ({ groupId }) => 
           center_lat: zone.center.lat,
           center_lng: zone.center.lng,
           radius: zone.radius,
+          boundary_type: zone.boundaryType,
+          polygon_coordinates: zone.polygonCoordinates,
           active: true,
-          notification_settings: zone.notifications
+          notification_settings: zone.notifications,
+          danger_zones: zone.dangerZones
         });
 
       if (error) throw error;
@@ -130,27 +181,37 @@ export const LocationTracker: React.FC<LocationTrackerProps> = ({ groupId }) => 
   const toggleLocationTracking = async () => {
     try {
       if (!isTracking) {
+        if (batteryLevel !== null && batteryLevel < 20 && !isCharging) {
+          toast({
+            title: "Battery Warning",
+            description: "Low battery may affect location tracking accuracy",
+            variant: "warning",
+          });
+        }
+
         const success = await LocationService.startLocationTracking(groupId);
         if (success) {
           setIsTracking(true);
           toast({
             title: "Location Tracking Enabled",
-            description: "Real-time location updates are now active.",
+            description: "Real-time location updates are now active",
           });
         }
       } else {
-        await LocationService.stopLocationTracking();
-        setIsTracking(false);
-        toast({
-          title: "Location Tracking Disabled",
-          description: "Location tracking has been stopped.",
-        });
+        const success = await LocationService.stopLocationTracking();
+        if (success) {
+          setIsTracking(false);
+          toast({
+            title: "Location Tracking Disabled",
+            description: "Location tracking has been stopped",
+          });
+        }
       }
     } catch (error) {
       console.error('Error toggling location tracking:', error);
       toast({
         title: "Error",
-        description: "Failed to toggle location tracking.",
+        description: "Failed to toggle location tracking",
         variant: "destructive",
       });
     }
@@ -174,8 +235,24 @@ export const LocationTracker: React.FC<LocationTrackerProps> = ({ groupId }) => 
             <div className="flex items-center gap-2">
               <MapPin className="h-5 w-5" />
               Location Tracking
+              {isTracking && (
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                  <Activity className="w-3 h-3 mr-1 animate-pulse" />
+                  Active
+                </span>
+              )}
             </div>
             <div className="flex items-center gap-4">
+              {batteryLevel !== null && (
+                <div className="flex items-center text-sm">
+                  {isCharging ? (
+                    <BatteryCharging className="w-4 h-4 mr-1 text-green-500" />
+                  ) : (
+                    <Battery className={`w-4 h-4 mr-1 ${batteryLevel < 20 ? 'text-red-500' : 'text-green-500'}`} />
+                  )}
+                  {Math.round(batteryLevel)}%
+                </div>
+              )}
               <Button
                 variant="outline"
                 size="sm"
@@ -199,6 +276,15 @@ export const LocationTracker: React.FC<LocationTrackerProps> = ({ groupId }) => 
           </CardTitle>
         </CardHeader>
         <CardContent>
+          {batteryLevel !== null && batteryLevel < 20 && !isCharging && (
+            <Alert variant="warning" className="mb-4">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertDescription>
+                Low battery ({Math.round(batteryLevel)}%). Location tracking accuracy may be affected.
+              </AlertDescription>
+            </Alert>
+          )}
+
           {currentLocation && (
             <>
               <LocationMap
@@ -222,6 +308,13 @@ export const LocationTracker: React.FC<LocationTrackerProps> = ({ groupId }) => 
               />
               
               <div className="mt-4 space-y-2">
+                <div className="flex items-center justify-between text-sm">
+                  <span>Tracking Status:</span>
+                  <span className={`px-2 py-1 rounded-full ${isTracking ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
+                    {isTracking ? 'Active' : 'Inactive'}
+                  </span>
+                </div>
+
                 <div className="flex items-center justify-between text-sm">
                   <span>Current Activity:</span>
                   <span className={`px-2 py-1 rounded-full text-white ${getActivityColor(currentLocation.activity_type || 'unknown')}`}>
@@ -247,10 +340,12 @@ export const LocationTracker: React.FC<LocationTrackerProps> = ({ groupId }) => 
               </div>
 
               {currentLocation.battery_level && currentLocation.battery_level < 20 && (
-                <div className="mt-4 p-2 bg-red-100 rounded-lg flex items-center gap-2 text-sm text-red-700">
+                <Alert className="mt-4" variant="warning">
                   <AlertTriangle className="h-4 w-4" />
-                  Low battery warning
-                </div>
+                  <AlertDescription>
+                    Low battery warning. Please charge your device to maintain accurate location tracking.
+                  </AlertDescription>
+                </Alert>
               )}
             </>
           )}

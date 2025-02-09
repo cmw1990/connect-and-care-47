@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { calculateDistance } from "@/utils/locationUtils";
 import { useToast } from "@/hooks/use-toast";
@@ -35,14 +34,24 @@ const DEFAULT_NOTIFICATION_SETTINGS: NotificationSettings = {
 export class LocationService {
   private static watchId: number | null = null;
   private static intervalId: NodeJS.Timeout | null = null;
+  private static isTrackingActive = false;
   private static readonly HIGH_ACCURACY_OPTIONS: PositionOptions = {
     enableHighAccuracy: true,
     maximumAge: 0,
     timeout: 5000
   };
 
+  static isTracking() {
+    return this.isTrackingActive;
+  }
+
   static async startLocationTracking(groupId: string, updateInterval = 30000) {
     try {
+      if (this.isTrackingActive) {
+        console.log('Location tracking is already active');
+        return false;
+      }
+
       // Check if browser supports geolocation
       if (!navigator.geolocation) {
         throw new Error('Geolocation is not supported by your browser');
@@ -52,6 +61,12 @@ export class LocationService {
       const permission = await this.requestLocationPermission();
       if (permission !== 'granted') {
         throw new Error('Location permission denied');
+      }
+
+      // Check battery status if available
+      const batteryWarning = await this.checkBatteryStatus();
+      if (batteryWarning) {
+        console.warn('Battery warning:', batteryWarning);
       }
 
       // Start watching position with high accuracy
@@ -76,10 +91,28 @@ export class LocationService {
       // Subscribe to geofence alerts
       await this.subscribeToGeofenceAlerts(groupId);
 
+      this.isTrackingActive = true;
       return true;
     } catch (error) {
       console.error('Error starting location tracking:', error);
       return false;
+    }
+  }
+
+  private static async checkBatteryStatus(): Promise<string | null> {
+    try {
+      if ('getBattery' in navigator) {
+        const battery: any = await (navigator as any).getBattery();
+        if (!battery.charging && battery.level < 0.2) {
+          return `Battery level is low (${Math.round(battery.level * 100)}%). Location tracking may be affected.`;
+        }
+        if (!battery.charging && battery.level < 0.1) {
+          return `Critical battery level (${Math.round(battery.level * 100)}%). Please charge your device to maintain location tracking.`;
+        }
+      }
+      return null;
+    } catch (error) {
+      return null;
     }
   }
 
@@ -175,6 +208,12 @@ export class LocationService {
 
       if (error) throw error;
 
+      const violations: Array<{
+        fenceId: string;
+        isExit: boolean;
+        dangerZone?: string;
+      }> = [];
+
       for (const fence of geofences || []) {
         let isOutside = true;
 
@@ -217,18 +256,30 @@ export class LocationService {
         if ((isOutside && notifications.exitAlert) || 
             (!isOutside && notifications.enterAlert) || 
             inDangerZone) {
-          await this.handleGeofenceViolation(
-            groupId, 
-            fence.id, 
-            location, 
-            isOutside,
-            notifications.smsAlert,
-            inDangerZone ? dangerZoneType : undefined
-          );
+          violations.push({
+            fenceId: fence.id,
+            isExit: isOutside,
+            dangerZone: inDangerZone ? dangerZoneType : undefined
+          });
         }
       }
+
+      // Handle all violations
+      for (const violation of violations) {
+        await this.handleGeofenceViolation(
+          groupId,
+          violation.fenceId,
+          location,
+          violation.isExit,
+          notifications.smsAlert,
+          violation.dangerZone
+        );
+      }
+
+      return violations.length > 0;
     } catch (error) {
       console.error('Error checking geofences:', error);
+      return false;
     }
   }
 
@@ -335,5 +386,7 @@ export class LocationService {
       clearInterval(this.intervalId);
       this.intervalId = null;
     }
+    this.isTrackingActive = false;
+    return true;
   }
 }
