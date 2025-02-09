@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -39,7 +38,6 @@ export const LocationTracker: React.FC<LocationTrackerProps> = ({ groupId }) => 
   const { toast } = useToast();
 
   useEffect(() => {
-    // Subscribe to location updates
     const channel = supabase
       .channel(`patient_locations_${groupId}`)
       .on(
@@ -60,7 +58,6 @@ export const LocationTracker: React.FC<LocationTrackerProps> = ({ groupId }) => 
       )
       .subscribe();
 
-    // Fetch initial location data
     fetchLocationData();
 
     return () => {
@@ -89,7 +86,16 @@ export const LocationTracker: React.FC<LocationTrackerProps> = ({ groupId }) => 
     }
   };
 
-  const handleZoneCreated = async (zone: { name: string; radius: number; center: { lat: number; lng: number } }) => {
+  const handleZoneCreated = async (zone: { 
+    name: string; 
+    radius: number; 
+    center: { lat: number; lng: number };
+    notifications: {
+      exitAlert: boolean;
+      enterAlert: boolean;
+      smsAlert: boolean;
+    };
+  }) => {
     try {
       const { error } = await supabase
         .from('geofences')
@@ -99,7 +105,8 @@ export const LocationTracker: React.FC<LocationTrackerProps> = ({ groupId }) => 
           center_lat: zone.center.lat,
           center_lng: zone.center.lng,
           radius: zone.radius,
-          active: true
+          active: true,
+          notification_settings: zone.notifications
         });
 
       if (error) throw error;

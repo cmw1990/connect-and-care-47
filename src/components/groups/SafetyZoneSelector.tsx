@@ -1,10 +1,12 @@
+
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
-import { MapPin, Shield, ShieldCheck, Bell } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { MapPin, Shield, ShieldCheck, Bell, Phone } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface SafetyZoneSelectorProps {
@@ -13,6 +15,11 @@ interface SafetyZoneSelectorProps {
     name: string;
     radius: number;
     center: { lat: number; lng: number };
+    notifications: {
+      exitAlert: boolean;
+      enterAlert: boolean;
+      smsAlert: boolean;
+    };
   }) => void;
 }
 
@@ -22,6 +29,11 @@ export const SafetyZoneSelector: React.FC<SafetyZoneSelectorProps> = ({
 }) => {
   const [radius, setRadius] = useState<number>(100);
   const [zoneName, setZoneName] = useState<string>("");
+  const [notifications, setNotifications] = useState({
+    exitAlert: true,
+    enterAlert: false,
+    smsAlert: true
+  });
   const { toast } = useToast();
 
   const handleCreateZone = () => {
@@ -43,12 +55,13 @@ export const SafetyZoneSelector: React.FC<SafetyZoneSelectorProps> = ({
           center: {
             lat: position.coords.latitude,
             lng: position.coords.longitude
-          }
+          },
+          notifications
         });
         
         toast({
           title: "Safety Zone Created",
-          description: "The new safe zone has been set up successfully",
+          description: "The new safe zone has been set up successfully"
         });
       },
       (error) => {
@@ -102,6 +115,57 @@ export const SafetyZoneSelector: React.FC<SafetyZoneSelectorProps> = ({
           </div>
         </div>
 
+        <div className="space-y-4 border rounded-lg p-4">
+          <Label className="text-base font-medium">Alert Settings</Label>
+          
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label>Exit Alerts</Label>
+                <p className="text-sm text-muted-foreground">
+                  Notify when leaving zone
+                </p>
+              </div>
+              <Switch
+                checked={notifications.exitAlert}
+                onCheckedChange={(checked) => 
+                  setNotifications(prev => ({ ...prev, exitAlert: checked }))
+                }
+              />
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label>Enter Alerts</Label>
+                <p className="text-sm text-muted-foreground">
+                  Notify when entering zone
+                </p>
+              </div>
+              <Switch
+                checked={notifications.enterAlert}
+                onCheckedChange={(checked) => 
+                  setNotifications(prev => ({ ...prev, enterAlert: checked }))
+                }
+              />
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label>SMS Alerts</Label>
+                <p className="text-sm text-muted-foreground">
+                  Send SMS for critical alerts
+                </p>
+              </div>
+              <Switch
+                checked={notifications.smsAlert}
+                onCheckedChange={(checked) => 
+                  setNotifications(prev => ({ ...prev, smsAlert: checked }))
+                }
+              />
+            </div>
+          </div>
+        </div>
+
         <div className="bg-muted/50 p-4 rounded-lg space-y-2">
           <div className="flex items-center gap-2 text-sm">
             <Bell className="h-4 w-4 text-amber-500" />
@@ -110,6 +174,10 @@ export const SafetyZoneSelector: React.FC<SafetyZoneSelectorProps> = ({
           <div className="flex items-center gap-2 text-sm">
             <MapPin className="h-4 w-4 text-rose-500" />
             <span>Zone will be centered on current location</span>
+          </div>
+          <div className="flex items-center gap-2 text-sm">
+            <Phone className="h-4 w-4 text-emerald-500" />
+            <span>SMS alerts for urgent notifications</span>
           </div>
         </div>
 

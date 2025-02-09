@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { calculateDistance } from "@/utils/locationUtils";
 import { useToast } from "@/hooks/use-toast";
@@ -183,9 +184,18 @@ export class LocationService {
           fence.center_lng
         );
 
+        const isOutside = distance > fence.radius;
+        const notifications = fence.notification_settings || { exitAlert: true };
+
         // Check if user has crossed the geofence boundary
-        if (distance > fence.radius) {
-          await this.handleGeofenceViolation(groupId, fence.id, location);
+        if ((isOutside && notifications.exitAlert) || (!isOutside && notifications.enterAlert)) {
+          await this.handleGeofenceViolation(
+            groupId, 
+            fence.id, 
+            location, 
+            isOutside,
+            notifications.smsAlert
+          );
         }
       }
     } catch (error) {
@@ -193,32 +203,49 @@ export class LocationService {
     }
   }
 
-  private static async handleGeofenceViolation(groupId: string, fenceId: string, location: LocationUpdate) {
+  private static async handleGeofenceViolation(
+    groupId: string, 
+    fenceId: string, 
+    location: LocationUpdate,
+    isExit: boolean,
+    sendSms: boolean
+  ) {
     try {
       // Create geofence alert
-      await supabase
+      const { data: alert } = await supabase
         .from('geofence_alerts')
         .insert({
           group_id: groupId,
           geofence_id: fenceId,
-          location: JSON.stringify(location),
+          location: location,
+          alert_type: isExit ? 'exit' : 'enter',
           status: 'unresolved'
-        });
+        })
+        .select()
+        .single();
 
-      // Create emergency check-in
-      await supabase
-        .from('patient_check_ins')
-        .insert({
-          group_id: groupId,
-          check_in_type: 'emergency',
-          status: 'urgent',
-          response_data: JSON.stringify({
-            type: 'geofence_violation',
-            location: location,
-            geofence_id: fenceId,
-            triggered_at: new Date().toISOString()
-          })
-        });
+      // Create emergency check-in for exits only
+      if (isExit) {
+        await supabase
+          .from('patient_check_ins')
+          .insert({
+            group_id: groupId,
+            check_in_type: 'emergency',
+            status: 'urgent',
+            response_data: {
+              type: 'geofence_violation',
+              location: location,
+              geofence_id: fenceId,
+              triggered_at: new Date().toISOString()
+            }
+          });
+
+        // Send SMS if enabled
+        if (sendSms) {
+          // Here you would integrate with your SMS service
+          console.log('SMS alert would be sent here');
+        }
+      }
     } catch (error) {
       console.error('Error handling geofence violation:', error);
     }
