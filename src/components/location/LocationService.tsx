@@ -19,6 +19,12 @@ interface NotificationSettings {
   smsAlert: boolean;
 }
 
+interface DangerZone {
+  coordinates: number[][];
+  typeId: string;
+  type: string;
+}
+
 const DEFAULT_NOTIFICATION_SETTINGS: NotificationSettings = {
   exitAlert: true,
   enterAlert: false,
@@ -180,9 +186,9 @@ export class LocationService {
           );
           isOutside = distance > fence.radius;
         } else if (fence.boundary_type === 'polygon' && fence.polygon_coordinates) {
-          isOutside = !isPointInPolygon(
+          isOutside = !LocationService.isPointInPolygon(
             [location.longitude, location.latitude],
-            fence.polygon_coordinates
+            fence.polygon_coordinates as number[][]
           );
         }
 
@@ -191,8 +197,12 @@ export class LocationService {
         let dangerZoneType = '';
         
         if (fence.danger_zones) {
-          for (const zone of fence.danger_zones) {
-            if (isPointInPolygon([location.longitude, location.latitude], zone.coordinates)) {
+          const dangerZones = fence.danger_zones as DangerZone[];
+          for (const zone of dangerZones) {
+            if (LocationService.isPointInPolygon(
+              [location.longitude, location.latitude],
+              zone.coordinates
+            )) {
               inDangerZone = true;
               dangerZoneType = zone.typeId;
               break;
@@ -200,7 +210,7 @@ export class LocationService {
           }
         }
 
-        const notifications = (fence.notification_settings as unknown as NotificationSettings) || DEFAULT_NOTIFICATION_SETTINGS;
+        const notifications = (fence.notification_settings as NotificationSettings) || DEFAULT_NOTIFICATION_SETTINGS;
 
         // Check if user has crossed the geofence boundary or entered danger zone
         if ((isOutside && notifications.exitAlert) || 
