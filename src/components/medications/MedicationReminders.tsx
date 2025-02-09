@@ -1,9 +1,11 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client"; 
 import { Loader2 } from "lucide-react";
 import { OverdueAlert } from "./components/OverdueAlert";  
 import { ReminderSettings } from "./components/ReminderSettings";
 import { UpcomingReminders } from "./components/UpcomingReminders";
+import type { MedicationSchedule } from "@/types/medication";
 
 interface MedicationRemindersProps {
   groupId: string;
@@ -31,10 +33,17 @@ const defaultSettings = {
   accessibility_settings: {
     voice_reminders: false
   }
-};
+} as const;
 
 // Interface for processed settings
-type PortalSettings = typeof defaultSettings;
+type PortalSettings = {
+  reminder_preferences: {
+    preferred_channels: string[];
+  };
+  accessibility_settings: {
+    voice_reminders: boolean;
+  };
+};
 
 export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
   // Query portal settings
@@ -56,7 +65,6 @@ export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
 
       const rawData = data as RawDBSettings;
 
-      // Ensure type safety by explicitly constructing the return object
       return {
         reminder_preferences: {
           preferred_channels: rawData.reminder_preferences?.preferred_channels || defaultSettings.reminder_preferences.preferred_channels
@@ -64,7 +72,7 @@ export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
         accessibility_settings: {
           voice_reminders: rawData.accessibility_settings?.voice_reminders ?? defaultSettings.accessibility_settings.voice_reminders
         }
-      };
+      } satisfies PortalSettings;
     }
   });
 

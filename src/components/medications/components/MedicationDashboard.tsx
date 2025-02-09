@@ -12,6 +12,13 @@ import { UpcomingReminders } from "./UpcomingReminders";
 import { Loader2, Bell, Activity, ShieldCheck } from "lucide-react";
 import type { MedicationAdherenceTrend, MedicationSupervisionSummary, MedicationPortalSettings } from "@/types/medication";
 
+interface PortalSettings {
+  reminder_preferences?: {
+    voice_reminders?: boolean;
+    preferred_voice?: string;
+  } | null;
+}
+
 interface MedicationDashboardProps {
   groupId: string;
 }
@@ -59,10 +66,12 @@ export const MedicationDashboard = ({ groupId }: MedicationDashboardProps) => {
 
       if (error) throw error;
       
+      const rawData = data as PortalSettings;
+      
       // Transform data to match required interface
       const voiceSettings = {
-        voice_reminders: data?.reminder_preferences?.voice_reminders ?? false,
-        preferred_voice: data?.reminder_preferences?.preferred_voice
+        voice_reminders: rawData?.reminder_preferences?.voice_reminders ?? false,
+        preferred_voice: rawData?.reminder_preferences?.preferred_voice
       };
       
       return voiceSettings;
