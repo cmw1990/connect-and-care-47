@@ -45,10 +45,10 @@ interface PortalSettings {
 }
 
 export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
-  // Query portal settings
-  const { data: portalSettings, isLoading: settingsLoading, error: settingsError } = useQuery({
+  // Query portal settings with explicit type annotations
+  const { data: portalSettings, isLoading: settingsLoading, error: settingsError } = useQuery<PortalSettings>({
     queryKey: ['portal-settings', groupId],
-    queryFn: async () => {
+    queryFn: async (): Promise<PortalSettings> => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return defaultSettings;
 
