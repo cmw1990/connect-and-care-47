@@ -169,24 +169,50 @@ export class LocationService {
       if (error) throw error;
 
       for (const fence of geofences || []) {
-        const distance = calculateDistance(
-          location.latitude,
-          location.longitude,
-          fence.center_lat,
-          fence.center_lng
-        );
+        let isOutside = true;
 
-        const isOutside = distance > fence.radius;
+        if (fence.boundary_type === 'circle') {
+          const distance = calculateDistance(
+            location.latitude,
+            location.longitude,
+            fence.center_lat,
+            fence.center_lng
+          );
+          isOutside = distance > fence.radius;
+        } else if (fence.boundary_type === 'polygon' && fence.polygon_coordinates) {
+          isOutside = !isPointInPolygon(
+            [location.longitude, location.latitude],
+            fence.polygon_coordinates
+          );
+        }
+
+        // Check if point is in any danger zones
+        let inDangerZone = false;
+        let dangerZoneType = '';
+        
+        if (fence.danger_zones) {
+          for (const zone of fence.danger_zones) {
+            if (isPointInPolygon([location.longitude, location.latitude], zone.coordinates)) {
+              inDangerZone = true;
+              dangerZoneType = zone.typeId;
+              break;
+            }
+          }
+        }
+
         const notifications = (fence.notification_settings as unknown as NotificationSettings) || DEFAULT_NOTIFICATION_SETTINGS;
 
-        // Check if user has crossed the geofence boundary
-        if ((isOutside && notifications.exitAlert) || (!isOutside && notifications.enterAlert)) {
+        // Check if user has crossed the geofence boundary or entered danger zone
+        if ((isOutside && notifications.exitAlert) || 
+            (!isOutside && notifications.enterAlert) || 
+            inDangerZone) {
           await this.handleGeofenceViolation(
             groupId, 
             fence.id, 
             location, 
             isOutside,
-            notifications.smsAlert
+            notifications.smsAlert,
+            inDangerZone ? dangerZoneType : undefined
           );
         }
       }
@@ -195,12 +221,32 @@ export class LocationService {
     }
   }
 
+  private static isPointInPolygon(point: number[], polygon: number[][]): boolean {
+    const x = point[0];
+    const y = point[1];
+    let inside = false;
+
+    for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+      const xi = polygon[i][0];
+      const yi = polygon[i][1];
+      const xj = polygon[j][0];
+      const yj = polygon[j][1];
+
+      const intersect = ((yi > y) !== (yj > y))
+          && (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
+      if (intersect) inside = !inside;
+    }
+
+    return inside;
+  }
+
   private static async handleGeofenceViolation(
     groupId: string, 
     fenceId: string, 
     location: LocationUpdate,
     isExit: boolean,
-    sendSms: boolean
+    sendSms: boolean,
+    dangerZoneType?: string
   ) {
     try {
       // Create geofence alert
@@ -210,14 +256,15 @@ export class LocationService {
           group_id: groupId,
           geofence_id: fenceId,
           location: location as unknown as Json,
-          alert_type: isExit ? 'exit' : 'enter',
-          status: 'unresolved'
+          alert_type: dangerZoneType ? 'danger' : (isExit ? 'exit' : 'enter'),
+          status: 'unresolved',
+          danger_zone_type: dangerZoneType
         })
         .select()
         .single();
 
-      // Create emergency check-in for exits only
-      if (isExit) {
+      // Create emergency check-in for exits or danger zones
+      if (isExit || dangerZoneType) {
         await supabase
           .from('patient_check_ins')
           .insert({
@@ -225,9 +272,10 @@ export class LocationService {
             check_in_type: 'emergency',
             status: 'urgent',
             response_data: {
-              type: 'geofence_violation',
+              type: dangerZoneType ? 'danger_zone' : 'geofence_violation',
               location: location,
               geofence_id: fenceId,
+              danger_zone_type: dangerZoneType,
               triggered_at: new Date().toISOString()
             } as unknown as Json
           });

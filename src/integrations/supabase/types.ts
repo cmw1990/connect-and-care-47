@@ -1821,6 +1821,30 @@ export type Database = {
           },
         ]
       }
+      danger_zone_types: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          icon: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          icon?: string | null
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          icon?: string | null
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
       emergency_contacts: {
         Row: {
           address: string | null
@@ -2204,43 +2228,52 @@ export type Database = {
       geofences: {
         Row: {
           active: boolean | null
+          boundary_type: string
           center_lat: number
           center_lng: number
           created_at: string | null
+          danger_zones: Json[] | null
           description: string | null
           group_id: string | null
           id: string
           name: string
           notification_settings: Json | null
           notification_type: string | null
+          polygon_coordinates: Json | null
           radius: number
           updated_at: string | null
         }
         Insert: {
           active?: boolean | null
+          boundary_type?: string
           center_lat: number
           center_lng: number
           created_at?: string | null
+          danger_zones?: Json[] | null
           description?: string | null
           group_id?: string | null
           id?: string
           name: string
           notification_settings?: Json | null
           notification_type?: string | null
+          polygon_coordinates?: Json | null
           radius: number
           updated_at?: string | null
         }
         Update: {
           active?: boolean | null
+          boundary_type?: string
           center_lat?: number
           center_lng?: number
           created_at?: string | null
+          danger_zones?: Json[] | null
           description?: string | null
           group_id?: string | null
           id?: string
           name?: string
           notification_settings?: Json | null
           notification_type?: string | null
+          polygon_coordinates?: Json | null
           radius?: number
           updated_at?: string | null
         }
