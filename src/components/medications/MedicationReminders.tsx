@@ -25,14 +25,14 @@ interface PortalSettings {
 }
 
 // Database type with flattened structure
-interface DatabasePortalSettings {
+type DatabasePortalSettings = {
   id?: string;
   user_id?: string;
   reminder_preferences: ReminderPreferences;
   accessibility_settings: AccessibilitySettings;
   created_at?: string;
   updated_at?: string;
-}
+};
 
 const defaultSettings: PortalSettings = {
   reminder_preferences: {
@@ -59,31 +59,25 @@ export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
 
       if (error && error.code !== 'PGRST116') throw error;
       
-      if (data) {
-        // Type assertion to handle JSON data from database
-        const rawPreferences = data.reminder_preferences as { preferred_channels?: unknown };
-        const rawAccessibility = data.accessibility_settings as { voice_reminders?: unknown };
-        
-        // Validate and transform to our expected types
-        const validated: DatabasePortalSettings = {
-          id: data.id,
-          user_id: data.user_id,
-          reminder_preferences: {
-            preferred_channels: Array.isArray(rawPreferences?.preferred_channels) 
-              ? rawPreferences.preferred_channels 
-              : []
-          },
-          accessibility_settings: {
-            voice_reminders: Boolean(rawAccessibility?.voice_reminders)
-          },
-          created_at: data.created_at,
-          updated_at: data.updated_at
-        };
-        
-        return validated;
-      }
+      if (!data) return null;
+
+      // Transform database data to expected type
+      const validated: DatabasePortalSettings = {
+        id: data.id,
+        user_id: data.user_id,
+        reminder_preferences: {
+          preferred_channels: Array.isArray(data.reminder_preferences?.preferred_channels) 
+            ? data.reminder_preferences.preferred_channels 
+            : []
+        },
+        accessibility_settings: {
+          voice_reminders: Boolean(data.accessibility_settings?.voice_reminders)
+        },
+        created_at: data.created_at,
+        updated_at: data.updated_at
+      };
       
-      return null;
+      return validated;
     }
   });
 
