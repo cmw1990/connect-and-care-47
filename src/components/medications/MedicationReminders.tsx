@@ -11,7 +11,7 @@ interface MedicationRemindersProps {
 }
 
 // Settings interfaces for UI components
-interface ReminderPreferences {
+interface PreferredChannels {
   preferred_channels: string[];
 }
 
@@ -20,12 +20,12 @@ interface AccessibilitySettings {
 }
 
 interface PortalSettings {
-  reminder_preferences: ReminderPreferences;
+  reminder_preferences: PreferredChannels;
   accessibility_settings: AccessibilitySettings;
 }
 
 // Raw database response type with strict typing
-interface RawDatabaseResponse {
+interface RawSettings {
   id: string;
   user_id: string;
   reminder_preferences: {
@@ -67,17 +67,15 @@ export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
       if (!data) return null;
 
       // Transform raw database response to strongly typed object
-      const rawData = data as RawDatabaseResponse;
-      const transformedSettings: PortalSettings = {
+      const rawData = data as RawSettings;
+      return {
         reminder_preferences: {
           preferred_channels: rawData.reminder_preferences?.preferred_channels || []
         },
         accessibility_settings: {
           voice_reminders: rawData.accessibility_settings?.voice_reminders || false
         }
-      };
-      
-      return transformedSettings;
+      } as PortalSettings;
     }
   });
 
