@@ -33,16 +33,11 @@ export const ReminderSettings = ({ settings, groupId }: ReminderSettingsProps) =
         return;
       }
 
-      const sanitizedUpdates = {
-        reminder_preferences: updates.reminder_preferences,
-        accessibility_settings: updates.accessibility_settings
-      };
-
       const { error } = await supabase
         .from('medication_portal_settings')
         .upsert({
           user_id: user.id,
-          ...sanitizedUpdates
+          ...updates
         });
 
       if (error) throw error;
@@ -86,7 +81,8 @@ export const ReminderSettings = ({ settings, groupId }: ReminderSettingsProps) =
                     preferred_channels: checked
                       ? [...channels, 'push']
                       : channels.filter(c => c !== 'push')
-                  }
+                  },
+                  accessibility_settings: settings.accessibility_settings
                 });
               }}
               className="group-hover:scale-105 transition-transform"
@@ -109,7 +105,8 @@ export const ReminderSettings = ({ settings, groupId }: ReminderSettingsProps) =
                     preferred_channels: checked
                       ? [...channels, 'sms']
                       : channels.filter(c => c !== 'sms')
-                  }
+                  },
+                  accessibility_settings: settings.accessibility_settings
                 });
               }}
               className="group-hover:scale-105 transition-transform"
@@ -127,6 +124,7 @@ export const ReminderSettings = ({ settings, groupId }: ReminderSettingsProps) =
               checked={settings.accessibility_settings.voice_reminders}
               onCheckedChange={(checked) => {
                 updateSettings({
+                  reminder_preferences: settings.reminder_preferences,
                   accessibility_settings: {
                     voice_reminders: checked
                   }

@@ -1,8 +1,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent } from "@/components/ui/card";
-import { Bell, Clock, Settings, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { OverdueAlert } from "./components/OverdueAlert";
 import { ReminderSettings } from "./components/ReminderSettings";
 import { UpcomingReminders } from "./components/UpcomingReminders";
@@ -11,11 +10,7 @@ interface MedicationRemindersProps {
   groupId: string;
 }
 
-// Simple recursive type with explicit depth limit
-type JsonValue = string | number | boolean | null | JsonObject | JsonArray;
-interface JsonObject { [key: string]: JsonValue }
-interface JsonArray extends Array<JsonValue> {}
-
+// Interface definitions for settings
 interface ReminderPreferences {
   preferred_channels: string[];
 }
@@ -24,18 +19,18 @@ interface AccessibilitySettings {
   voice_reminders: boolean;
 }
 
-interface DatabasePortalSettings {
-  id?: string;
-  user_id?: string;
-  reminder_preferences: JsonValue;
-  accessibility_settings: JsonValue;
-  created_at?: string;
-  updated_at?: string;
-}
-
 interface PortalSettings {
   reminder_preferences: ReminderPreferences;
   accessibility_settings: AccessibilitySettings;
+}
+
+interface DatabasePortalSettings {
+  id?: string;
+  user_id?: string;
+  reminder_preferences: ReminderPreferences;
+  accessibility_settings: AccessibilitySettings;
+  created_at?: string;
+  updated_at?: string;
 }
 
 const defaultSettings: PortalSettings = {
@@ -65,10 +60,7 @@ export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
     }
   });
 
-  const settings: PortalSettings = dbSettings ? {
-    reminder_preferences: (dbSettings.reminder_preferences as JsonValue) as ReminderPreferences,
-    accessibility_settings: (dbSettings.accessibility_settings as JsonValue) as AccessibilitySettings
-  } : defaultSettings;
+  const settings: PortalSettings = dbSettings ?? defaultSettings;
 
   const { data: overdueCount = 0, isLoading: overdueLoading } = useQuery({
     queryKey: ['overduemedications', groupId],
