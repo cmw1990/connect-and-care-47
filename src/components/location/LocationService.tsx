@@ -2,6 +2,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { calculateDistance } from "@/utils/locationUtils";
 import { useToast } from "@/hooks/use-toast";
+import { Json } from "@/integrations/supabase/types";
 
 interface LocationUpdate {
   latitude: number;
@@ -87,23 +88,14 @@ export class LocationService {
         activity_type: await this.detectActivityType(position)
       };
 
-      // Convert LocationUpdate to a valid Json type
-      const locationJson = {
-        ...locationUpdate,
-        activity_type: locationUpdate.activity_type || null,
-        battery_level: locationUpdate.battery_level || null,
-        accuracy: locationUpdate.accuracy || null,
-        speed: locationUpdate.speed || null
-      };
-
-      // Update location in database using raw SQL
+      // Update location in database
       const { error } = await supabase
         .from('patient_locations')
         .upsert({
           group_id: groupId,
           location_enabled: true,
-          current_location: locationJson,
-          location_history: `array_append(COALESCE(location_history, '[]'::jsonb[]), '${JSON.stringify(locationJson)}'::jsonb)`
+          current_location: locationUpdate as unknown as Json,
+          location_history: `array_append(COALESCE(location_history, '[]'::jsonb[]), '${JSON.stringify(locationUpdate)}'::jsonb)`
         }, {
           onConflict: 'group_id'
         });
@@ -185,7 +177,11 @@ export class LocationService {
         );
 
         const isOutside = distance > fence.radius;
-        const notifications = fence.notification_settings || { exitAlert: true };
+        const notifications = fence.notification_settings as {
+          exitAlert: boolean;
+          enterAlert: boolean;
+          smsAlert: boolean;
+        } || { exitAlert: true };
 
         // Check if user has crossed the geofence boundary
         if ((isOutside && notifications.exitAlert) || (!isOutside && notifications.enterAlert)) {
@@ -217,7 +213,7 @@ export class LocationService {
         .insert({
           group_id: groupId,
           geofence_id: fenceId,
-          location: location,
+          location: location as unknown as Json,
           alert_type: isExit ? 'exit' : 'enter',
           status: 'unresolved'
         })
@@ -237,7 +233,7 @@ export class LocationService {
               location: location,
               geofence_id: fenceId,
               triggered_at: new Date().toISOString()
-            }
+            } as unknown as Json
           });
 
         // Send SMS if enabled

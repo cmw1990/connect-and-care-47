@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -49,7 +50,7 @@ export const LocationTracker: React.FC<LocationTrackerProps> = ({ groupId }) => 
           filter: `group_id=eq.${groupId}`
         },
         (payload) => {
-          const data = payload.new as PatientLocation;
+          const data = payload.new as unknown as PatientLocation;
           if (data?.current_location) {
             setCurrentLocation(data.current_location);
             setLocationHistory(data.location_history || []);
@@ -76,7 +77,7 @@ export const LocationTracker: React.FC<LocationTrackerProps> = ({ groupId }) => 
       if (error) throw error;
 
       if (data) {
-        const locationData = data as PatientLocation;
+        const locationData = data as unknown as PatientLocation;
         setCurrentLocation(locationData.current_location);
         setLocationHistory(locationData.location_history || []);
         setIsTracking(locationData.location_enabled);
