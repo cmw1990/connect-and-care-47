@@ -27,8 +27,8 @@ interface PortalSettings {
 interface DatabasePortalSettings {
   id?: string;
   user_id?: string;
-  reminder_preferences: ReminderPreferences;
-  accessibility_settings: AccessibilitySettings;
+  reminder_preferences: unknown;
+  accessibility_settings: unknown;
   created_at?: string;
   updated_at?: string;
 }
@@ -58,12 +58,21 @@ export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
       if (error && error.code !== 'PGRST116') throw error;
       
       if (data) {
-        // Parse the JSONB fields from Supabase into the correct TypeScript types
+        // Type assertion after validating structure
+        const parsedData = data as DatabasePortalSettings;
+        const reminderPrefs = parsedData.reminder_preferences as { preferred_channels: string[] };
+        const accessibilitySettings = parsedData.accessibility_settings as { voice_reminders: boolean };
+        
+        // Return properly typed data
         return {
-          ...data,
-          reminder_preferences: data.reminder_preferences as ReminderPreferences,
-          accessibility_settings: data.accessibility_settings as AccessibilitySettings,
-        } as DatabasePortalSettings;
+          ...parsedData,
+          reminder_preferences: {
+            preferred_channels: reminderPrefs.preferred_channels || []
+          },
+          accessibility_settings: {
+            voice_reminders: accessibilitySettings.voice_reminders || false
+          }
+        };
       }
       
       return null;
