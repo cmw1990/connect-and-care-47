@@ -63,7 +63,7 @@ const defaultSettings: PortalSettings = {
 export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
   const { toast } = useToast();
   
-  const { data: dbSettings, isLoading: settingsLoading, error: settingsError } = useQuery<DatabasePortalSettings | null>({
+  const { data: dbSettings, isLoading: settingsLoading, error: settingsError } = useQuery({
     queryKey: ['portal-settings', groupId],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -85,7 +85,7 @@ export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
     accessibility_settings: (dbSettings.accessibility_settings as unknown as AccessibilitySettings) || defaultSettings.accessibility_settings
   } : defaultSettings;
 
-  const { data: overdueCount, isLoading: overdueLoading } = useQuery<number>({
+  const { data: overdueCount = 0, isLoading: overdueLoading } = useQuery({
     queryKey: ['overduemedications', groupId],
     queryFn: async () => {
       const { count, error } = await supabase
@@ -100,7 +100,7 @@ export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
     refetchInterval: 60000
   });
 
-  const { data: schedules, isLoading: schedulesLoading } = useQuery<MedicationSchedule[]>({
+  const { data: schedules = [], isLoading: schedulesLoading } = useQuery({
     queryKey: ['medicationSchedules', groupId],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -126,8 +126,8 @@ export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
       }
 
       const sanitizedUpdates: Partial<DatabasePortalSettings> = {
-        reminder_preferences: updates.reminder_preferences as unknown as Json,
-        accessibility_settings: updates.accessibility_settings as unknown as Json
+        reminder_preferences: updates.reminder_preferences as Json,
+        accessibility_settings: updates.accessibility_settings as Json
       };
 
       if (dbSettings) {
@@ -178,7 +178,7 @@ export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
         </div>
       ) : (
         <>
-          {overdueCount && overdueCount > 0 && (
+          {overdueCount > 0 && (
             <div className="bg-destructive/15 text-destructive p-4 rounded-lg mb-4 flex items-center justify-between animate-pulse">
               <div className="flex items-center gap-2">
                 <Bell className="h-5 w-5" />
