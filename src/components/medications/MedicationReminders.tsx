@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -19,8 +18,11 @@ interface MedicationRemindersProps {
   groupId: string;
 }
 
-type JsonValue = string | number | boolean | null | { [key: string]: JsonValue };
-type Json = JsonValue | JsonValue[];
+type JsonPrimitive = string | number | boolean | null;
+type JsonObject = { [key: string]: JsonValue };
+type JsonArray = JsonValue[];
+type JsonValue = JsonPrimitive | JsonObject | JsonArray;
+type Json = JsonValue;
 
 interface ReminderPreferences {
   preferred_channels: string[];
@@ -127,8 +129,8 @@ export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
       }
 
       const sanitizedUpdates = {
-        reminder_preferences: updates.reminder_preferences as unknown as Json,
-        accessibility_settings: updates.accessibility_settings as unknown as Json
+        reminder_preferences: updates.reminder_preferences as Json,
+        accessibility_settings: updates.accessibility_settings as Json
       };
 
       if (dbSettings) {
