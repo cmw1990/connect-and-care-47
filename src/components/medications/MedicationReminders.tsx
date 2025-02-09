@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -20,13 +21,17 @@ interface MedicationRemindersProps {
   groupId: string;
 }
 
+interface ReminderPreferences {
+  preferred_channels?: string[];
+}
+
+interface AccessibilitySettings {
+  voice_reminders?: boolean;
+}
+
 interface PortalSettings {
-  reminder_preferences?: {
-    preferred_channels?: string[];
-  };
-  accessibility_settings?: {
-    voice_reminders?: boolean;
-  };
+  reminder_preferences?: ReminderPreferences;
+  accessibility_settings?: AccessibilitySettings;
 }
 
 export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
@@ -122,9 +127,9 @@ export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
           <Button
             variant="destructive"
             size="sm"
-            onClick={() => setActiveTab('schedule')}
+            onClick={() => {}}
           >
-            View Schedule
+            View Details
           </Button>
         </div>
       )}

@@ -127,7 +127,7 @@ export const MedicationDashboard = ({ groupId }: MedicationDashboardProps) => {
             </TabsList>
 
             <TabsContent value="schedule">
-              <MedicationScheduleManager groupId={groupId} userRole={userRole} />
+              <MedicationScheduleManager groupId={groupId} />
             </TabsContent>
 
             {userRole && ['admin', 'caregiver'].includes(userRole) && (
