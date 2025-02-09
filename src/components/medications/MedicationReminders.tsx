@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -18,7 +19,8 @@ interface MedicationRemindersProps {
   groupId: string;
 }
 
-type Json = string | number | boolean | null | { [key: string]: Json } | Json[];
+type JsonValue = string | number | boolean | null | { [key: string]: JsonValue };
+type Json = JsonValue | JsonValue[];
 
 interface ReminderPreferences {
   preferred_channels: string[];
@@ -80,8 +82,8 @@ export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
   });
 
   const settings: PortalSettings = dbSettings ? {
-    reminder_preferences: (dbSettings.reminder_preferences as any as ReminderPreferences) || defaultSettings.reminder_preferences,
-    accessibility_settings: (dbSettings.accessibility_settings as any as AccessibilitySettings) || defaultSettings.accessibility_settings
+    reminder_preferences: (dbSettings.reminder_preferences as unknown as ReminderPreferences) || defaultSettings.reminder_preferences,
+    accessibility_settings: (dbSettings.accessibility_settings as unknown as AccessibilitySettings) || defaultSettings.accessibility_settings
   } : defaultSettings;
 
   const { data: overdueCount = 0, isLoading: overdueLoading } = useQuery({
