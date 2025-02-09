@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
@@ -24,21 +23,19 @@ interface PortalSettings {
   accessibility_settings: AccessibilitySettings;
 }
 
-// Database type with explicit JSONB field types
-interface DatabasePortalSettings {
+// Simplified database type without nested unknowns
+type DatabasePortalSettings = {
   id?: string;
   user_id?: string;
   reminder_preferences: {
     preferred_channels?: string[];
-    [key: string]: unknown;
   };
   accessibility_settings: {
     voice_reminders?: boolean;
-    [key: string]: unknown;
   };
   created_at?: string;
   updated_at?: string;
-}
+};
 
 const defaultSettings: PortalSettings = {
   reminder_preferences: {
