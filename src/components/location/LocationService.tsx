@@ -19,6 +19,12 @@ interface NotificationSettings {
   smsAlert: boolean;
 }
 
+const DEFAULT_NOTIFICATION_SETTINGS: NotificationSettings = {
+  exitAlert: true,
+  enterAlert: false,
+  smsAlert: false
+};
+
 export class LocationService {
   private static watchId: number | null = null;
   private static intervalId: NodeJS.Timeout | null = null;
@@ -70,17 +76,6 @@ export class LocationService {
     }
   }
 
-  static async stopLocationTracking() {
-    if (this.watchId !== null) {
-      navigator.geolocation.clearWatch(this.watchId);
-      this.watchId = null;
-    }
-    if (this.intervalId !== null) {
-      clearInterval(this.intervalId);
-      this.intervalId = null;
-    }
-  }
-
   static async handleLocationUpdate(position: GeolocationPosition, groupId: string) {
     try {
       const locationUpdate: LocationUpdate = {
@@ -100,7 +95,7 @@ export class LocationService {
           group_id: groupId,
           location_enabled: true,
           current_location: locationUpdate as unknown as Json,
-          location_history: `array_append(COALESCE(location_history, '[]'::jsonb[]), '${JSON.stringify(locationUpdate)}'::jsonb)`
+          location_history: [locationUpdate] as unknown as Json[]
         }, {
           onConflict: 'group_id'
         });
@@ -182,7 +177,7 @@ export class LocationService {
         );
 
         const isOutside = distance > fence.radius;
-        const notifications = fence.notification_settings as NotificationSettings || { exitAlert: true };
+        const notifications = (fence.notification_settings as unknown as NotificationSettings) || DEFAULT_NOTIFICATION_SETTINGS;
 
         // Check if user has crossed the geofence boundary
         if ((isOutside && notifications.exitAlert) || (!isOutside && notifications.enterAlert)) {
@@ -270,5 +265,16 @@ export class LocationService {
   private static async handleGeofenceAlert(alert: any) {
     // Implement any additional alert handling logic here
     console.log('New geofence alert:', alert);
+  }
+
+  static async stopLocationTracking() {
+    if (this.watchId !== null) {
+      navigator.geolocation.clearWatch(this.watchId);
+      this.watchId = null;
+    }
+    if (this.intervalId !== null) {
+      clearInterval(this.intervalId);
+      this.intervalId = null;
+    }
   }
 }
