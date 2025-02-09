@@ -13,7 +13,7 @@ interface VoiceReminderSettings {
 
 interface VoiceReminderProps {
   groupId: string;
-  settings?: VoiceReminderSettings;
+  settings?: Partial<VoiceReminderSettings>;
 }
 
 interface TextToSpeechResponse {

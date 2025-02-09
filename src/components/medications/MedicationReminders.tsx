@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client"; 
 import { Loader2 } from "lucide-react";
@@ -17,10 +16,10 @@ interface RawDBSettings {
   group_id: string;
   reminder_preferences: {
     preferred_channels: string[];
-  };
+  } | null;
   accessibility_settings: {
     voice_reminders: boolean;
-  };
+  } | null;
   created_at: string;
   updated_at: string;
 }
@@ -63,17 +62,15 @@ export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
       
       if (!data) return defaultSettings;
 
+      const rawData = data as RawDBSettings;
+
       // Ensure type safety by explicitly constructing the return object
       return {
         reminder_preferences: {
-          preferred_channels: Array.isArray(data.reminder_preferences?.preferred_channels) 
-            ? data.reminder_preferences.preferred_channels 
-            : defaultSettings.reminder_preferences.preferred_channels
+          preferred_channels: rawData.reminder_preferences?.preferred_channels || defaultSettings.reminder_preferences.preferred_channels
         },
         accessibility_settings: {
-          voice_reminders: typeof data.accessibility_settings?.voice_reminders === 'boolean'
-            ? data.accessibility_settings.voice_reminders
-            : defaultSettings.accessibility_settings.voice_reminders
+          voice_reminders: rawData.accessibility_settings?.voice_reminders ?? defaultSettings.accessibility_settings.voice_reminders
         }
       } as PortalSettings;
     }
