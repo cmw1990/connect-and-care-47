@@ -2405,6 +2405,36 @@ export type Database = {
         }
         Relationships: []
       }
+      direct_messages: {
+        Row: {
+          content: string
+          created_at: string | null
+          id: string
+          read_at: string | null
+          recipient_id: string | null
+          sender_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          id?: string
+          read_at?: string | null
+          recipient_id?: string | null
+          sender_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          id?: string
+          read_at?: string | null
+          recipient_id?: string | null
+          sender_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       emergency_contacts: {
         Row: {
           address: string | null
@@ -3752,6 +3782,47 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      mood_entries: {
+        Row: {
+          activities: Json | null
+          created_at: string | null
+          group_id: string | null
+          id: string
+          mood_score: number
+          notes: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          activities?: Json | null
+          created_at?: string | null
+          group_id?: string | null
+          id?: string
+          mood_score: number
+          notes?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          activities?: Json | null
+          created_at?: string | null
+          group_id?: string | null
+          id?: string
+          mood_score?: number
+          notes?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mood_entries_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "care_groups"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       notifications: {
         Row: {
