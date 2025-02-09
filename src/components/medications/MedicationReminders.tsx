@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -18,6 +19,11 @@ interface MedicationRemindersProps {
   groupId: string;
 }
 
+type JsonPrimitive = string | number | boolean | null;
+type JsonArray = JsonValue[];
+type JsonObject = { [key: string]: JsonValue };
+type JsonValue = JsonPrimitive | JsonObject | JsonArray;
+
 interface ReminderPreferences {
   preferred_channels: string[];
 }
@@ -29,14 +35,14 @@ interface AccessibilitySettings {
 interface DatabasePortalSettings {
   id?: string;
   user_id?: string;
-  reminder_preferences: ReminderPreferences;
-  accessibility_settings: AccessibilitySettings;
+  reminder_preferences: JsonValue;
+  accessibility_settings: JsonValue;
   created_at?: string;
   updated_at?: string;
 }
 
 interface PortalSettings {
-  reminder_preferences: ReminderPreferences;  
+  reminder_preferences: ReminderPreferences;
   accessibility_settings: AccessibilitySettings;
 }
 
@@ -78,8 +84,8 @@ export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
   });
 
   const settings: PortalSettings = dbSettings ? {
-    reminder_preferences: dbSettings.reminder_preferences || defaultSettings.reminder_preferences,
-    accessibility_settings: dbSettings.accessibility_settings || defaultSettings.accessibility_settings
+    reminder_preferences: (dbSettings.reminder_preferences as ReminderPreferences) || defaultSettings.reminder_preferences,
+    accessibility_settings: (dbSettings.accessibility_settings as AccessibilitySettings) || defaultSettings.accessibility_settings
   } : defaultSettings;
 
   const { data: overdueCount = 0, isLoading: overdueLoading } = useQuery({
@@ -122,9 +128,9 @@ export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
         return;
       }
 
-      const sanitizedUpdates: Partial<DatabasePortalSettings> = {
-        reminder_preferences: updates.reminder_preferences,
-        accessibility_settings: updates.accessibility_settings
+      const sanitizedUpdates = {
+        reminder_preferences: updates.reminder_preferences as JsonValue,
+        accessibility_settings: updates.accessibility_settings as JsonValue
       };
 
       if (dbSettings) {
