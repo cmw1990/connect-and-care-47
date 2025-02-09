@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -5,8 +6,9 @@ import { AnimatedCareGuide } from "@/components/guides/AnimatedCareGuide";
 import { Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
 
-const careGuides = [
+const initialCareGuides = [
   {
     disease: "Alzheimer's Disease",
     description: "A progressive brain disorder that affects memory and thinking skills",
@@ -42,32 +44,32 @@ const careGuides = [
       "Take medications as prescribed",
       "Stay hydrated and exercise regularly"
     ]
-  },
-  {
-    disease: "Heart Disease",
-    description: "Conditions affecting heart function and circulation",
-    guidelines: [
-      "Monitor blood pressure daily",
-      "Take medications exactly as prescribed",
-      "Follow a heart-healthy diet plan",
-      "Exercise within recommended limits",
-      "Recognize warning signs of complications",
-      "Attend all scheduled medical check-ups"
-    ]
   }
 ];
 
 export const CareGuides = () => {
   const [isGenerating, setIsGenerating] = useState(false);
-  const [generatedGuides, setGeneratedGuides] = useState<string[]>([]);
   const { toast } = useToast();
+
+  // Query existing care guides from the database
+  const { data: existingGuides, isLoading } = useQuery({
+    queryKey: ['care-guides'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('care_guides')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      return data;
+    }
+  });
 
   const generateAllGuides = async () => {
     setIsGenerating(true);
     try {
-      const guides = [];
-      for (const guide of careGuides) {
-        const { data, error } = await supabase.functions.invoke('generate-care-image', {
+      for (const guide of initialCareGuides) {
+        const { data, error } = await supabase.functions.invoke('generate-care-guide', {
           body: {
             disease: guide.disease,
             description: guide.description
@@ -76,14 +78,24 @@ export const CareGuides = () => {
 
         if (error) throw error;
         
-        guides.push(data.imageUrl);
+        // Insert the generated guide into the database
+        const { error: insertError } = await supabase
+          .from('care_guides')
+          .insert([{
+            disease: guide.disease,
+            description: guide.description,
+            guidelines: guide.guidelines,
+            content: data.content,
+            video_url: data.videoUrl
+          }]);
+
+        if (insertError) throw insertError;
         
         toast({
           title: "Guide Generated",
           description: `Generated guide for ${guide.disease}`,
         });
       }
-      setGeneratedGuides(guides);
     } catch (error) {
       console.error('Error generating guides:', error);
       toast({
@@ -95,6 +107,16 @@ export const CareGuides = () => {
       setIsGenerating(false);
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
+
+  const guidesToDisplay = existingGuides?.length ? existingGuides : initialCareGuides;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-primary-100 to-white">
@@ -127,12 +149,12 @@ export const CareGuides = () => {
         </Card>
 
         <div className="grid gap-6 md:grid-cols-2">
-          {careGuides.map((guide) => (
+          {guidesToDisplay.map((guide) => (
             <AnimatedCareGuide
               key={guide.disease}
               disease={guide.disease}
               description={guide.description}
-              guidelines={guide.guidelines}
+              guidelines={Array.isArray(guide.guidelines) ? guide.guidelines : initialCareGuides[0].guidelines}
             />
           ))}
         </div>

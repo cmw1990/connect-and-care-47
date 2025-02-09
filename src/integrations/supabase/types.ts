@@ -756,6 +756,42 @@ export type Database = {
         }
         Relationships: []
       }
+      care_guides: {
+        Row: {
+          content: string | null
+          created_at: string | null
+          description: string | null
+          disease: string
+          guidelines: Json
+          id: string
+          image_url: string | null
+          updated_at: string | null
+          video_url: string | null
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string | null
+          description?: string | null
+          disease: string
+          guidelines?: Json
+          id?: string
+          image_url?: string | null
+          updated_at?: string | null
+          video_url?: string | null
+        }
+        Update: {
+          content?: string | null
+          created_at?: string | null
+          description?: string | null
+          disease?: string
+          guidelines?: Json
+          id?: string
+          image_url?: string | null
+          updated_at?: string | null
+          video_url?: string | null
+        }
+        Relationships: []
+      }
       care_home_metrics: {
         Row: {
           facility_id: string | null
