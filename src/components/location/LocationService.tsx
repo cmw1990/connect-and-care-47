@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { calculateDistance } from "@/utils/locationUtils";
 import { useToast } from "@/hooks/use-toast";
@@ -197,7 +198,7 @@ export class LocationService {
         let dangerZoneType = '';
         
         if (fence.danger_zones) {
-          const dangerZones = fence.danger_zones as DangerZone[];
+          const dangerZones = (fence.danger_zones as unknown as DangerZone[]);
           for (const zone of dangerZones) {
             if (LocationService.isPointInPolygon(
               [location.longitude, location.latitude],
@@ -210,7 +211,7 @@ export class LocationService {
           }
         }
 
-        const notifications = (fence.notification_settings as NotificationSettings) || DEFAULT_NOTIFICATION_SETTINGS;
+        const notifications = ((fence.notification_settings as unknown) as NotificationSettings) || DEFAULT_NOTIFICATION_SETTINGS;
 
         // Check if user has crossed the geofence boundary or entered danger zone
         if ((isOutside && notifications.exitAlert) || 
