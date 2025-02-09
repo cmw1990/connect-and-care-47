@@ -35,15 +35,15 @@ const defaultSettings = {
   }
 } as const;
 
-// Interface for processed settings
-type PortalSettings = {
+// Interface for processed settings - explicitly defined to avoid recursion
+interface PortalSettings {
   reminder_preferences: {
     preferred_channels: string[];
   };
   accessibility_settings: {
     voice_reminders: boolean;
   };
-};
+}
 
 export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
   // Query portal settings
@@ -65,14 +65,16 @@ export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
 
       const rawData = data as RawDBSettings;
 
-      return {
+      const processedSettings: PortalSettings = {
         reminder_preferences: {
           preferred_channels: rawData.reminder_preferences?.preferred_channels || defaultSettings.reminder_preferences.preferred_channels
         },
         accessibility_settings: {
           voice_reminders: rawData.accessibility_settings?.voice_reminders ?? defaultSettings.accessibility_settings.voice_reminders
         }
-      } satisfies PortalSettings;
+      };
+
+      return processedSettings;
     }
   });
 
