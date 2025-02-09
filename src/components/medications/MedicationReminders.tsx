@@ -24,12 +24,18 @@ interface PortalSettings {
   accessibility_settings: AccessibilitySettings;
 }
 
-// Database type
-type DatabasePortalSettings = {
+// Database type with explicit JSONB field types
+interface DatabasePortalSettings {
   id?: string;
   user_id?: string;
-  reminder_preferences: Record<string, unknown>;
-  accessibility_settings: Record<string, unknown>;
+  reminder_preferences: {
+    preferred_channels?: string[];
+    [key: string]: unknown;
+  };
+  accessibility_settings: {
+    voice_reminders?: boolean;
+    [key: string]: unknown;
+  };
   created_at?: string;
   updated_at?: string;
 }
