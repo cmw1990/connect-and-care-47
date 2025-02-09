@@ -56,7 +56,7 @@ interface PortalSettings {
 
 export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
   // Query portal settings
-  const portalSettingsQuery = useQuery<PortalSettings, Error>({
+  const portalSettingsQuery = useQuery({
     queryKey: ['portal-settings', groupId],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -89,7 +89,7 @@ export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
   });
 
   // Overdue medications count 
-  const overdueQuery = useQuery<number, Error>({
+  const overdueQuery = useQuery({
     queryKey: ['overduemedications', groupId],
     queryFn: async () => {
       const { count, error } = await supabase
@@ -105,7 +105,7 @@ export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
   });
 
   // Medication schedules 
-  const schedulesQuery = useQuery<MedicationSchedule[], Error>({
+  const schedulesQuery = useQuery({
     queryKey: ['medicationSchedules', groupId],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -115,7 +115,7 @@ export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data ?? [];
+      return (data ?? []) as MedicationSchedule[];
     }
   });
 
