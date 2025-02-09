@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
@@ -59,23 +60,24 @@ export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
       if (error && error.code !== 'PGRST116') throw error;
       
       if (data) {
-        // Cast the raw data to unknown first
-        const rawData = data as unknown;
+        // Type assertion to handle JSON data from database
+        const rawPreferences = data.reminder_preferences as { preferred_channels?: unknown };
+        const rawAccessibility = data.accessibility_settings as { voice_reminders?: unknown };
         
-        // Now safely transform to our expected type
+        // Validate and transform to our expected types
         const validated: DatabasePortalSettings = {
-          id: (rawData as any).id,
-          user_id: (rawData as any).user_id,
+          id: data.id,
+          user_id: data.user_id,
           reminder_preferences: {
-            preferred_channels: Array.isArray((rawData as any).reminder_preferences?.preferred_channels) 
-              ? (rawData as any).reminder_preferences.preferred_channels 
+            preferred_channels: Array.isArray(rawPreferences?.preferred_channels) 
+              ? rawPreferences.preferred_channels 
               : []
           },
           accessibility_settings: {
-            voice_reminders: Boolean((rawData as any).accessibility_settings?.voice_reminders)
+            voice_reminders: Boolean(rawAccessibility?.voice_reminders)
           },
-          created_at: (rawData as any).created_at,
-          updated_at: (rawData as any).updated_at
+          created_at: data.created_at,
+          updated_at: data.updated_at
         };
         
         return validated;
