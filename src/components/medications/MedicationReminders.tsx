@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -19,10 +18,7 @@ interface MedicationRemindersProps {
   groupId: string;
 }
 
-type JsonPrimitive = string | number | boolean | null;
-type JsonArray = JsonValue[];
-type JsonObject = { [key: string]: JsonValue };
-type JsonValue = JsonPrimitive | JsonObject | JsonArray;
+type Json = string | number | boolean | null | { [key: string]: Json } | Json[];
 
 interface ReminderPreferences {
   preferred_channels: string[];
@@ -35,8 +31,8 @@ interface AccessibilitySettings {
 interface DatabasePortalSettings {
   id?: string;
   user_id?: string;
-  reminder_preferences: JsonValue;
-  accessibility_settings: JsonValue;
+  reminder_preferences: Json;
+  accessibility_settings: Json;
   created_at?: string;
   updated_at?: string;
 }
@@ -84,8 +80,8 @@ export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
   });
 
   const settings: PortalSettings = dbSettings ? {
-    reminder_preferences: (dbSettings.reminder_preferences as ReminderPreferences) || defaultSettings.reminder_preferences,
-    accessibility_settings: (dbSettings.accessibility_settings as AccessibilitySettings) || defaultSettings.accessibility_settings
+    reminder_preferences: (dbSettings.reminder_preferences as any as ReminderPreferences) || defaultSettings.reminder_preferences,
+    accessibility_settings: (dbSettings.accessibility_settings as any as AccessibilitySettings) || defaultSettings.accessibility_settings
   } : defaultSettings;
 
   const { data: overdueCount = 0, isLoading: overdueLoading } = useQuery({
@@ -129,8 +125,8 @@ export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
       }
 
       const sanitizedUpdates = {
-        reminder_preferences: updates.reminder_preferences as JsonValue,
-        accessibility_settings: updates.accessibility_settings as JsonValue
+        reminder_preferences: updates.reminder_preferences as unknown as Json,
+        accessibility_settings: updates.accessibility_settings as unknown as Json
       };
 
       if (dbSettings) {
