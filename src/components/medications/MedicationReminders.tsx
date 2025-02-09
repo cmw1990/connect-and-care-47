@@ -46,7 +46,7 @@ interface PortalSettings {
 
 export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
   // Query portal settings
-  const { data: settings, isLoading: settingsLoading, error: settingsError } = useQuery<PortalSettings>({
+  const { data: portalSettings, isLoading: settingsLoading, error: settingsError } = useQuery({
     queryKey: ['portal-settings', groupId],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -65,7 +65,7 @@ export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
       const rawSettings = data as RawDBSettings;
       
       // Transform response to expected format
-      return {
+      const settings: PortalSettings = {
         reminder_preferences: {
           preferred_channels: rawSettings.reminder_preferences?.preferred_channels || []
         },
@@ -73,10 +73,12 @@ export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
           voice_reminders: rawSettings.accessibility_settings?.voice_reminders || false
         }
       };
+
+      return settings;
     }
   });
 
-  // Overdue medications count
+  // Overdue medications count 
   const { data: overdueCount = 0, isLoading: overdueLoading } = useQuery({
     queryKey: ['overduemedications', groupId],
     queryFn: async () => {
@@ -126,7 +128,7 @@ export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
           
           <div className="grid gap-4 md:grid-cols-2">
             <ReminderSettings 
-              settings={settings || defaultSettings} 
+              settings={portalSettings || defaultSettings} 
               groupId={groupId} 
             />
             <UpcomingReminders 
