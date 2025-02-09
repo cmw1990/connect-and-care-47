@@ -4,7 +4,6 @@ import { Loader2 } from "lucide-react";
 import { OverdueAlert } from "./components/OverdueAlert";  
 import { ReminderSettings } from "./components/ReminderSettings";
 import { UpcomingReminders } from "./components/UpcomingReminders";
-import type { MedicationSchedule } from "@/types/medication";
 
 interface MedicationRemindersProps {
   groupId: string;
@@ -35,14 +34,7 @@ const defaultSettings = {
 };
 
 // Interface for processed settings
-interface PortalSettings {
-  reminder_preferences: {
-    preferred_channels: string[];
-  };
-  accessibility_settings: {
-    voice_reminders: boolean;
-  };
-}
+type PortalSettings = typeof defaultSettings;
 
 export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
   // Query portal settings
@@ -72,7 +64,7 @@ export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
         accessibility_settings: {
           voice_reminders: rawData.accessibility_settings?.voice_reminders ?? defaultSettings.accessibility_settings.voice_reminders
         }
-      } as PortalSettings;
+      };
     }
   });
 

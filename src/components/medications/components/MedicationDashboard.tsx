@@ -59,16 +59,13 @@ export const MedicationDashboard = ({ groupId }: MedicationDashboardProps) => {
 
       if (error) throw error;
       
-      // Transform data to match MedicationPortalSettings interface
-      const transformedData: MedicationPortalSettings = {
-        id: data.id,
-        group_id: groupId,
-        reminder_preferences: data.reminder_preferences || {},
-        created_at: data.created_at,
-        updated_at: data.updated_at
+      // Transform data to match required interface
+      const voiceSettings = {
+        voice_reminders: data?.reminder_preferences?.voice_reminders ?? false,
+        preferred_voice: data?.reminder_preferences?.preferred_voice
       };
       
-      return transformedData;
+      return voiceSettings;
     }
   });
 
@@ -106,7 +103,7 @@ export const MedicationDashboard = ({ groupId }: MedicationDashboardProps) => {
           <CardContent>
             <VoiceReminder 
               groupId={groupId} 
-              settings={settings?.reminder_preferences} 
+              settings={settings ?? { voice_reminders: false }} 
             />
           </CardContent>
         </Card>
