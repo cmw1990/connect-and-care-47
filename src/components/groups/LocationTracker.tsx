@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -336,7 +335,7 @@ export const LocationTracker: React.FC<LocationTrackerProps> = ({ groupId }) => 
               </div>
 
               {currentLocation.battery_level && currentLocation.battery_level < 20 && (
-                <Alert className="mt-4" variant="warning">
+                <Alert className="mt-4" variant="destructive">
                   <AlertTriangle className="h-4 w-4" />
                   <AlertDescription>
                     Low battery warning. Please charge your device to maintain accurate location tracking.

@@ -344,7 +344,6 @@ export class LocationService {
 
         // Send SMS if enabled
         if (sendSms) {
-          // Here you would integrate with your SMS service
           console.log('SMS alert would be sent here');
         }
       }
