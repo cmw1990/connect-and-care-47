@@ -946,6 +946,59 @@ export type Database = {
           },
         ]
       }
+      care_recommendations: {
+        Row: {
+          action_items: Json | null
+          created_at: string | null
+          data_sources: Json | null
+          description: string
+          group_id: string | null
+          id: string
+          ml_confidence: number | null
+          priority: string
+          recommendation_type: string
+          status: string | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          action_items?: Json | null
+          created_at?: string | null
+          data_sources?: Json | null
+          description: string
+          group_id?: string | null
+          id?: string
+          ml_confidence?: number | null
+          priority: string
+          recommendation_type: string
+          status?: string | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          action_items?: Json | null
+          created_at?: string | null
+          data_sources?: Json | null
+          description?: string
+          group_id?: string | null
+          id?: string
+          ml_confidence?: number | null
+          priority?: string
+          recommendation_type?: string
+          status?: string | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "care_recommendations_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "care_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       care_reviews: {
         Row: {
           booking_id: string | null
@@ -1279,6 +1332,57 @@ export type Database = {
           id?: string
           mood?: string | null
           updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      caregiver_matching_preferences: {
+        Row: {
+          availability: Json | null
+          care_type: string[]
+          certification_requirements: string[] | null
+          created_at: string | null
+          cultural_preferences: string[] | null
+          experience_level: string | null
+          id: string
+          language_preferences: string[] | null
+          location_preference: Json | null
+          personality_traits: string[] | null
+          rate_range: Json | null
+          specializations: string[] | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          availability?: Json | null
+          care_type: string[]
+          certification_requirements?: string[] | null
+          created_at?: string | null
+          cultural_preferences?: string[] | null
+          experience_level?: string | null
+          id?: string
+          language_preferences?: string[] | null
+          location_preference?: Json | null
+          personality_traits?: string[] | null
+          rate_range?: Json | null
+          specializations?: string[] | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          availability?: Json | null
+          care_type?: string[]
+          certification_requirements?: string[] | null
+          created_at?: string | null
+          cultural_preferences?: string[] | null
+          experience_level?: string | null
+          id?: string
+          language_preferences?: string[] | null
+          location_preference?: Json | null
+          personality_traits?: string[] | null
+          rate_range?: Json | null
+          specializations?: string[] | null
+          updated_at?: string | null
           user_id?: string | null
         }
         Relationships: []
@@ -2467,6 +2571,68 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "medical_device_data_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "care_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      medical_devices: {
+        Row: {
+          battery_level: number | null
+          created_at: string | null
+          device_id: string
+          device_name: string
+          device_type: Database["public"]["Enums"]["device_type"]
+          firmware_version: string | null
+          group_id: string | null
+          id: string
+          last_synced: string | null
+          manufacturer: string | null
+          model: string | null
+          settings: Json | null
+          status: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          battery_level?: number | null
+          created_at?: string | null
+          device_id: string
+          device_name: string
+          device_type: Database["public"]["Enums"]["device_type"]
+          firmware_version?: string | null
+          group_id?: string | null
+          id?: string
+          last_synced?: string | null
+          manufacturer?: string | null
+          model?: string | null
+          settings?: Json | null
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          battery_level?: number | null
+          created_at?: string | null
+          device_id?: string
+          device_name?: string
+          device_type?: Database["public"]["Enums"]["device_type"]
+          firmware_version?: string | null
+          group_id?: string | null
+          id?: string
+          last_synced?: string | null
+          manufacturer?: string | null
+          model?: string | null
+          settings?: Json | null
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "medical_devices_group_id_fkey"
             columns: ["group_id"]
             isOneToOne: false
             referencedRelation: "care_groups"
@@ -7116,6 +7282,12 @@ export type Database = {
     }
     Enums: {
       connection_type: "carer" | "pal"
+      device_type:
+        | "vital_signs"
+        | "activity_tracker"
+        | "medication_dispenser"
+        | "sleep_monitor"
+        | "fall_detector"
       subscription_tier: "basic" | "pro" | "enterprise"
       user_type:
         | "patient"
