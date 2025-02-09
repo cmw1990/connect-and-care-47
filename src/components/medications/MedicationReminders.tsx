@@ -10,17 +10,31 @@ interface MedicationRemindersProps {
   groupId: string;
 }
 
+// Database response types
+interface RawDBSettings {
+  id: string;
+  user_id: string;
+  reminder_preferences: {
+    preferred_channels: string[];
+  };
+  accessibility_settings: {
+    voice_reminders: boolean;
+  };
+  created_at: string;
+  updated_at: string;
+}
+
 // Fixed default settings
 const defaultSettings = {
   reminder_preferences: {
-    preferred_channels: []
+    preferred_channels: [] as string[]
   },
   accessibility_settings: {
     voice_reminders: false
   }
 };
 
-// Database types
+// Interface for processed settings
 interface PortalSettings {
   reminder_preferences: {
     preferred_channels: string[];
@@ -32,7 +46,7 @@ interface PortalSettings {
 
 export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
   // Query portal settings
-  const { data: settings, isLoading: settingsLoading, error: settingsError } = useQuery({
+  const { data: settings, isLoading: settingsLoading, error: settingsError } = useQuery<PortalSettings>({
     queryKey: ['portal-settings', groupId],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -48,15 +62,17 @@ export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
       
       if (!data) return defaultSettings;
 
+      const rawSettings = data as RawDBSettings;
+      
       // Transform response to expected format
       return {
         reminder_preferences: {
-          preferred_channels: data.reminder_preferences?.preferred_channels || []
+          preferred_channels: rawSettings.reminder_preferences?.preferred_channels || []
         },
         accessibility_settings: {
-          voice_reminders: data.accessibility_settings?.voice_reminders || false
+          voice_reminders: rawSettings.accessibility_settings?.voice_reminders || false
         }
-      } as PortalSettings;
+      };
     }
   });
 
