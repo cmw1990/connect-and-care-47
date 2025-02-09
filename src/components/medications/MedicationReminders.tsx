@@ -41,7 +41,7 @@ interface DatabasePortalSettings {
 }
 
 interface PortalSettings {
-  reminder_preferences: ReminderPreferences;
+  reminder_preferences: ReminderPreferences;  
   accessibility_settings: AccessibilitySettings;
 }
 
@@ -73,10 +73,10 @@ export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
     }
   });
 
-  // Convert database settings to frontend format
+  // Convert database settings to frontend format with type assertions
   const settings: PortalSettings = dbSettings ? {
-    reminder_preferences: dbSettings.reminder_preferences as ReminderPreferences || defaultSettings.reminder_preferences,
-    accessibility_settings: dbSettings.accessibility_settings as AccessibilitySettings || defaultSettings.accessibility_settings
+    reminder_preferences: (dbSettings.reminder_preferences as unknown as ReminderPreferences) || defaultSettings.reminder_preferences,
+    accessibility_settings: (dbSettings.accessibility_settings as unknown as AccessibilitySettings) || defaultSettings.accessibility_settings
   } : defaultSettings;
 
   const { data: overdueCount } = useQuery({
@@ -100,8 +100,8 @@ export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
       if (!user) return;
 
       const sanitizedUpdates: Partial<DatabasePortalSettings> = {
-        reminder_preferences: updates.reminder_preferences as Json,
-        accessibility_settings: updates.accessibility_settings as Json
+        reminder_preferences: updates.reminder_preferences as unknown as Json,
+        accessibility_settings: updates.accessibility_settings as unknown as Json
       };
 
       if (dbSettings) {
