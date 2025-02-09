@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -6,7 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Heart, Building2, ShoppingCart, Shield, Star, Users, Search, ArrowRight } from "lucide-react";
+import { Heart, Building2, ShoppingCart, Shield, Star, Users, Search, ArrowRight, ChartBar, Brain } from "lucide-react";
 import { LocationMap } from "@/components/groups/LocationMap";
 import { useToast } from "@/hooks/use-toast";
 import { LocationSearch } from "@/components/landing/LocationSearch";
@@ -24,6 +23,8 @@ const Index = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [mapCenter, setMapCenter] = useState({ latitude: 40, longitude: -95 });
   const [selectedCareType, setSelectedCareType] = useState<string>("");
+  const [analyticsEnabled, setAnalyticsEnabled] = useState(true);
+  const [aiInsightsEnabled, setAiInsightsEnabled] = useState(true);
 
   const fetchSearchResults = async (): Promise<Region[]> => {
     if (searchQuery.length < 2) return [];
@@ -139,7 +140,7 @@ const Index = () => {
     setSearchOpen(false);
   };
 
-  const handleFindCare = () => {
+  const handleCompareOptions = () => {
     if (!selectedCity || !selectedCareType) {
       toast({
         title: "Please complete your selection",
@@ -148,7 +149,7 @@ const Index = () => {
       });
       return;
     }
-    navigate(`/caregivers?location=${selectedCity}&type=${selectedCareType}`);
+    navigate(`/compare?location=${selectedCity}&type=${selectedCareType}&analytics=${analyticsEnabled}&ai=${aiInsightsEnabled}`);
   };
 
   return (
@@ -167,7 +168,7 @@ const Index = () => {
                 animate={{ opacity: 1, y: 0 }}
                 className="text-4xl md:text-6xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/80"
               >
-                Find Your Perfect Care Match
+                Smart Care Comparison Platform
               </motion.h1>
               <motion.p 
                 initial={{ opacity: 0, y: 20 }}
@@ -175,7 +176,7 @@ const Index = () => {
                 transition={{ delay: 0.1 }}
                 className="text-xl text-muted-foreground mb-8"
               >
-                Compare caregivers, facilities, and care products all in one place
+                Compare care options with AI-powered insights and advanced analytics
               </motion.p>
 
               <Card className="p-6 shadow-lg mb-8 hover:shadow-xl transition-shadow duration-300">
@@ -198,14 +199,48 @@ const Index = () => {
                   />
                 </div>
 
-                <div className="mt-4">
+                <div className="mt-4 flex flex-col gap-4">
+                  <div className="flex items-center justify-between px-2">
+                    <div className="flex items-center gap-2">
+                      <ChartBar className="h-5 w-5 text-primary" />
+                      <span className="text-sm">Advanced Analytics</span>
+                    </div>
+                    <div className="flex items-center">
+                      <Button
+                        variant={analyticsEnabled ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setAnalyticsEnabled(!analyticsEnabled)}
+                        className="relative"
+                      >
+                        {analyticsEnabled ? "Enabled" : "Disabled"}
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between px-2">
+                    <div className="flex items-center gap-2">
+                      <Brain className="h-5 w-5 text-primary" />
+                      <span className="text-sm">AI Insights</span>
+                    </div>
+                    <div className="flex items-center">
+                      <Button
+                        variant={aiInsightsEnabled ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setAiInsightsEnabled(!aiInsightsEnabled)}
+                        className="relative"
+                      >
+                        {aiInsightsEnabled ? "Enabled" : "Disabled"}
+                      </Button>
+                    </div>
+                  </div>
+
                   <Button 
                     size="lg" 
                     className="w-full group"
-                    onClick={handleFindCare}
+                    onClick={handleCompareOptions}
                     disabled={!selectedCity || !selectedCareType}
                   >
-                    Find Care
+                    Compare Options
                     <Search className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
                   </Button>
                 </div>
@@ -287,48 +322,36 @@ const Index = () => {
           </div>
         </section>
 
-        <section className="py-16 bg-gradient-to-b from-gray-50 to-background dark:from-gray-900/50 dark:to-background">
+        <section className="py-16 bg-primary/5">
           <div className="container mx-auto px-4">
-            <div className="max-w-4xl mx-auto">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: 0.1 }}
-                >
-                  <div className="text-center">
-                    <Shield className="h-12 w-12 mx-auto mb-4 text-primary" />
-                    <h3 className="text-xl font-semibold mb-2">Verified Caregivers</h3>
-                    <p className="text-muted-foreground">Background-checked and certified professionals</p>
-                  </div>
-                </motion.div>
-
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: 0.2 }}
-                >
-                  <div className="text-center">
-                    <Star className="h-12 w-12 mx-auto mb-4 text-primary" />
-                    <h3 className="text-xl font-semibold mb-2">Top-Rated Care</h3>
-                    <p className="text-muted-foreground">Read reviews from verified clients</p>
-                  </div>
-                </motion.div>
-
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: 0.3 }}
-                >
-                  <div className="text-center">
-                    <Heart className="h-12 w-12 mx-auto mb-4 text-primary" />
-                    <h3 className="text-xl font-semibold mb-2">Perfect Matches</h3>
-                    <p className="text-muted-foreground">Find care that fits your needs</p>
-                  </div>
-                </motion.div>
+            <div className="max-w-4xl mx-auto text-center">
+              <ChartBar className="h-12 w-12 mx-auto mb-6 text-primary" />
+              <h2 className="text-3xl font-bold mb-4">Advanced Analytics & AI Insights</h2>
+              <p className="text-lg text-muted-foreground mb-8">
+                Make informed decisions with our comprehensive analytics and AI-powered recommendations.
+              </p>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <Card className="p-6">
+                  <Brain className="h-8 w-8 mb-4 text-primary" />
+                  <h3 className="text-xl font-semibold mb-2">Smart Analysis</h3>
+                  <p className="text-sm text-muted-foreground">
+                    AI-powered insights to help you make the best choice
+                  </p>
+                </Card>
+                <Card className="p-6">
+                  <ChartBar className="h-8 w-8 mb-4 text-primary" />
+                  <h3 className="text-xl font-semibold mb-2">Quality Metrics</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Compare detailed quality and performance metrics
+                  </p>
+                </Card>
+                <Card className="p-6">
+                  <Shield className="h-8 w-8 mb-4 text-primary" />
+                  <h3 className="text-xl font-semibold mb-2">Verified Data</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Trust our verified and up-to-date information
+                  </p>
+                </Card>
               </div>
             </div>
           </div>
