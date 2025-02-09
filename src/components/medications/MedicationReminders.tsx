@@ -1,6 +1,6 @@
 
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/supabase/client"; 
 import { Loader2 } from "lucide-react";
 import { OverdueAlert } from "./components/OverdueAlert";  
 import { ReminderSettings } from "./components/ReminderSettings";
@@ -10,36 +10,8 @@ interface MedicationRemindersProps {
   groupId: string;
 }
 
-// Settings interfaces for UI components
-interface PreferredChannels {
-  preferred_channels: string[];
-}
-
-interface AccessibilitySettings {
-  voice_reminders: boolean;
-}
-
-interface PortalSettings {
-  reminder_preferences: PreferredChannels;
-  accessibility_settings: AccessibilitySettings;
-}
-
-// Raw database response type with strict typing
-interface RawSettings {
-  id: string;
-  user_id: string;
-  reminder_preferences: {
-    preferred_channels?: string[];
-  } | null;
-  accessibility_settings: {
-    voice_reminders?: boolean;
-  } | null;
-  created_at: string;
-  updated_at: string;
-}
-
 // Fixed default settings
-const defaultSettings: PortalSettings = {
+const defaultSettings = {
   reminder_preferences: {
     preferred_channels: []
   },
@@ -48,13 +20,23 @@ const defaultSettings: PortalSettings = {
   }
 };
 
+// Database types
+interface PortalSettings {
+  reminder_preferences: {
+    preferred_channels: string[];
+  };
+  accessibility_settings: {
+    voice_reminders: boolean;
+  };
+}
+
 export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
-  // Query portal settings with improved type safety
-  const { data: dbSettings, isLoading: settingsLoading, error: settingsError } = useQuery({
+  // Query portal settings
+  const { data: settings, isLoading: settingsLoading, error: settingsError } = useQuery({
     queryKey: ['portal-settings', groupId],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return null;
+      if (!user) return defaultSettings;
 
       const { data, error } = await supabase
         .from('medication_portal_settings')
@@ -64,16 +46,15 @@ export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
 
       if (error && error.code !== 'PGRST116') throw error;
       
-      if (!data) return null;
+      if (!data) return defaultSettings;
 
-      // Transform raw database response to strongly typed object
-      const rawData = data as RawSettings;
+      // Transform response to expected format
       return {
         reminder_preferences: {
-          preferred_channels: rawData.reminder_preferences?.preferred_channels || []
+          preferred_channels: data.reminder_preferences?.preferred_channels || []
         },
         accessibility_settings: {
-          voice_reminders: rawData.accessibility_settings?.voice_reminders || false
+          voice_reminders: data.accessibility_settings?.voice_reminders || false
         }
       } as PortalSettings;
     }
@@ -95,7 +76,7 @@ export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
     refetchInterval: 60000 // Refresh every minute
   });
 
-  // Medication schedules
+  // Medication schedules 
   const { data: schedules = [], isLoading: schedulesLoading } = useQuery({
     queryKey: ['medicationSchedules', groupId],
     queryFn: async () => {
@@ -108,9 +89,6 @@ export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
       return data;
     }
   });
-
-  // Use default settings if none found in DB
-  const settings = dbSettings || defaultSettings;
 
   if (settingsError) {
     return (
@@ -132,7 +110,7 @@ export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
           
           <div className="grid gap-4 md:grid-cols-2">
             <ReminderSettings 
-              settings={settings} 
+              settings={settings || defaultSettings} 
               groupId={groupId} 
             />
             <UpcomingReminders 
