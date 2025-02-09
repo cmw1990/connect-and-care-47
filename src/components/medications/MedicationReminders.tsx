@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
@@ -23,19 +24,15 @@ interface PortalSettings {
   accessibility_settings: AccessibilitySettings;
 }
 
-// Simplified database type without nested unknowns
-type DatabasePortalSettings = {
+// Database type with flattened structure
+interface DatabasePortalSettings {
   id?: string;
   user_id?: string;
-  reminder_preferences: {
-    preferred_channels?: string[];
-  };
-  accessibility_settings: {
-    voice_reminders?: boolean;
-  };
+  reminder_preferences: ReminderPreferences;
+  accessibility_settings: AccessibilitySettings;
   created_at?: string;
   updated_at?: string;
-};
+}
 
 const defaultSettings: PortalSettings = {
   reminder_preferences: {
@@ -63,22 +60,7 @@ export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
       if (error && error.code !== 'PGRST116') throw error;
       
       if (data) {
-        // Parse and validate settings
-        const dbData = data as DatabasePortalSettings;
-        
-        // Safely transform database data to application type
-        const settings: PortalSettings = {
-          reminder_preferences: {
-            preferred_channels: Array.isArray(dbData.reminder_preferences?.preferred_channels) 
-              ? dbData.reminder_preferences.preferred_channels 
-              : []
-          },
-          accessibility_settings: {
-            voice_reminders: Boolean(dbData.accessibility_settings?.voice_reminders)
-          }
-        };
-
-        return settings;
+        return data as DatabasePortalSettings;
       }
       
       return null;
