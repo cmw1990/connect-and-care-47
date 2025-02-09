@@ -11,31 +11,7 @@ interface MedicationRemindersProps {
   groupId: string;
 }
 
-// Database response types
-interface RawDBSettings {
-  id: string;
-  group_id: string;
-  reminder_preferences: {
-    preferred_channels: string[];
-  } | null;
-  accessibility_settings: {
-    voice_reminders: boolean;
-  } | null;
-  created_at: string;
-  updated_at: string;
-}
-
-// Fixed default settings
-const defaultSettings = {
-  reminder_preferences: {
-    preferred_channels: [] as string[]
-  },
-  accessibility_settings: {
-    voice_reminders: false
-  }
-} as const;
-
-// Interface for processed settings - explicitly defined to avoid recursion
+// Fixed type definitions to avoid recursion
 interface ReminderPreferences {
   preferred_channels: string[];
 }
@@ -48,6 +24,16 @@ interface PortalSettings {
   reminder_preferences: ReminderPreferences;
   accessibility_settings: AccessibilitySettings;
 }
+
+// Default settings object
+const defaultSettings: PortalSettings = {
+  reminder_preferences: {
+    preferred_channels: []
+  },
+  accessibility_settings: {
+    voice_reminders: false
+  }
+};
 
 export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
   // Query portal settings
@@ -67,18 +53,14 @@ export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
       
       if (!data) return defaultSettings;
 
-      const rawData = data as RawDBSettings;
-
-      const processedSettings: PortalSettings = {
+      return {
         reminder_preferences: {
-          preferred_channels: rawData.reminder_preferences?.preferred_channels || []
+          preferred_channels: data.reminder_preferences?.preferred_channels || []
         },
         accessibility_settings: {
-          voice_reminders: rawData.accessibility_settings?.voice_reminders ?? false
+          voice_reminders: data.accessibility_settings?.voice_reminders ?? false
         }
-      };
-
-      return processedSettings;
+      } satisfies PortalSettings;
     }
   });
 
