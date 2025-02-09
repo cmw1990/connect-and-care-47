@@ -14,10 +14,6 @@ interface VoiceReminderProps {
   };
 }
 
-interface TextToSpeechResponse {
-  audioContent: string;
-}
-
 export const VoiceReminder = ({ groupId, settings }: VoiceReminderProps) => {
   const { toast } = useToast();
   const [isPlaying, setIsPlaying] = useState(false);
@@ -35,10 +31,7 @@ export const VoiceReminder = ({ groupId, settings }: VoiceReminderProps) => {
 
   const playVoiceReminder = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { data: reminder } = await supabase.functions.invoke('text-to-speech', {
+      const { data: reminder } = await supabase.functions.invoke<{ audioContent: string }>('text-to-speech', {
         body: {
           text: "Time to take your medication. Please don't forget to log it in the system.",
           voice: settings?.preferred_voice || "alloy"
@@ -120,9 +113,7 @@ export const VoiceReminder = ({ groupId, settings }: VoiceReminderProps) => {
           ) : (
             <VolumeX className="h-4 w-4 text-muted-foreground" />
           )}
-          <span className="text-sm font-medium">
-            Voice Reminders
-          </span>
+          <span className="text-sm font-medium">Voice Reminders</span>
         </div>
         <Switch
           checked={voiceEnabled}

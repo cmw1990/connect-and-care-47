@@ -4,21 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { Check, X, AlertCircle } from "lucide-react";
-import type { MedicationSupervisionSummary } from "@/types/medication";
+import type { MedicationSupervisionSummary, MedicationLog } from "@/types/medication";
 
 interface SupervisorPanelProps {
   groupId: string;
   data: MedicationSupervisionSummary | null;
-}
-
-interface MedicationLog {
-  id: string;
-  medication_schedules: {
-    medication_name: string;
-    dosage: string;
-  };
-  taken_at: string;
-  status: string;
 }
 
 export const SupervisorPanel = ({ groupId, data }: SupervisorPanelProps) => {
@@ -39,7 +29,14 @@ export const SupervisorPanel = ({ groupId, data }: SupervisorPanelProps) => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data as MedicationLog[];
+      
+      // Transform the data to match our MedicationLog type
+      const transformedData = data.map((log: any) => ({
+        ...log,
+        taken_at: log.administered_at // Map administered_at to taken_at
+      })) as MedicationLog[];
+      
+      return transformedData;
     }
   });
 
@@ -86,14 +83,14 @@ export const SupervisorPanel = ({ groupId, data }: SupervisorPanelProps) => {
           <h3 className="text-lg font-medium">Pending Verifications</h3>
         </div>
         <div className="divide-y">
-          {pendingVerifications?.map((log: any) => (
+          {pendingVerifications?.map((log) => (
             <div key={log.id} className="flex items-center justify-between p-4">
               <div>
                 <p className="font-medium">
-                  {log.medication_schedules.medication_name}
+                  {log.medication_schedules?.medication_name}
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  {log.medication_schedules.dosage} - {new Date(log.taken_at).toLocaleTimeString()}
+                  {log.medication_schedules?.dosage} - {new Date(log.taken_at).toLocaleTimeString()}
                 </p>
               </div>
               <div className="flex space-x-2">
