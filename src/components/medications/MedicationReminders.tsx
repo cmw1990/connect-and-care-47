@@ -24,6 +24,16 @@ interface RawDBSettings {
   updated_at: string;
 }
 
+interface MedicationSchedule {
+  id: string;
+  medication_name: string;
+  dosage: string;
+  time_of_day: string[];
+  group_id: string;
+  created_at: string;
+  updated_at: string;
+}
+
 // Fixed default settings
 const defaultSettings = {
   reminder_preferences: {
@@ -95,13 +105,14 @@ export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
   });
 
   // Medication schedules 
-  const schedulesQuery = useQuery<any[], Error>({
+  const schedulesQuery = useQuery<MedicationSchedule[], Error>({
     queryKey: ['medicationSchedules', groupId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('medication_schedules')
         .select('*')
-        .eq('group_id', groupId);
+        .eq('group_id', groupId)
+        .order('created_at', { ascending: false });
 
       if (error) throw error;
       return data ?? [];
@@ -111,7 +122,7 @@ export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
   if (portalSettingsQuery.error) {
     return (
       <div className="p-4 bg-destructive/10 rounded-lg text-destructive">
-        Error loading settings. Please try again later.
+        Error loading settings: {portalSettingsQuery.error.message}
       </div>
     );
   }
