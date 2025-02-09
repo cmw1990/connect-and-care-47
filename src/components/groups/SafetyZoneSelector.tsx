@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
@@ -50,7 +49,6 @@ export const SafetyZoneSelector: React.FC<SafetyZoneSelectorProps> = ({
         toast({
           title: "Safety Zone Created",
           description: "The new safe zone has been set up successfully",
-          icon: <ShieldCheck className="h-4 w-4 text-green-500" />
         });
       },
       (error) => {

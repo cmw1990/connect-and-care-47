@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -23,6 +24,12 @@ interface LocationData {
   activity_type?: 'still' | 'walking' | 'running' | 'driving';
 }
 
+interface PatientLocation {
+  current_location: LocationData;
+  location_history: LocationData[];
+  location_enabled: boolean;
+}
+
 export const LocationTracker: React.FC<LocationTrackerProps> = ({ groupId }) => {
   const [isTracking, setIsTracking] = useState(false);
   const [currentLocation, setCurrentLocation] = useState<LocationData | null>(null);
@@ -44,9 +51,10 @@ export const LocationTracker: React.FC<LocationTrackerProps> = ({ groupId }) => 
           filter: `group_id=eq.${groupId}`
         },
         (payload) => {
-          if (payload.new && payload.new.current_location) {
-            setCurrentLocation(payload.new.current_location as LocationData);
-            setLocationHistory((payload.new.location_history || []) as LocationData[]);
+          const data = payload.new as PatientLocation;
+          if (data?.current_location) {
+            setCurrentLocation(data.current_location);
+            setLocationHistory(data.location_history || []);
           }
         }
       )
@@ -71,9 +79,10 @@ export const LocationTracker: React.FC<LocationTrackerProps> = ({ groupId }) => 
       if (error) throw error;
 
       if (data) {
-        setCurrentLocation(data.current_location as LocationData);
-        setLocationHistory((data.location_history || []) as LocationData[]);
-        setIsTracking(data.location_enabled);
+        const locationData = data as PatientLocation;
+        setCurrentLocation(locationData.current_location);
+        setLocationHistory(locationData.location_history || []);
+        setIsTracking(locationData.location_enabled);
       }
     } catch (error) {
       console.error('Error fetching location data:', error);

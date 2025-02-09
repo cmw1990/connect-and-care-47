@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { calculateDistance } from "@/utils/locationUtils";
 import { useToast } from "@/hooks/use-toast";
@@ -96,14 +95,14 @@ export class LocationService {
         speed: locationUpdate.speed || null
       };
 
-      // Update location in database using upsert
+      // Update location in database using raw SQL
       const { error } = await supabase
         .from('patient_locations')
         .upsert({
           group_id: groupId,
           location_enabled: true,
           current_location: locationJson,
-          location_history: supabase.sql`array_append(COALESCE(location_history, '[]'::jsonb[]), ${locationJson}::jsonb)`
+          location_history: `array_append(COALESCE(location_history, '[]'::jsonb[]), '${JSON.stringify(locationJson)}'::jsonb)`
         }, {
           onConflict: 'group_id'
         });
