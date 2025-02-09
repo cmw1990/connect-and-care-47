@@ -13,10 +13,20 @@ interface LocationTrackerProps {
   groupId: string;
 }
 
+interface LocationData {
+  latitude: number;
+  longitude: number;
+  accuracy?: number;
+  speed?: number;
+  timestamp: string;
+  battery_level?: number;
+  activity_type?: 'still' | 'walking' | 'running' | 'driving';
+}
+
 export const LocationTracker: React.FC<LocationTrackerProps> = ({ groupId }) => {
   const [isTracking, setIsTracking] = useState(false);
-  const [currentLocation, setCurrentLocation] = useState<any>(null);
-  const [locationHistory, setLocationHistory] = useState<any[]>([]);
+  const [currentLocation, setCurrentLocation] = useState<LocationData | null>(null);
+  const [locationHistory, setLocationHistory] = useState<LocationData[]>([]);
   const [showHistory, setShowHistory] = useState(false);
   const { toast } = useToast();
 
@@ -145,7 +155,7 @@ export const LocationTracker: React.FC<LocationTrackerProps> = ({ groupId }) => 
                   title: "Current Location",
                   description: `Last updated: ${new Date(currentLocation.timestamp).toLocaleString()}`
                 },
-                ...(showHistory ? locationHistory.map((loc: any) => ({
+                ...(showHistory ? locationHistory.map((loc: LocationData) => ({
                   lat: loc.latitude,
                   lng: loc.longitude,
                   title: `Previous Location`,
@@ -157,7 +167,7 @@ export const LocationTracker: React.FC<LocationTrackerProps> = ({ groupId }) => 
             <div className="mt-4 space-y-2">
               <div className="flex items-center justify-between text-sm">
                 <span>Current Activity:</span>
-                <span className={`px-2 py-1 rounded-full text-white ${getActivityColor(currentLocation.activity_type)}`}>
+                <span className={`px-2 py-1 rounded-full text-white ${getActivityColor(currentLocation.activity_type || 'unknown')}`}>
                   {currentLocation.activity_type || 'Unknown'}
                 </span>
               </div>

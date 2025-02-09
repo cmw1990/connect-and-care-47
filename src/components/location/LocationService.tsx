@@ -87,14 +87,25 @@ export class LocationService {
         activity_type: await this.detectActivityType(position)
       };
 
-      // Update location in database
+      // Convert LocationUpdate to a valid Json type
+      const locationJson = {
+        ...locationUpdate,
+        activity_type: locationUpdate.activity_type || null,
+        battery_level: locationUpdate.battery_level || null,
+        accuracy: locationUpdate.accuracy || null,
+        speed: locationUpdate.speed || null
+      };
+
+      // Update location in database using upsert
       const { error } = await supabase
         .from('patient_locations')
         .upsert({
           group_id: groupId,
           location_enabled: true,
-          current_location: locationUpdate,
-          location_history: supabase.sql`array_append(COALESCE(location_history, '[]'::jsonb), ${locationUpdate}::jsonb)`
+          current_location: locationJson,
+          location_history: supabase.sql`array_append(COALESCE(location_history, '[]'::jsonb[]), ${locationJson}::jsonb)`
+        }, {
+          onConflict: 'group_id'
         });
 
       if (error) throw error;
@@ -191,7 +202,7 @@ export class LocationService {
         .insert({
           group_id: groupId,
           geofence_id: fenceId,
-          location: location,
+          location: JSON.stringify(location),
           status: 'unresolved'
         });
 
@@ -202,12 +213,12 @@ export class LocationService {
           group_id: groupId,
           check_in_type: 'emergency',
           status: 'urgent',
-          response_data: {
+          response_data: JSON.stringify({
             type: 'geofence_violation',
             location: location,
             geofence_id: fenceId,
             triggered_at: new Date().toISOString()
-          }
+          })
         });
     } catch (error) {
       console.error('Error handling geofence violation:', error);
