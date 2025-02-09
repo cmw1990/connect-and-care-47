@@ -51,9 +51,9 @@ const defaultSettings: PortalSettings = {
 
 export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
   // Query portal settings
-  const portalSettingsQuery = useQuery<PortalSettings, Error>({
+  const portalSettingsQuery = useQuery({
     queryKey: ['portal-settings', groupId],
-    queryFn: async () => {
+    queryFn: async (): Promise<PortalSettings> => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return defaultSettings;
 
@@ -81,9 +81,9 @@ export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
   });
 
   // Overdue medications count 
-  const overdueQuery = useQuery<number, Error>({
+  const overdueQuery = useQuery({
     queryKey: ['overduemedications', groupId],
-    queryFn: async () => {
+    queryFn: async (): Promise<number> => {
       const { count, error } = await supabase
         .from('medication_logs')
         .select('*', { count: 'exact', head: true })
@@ -97,9 +97,9 @@ export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
   });
 
   // Medication schedules 
-  const schedulesQuery = useQuery<MedicationSchedule[], Error>({
+  const schedulesQuery = useQuery({
     queryKey: ['medicationSchedules', groupId],
-    queryFn: async () => {
+    queryFn: async (): Promise<MedicationSchedule[]> => {
       const { data, error } = await supabase
         .from('medication_schedules')
         .select('*')
