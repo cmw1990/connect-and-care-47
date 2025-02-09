@@ -10,7 +10,7 @@ import {
   Heart, Building2, ShoppingCart, Shield, Star, 
   Users, Search, ArrowRight, ChartBar, Brain,
   Sparkles, Scale, History, TrendingUp, Info,
-  Activity, DeviceMobile, Stethoscope, AiFill,
+  Activity, Smartphone, Stethoscope, Robot,
   UserCheck
 } from "lucide-react";
 import { LocationMap } from "@/components/groups/LocationMap";
@@ -414,7 +414,7 @@ const Index = () => {
         <section className="py-16 bg-primary/5">
           <div className="container mx-auto px-4">
             <div className="max-w-4xl mx-auto text-center">
-              <DeviceMobile className="h-12 w-12 mx-auto mb-6 text-primary" />
+              <Smartphone className="h-12 w-12 mx-auto mb-6 text-primary" />
               <h2 className="text-3xl font-bold mb-4">Smart Device Integration</h2>
               <p className="text-lg text-muted-foreground mb-8">
                 Connect medical devices for real-time monitoring and insights
