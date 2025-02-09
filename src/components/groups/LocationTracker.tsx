@@ -17,6 +17,7 @@ import { SafetyZoneSelector } from "./SafetyZoneSelector";
 import { LocationService } from "../location/LocationService";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { Json } from "@/integrations/supabase/types";
 
 interface LocationTrackerProps {
   groupId: string;
@@ -38,18 +39,16 @@ interface PatientLocation {
   location_enabled: boolean;
 }
 
+interface NotificationSettings {
+  exitAlert: boolean;
+  enterAlert: boolean;
+  smsAlert: boolean;
+}
+
 interface DangerZone {
-  name: string;
-  radius: number;
-  center: { lat: number; lng: number };
-  notifications: {
-    exitAlert: boolean;
-    enterAlert: boolean;
-    smsAlert: boolean;
-  };
-  boundaryType: 'circle' | 'polygon';
-  polygonCoordinates?: number[][];
-  dangerZones?: DangerZone[];
+  coordinates: number[][];
+  typeId: string;
+  type: string;
 }
 
 export const LocationTracker: React.FC<LocationTrackerProps> = ({ groupId }) => {
@@ -136,11 +135,7 @@ export const LocationTracker: React.FC<LocationTrackerProps> = ({ groupId }) => 
     name: string; 
     radius: number; 
     center: { lat: number; lng: number };
-    notifications: {
-      exitAlert: boolean;
-      enterAlert: boolean;
-      smsAlert: boolean;
-    };
+    notifications: NotificationSettings;
     boundaryType: 'circle' | 'polygon';
     polygonCoordinates?: number[][];
     dangerZones?: DangerZone[];
@@ -157,8 +152,8 @@ export const LocationTracker: React.FC<LocationTrackerProps> = ({ groupId }) => 
           boundary_type: zone.boundaryType,
           polygon_coordinates: zone.polygonCoordinates,
           active: true,
-          notification_settings: zone.notifications,
-          danger_zones: zone.dangerZones
+          notification_settings: zone.notifications as Json,
+          danger_zones: zone.dangerZones as unknown as Json[]
         });
 
       if (error) throw error;
@@ -185,7 +180,7 @@ export const LocationTracker: React.FC<LocationTrackerProps> = ({ groupId }) => 
           toast({
             title: "Battery Warning",
             description: "Low battery may affect location tracking accuracy",
-            variant: "warning",
+            variant: "destructive",
           });
         }
 
@@ -277,7 +272,7 @@ export const LocationTracker: React.FC<LocationTrackerProps> = ({ groupId }) => 
         </CardHeader>
         <CardContent>
           {batteryLevel !== null && batteryLevel < 20 && !isCharging && (
-            <Alert variant="warning" className="mb-4">
+            <Alert className="mb-4" variant="destructive">
               <AlertTriangle className="h-4 w-4" />
               <AlertDescription>
                 Low battery ({Math.round(batteryLevel)}%). Location tracking accuracy may be affected.

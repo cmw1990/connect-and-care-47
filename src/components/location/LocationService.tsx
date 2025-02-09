@@ -250,11 +250,11 @@ export class LocationService {
           }
         }
 
-        const notifications = ((fence.notification_settings as unknown) as NotificationSettings) || DEFAULT_NOTIFICATION_SETTINGS;
+        const fenceNotifications = ((fence.notification_settings as unknown) as NotificationSettings) || DEFAULT_NOTIFICATION_SETTINGS;
 
         // Check if user has crossed the geofence boundary or entered danger zone
-        if ((isOutside && notifications.exitAlert) || 
-            (!isOutside && notifications.enterAlert) || 
+        if ((isOutside && fenceNotifications.exitAlert) || 
+            (!isOutside && fenceNotifications.enterAlert) || 
             inDangerZone) {
           violations.push({
             fenceId: fence.id,
@@ -271,7 +271,7 @@ export class LocationService {
           violation.fenceId,
           location,
           violation.isExit,
-          notifications.smsAlert,
+          fenceNotifications.smsAlert,
           violation.dangerZone
         );
       }
