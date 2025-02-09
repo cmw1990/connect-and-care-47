@@ -63,7 +63,7 @@ const defaultSettings: PortalSettings = {
 export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
   const { toast } = useToast();
   
-  const { data: dbSettings, isLoading: settingsLoading, error: settingsError } = useQuery({
+  const { data: dbSettings, isLoading: settingsLoading, error: settingsError } = useQuery<DatabasePortalSettings | null>({
     queryKey: ['portal-settings', groupId],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -81,11 +81,11 @@ export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
   });
 
   const settings: PortalSettings = dbSettings ? {
-    reminder_preferences: dbSettings.reminder_preferences as ReminderPreferences,
-    accessibility_settings: dbSettings.accessibility_settings as AccessibilitySettings
+    reminder_preferences: (dbSettings.reminder_preferences as unknown as ReminderPreferences) || defaultSettings.reminder_preferences,
+    accessibility_settings: (dbSettings.accessibility_settings as unknown as AccessibilitySettings) || defaultSettings.accessibility_settings
   } : defaultSettings;
 
-  const { data: overdueCount, isLoading: overdueLoading } = useQuery({
+  const { data: overdueCount, isLoading: overdueLoading } = useQuery<number>({
     queryKey: ['overduemedications', groupId],
     queryFn: async () => {
       const { count, error } = await supabase
@@ -100,7 +100,7 @@ export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
     refetchInterval: 60000
   });
 
-  const { data: schedules, isLoading: schedulesLoading } = useQuery({
+  const { data: schedules, isLoading: schedulesLoading } = useQuery<MedicationSchedule[]>({
     queryKey: ['medicationSchedules', groupId],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -126,8 +126,8 @@ export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
       }
 
       const sanitizedUpdates: Partial<DatabasePortalSettings> = {
-        reminder_preferences: updates.reminder_preferences as Json,
-        accessibility_settings: updates.accessibility_settings as Json
+        reminder_preferences: updates.reminder_preferences as unknown as Json,
+        accessibility_settings: updates.accessibility_settings as unknown as Json
       };
 
       if (dbSettings) {
