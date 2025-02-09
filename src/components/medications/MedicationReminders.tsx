@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client"; 
 import { Loader2 } from "lucide-react";
@@ -13,23 +14,13 @@ interface MedicationRemindersProps {
 // Database response types
 interface RawDBSettings {
   id: string;
-  user_id: string;
+  group_id: string;
   reminder_preferences: {
     preferred_channels: string[];
   };
   accessibility_settings: {
     voice_reminders: boolean;
   };
-  created_at: string;
-  updated_at: string;
-}
-
-interface MedicationSchedule {
-  id: string;
-  medication_name: string;
-  dosage: string;
-  time_of_day: string[];
-  group_id: string;
   created_at: string;
   updated_at: string;
 }
@@ -70,10 +61,21 @@ export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
 
       if (error && error.code !== 'PGRST116') throw error;
       
-      return data ? {
-        reminder_preferences: data.reminder_preferences || defaultSettings.reminder_preferences,
-        accessibility_settings: data.accessibility_settings || defaultSettings.accessibility_settings
-      } : defaultSettings;
+      if (!data) return defaultSettings;
+
+      // Ensure type safety by explicitly constructing the return object
+      return {
+        reminder_preferences: {
+          preferred_channels: Array.isArray(data.reminder_preferences?.preferred_channels) 
+            ? data.reminder_preferences.preferred_channels 
+            : defaultSettings.reminder_preferences.preferred_channels
+        },
+        accessibility_settings: {
+          voice_reminders: typeof data.accessibility_settings?.voice_reminders === 'boolean'
+            ? data.accessibility_settings.voice_reminders
+            : defaultSettings.accessibility_settings.voice_reminders
+        }
+      } as PortalSettings;
     }
   });
 

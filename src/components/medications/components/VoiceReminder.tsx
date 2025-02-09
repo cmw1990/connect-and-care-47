@@ -6,12 +6,14 @@ import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { Play, Pause, Volume2, VolumeX } from "lucide-react";
 
+interface VoiceReminderSettings {
+  voice_reminders: boolean;
+  preferred_voice?: string;
+}
+
 interface VoiceReminderProps {
   groupId: string;
-  settings?: {
-    voice_reminders?: boolean;
-    preferred_voice?: string;
-  };
+  settings?: VoiceReminderSettings;
 }
 
 interface TextToSpeechResponse {
@@ -35,7 +37,7 @@ export const VoiceReminder = ({ groupId, settings }: VoiceReminderProps) => {
 
   const playVoiceReminder = async () => {
     try {
-      const { data: reminder } = await supabase.functions.invoke<{ audioContent: string }>('text-to-speech', {
+      const { data: reminder } = await supabase.functions.invoke<TextToSpeechResponse>('text-to-speech', {
         body: {
           text: "Time to take your medication. Please don't forget to log it in the system.",
           voice: settings?.preferred_voice || "alloy"
@@ -83,7 +85,6 @@ export const VoiceReminder = ({ groupId, settings }: VoiceReminderProps) => {
     try {
       const newSettings = {
         reminder_preferences: {
-          ...settings,
           voice_reminders: !voiceEnabled
         }
       };
