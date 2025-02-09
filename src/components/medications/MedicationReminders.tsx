@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -19,11 +18,14 @@ interface MedicationRemindersProps {
   groupId: string;
 }
 
-// JSON type definitions with explicit recursion limit
-type JsonPrimitive = string | number | boolean | null;
-type JsonObject = { [key: string]: JsonPrimitive | JsonObject | JsonArray };
-type JsonArray = (JsonPrimitive | JsonObject | JsonArray)[];
-type Json = JsonPrimitive | JsonObject | JsonArray;
+// Using a simpler non-recursive JSON type definition
+type Json = 
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json }
+  | Json[];
 
 interface ReminderPreferences {
   preferred_channels: string[];
@@ -85,8 +87,8 @@ export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
   });
 
   const settings: PortalSettings = dbSettings ? {
-    reminder_preferences: (dbSettings.reminder_preferences as JsonObject) as unknown as ReminderPreferences,
-    accessibility_settings: (dbSettings.accessibility_settings as JsonObject) as unknown as AccessibilitySettings
+    reminder_preferences: (dbSettings.reminder_preferences as Json) as unknown as ReminderPreferences,
+    accessibility_settings: (dbSettings.accessibility_settings as Json) as unknown as AccessibilitySettings
   } : defaultSettings;
 
   const { data: overdueCount = 0, isLoading: overdueLoading } = useQuery({
