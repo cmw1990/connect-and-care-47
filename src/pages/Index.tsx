@@ -10,7 +10,7 @@ import {
   Heart, Building2, ShoppingCart, Shield, Star, 
   Users, Search, ArrowRight, ChartBar, Brain,
   Sparkles, Scale, History, TrendingUp, Info,
-  Activity, Smartphone, Stethoscope, Robot,
+  Activity, Smartphone, Stethoscope, Bot,
   UserCheck
 } from "lucide-react";
 import { LocationMap } from "@/components/groups/LocationMap";
