@@ -23,13 +23,26 @@ interface MedicationRemindersProps {
 
 type Json = string | number | boolean | null | { [key: string]: Json } | Json[];
 
+interface ReminderPreferences {
+  preferred_channels?: string[];
+}
+
+interface AccessibilitySettings {
+  voice_reminders?: boolean;
+}
+
+interface DatabasePortalSettings {
+  id?: string;
+  user_id?: string;
+  reminder_preferences?: Json;
+  accessibility_settings?: Json;
+  created_at?: string;
+  updated_at?: string;
+}
+
 interface PortalSettings {
-  reminder_preferences?: {
-    preferred_channels?: string[];
-  };
-  accessibility_settings?: {
-    voice_reminders?: boolean;
-  };
+  reminder_preferences?: ReminderPreferences;
+  accessibility_settings?: AccessibilitySettings;
 }
 
 export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
@@ -47,11 +60,10 @@ export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
         .single();
 
       if (error && error.code !== 'PGRST116') throw error;
-      return data as PortalSettings | null;
+      return data as DatabasePortalSettings | null;
     }
   });
 
-  // Add query for overdue medications
   const { data: overdueCount } = useQuery({
     queryKey: ['overduemedications', groupId],
     queryFn: async () => {
@@ -64,7 +76,7 @@ export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
       if (error) throw error;
       return count;
     },
-    refetchInterval: 60000 // Refresh every minute
+    refetchInterval: 60000
   });
 
   const updateSettings = async (updates: Partial<PortalSettings>) => {
@@ -72,9 +84,7 @@ export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Cast the updates to match Supabase's expected Json type
-      const sanitizedUpdates = {
-        ...updates,
+      const sanitizedUpdates: Partial<DatabasePortalSettings> = {
         reminder_preferences: updates.reminder_preferences as Json,
         accessibility_settings: updates.accessibility_settings as Json
       };
@@ -89,7 +99,10 @@ export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
       } else {
         const { error } = await supabase
           .from('medication_portal_settings')
-          .insert([{ user_id: user.id, ...sanitizedUpdates }]);
+          .insert([{ 
+            user_id: user.id,
+            ...sanitizedUpdates 
+          }]);
 
         if (error) throw error;
       }
@@ -158,10 +171,9 @@ export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
                 <Switch
                   checked={settings?.reminder_preferences?.preferred_channels?.includes('push')}
                   onCheckedChange={(checked) => {
-                    const channels = settings?.reminder_preferences?.preferred_channels || [];
+                    const channels = (settings?.reminder_preferences as ReminderPreferences)?.preferred_channels || [];
                     updateSettings({
                       reminder_preferences: {
-                        ...settings?.reminder_preferences,
                         preferred_channels: checked
                           ? [...channels, 'push']
                           : channels.filter(c => c !== 'push')
@@ -181,10 +193,9 @@ export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
                 <Switch
                   checked={settings?.reminder_preferences?.preferred_channels?.includes('sms')}
                   onCheckedChange={(checked) => {
-                    const channels = settings?.reminder_preferences?.preferred_channels || [];
+                    const channels = (settings?.reminder_preferences as ReminderPreferences)?.preferred_channels || [];
                     updateSettings({
                       reminder_preferences: {
-                        ...settings?.reminder_preferences,
                         preferred_channels: checked
                           ? [...channels, 'sms']
                           : channels.filter(c => c !== 'sms')
@@ -202,11 +213,10 @@ export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
                   </div>
                 </div>
                 <Switch
-                  checked={settings?.accessibility_settings?.voice_reminders}
+                  checked={(settings?.accessibility_settings as AccessibilitySettings)?.voice_reminders}
                   onCheckedChange={(checked) => {
                     updateSettings({
                       accessibility_settings: {
-                        ...settings?.accessibility_settings,
                         voice_reminders: checked
                       }
                     });
