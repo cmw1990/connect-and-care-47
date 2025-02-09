@@ -15,6 +15,10 @@ export const SupervisorPanel = ({ groupId, data }: SupervisorPanelProps) => {
   const { data: pendingVerifications } = useQuery({
     queryKey: ['pendingVerifications', groupId],
     queryFn: async () => {
+      type DBMedicationLog = Omit<MedicationLog, 'taken_at'> & {
+        administered_at: string;
+      };
+
       const { data, error } = await supabase
         .from('medication_logs')
         .select(`
@@ -31,12 +35,10 @@ export const SupervisorPanel = ({ groupId, data }: SupervisorPanelProps) => {
       if (error) throw error;
       
       // Transform the data to match our MedicationLog type
-      const transformedData = data.map((log: any) => ({
+      return (data as DBMedicationLog[]).map(log => ({
         ...log,
-        taken_at: log.administered_at // Map administered_at to taken_at
-      })) as MedicationLog[];
-      
-      return transformedData;
+        taken_at: log.administered_at
+      }));
     }
   });
 

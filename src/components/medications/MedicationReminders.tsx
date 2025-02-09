@@ -1,10 +1,10 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client"; 
 import { Loader2 } from "lucide-react";
 import { OverdueAlert } from "./components/OverdueAlert";  
 import { ReminderSettings } from "./components/ReminderSettings";
 import { UpcomingReminders } from "./components/UpcomingReminders";
+import type { MedicationSchedule } from "@/types/medication";
 
 interface MedicationRemindersProps {
   groupId: string;
@@ -65,26 +65,15 @@ export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
       const { data, error } = await supabase
         .from('medication_portal_settings')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('group_id', groupId)
         .single();
 
       if (error && error.code !== 'PGRST116') throw error;
       
-      if (!data) return defaultSettings;
-
-      const rawSettings = data as RawDBSettings;
-      
-      // Transform response to expected format
-      const settings: PortalSettings = {
-        reminder_preferences: {
-          preferred_channels: rawSettings.reminder_preferences?.preferred_channels || []
-        },
-        accessibility_settings: {
-          voice_reminders: rawSettings.accessibility_settings?.voice_reminders || false
-        }
-      };
-
-      return settings;
+      return data ? {
+        reminder_preferences: data.reminder_preferences || defaultSettings.reminder_preferences,
+        accessibility_settings: data.accessibility_settings || defaultSettings.accessibility_settings
+      } : defaultSettings;
     }
   });
 

@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -31,7 +30,7 @@ export const MedicationDashboard = ({ groupId }: MedicationDashboardProps) => {
         .limit(30);
 
       if (error) throw error;
-      return data as MedicationAdherenceTrend[];
+      return (data || []) as MedicationAdherenceTrend[];
     }
   });
 
@@ -59,7 +58,17 @@ export const MedicationDashboard = ({ groupId }: MedicationDashboardProps) => {
         .single();
 
       if (error) throw error;
-      return data as MedicationPortalSettings;
+      
+      // Transform data to match MedicationPortalSettings interface
+      const transformedData: MedicationPortalSettings = {
+        id: data.id,
+        group_id: groupId,
+        reminder_preferences: data.reminder_preferences || {},
+        created_at: data.created_at,
+        updated_at: data.updated_at
+      };
+      
+      return transformedData;
     }
   });
 

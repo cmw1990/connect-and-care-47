@@ -14,6 +14,10 @@ interface VoiceReminderProps {
   };
 }
 
+interface TextToSpeechResponse {
+  audioContent: string;
+}
+
 export const VoiceReminder = ({ groupId, settings }: VoiceReminderProps) => {
   const { toast } = useToast();
   const [isPlaying, setIsPlaying] = useState(false);
@@ -77,14 +81,16 @@ export const VoiceReminder = ({ groupId, settings }: VoiceReminderProps) => {
 
   const toggleVoiceReminders = async () => {
     try {
+      const newSettings = {
+        reminder_preferences: {
+          ...settings,
+          voice_reminders: !voiceEnabled
+        }
+      };
+
       const { error } = await supabase
         .from('medication_portal_settings')
-        .update({
-          reminder_preferences: {
-            ...settings,
-            voice_reminders: !voiceEnabled
-          }
-        })
+        .update(newSettings)
         .eq('group_id', groupId);
 
       if (error) throw error;
