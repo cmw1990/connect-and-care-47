@@ -24,7 +24,7 @@ interface PortalSettings {
   accessibility_settings: AccessibilitySettings;
 }
 
-// Raw database response type
+// Raw database response type with strict typing
 interface RawDatabaseResponse {
   id: string;
   user_id: string;
@@ -38,6 +38,7 @@ interface RawDatabaseResponse {
   updated_at: string;
 }
 
+// Fixed default settings
 const defaultSettings: PortalSettings = {
   reminder_preferences: {
     preferred_channels: []
@@ -48,7 +49,7 @@ const defaultSettings: PortalSettings = {
 };
 
 export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
-  // Query portal settings
+  // Query portal settings with improved type safety
   const { data: dbSettings, isLoading: settingsLoading, error: settingsError } = useQuery({
     queryKey: ['portal-settings', groupId],
     queryFn: async () => {
@@ -67,19 +68,16 @@ export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
 
       // Transform raw database response to strongly typed object
       const rawData = data as RawDatabaseResponse;
-      
-      return {
-        id: rawData.id,
-        user_id: rawData.user_id,
+      const transformedSettings: PortalSettings = {
         reminder_preferences: {
           preferred_channels: rawData.reminder_preferences?.preferred_channels || []
         },
         accessibility_settings: {
           voice_reminders: rawData.accessibility_settings?.voice_reminders || false
-        },
-        created_at: rawData.created_at,
-        updated_at: rawData.updated_at
+        }
       };
+      
+      return transformedSettings;
     }
   });
 
