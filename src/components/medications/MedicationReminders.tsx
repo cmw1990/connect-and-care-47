@@ -1,7 +1,8 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
-import { OverdueAlert } from "./components/OverdueAlert";
+import { OverdueAlert } from "./components/OverdueAlert";  
 import { ReminderSettings } from "./components/ReminderSettings";
 import { UpcomingReminders } from "./components/UpcomingReminders";
 
@@ -9,7 +10,7 @@ interface MedicationRemindersProps {
   groupId: string;
 }
 
-// Interface definitions for settings
+// Settings interfaces
 interface ReminderPreferences {
   preferred_channels: string[];
 }
@@ -23,6 +24,7 @@ interface PortalSettings {
   accessibility_settings: AccessibilitySettings;
 }
 
+// Database type
 type DatabasePortalSettings = {
   id?: string;
   user_id?: string;
@@ -42,6 +44,7 @@ const defaultSettings: PortalSettings = {
 };
 
 export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
+  // Query portal settings
   const { data: dbSettings, isLoading: settingsLoading, error: settingsError } = useQuery({
     queryKey: ['portal-settings', groupId],
     queryFn: async () => {
@@ -57,26 +60,29 @@ export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
       if (error && error.code !== 'PGRST116') throw error;
       
       if (data) {
-        const parsedData = data as DatabasePortalSettings;
-        return {
-          ...parsedData,
+        // Parse and validate settings
+        const dbData = data as DatabasePortalSettings;
+        
+        // Safely transform database data to application type
+        const settings: PortalSettings = {
           reminder_preferences: {
-            preferred_channels: Array.isArray(parsedData.reminder_preferences?.preferred_channels) 
-              ? parsedData.reminder_preferences.preferred_channels 
+            preferred_channels: Array.isArray(dbData.reminder_preferences?.preferred_channels) 
+              ? dbData.reminder_preferences.preferred_channels 
               : []
           },
           accessibility_settings: {
-            voice_reminders: Boolean(parsedData.accessibility_settings?.voice_reminders)
+            voice_reminders: Boolean(dbData.accessibility_settings?.voice_reminders)
           }
-        } as PortalSettings;
+        };
+
+        return settings;
       }
       
       return null;
     }
   });
 
-  const settings: PortalSettings = dbSettings ?? defaultSettings;
-
+  // Overdue medications count
   const { data: overdueCount = 0, isLoading: overdueLoading } = useQuery({
     queryKey: ['overduemedications', groupId],
     queryFn: async () => {
@@ -92,6 +98,7 @@ export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
     refetchInterval: 60000 // Refresh every minute
   });
 
+  // Medication schedules
   const { data: schedules = [], isLoading: schedulesLoading } = useQuery({
     queryKey: ['medicationSchedules', groupId],
     queryFn: async () => {
@@ -104,6 +111,9 @@ export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
       return data;
     }
   });
+
+  // Use default settings if none found in DB
+  const settings: PortalSettings = dbSettings ?? defaultSettings;
 
   if (settingsError) {
     return (
