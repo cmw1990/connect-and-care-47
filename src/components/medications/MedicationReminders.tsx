@@ -10,7 +10,7 @@ interface MedicationRemindersProps {
   groupId: string;
 }
 
-// Settings interfaces
+// Settings interfaces for UI components
 interface ReminderPreferences {
   preferred_channels: string[];
 }
@@ -24,19 +24,19 @@ interface PortalSettings {
   accessibility_settings: AccessibilitySettings;
 }
 
-// Database type with flattened structure
-type DatabasePortalSettings = {
-  id?: string;
-  user_id?: string;  
+// Raw database response type
+interface RawDatabaseResponse {
+  id: string;
+  user_id: string;
   reminder_preferences: {
     preferred_channels?: string[];
-  };
+  } | null;
   accessibility_settings: {
     voice_reminders?: boolean;
-  };
-  created_at?: string;
-  updated_at?: string;
-};
+  } | null;
+  created_at: string;
+  updated_at: string;
+}
 
 const defaultSettings: PortalSettings = {
   reminder_preferences: {
@@ -65,23 +65,21 @@ export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
       
       if (!data) return null;
 
-      // Transform database data to expected type with safe type checking
-      const validated: DatabasePortalSettings = {
-        id: data.id,
-        user_id: data.user_id,
+      // Transform raw database response to strongly typed object
+      const rawData = data as RawDatabaseResponse;
+      
+      return {
+        id: rawData.id,
+        user_id: rawData.user_id,
         reminder_preferences: {
-          preferred_channels: Array.isArray(data.reminder_preferences?.preferred_channels) 
-            ? data.reminder_preferences.preferred_channels 
-            : []
+          preferred_channels: rawData.reminder_preferences?.preferred_channels || []
         },
         accessibility_settings: {
-          voice_reminders: Boolean(data.accessibility_settings?.voice_reminders)
+          voice_reminders: rawData.accessibility_settings?.voice_reminders || false
         },
-        created_at: data.created_at,
-        updated_at: data.updated_at
+        created_at: rawData.created_at,
+        updated_at: rawData.updated_at
       };
-      
-      return validated;
     }
   });
 
@@ -116,7 +114,7 @@ export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
   });
 
   // Use default settings if none found in DB
-  const settings: PortalSettings = dbSettings ?? defaultSettings;
+  const settings = dbSettings || defaultSettings;
 
   if (settingsError) {
     return (
