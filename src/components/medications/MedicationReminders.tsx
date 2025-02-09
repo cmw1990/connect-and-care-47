@@ -27,9 +27,13 @@ interface PortalSettings {
 // Database type with flattened structure
 type DatabasePortalSettings = {
   id?: string;
-  user_id?: string;
-  reminder_preferences: ReminderPreferences;
-  accessibility_settings: AccessibilitySettings;
+  user_id?: string;  
+  reminder_preferences: {
+    preferred_channels?: string[];
+  };
+  accessibility_settings: {
+    voice_reminders?: boolean;
+  };
   created_at?: string;
   updated_at?: string;
 };
@@ -61,7 +65,7 @@ export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
       
       if (!data) return null;
 
-      // Transform database data to expected type
+      // Transform database data to expected type with safe type checking
       const validated: DatabasePortalSettings = {
         id: data.id,
         user_id: data.user_id,
