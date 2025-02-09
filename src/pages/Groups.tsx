@@ -28,6 +28,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { motion } from "framer-motion";
+import { MedicationDashboard } from "@/components/medications/MedicationDashboard";
 
 const Groups = () => {
   const navigate = useNavigate();
@@ -475,6 +476,7 @@ const Groups = () => {
                     />
                     <div className="mt-4 space-y-4">
                       <CareRecipientManager groupId={group.id} />
+                      <MedicationDashboard groupId={group.id} />
                       <CareTeamPresence groupId={group.id} />
                       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                         <CareUpdates groupId={group.id} />
