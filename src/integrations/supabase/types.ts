@@ -726,6 +726,50 @@ export type Database = {
           },
         ]
       }
+      care_insights: {
+        Row: {
+          created_at: string | null
+          group_id: string | null
+          id: string
+          insight_data: Json
+          insight_type: string
+          severity: string | null
+          status: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          group_id?: string | null
+          id?: string
+          insight_data: Json
+          insight_type: string
+          severity?: string | null
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          group_id?: string | null
+          id?: string
+          insight_data?: Json
+          insight_type?: string
+          severity?: string | null
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "care_insights_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "care_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       care_outcome_metrics: {
         Row: {
           activity_completion_rate: number | null
@@ -1502,6 +1546,44 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      caregiver_reviews: {
+        Row: {
+          caregiver_id: string | null
+          created_at: string | null
+          id: string
+          rating: number | null
+          review_text: string | null
+          reviewer_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          caregiver_id?: string | null
+          created_at?: string | null
+          id?: string
+          rating?: number | null
+          review_text?: string | null
+          reviewer_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          caregiver_id?: string | null
+          created_at?: string | null
+          id?: string
+          rating?: number | null
+          review_text?: string | null
+          reviewer_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "caregiver_reviews_caregiver_id_fkey"
+            columns: ["caregiver_id"]
+            isOneToOne: false
+            referencedRelation: "caregiver_profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -4142,6 +4224,53 @@ export type Database = {
           suitable_for?: string[] | null
         }
         Relationships: []
+      }
+      vital_signs: {
+        Row: {
+          blood_pressure: string | null
+          created_at: string | null
+          group_id: string | null
+          heart_rate: number | null
+          id: string
+          oxygen_level: number | null
+          recorded_at: string | null
+          temperature: number | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          blood_pressure?: string | null
+          created_at?: string | null
+          group_id?: string | null
+          heart_rate?: number | null
+          id?: string
+          oxygen_level?: number | null
+          recorded_at?: string | null
+          temperature?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          blood_pressure?: string | null
+          created_at?: string | null
+          group_id?: string | null
+          heart_rate?: number | null
+          id?: string
+          oxygen_level?: number | null
+          recorded_at?: string | null
+          temperature?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vital_signs_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "care_groups"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       wishes: {
         Row: {
