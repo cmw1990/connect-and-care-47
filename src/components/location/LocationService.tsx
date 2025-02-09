@@ -2,33 +2,22 @@ import { supabase } from "@/integrations/supabase/client";
 import { calculateDistance } from "@/utils/locationUtils";
 import { useToast } from "@/hooks/use-toast";
 import { Json } from "@/integrations/supabase/types";
-
-interface LocationUpdate {
-  latitude: number;
-  longitude: number;
-  accuracy?: number;
-  speed?: number;
-  timestamp: string;
-  battery_level?: number;
-  activity_type?: 'still' | 'walking' | 'running' | 'driving';
-}
-
-interface NotificationSettings {
-  exitAlert: boolean;
-  enterAlert: boolean;
-  smsAlert: boolean;
-}
-
-interface DangerZone {
-  coordinates: number[][];
-  typeId: string;
-  type: string;
-}
+import { 
+  LocationUpdate, 
+  NotificationSettings, 
+  DangerZone,
+  GeofenceConfig 
+} from "@/types/groups";
 
 const DEFAULT_NOTIFICATION_SETTINGS: NotificationSettings = {
   exitAlert: true,
   enterAlert: false,
-  smsAlert: false
+  smsAlert: false,
+  emailAlert: true,
+  pushNotifications: true,
+  notifyCaregiver: true,
+  notifyEmergencyContact: false,
+  escalationTimeout: 30
 };
 
 export class LocationService {
@@ -63,10 +52,22 @@ export class LocationService {
         throw new Error('Location permission denied');
       }
 
-      // Check battery status if available
+      // Check battery status
       const batteryWarning = await this.checkBatteryStatus();
       if (batteryWarning) {
         console.warn('Battery warning:', batteryWarning);
+      }
+
+      // Verify group membership and permissions
+      const { data: membership } = await supabase
+        .from('care_group_members')
+        .select('role')
+        .eq('group_id', groupId)
+        .eq('user_id', supabase.auth.getUser())
+        .single();
+
+      if (!membership) {
+        throw new Error('Not authorized to track location for this group');
       }
 
       // Start watching position with high accuracy
@@ -311,6 +312,12 @@ export class LocationService {
     dangerZoneType?: string
   ) {
     try {
+      const { data: group } = await supabase
+        .from('care_groups')
+        .select('name, emergency_contacts')
+        .eq('id', groupId)
+        .single();
+
       // Create geofence alert
       const { data: alert } = await supabase
         .from('geofence_alerts')
@@ -342,11 +349,29 @@ export class LocationService {
             } as unknown as Json
           });
 
+        // Notify emergency contacts if configured
+        if (group?.emergency_contacts) {
+          // Here you would integrate with your notification service
+          console.log('Notifying emergency contacts:', group.emergency_contacts);
+        }
+
         // Send SMS if enabled
         if (sendSms) {
           console.log('SMS alert would be sent here');
         }
       }
+
+      // Update group status
+      await supabase
+        .from('care_groups')
+        .update({
+          privacy_settings: {
+            status: dangerZoneType ? 'emergency' : 'warning',
+            lastUpdated: new Date().toISOString()
+          }
+        })
+        .eq('id', groupId);
+
     } catch (error) {
       console.error('Error handling geofence violation:', error);
     }
@@ -387,5 +412,49 @@ export class LocationService {
     }
     this.isTrackingActive = false;
     return true;
+  }
+
+  static async getLocationHistory(groupId: string, startDate?: Date, endDate?: Date) {
+    try {
+      let query = supabase
+        .from('patient_locations')
+        .select('location_history')
+        .eq('group_id', groupId)
+        .single();
+
+      const { data, error } = await query;
+      if (error) throw error;
+
+      let history = data?.location_history || [];
+
+      if (startDate || endDate) {
+        history = history.filter((loc: LocationUpdate) => {
+          const timestamp = new Date(loc.timestamp);
+          return (!startDate || timestamp >= startDate) && 
+                 (!endDate || timestamp <= endDate);
+        });
+      }
+
+      return history;
+    } catch (error) {
+      console.error('Error fetching location history:', error);
+      return [];
+    }
+  }
+
+  static async getCareGroupGeofences(groupId: string) {
+    try {
+      const { data, error } = await supabase
+        .from('geofences')
+        .select('*')
+        .eq('group_id', groupId)
+        .eq('active', true);
+
+      if (error) throw error;
+      return data as GeofenceConfig[];
+    } catch (error) {
+      console.error('Error fetching geofences:', error);
+      return [];
+    }
   }
 }
