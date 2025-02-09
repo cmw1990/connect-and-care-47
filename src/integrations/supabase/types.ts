@@ -3209,6 +3209,47 @@ export type Database = {
           },
         ]
       }
+      medication_adherence_trends: {
+        Row: {
+          adherence_rate: number
+          created_at: string | null
+          date: string
+          group_id: string
+          id: string
+          taken_doses: number
+          total_doses: number
+          updated_at: string | null
+        }
+        Insert: {
+          adherence_rate: number
+          created_at?: string | null
+          date: string
+          group_id: string
+          id?: string
+          taken_doses: number
+          total_doses: number
+          updated_at?: string | null
+        }
+        Update: {
+          adherence_rate?: number
+          created_at?: string | null
+          date?: string
+          group_id?: string
+          id?: string
+          taken_doses?: number
+          total_doses?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "medication_adherence_trends_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "care_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       medication_inventory: {
         Row: {
           created_at: string | null
@@ -3448,6 +3489,53 @@ export type Database = {
             columns: ["schedule_id"]
             isOneToOne: false
             referencedRelation: "medication_schedules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      medication_supervision_summary: {
+        Row: {
+          approved_medications: number
+          avg_verification_time_minutes: number
+          created_at: string | null
+          group_id: string
+          id: string
+          missed_medications: number
+          pending_verifications: number
+          supervisor_id: string
+          total_medications: number
+          updated_at: string | null
+        }
+        Insert: {
+          approved_medications?: number
+          avg_verification_time_minutes?: number
+          created_at?: string | null
+          group_id: string
+          id?: string
+          missed_medications?: number
+          pending_verifications?: number
+          supervisor_id: string
+          total_medications?: number
+          updated_at?: string | null
+        }
+        Update: {
+          approved_medications?: number
+          avg_verification_time_minutes?: number
+          created_at?: string | null
+          group_id?: string
+          id?: string
+          missed_medications?: number
+          pending_verifications?: number
+          supervisor_id?: string
+          total_medications?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "medication_supervision_summary_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "care_groups"
             referencedColumns: ["id"]
           },
         ]
