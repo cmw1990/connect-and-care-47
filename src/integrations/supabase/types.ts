@@ -360,6 +360,44 @@ export type Database = {
           },
         ]
       }
+      care_circle_members: {
+        Row: {
+          created_at: string
+          group_id: string
+          id: string
+          permissions: Json
+          role: Database["public"]["Enums"]["member_role"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          group_id: string
+          id?: string
+          permissions?: Json
+          role: Database["public"]["Enums"]["member_role"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          group_id?: string
+          id?: string
+          permissions?: Json
+          role?: Database["public"]["Enums"]["member_role"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "care_circle_members_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "care_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       care_connections: {
         Row: {
           connection_type: Database["public"]["Enums"]["connection_type"]
@@ -1236,6 +1274,53 @@ export type Database = {
           },
           {
             foreignKeyName: "care_schedule_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "care_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      care_shifts: {
+        Row: {
+          caregiver_id: string
+          created_at: string
+          end_time: string
+          group_id: string
+          id: string
+          notes: string | null
+          start_time: string
+          status: Database["public"]["Enums"]["shift_status"]
+          tasks: Json | null
+          updated_at: string
+        }
+        Insert: {
+          caregiver_id: string
+          created_at?: string
+          end_time: string
+          group_id: string
+          id?: string
+          notes?: string | null
+          start_time: string
+          status?: Database["public"]["Enums"]["shift_status"]
+          tasks?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          caregiver_id?: string
+          created_at?: string
+          end_time?: string
+          group_id?: string
+          id?: string
+          notes?: string | null
+          start_time?: string
+          status?: Database["public"]["Enums"]["shift_status"]
+          tasks?: Json | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "care_shifts_group_id_fkey"
             columns: ["group_id"]
             isOneToOne: false
             referencedRelation: "care_groups"
@@ -3940,6 +4025,62 @@ export type Database = {
           },
         ]
       }
+      safety_incidents: {
+        Row: {
+          actions_taken: string | null
+          created_at: string
+          description: string
+          follow_up_required: boolean | null
+          group_id: string
+          id: string
+          incident_type: string
+          location: string | null
+          occurred_at: string
+          reported_by: string
+          severity: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          actions_taken?: string | null
+          created_at?: string
+          description: string
+          follow_up_required?: boolean | null
+          group_id: string
+          id?: string
+          incident_type: string
+          location?: string | null
+          occurred_at: string
+          reported_by: string
+          severity: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          actions_taken?: string | null
+          created_at?: string
+          description?: string
+          follow_up_required?: boolean | null
+          group_id?: string
+          id?: string
+          incident_type?: string
+          location?: string | null
+          occurred_at?: string
+          reported_by?: string
+          severity?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "safety_incidents_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "care_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       service_reviews: {
         Row: {
           booking_id: string
@@ -4597,6 +4738,47 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "vital_signs_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "care_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vital_signs_thresholds: {
+        Row: {
+          created_at: string
+          group_id: string
+          id: string
+          max_value: number | null
+          min_value: number | null
+          notify_on_breach: boolean | null
+          updated_at: string
+          vital_type: Database["public"]["Enums"]["vital_type"]
+        }
+        Insert: {
+          created_at?: string
+          group_id: string
+          id?: string
+          max_value?: number | null
+          min_value?: number | null
+          notify_on_breach?: boolean | null
+          updated_at?: string
+          vital_type: Database["public"]["Enums"]["vital_type"]
+        }
+        Update: {
+          created_at?: string
+          group_id?: string
+          id?: string
+          max_value?: number | null
+          min_value?: number | null
+          notify_on_breach?: boolean | null
+          updated_at?: string
+          vital_type?: Database["public"]["Enums"]["vital_type"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vital_signs_thresholds_group_id_fkey"
             columns: ["group_id"]
             isOneToOne: false
             referencedRelation: "care_groups"
@@ -7758,6 +7940,12 @@ export type Database = {
         | "medication_dispenser"
         | "sleep_monitor"
         | "fall_detector"
+      member_role:
+        | "primary_caregiver"
+        | "family_member"
+        | "medical_professional"
+        | "care_coordinator"
+      shift_status: "scheduled" | "active" | "completed" | "cancelled"
       subscription_tier: "basic" | "pro" | "enterprise"
       user_type:
         | "patient"
@@ -7774,6 +7962,13 @@ export type Database = {
         | "verified"
         | "failed"
         | "expired"
+      vital_type:
+        | "blood_pressure"
+        | "heart_rate"
+        | "temperature"
+        | "oxygen"
+        | "blood_sugar"
+        | "weight"
     }
     CompositeTypes: {
       geometry_dump: {
