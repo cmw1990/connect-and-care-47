@@ -3372,28 +3372,36 @@ export type Database = {
         Row: {
           accessibility_settings: Json | null
           created_at: string | null
+          group_id: string | null
           id: string
           reminder_preferences: Json | null
           updated_at: string | null
-          user_id: string | null
         }
         Insert: {
           accessibility_settings?: Json | null
           created_at?: string | null
+          group_id?: string | null
           id?: string
           reminder_preferences?: Json | null
           updated_at?: string | null
-          user_id?: string | null
         }
         Update: {
           accessibility_settings?: Json | null
           created_at?: string | null
+          group_id?: string | null
           id?: string
           reminder_preferences?: Json | null
           updated_at?: string | null
-          user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "medication_portal_settings_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "care_groups"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       medication_schedules: {
         Row: {
