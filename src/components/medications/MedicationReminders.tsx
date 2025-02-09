@@ -10,11 +10,9 @@ import {
   Bell,
   BellRing,
   Clock,
-  Calendar,
   Settings,
-  MessageSquare
+  Loader2
 } from "lucide-react";
-import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 
 interface MedicationRemindersProps {
@@ -57,8 +55,7 @@ const defaultSettings: PortalSettings = {
 export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
   const { toast } = useToast();
   
-  // Specify explicit types for the query
-  const { data: dbSettings, isLoading } = useQuery({
+  const { data: dbSettings, isLoading: settingsLoading, error: settingsError } = useQuery({
     queryKey: ['portal-settings', groupId] as const,
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -75,13 +72,12 @@ export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
     }
   });
 
-  // Convert database settings to frontend format with type assertions
   const settings: PortalSettings = dbSettings ? {
-    reminder_preferences: (dbSettings.reminder_preferences as unknown as ReminderPreferences) || defaultSettings.reminder_preferences,
-    accessibility_settings: (dbSettings.accessibility_settings as unknown as AccessibilitySettings) || defaultSettings.accessibility_settings
+    reminder_preferences: dbSettings.reminder_preferences as unknown as ReminderPreferences,
+    accessibility_settings: dbSettings.accessibility_settings as unknown as AccessibilitySettings
   } : defaultSettings;
 
-  const { data: overdueCount } = useQuery({
+  const { data: overdueCount, isLoading: overdueLoading } = useQuery({
     queryKey: ['overduemedications', groupId] as const,
     queryFn: async () => {
       const { count, error } = await supabase
@@ -96,10 +92,30 @@ export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
     refetchInterval: 60000
   });
 
+  const { data: schedules, isLoading: schedulesLoading } = useQuery({
+    queryKey: ['medicationSchedules', groupId] as const,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('medication_schedules')
+        .select('*')
+        .eq('group_id', groupId);
+
+      if (error) throw error;
+      return data;
+    }
+  });
+
   const updateSettings = async (updates: Partial<PortalSettings>) => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      if (!user) {
+        toast({
+          title: "Authentication Error",
+          description: "Please sign in to update settings.",
+          variant: "destructive",
+        });
+        return;
+      }
 
       const sanitizedUpdates: Partial<DatabasePortalSettings> = {
         reminder_preferences: updates.reminder_preferences as unknown as Json,
@@ -138,145 +154,160 @@ export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
     }
   };
 
-  const { data: schedules } = useQuery({
-    queryKey: ['medicationSchedules', groupId] as const,
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('medication_schedules')
-        .select('*')
-        .eq('group_id', groupId);
-
-      if (error) throw error;
-      return data;
-    }
-  });
+  if (settingsError) {
+    return (
+      <div className="p-4 bg-destructive/10 rounded-lg text-destructive">
+        Error loading settings. Please try again later.
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
-      {overdueCount && overdueCount > 0 && (
-        <div className="bg-destructive/15 text-destructive p-4 rounded-lg mb-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Bell className="h-5 w-5" />
-            <span>You have {overdueCount} overdue medication{overdueCount > 1 ? 's' : ''}</span>
-          </div>
-          <Button
-            variant="destructive"
-            size="sm"
-            onClick={() => {}}
-          >
-            View Details
-          </Button>
+      {settingsLoading || overdueLoading || schedulesLoading ? (
+        <div className="flex items-center justify-center p-8">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
-      )}
-
-      <div className="grid gap-4 md:grid-cols-2">
-        <Card>
-          <CardContent className="pt-6">
-            <h4 className="font-medium flex items-center gap-2 mb-4">
-              <Settings className="h-4 w-4" />
-              Reminder Preferences
-            </h4>
-
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label>Push Notifications</Label>
-                  <div className="text-sm text-muted-foreground">
-                    Receive push notifications on your devices
-                  </div>
-                </div>
-                <Switch
-                  checked={settings.reminder_preferences.preferred_channels.includes('push')}
-                  onCheckedChange={(checked) => {
-                    const channels = settings.reminder_preferences.preferred_channels;
-                    updateSettings({
-                      reminder_preferences: {
-                        preferred_channels: checked
-                          ? [...channels, 'push']
-                          : channels.filter(c => c !== 'push')
-                      }
-                    });
-                  }}
-                />
+      ) : (
+        <>
+          {overdueCount && overdueCount > 0 && (
+            <div className="bg-destructive/15 text-destructive p-4 rounded-lg mb-4 flex items-center justify-between animate-pulse">
+              <div className="flex items-center gap-2">
+                <Bell className="h-5 w-5" />
+                <span>You have {overdueCount} overdue medication{overdueCount > 1 ? 's' : ''}</span>
               </div>
-
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label>SMS Notifications</Label>
-                  <div className="text-sm text-muted-foreground">
-                    Receive text message reminders
-                  </div>
-                </div>
-                <Switch
-                  checked={settings.reminder_preferences.preferred_channels.includes('sms')}
-                  onCheckedChange={(checked) => {
-                    const channels = settings.reminder_preferences.preferred_channels;
-                    updateSettings({
-                      reminder_preferences: {
-                        preferred_channels: checked
-                          ? [...channels, 'sms']
-                          : channels.filter(c => c !== 'sms')
-                      }
-                    });
-                  }}
-                />
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label>Voice Reminders</Label>
-                  <div className="text-sm text-muted-foreground">
-                    Enable spoken medication reminders
-                  </div>
-                </div>
-                <Switch
-                  checked={settings.accessibility_settings.voice_reminders}
-                  onCheckedChange={(checked) => {
-                    updateSettings({
-                      accessibility_settings: {
-                        voice_reminders: checked
-                      }
-                    });
-                  }}
-                />
-              </div>
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => {}}
+                className="hover:scale-105 transition-transform"
+              >
+                View Details
+              </Button>
             </div>
-          </CardContent>
-        </Card>
+          )}
 
-        <Card>
-          <CardContent className="pt-6">
-            <h4 className="font-medium flex items-center gap-2 mb-4">
-              <Clock className="h-4 w-4" />
-              Upcoming Reminders
-            </h4>
+          <div className="grid gap-4 md:grid-cols-2">
+            <Card className="hover:shadow-md transition-shadow">
+              <CardContent className="pt-6">
+                <h4 className="font-medium flex items-center gap-2 mb-4">
+                  <Settings className="h-4 w-4" />
+                  Reminder Preferences
+                </h4>
 
-            <div className="space-y-4">
-              {schedules?.map((schedule) => (
-                <div
-                  key={schedule.id}
-                  className="flex items-center justify-between pb-4 border-b last:border-0"
-                >
-                  <div>
-                    <p className="font-medium">{schedule.medication_name}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {schedule.dosage}
-                    </p>
-                  </div>
-                  <div className="text-sm text-right">
-                    {schedule.time_of_day.map((time: string) => (
-                      <div key={time} className="flex items-center gap-2">
-                        <BellRing className="h-4 w-4" />
-                        {time}
+                <div className="space-y-6">
+                  <div className="flex items-center justify-between group">
+                    <div className="space-y-0.5">
+                      <Label>Push Notifications</Label>
+                      <div className="text-sm text-muted-foreground">
+                        Receive push notifications on your devices
                       </div>
-                    ))}
+                    </div>
+                    <Switch
+                      checked={settings.reminder_preferences.preferred_channels.includes('push')}
+                      onCheckedChange={(checked) => {
+                        const channels = settings.reminder_preferences.preferred_channels;
+                        updateSettings({
+                          reminder_preferences: {
+                            preferred_channels: checked
+                              ? [...channels, 'push']
+                              : channels.filter(c => c !== 'push')
+                          }
+                        });
+                      }}
+                      className="group-hover:scale-105 transition-transform"
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between group">
+                    <div className="space-y-0.5">
+                      <Label>SMS Notifications</Label>
+                      <div className="text-sm text-muted-foreground">
+                        Receive text message reminders
+                      </div>
+                    </div>
+                    <Switch
+                      checked={settings.reminder_preferences.preferred_channels.includes('sms')}
+                      onCheckedChange={(checked) => {
+                        const channels = settings.reminder_preferences.preferred_channels;
+                        updateSettings({
+                          reminder_preferences: {
+                            preferred_channels: checked
+                              ? [...channels, 'sms']
+                              : channels.filter(c => c !== 'sms')
+                          }
+                        });
+                      }}
+                      className="group-hover:scale-105 transition-transform"
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between group">
+                    <div className="space-y-0.5">
+                      <Label>Voice Reminders</Label>
+                      <div className="text-sm text-muted-foreground">
+                        Enable spoken medication reminders
+                      </div>
+                    </div>
+                    <Switch
+                      checked={settings.accessibility_settings.voice_reminders}
+                      onCheckedChange={(checked) => {
+                        updateSettings({
+                          accessibility_settings: {
+                            voice_reminders: checked
+                          }
+                        });
+                      }}
+                      className="group-hover:scale-105 transition-transform"
+                    />
                   </div>
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+              </CardContent>
+            </Card>
+
+            <Card className="hover:shadow-md transition-shadow">
+              <CardContent className="pt-6">
+                <h4 className="font-medium flex items-center gap-2 mb-4">
+                  <Clock className="h-4 w-4" />
+                  Upcoming Reminders
+                </h4>
+
+                <div className="space-y-4">
+                  {schedules?.length === 0 ? (
+                    <p className="text-muted-foreground text-center py-4">
+                      No upcoming medication reminders
+                    </p>
+                  ) : (
+                    schedules?.map((schedule) => (
+                      <div
+                        key={schedule.id}
+                        className="flex items-center justify-between pb-4 border-b last:border-0 hover:bg-muted/50 p-2 rounded-lg transition-colors group"
+                      >
+                        <div>
+                          <p className="font-medium group-hover:text-primary transition-colors">
+                            {schedule.medication_name}
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            {schedule.dosage}
+                          </p>
+                        </div>
+                        <div className="text-sm text-right">
+                          {schedule.time_of_day.map((time: string) => (
+                            <div key={time} className="flex items-center gap-2">
+                              <BellRing className="h-4 w-4" />
+                              {time}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </>
+      )}
     </div>
   );
 };
