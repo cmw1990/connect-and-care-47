@@ -1,10 +1,10 @@
-
 import React, { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { MapPin, Settings, AlertTriangle } from "lucide-react";
+import { MapPin, Settings, AlertTriangle, Shield } from "lucide-react";
 import { LocationMap } from "./LocationMap";
+import { SafetyZoneSelector } from "./SafetyZoneSelector";
 import { LocationService } from "../location/LocationService";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -28,6 +28,7 @@ export const LocationTracker: React.FC<LocationTrackerProps> = ({ groupId }) => 
   const [currentLocation, setCurrentLocation] = useState<LocationData | null>(null);
   const [locationHistory, setLocationHistory] = useState<LocationData[]>([]);
   const [showHistory, setShowHistory] = useState(false);
+  const [showSafetyZone, setShowSafetyZone] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -43,9 +44,9 @@ export const LocationTracker: React.FC<LocationTrackerProps> = ({ groupId }) => 
           filter: `group_id=eq.${groupId}`
         },
         (payload) => {
-          if (payload.new) {
-            setCurrentLocation(payload.new.current_location);
-            setLocationHistory(payload.new.location_history || []);
+          if (payload.new && payload.new.current_location) {
+            setCurrentLocation(payload.new.current_location as LocationData);
+            setLocationHistory((payload.new.location_history || []) as LocationData[]);
           }
         }
       )
@@ -70,12 +71,42 @@ export const LocationTracker: React.FC<LocationTrackerProps> = ({ groupId }) => 
       if (error) throw error;
 
       if (data) {
-        setCurrentLocation(data.current_location);
-        setLocationHistory(data.location_history || []);
+        setCurrentLocation(data.current_location as LocationData);
+        setLocationHistory((data.location_history || []) as LocationData[]);
         setIsTracking(data.location_enabled);
       }
     } catch (error) {
       console.error('Error fetching location data:', error);
+    }
+  };
+
+  const handleZoneCreated = async (zone: { name: string; radius: number; center: { lat: number; lng: number } }) => {
+    try {
+      const { error } = await supabase
+        .from('geofences')
+        .insert({
+          group_id: groupId,
+          name: zone.name,
+          center_lat: zone.center.lat,
+          center_lng: zone.center.lng,
+          radius: zone.radius,
+          active: true
+        });
+
+      if (error) throw error;
+
+      setShowSafetyZone(false);
+      toast({
+        title: "Safety Zone Created",
+        description: `${zone.name} has been set up successfully`,
+      });
+    } catch (error) {
+      console.error('Error creating safety zone:', error);
+      toast({
+        title: "Error",
+        description: "Failed to create safety zone",
+        variant: "destructive",
+      });
     }
   };
 
@@ -119,91 +150,108 @@ export const LocationTracker: React.FC<LocationTrackerProps> = ({ groupId }) => 
   };
 
   return (
-    <Card className="w-full">
-      <CardHeader>
-        <CardTitle className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <MapPin className="h-5 w-5" />
-            Location Tracking
-          </div>
-          <div className="flex items-center gap-4">
-            <Switch
-              checked={isTracking}
-              onCheckedChange={toggleLocationTracking}
-            />
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => setShowHistory(!showHistory)}
-            >
-              <Settings className="h-4 w-4" />
-            </Button>
-          </div>
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        {currentLocation && (
-          <>
-            <LocationMap
-              latitude={currentLocation.latitude}
-              longitude={currentLocation.longitude}
-              zoom={15}
-              markers={[
-                {
-                  lat: currentLocation.latitude,
-                  lng: currentLocation.longitude,
-                  title: "Current Location",
-                  description: `Last updated: ${new Date(currentLocation.timestamp).toLocaleString()}`
-                },
-                ...(showHistory ? locationHistory.map((loc: LocationData) => ({
-                  lat: loc.latitude,
-                  lng: loc.longitude,
-                  title: `Previous Location`,
-                  description: `${new Date(loc.timestamp).toLocaleString()}\nActivity: ${loc.activity_type || 'Unknown'}`
-                })) : [])
-              ]}
-            />
-            
-            <div className="mt-4 space-y-2">
-              <div className="flex items-center justify-between text-sm">
-                <span>Current Activity:</span>
-                <span className={`px-2 py-1 rounded-full text-white ${getActivityColor(currentLocation.activity_type || 'unknown')}`}>
-                  {currentLocation.activity_type || 'Unknown'}
-                </span>
-              </div>
+    <div className="space-y-4">
+      <Card className="w-full">
+        <CardHeader>
+          <CardTitle className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <MapPin className="h-5 w-5" />
+              Location Tracking
+            </div>
+            <div className="flex items-center gap-4">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowSafetyZone(!showSafetyZone)}
+              >
+                <Shield className="h-4 w-4 mr-2" />
+                Safety Zone
+              </Button>
+              <Switch
+                checked={isTracking}
+                onCheckedChange={toggleLocationTracking}
+              />
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setShowHistory(!showHistory)}
+              >
+                <Settings className="h-4 w-4" />
+              </Button>
+            </div>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {currentLocation && (
+            <>
+              <LocationMap
+                latitude={currentLocation.latitude}
+                longitude={currentLocation.longitude}
+                zoom={15}
+                markers={[
+                  {
+                    lat: currentLocation.latitude,
+                    lng: currentLocation.longitude,
+                    title: "Current Location",
+                    description: `Last updated: ${new Date(currentLocation.timestamp).toLocaleString()}`
+                  },
+                  ...(showHistory ? locationHistory.map((loc: LocationData) => ({
+                    lat: loc.latitude,
+                    lng: loc.longitude,
+                    title: `Previous Location`,
+                    description: `${new Date(loc.timestamp).toLocaleString()}\nActivity: ${loc.activity_type || 'Unknown'}`
+                  })) : [])
+                ]}
+              />
               
-              {currentLocation.battery_level && (
+              <div className="mt-4 space-y-2">
                 <div className="flex items-center justify-between text-sm">
-                  <span>Battery Level:</span>
-                  <span className={`${currentLocation.battery_level < 20 ? 'text-red-500' : ''}`}>
-                    {currentLocation.battery_level.toFixed(0)}%
+                  <span>Current Activity:</span>
+                  <span className={`px-2 py-1 rounded-full text-white ${getActivityColor(currentLocation.activity_type || 'unknown')}`}>
+                    {currentLocation.activity_type || 'Unknown'}
                   </span>
                 </div>
-              )}
-              
-              {currentLocation.speed && (
-                <div className="flex items-center justify-between text-sm">
-                  <span>Speed:</span>
-                  <span>{(currentLocation.speed * 3.6).toFixed(1)} km/h</span>
+                
+                {currentLocation.battery_level && (
+                  <div className="flex items-center justify-between text-sm">
+                    <span>Battery Level:</span>
+                    <span className={`${currentLocation.battery_level < 20 ? 'text-red-500' : ''}`}>
+                      {currentLocation.battery_level.toFixed(0)}%
+                    </span>
+                  </div>
+                )}
+                
+                {currentLocation.speed && (
+                  <div className="flex items-center justify-between text-sm">
+                    <span>Speed:</span>
+                    <span>{(currentLocation.speed * 3.6).toFixed(1)} km/h</span>
+                  </div>
+                )}
+              </div>
+
+              {currentLocation.battery_level && currentLocation.battery_level < 20 && (
+                <div className="mt-4 p-2 bg-red-100 rounded-lg flex items-center gap-2 text-sm text-red-700">
+                  <AlertTriangle className="h-4 w-4" />
+                  Low battery warning
                 </div>
               )}
+            </>
+          )}
+
+          {!currentLocation && (
+            <div className="text-center py-8 text-gray-500">
+              No location data available
             </div>
+          )}
+        </CardContent>
+      </Card>
 
-            {currentLocation.battery_level && currentLocation.battery_level < 20 && (
-              <div className="mt-4 p-2 bg-red-100 rounded-lg flex items-center gap-2 text-sm text-red-700">
-                <AlertTriangle className="h-4 w-4" />
-                Low battery warning
-              </div>
-            )}
-          </>
-        )}
-
-        {!currentLocation && (
-          <div className="text-center py-8 text-gray-500">
-            No location data available
-          </div>
-        )}
-      </CardContent>
-    </Card>
+      {showSafetyZone && (
+        <SafetyZoneSelector
+          groupId={groupId}
+          onZoneCreated={handleZoneCreated}
+        />
+      )}
+    </div>
   );
 };
