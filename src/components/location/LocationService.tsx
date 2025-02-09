@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { calculateDistance } from "@/utils/locationUtils";
 import { useToast } from "@/hooks/use-toast";
@@ -12,6 +11,12 @@ interface LocationUpdate {
   timestamp: string;
   battery_level?: number;
   activity_type?: 'still' | 'walking' | 'running' | 'driving';
+}
+
+interface NotificationSettings {
+  exitAlert: boolean;
+  enterAlert: boolean;
+  smsAlert: boolean;
 }
 
 export class LocationService {
@@ -177,11 +182,7 @@ export class LocationService {
         );
 
         const isOutside = distance > fence.radius;
-        const notifications = fence.notification_settings as {
-          exitAlert: boolean;
-          enterAlert: boolean;
-          smsAlert: boolean;
-        } || { exitAlert: true };
+        const notifications = fence.notification_settings as NotificationSettings || { exitAlert: true };
 
         // Check if user has crossed the geofence boundary
         if ((isOutside && notifications.exitAlert) || (!isOutside && notifications.enterAlert)) {

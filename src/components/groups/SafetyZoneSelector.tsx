@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
@@ -9,17 +8,19 @@ import { Switch } from "@/components/ui/switch";
 import { MapPin, Shield, ShieldCheck, Bell, Phone } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
+interface NotificationSettings {
+  exitAlert: boolean;
+  enterAlert: boolean;
+  smsAlert: boolean;
+}
+
 interface SafetyZoneSelectorProps {
   groupId: string;
   onZoneCreated: (zone: {
     name: string;
     radius: number;
     center: { lat: number; lng: number };
-    notifications: {
-      exitAlert: boolean;
-      enterAlert: boolean;
-      smsAlert: boolean;
-    };
+    notifications: NotificationSettings;
   }) => void;
 }
 
@@ -29,7 +30,7 @@ export const SafetyZoneSelector: React.FC<SafetyZoneSelectorProps> = ({
 }) => {
   const [radius, setRadius] = useState<number>(100);
   const [zoneName, setZoneName] = useState<string>("");
-  const [notifications, setNotifications] = useState({
+  const [notifications, setNotifications] = useState<NotificationSettings>({
     exitAlert: true,
     enterAlert: false,
     smsAlert: true
