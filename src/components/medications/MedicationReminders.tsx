@@ -56,8 +56,10 @@ const defaultSettings: PortalSettings = {
 
 export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
   const { toast } = useToast();
-  const { data: dbSettings } = useQuery({
-    queryKey: ['medicationPortalSettings', groupId],
+  
+  // Simplified query key to avoid deep nesting
+  const { data: dbSettings } = useQuery<DatabasePortalSettings | null>({
+    queryKey: ['portal-settings', groupId],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return null;
