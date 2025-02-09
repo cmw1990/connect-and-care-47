@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,6 +14,7 @@ import {
   MessageSquare
 } from "lucide-react";
 import { format } from "date-fns";
+import { useToast } from "@/hooks/use-toast";
 
 interface MedicationRemindersProps {
   groupId: string;
@@ -30,6 +30,7 @@ interface PortalSettings {
 }
 
 export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
+  const { toast } = useToast();
   const { data: settings } = useQuery({
     queryKey: ['medicationPortalSettings', groupId],
     queryFn: async () => {
@@ -47,6 +48,56 @@ export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
     }
   });
 
+  // Add query for overdue medications
+  const { data: overdueCount } = useQuery({
+    queryKey: ['overduemedications', groupId],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from('medication_logs')
+        .select('*', { count: 'exact', head: true })
+        .eq('group_id', groupId)
+        .eq('status', 'overdue');
+
+      if (error) throw error;
+      return count;
+    },
+    refetchInterval: 60000 // Refresh every minute
+  });
+
+  const updateSettings = async (updates: Partial<PortalSettings>) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      if (settings) {
+        const { error } = await supabase
+          .from('medication_portal_settings')
+          .update(updates)
+          .eq('user_id', user.id);
+
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('medication_portal_settings')
+          .insert([{ user_id: user.id, ...updates }]);
+
+        if (error) throw error;
+      }
+
+      toast({
+        title: "Settings Updated",
+        description: "Your medication reminder preferences have been saved.",
+      });
+    } catch (error) {
+      console.error('Error updating settings:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update settings. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const { data: schedules } = useQuery({
     queryKey: ['medicationSchedules', groupId],
     queryFn: async () => {
@@ -60,28 +111,24 @@ export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
     }
   });
 
-  const updateSettings = async (updates: Partial<PortalSettings>) => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-
-    if (settings) {
-      const { error } = await supabase
-        .from('medication_portal_settings')
-        .update(updates)
-        .eq('user_id', user.id);
-
-      if (error) console.error('Error updating settings:', error);
-    } else {
-      const { error } = await supabase
-        .from('medication_portal_settings')
-        .insert([{ user_id: user.id, ...updates }]);
-
-      if (error) console.error('Error creating settings:', error);
-    }
-  };
-
   return (
     <div className="space-y-4">
+      {overdueCount && overdueCount > 0 && (
+        <div className="bg-destructive/15 text-destructive p-4 rounded-lg mb-4 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Bell className="h-5 w-5" />
+            <span>You have {overdueCount} overdue medication{overdueCount > 1 ? 's' : ''}</span>
+          </div>
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={() => setActiveTab('schedule')}
+          >
+            View Schedule
+          </Button>
+        </div>
+      )}
+
       <div className="grid gap-4 md:grid-cols-2">
         <Card>
           <CardContent className="pt-6">
