@@ -11,7 +11,7 @@ interface MedicationRemindersProps {
   groupId: string;
 }
 
-// Database types - Flattened to avoid recursive types
+// Explicitly define the shape of data returned from database
 interface DBMedicationPortalSettings {
   id: string;
   group_id: string;
@@ -25,8 +25,8 @@ interface DBMedicationPortalSettings {
   updated_at: string;
 }
 
-// Simple flat types
-interface PortalSettings {
+// Define the shape of processed settings data
+interface ProcessedPortalSettings {
   reminder_preferences: {
     preferred_channels: string[];
   };
@@ -36,7 +36,7 @@ interface PortalSettings {
 }
 
 // Default settings
-const defaultSettings: PortalSettings = {
+const defaultSettings: ProcessedPortalSettings = {
   reminder_preferences: {
     preferred_channels: []
   },
@@ -46,8 +46,8 @@ const defaultSettings: PortalSettings = {
 };
 
 export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
-  // Query portal settings
-  const portalSettingsQuery = useQuery({
+  // Query portal settings with explicit type annotations
+  const portalSettingsQuery = useQuery<ProcessedPortalSettings, Error>({
     queryKey: ['portal-settings', groupId],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -77,7 +77,7 @@ export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
   });
 
   // Overdue medications count 
-  const overdueQuery = useQuery({
+  const overdueQuery = useQuery<number, Error>({
     queryKey: ['overduemedications', groupId],
     queryFn: async () => {
       const { count, error } = await supabase
@@ -93,7 +93,7 @@ export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
   });
 
   // Medication schedules 
-  const schedulesQuery = useQuery({
+  const schedulesQuery = useQuery<MedicationSchedule[], Error>({
     queryKey: ['medicationSchedules', groupId],
     queryFn: async () => {
       const { data, error } = await supabase
