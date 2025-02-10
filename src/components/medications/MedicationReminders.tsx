@@ -11,6 +11,7 @@ interface MedicationRemindersProps {
   groupId: string;
 }
 
+// Database types that match the SQL constraints
 type DatabaseReminderPreferences = {
   preferred_channels: string[];
 };
@@ -49,7 +50,7 @@ const fetchPortalSettings = async (groupId: string): Promise<MedicationPortalSet
     .from('medication_portal_settings')
     .select('*')
     .eq('group_id', groupId)
-    .maybeSingle();
+    .single();
 
   if (error) throw error;
   
@@ -58,23 +59,19 @@ const fetchPortalSettings = async (groupId: string): Promise<MedicationPortalSet
   }
 
   // Type assertion with runtime validation
-  const dbSettings = data as unknown as DatabasePortalSettings;
+  const settings = data as DatabasePortalSettings;
   
   return {
-    id: dbSettings.id || '',
-    group_id: dbSettings.group_id,
+    id: settings.id || '',
+    group_id: settings.group_id,
     reminder_preferences: {
-      preferred_channels: Array.isArray(dbSettings.reminder_preferences?.preferred_channels) 
-        ? dbSettings.reminder_preferences.preferred_channels 
-        : []
+      preferred_channels: settings.reminder_preferences?.preferred_channels || []
     },
     accessibility_settings: {
-      voice_reminders: typeof dbSettings.accessibility_settings?.voice_reminders === 'boolean'
-        ? dbSettings.accessibility_settings.voice_reminders
-        : false
+      voice_reminders: settings.accessibility_settings?.voice_reminders || false
     },
-    created_at: dbSettings.created_at,
-    updated_at: dbSettings.updated_at
+    created_at: settings.created_at,
+    updated_at: settings.updated_at
   };
 };
 
