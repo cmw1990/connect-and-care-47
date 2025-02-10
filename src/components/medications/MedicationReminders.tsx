@@ -47,7 +47,6 @@ const fetchPortalSettings = async (groupId: string): Promise<MedicationPortalSet
 
   if (error) throw error;
   
-  // Transform raw data to match our TypeScript types
   if (!data) {
     return {
       id: '',
@@ -99,7 +98,7 @@ const fetchMedicationSchedules = async (groupId: string): Promise<MedicationSche
   return data ?? [];
 };
 
-export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
+export const MedicationReminders: React.FC<MedicationRemindersProps> = ({ groupId }) => {
   const portalSettingsQuery = useQuery({
     queryKey: ['portal-settings', groupId],
     queryFn: () => fetchPortalSettings(groupId)
