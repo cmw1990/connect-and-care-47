@@ -16,6 +16,7 @@ import Messages from "@/pages/Messages";
 import Settings from "@/pages/Settings";
 import { MoodSupport } from "@/pages/MoodSupport";
 import More from "@/pages/More";
+import Analytics from "@/pages/Analytics";
 import { motion, AnimatePresence } from "framer-motion";
 import { ThemeSwitcher } from "@/components/ui/theme-switcher";
 import { I18nextProvider } from 'react-i18next';
@@ -55,6 +56,7 @@ const AppContent = () => {
             <Route path="/settings" element={<Settings />} />
             <Route path="/mood-support" element={<MoodSupport />} />
             <Route path="/more" element={<More />} />
+            <Route path="/analytics" element={<Analytics />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </motion.main>
