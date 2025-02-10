@@ -11,6 +11,19 @@ interface MedicationRemindersProps {
   groupId: string;
 }
 
+interface DatabasePortalSettings {
+  id: string;
+  group_id: string;
+  reminder_preferences: {
+    preferred_channels: string[];
+  };
+  accessibility_settings: {
+    voice_reminders: boolean;
+  };
+  created_at?: string;
+  updated_at?: string;
+}
+
 const fetchPortalSettings = async (groupId: string): Promise<MedicationPortalSettings> => {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
@@ -47,17 +60,19 @@ const fetchPortalSettings = async (groupId: string): Promise<MedicationPortalSet
     };
   }
 
+  const settings = data as DatabasePortalSettings;
+  
   return {
-    id: data.id,
-    group_id: data.group_id,
+    id: settings.id,
+    group_id: settings.group_id,
     reminder_preferences: {
-      preferred_channels: data.reminder_preferences?.preferred_channels || []
+      preferred_channels: settings.reminder_preferences?.preferred_channels || []
     },
     accessibility_settings: {
-      voice_reminders: data.accessibility_settings?.voice_reminders || false
+      voice_reminders: settings.accessibility_settings?.voice_reminders || false
     },
-    created_at: data.created_at,
-    updated_at: data.updated_at
+    created_at: settings.created_at,
+    updated_at: settings.updated_at
   };
 };
 
