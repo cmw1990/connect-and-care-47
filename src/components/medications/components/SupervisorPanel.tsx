@@ -23,7 +23,7 @@ export const SupervisorPanel = ({ groupId, data }: SupervisorPanelProps) => {
         .from('medication_logs')
         .select(`
           *,
-          medication_schedules (
+          medication_schedule (
             medication_name,
             dosage
           )
@@ -89,10 +89,10 @@ export const SupervisorPanel = ({ groupId, data }: SupervisorPanelProps) => {
             <div key={log.id} className="flex items-center justify-between p-4">
               <div>
                 <p className="font-medium">
-                  {log.medication_schedules?.medication_name}
+                  {log.medication_schedule?.medication_name}
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  {log.medication_schedules?.dosage} - {new Date(log.taken_at).toLocaleTimeString()}
+                  {log.medication_schedule?.dosage} - {new Date(log.taken_at).toLocaleTimeString()}
                 </p>
               </div>
               <div className="flex space-x-2">

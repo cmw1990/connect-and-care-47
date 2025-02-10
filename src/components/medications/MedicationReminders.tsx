@@ -35,6 +35,7 @@ const fetchPortalSettings = async (groupId: string): Promise<MedicationPortalSet
 
   if (error) throw error;
   
+  // Transform raw data to match our TypeScript types
   if (!data) {
     return {
       id: '',
@@ -48,7 +49,20 @@ const fetchPortalSettings = async (groupId: string): Promise<MedicationPortalSet
     };
   }
 
-  return data;
+  return {
+    id: data.id,
+    group_id: data.group_id,
+    reminder_preferences: {
+      preferred_channels: Array.isArray(data.reminder_preferences?.preferred_channels) 
+        ? data.reminder_preferences.preferred_channels 
+        : []
+    },
+    accessibility_settings: {
+      voice_reminders: Boolean(data.accessibility_settings?.voice_reminders)
+    },
+    created_at: data.created_at,
+    updated_at: data.updated_at
+  };
 };
 
 const fetchOverdueCount = async (groupId: string): Promise<number> => {
@@ -81,8 +95,7 @@ export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
 
   const overdueQuery = useQuery({
     queryKey: ['overduemedications', groupId],
-    queryFn: () => fetchOverdueCount(groupId),
-    refetchInterval: 60000 // Refresh every minute
+    queryFn: () => fetchOverdueCount(groupId)
   });
 
   const schedulesQuery = useQuery({
