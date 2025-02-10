@@ -11,8 +11,8 @@ interface MedicationRemindersProps {
   groupId: string;
 }
 
-// Database types
-type DBMedicationPortalSettings = {
+// Database types - Flattened to avoid recursive types
+interface DBMedicationPortalSettings {
   id: string;
   group_id: string;
   reminder_preferences: {
@@ -25,18 +25,14 @@ type DBMedicationPortalSettings = {
   updated_at: string;
 }
 
-// Simple flat types to avoid recursion
-type ReminderPreferences = {
-  preferred_channels: string[];
-}
-
-type AccessibilitySettings = {
-  voice_reminders: boolean;
-}
-
-type PortalSettings = {
-  reminder_preferences: ReminderPreferences;
-  accessibility_settings: AccessibilitySettings;
+// Simple flat types
+interface PortalSettings {
+  reminder_preferences: {
+    preferred_channels: string[];
+  };
+  accessibility_settings: {
+    voice_reminders: boolean;
+  };
 }
 
 // Default settings
@@ -53,7 +49,7 @@ export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
   // Query portal settings
   const portalSettingsQuery = useQuery({
     queryKey: ['portal-settings', groupId],
-    queryFn: async (): Promise<PortalSettings> => {
+    queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return defaultSettings;
 
@@ -83,7 +79,7 @@ export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
   // Overdue medications count 
   const overdueQuery = useQuery({
     queryKey: ['overduemedications', groupId],
-    queryFn: async (): Promise<number> => {
+    queryFn: async () => {
       const { count, error } = await supabase
         .from('medication_logs')
         .select('*', { count: 'exact', head: true })
@@ -99,7 +95,7 @@ export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
   // Medication schedules 
   const schedulesQuery = useQuery({
     queryKey: ['medicationSchedules', groupId],
-    queryFn: async (): Promise<MedicationSchedule[]> => {
+    queryFn: async () => {
       const { data, error } = await supabase
         .from('medication_schedules')
         .select('*')
