@@ -11,32 +11,38 @@ interface MedicationRemindersProps {
   groupId: string;
 }
 
-interface PortalSettingsRow {
+type DatabaseReminderPreferences = {
+  preferred_channels: string[];
+};
+
+type DatabaseAccessibilitySettings = {
+  voice_reminders: boolean;
+};
+
+interface DatabasePortalSettings {
   id: string;
   group_id: string;
-  reminder_preferences: {
-    preferred_channels: string[];
-  };
-  accessibility_settings: {
-    voice_reminders: boolean;
-  };
+  reminder_preferences: DatabaseReminderPreferences;
+  accessibility_settings: DatabaseAccessibilitySettings;
   created_at?: string;
   updated_at?: string;
 }
 
+const DEFAULT_SETTINGS: MedicationPortalSettings = {
+  id: '',
+  group_id: '',
+  reminder_preferences: {
+    preferred_channels: []
+  },
+  accessibility_settings: {
+    voice_reminders: false
+  }
+};
+
 const fetchPortalSettings = async (groupId: string): Promise<MedicationPortalSettings> => {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
-    return {
-      id: '',
-      group_id: groupId,
-      reminder_preferences: {
-        preferred_channels: []
-      },
-      accessibility_settings: {
-        voice_reminders: false
-      }
-    };
+    return { ...DEFAULT_SETTINGS, group_id: groupId };
   }
 
   const { data, error } = await supabase
@@ -48,31 +54,27 @@ const fetchPortalSettings = async (groupId: string): Promise<MedicationPortalSet
   if (error) throw error;
   
   if (!data) {
-    return {
-      id: '',
-      group_id: groupId,
-      reminder_preferences: {
-        preferred_channels: []
-      },
-      accessibility_settings: {
-        voice_reminders: false
-      }
-    };
+    return { ...DEFAULT_SETTINGS, group_id: groupId };
   }
 
-  const typedData = data as PortalSettingsRow;
+  // Type assertion with runtime validation
+  const dbSettings = data as unknown as DatabasePortalSettings;
   
   return {
-    id: typedData.id,
-    group_id: typedData.group_id,
+    id: dbSettings.id || '',
+    group_id: dbSettings.group_id,
     reminder_preferences: {
-      preferred_channels: typedData.reminder_preferences?.preferred_channels || []
+      preferred_channels: Array.isArray(dbSettings.reminder_preferences?.preferred_channels) 
+        ? dbSettings.reminder_preferences.preferred_channels 
+        : []
     },
     accessibility_settings: {
-      voice_reminders: typedData.accessibility_settings?.voice_reminders || false
+      voice_reminders: typeof dbSettings.accessibility_settings?.voice_reminders === 'boolean'
+        ? dbSettings.accessibility_settings.voice_reminders
+        : false
     },
-    created_at: typedData.created_at,
-    updated_at: typedData.updated_at
+    created_at: dbSettings.created_at,
+    updated_at: dbSettings.updated_at
   };
 };
 
