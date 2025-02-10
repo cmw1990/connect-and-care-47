@@ -36,6 +36,21 @@ export interface MedicationPortalSettings {
   updated_at?: string;
 }
 
+// Break circular dependency by making a base type
+export interface MedicationScheduleBase {
+  id: string;
+  medication_name: string;
+  dosage: string;
+  time_of_day: string[];
+  group_id: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface MedicationSchedule extends MedicationScheduleBase {
+  medication_logs?: MedicationLog[];
+}
+
 export interface MedicationLog {
   id: string;
   schedule_id: string;
@@ -49,15 +64,5 @@ export interface MedicationLog {
   side_effects?: Record<string, unknown>;
   symptoms?: Record<string, unknown>;
   created_at?: string;
-  medication_schedules?: MedicationSchedule;
-}
-
-export interface MedicationSchedule {
-  id: string;
-  medication_name: string;
-  dosage: string;
-  time_of_day: string[];
-  group_id: string;
-  created_at?: string;
-  updated_at?: string;
+  medication_schedule?: MedicationScheduleBase;
 }

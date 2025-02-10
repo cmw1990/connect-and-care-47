@@ -11,6 +11,7 @@ interface MedicationRemindersProps {
   groupId: string;
 }
 
+// Move query functions outside component to improve type inference
 const fetchPortalSettings = async (groupId: string): Promise<MedicationPortalSettings> => {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
@@ -30,9 +31,9 @@ const fetchPortalSettings = async (groupId: string): Promise<MedicationPortalSet
     .from('medication_portal_settings')
     .select('*')
     .eq('group_id', groupId)
-    .single();
+    .maybeSingle();
 
-  if (error && error.code !== 'PGRST116') throw error;
+  if (error) throw error;
   
   if (!data) {
     return {
@@ -47,7 +48,7 @@ const fetchPortalSettings = async (groupId: string): Promise<MedicationPortalSet
     };
   }
 
-  return data as MedicationPortalSettings;
+  return data;
 };
 
 const fetchOverdueCount = async (groupId: string): Promise<number> => {
