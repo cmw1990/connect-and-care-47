@@ -11,7 +11,7 @@ interface MedicationRemindersProps {
   groupId: string;
 }
 
-interface DatabasePortalSettings {
+interface PortalSettingsResponse {
   id: string;
   group_id: string;
   reminder_preferences: {
@@ -60,16 +60,16 @@ const fetchPortalSettings = async (groupId: string): Promise<MedicationPortalSet
     };
   }
 
-  const settings = data as DatabasePortalSettings;
+  const settings = data as PortalSettingsResponse;
   
   return {
     id: settings.id,
     group_id: settings.group_id,
     reminder_preferences: {
-      preferred_channels: settings.reminder_preferences?.preferred_channels || []
+      preferred_channels: settings.reminder_preferences.preferred_channels
     },
     accessibility_settings: {
-      voice_reminders: settings.accessibility_settings?.voice_reminders || false
+      voice_reminders: settings.accessibility_settings.voice_reminders
     },
     created_at: settings.created_at,
     updated_at: settings.updated_at
