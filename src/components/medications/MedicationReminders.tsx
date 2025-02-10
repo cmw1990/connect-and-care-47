@@ -11,20 +11,20 @@ interface MedicationRemindersProps {
   groupId: string;
 }
 
-// Database types that match the SQL constraints
-type DatabaseReminderPreferences = {
+// Database interface for type safety
+interface DatabaseReminderPreferences {
   preferred_channels: string[];
-};
+}
 
-type DatabaseAccessibilitySettings = {
+interface DatabaseAccessibilitySettings {
   voice_reminders: boolean;
-};
+}
 
 interface DatabasePortalSettings {
   id: string;
   group_id: string;
-  reminder_preferences: DatabaseReminderPreferences;
-  accessibility_settings: DatabaseAccessibilitySettings;
+  reminder_preferences: DatabaseReminderPreferences | null;
+  accessibility_settings: DatabaseAccessibilitySettings | null;
   created_at?: string;
   updated_at?: string;
 }
@@ -58,7 +58,6 @@ const fetchPortalSettings = async (groupId: string): Promise<MedicationPortalSet
     return { ...DEFAULT_SETTINGS, group_id: groupId };
   }
 
-  // Type assertion with runtime validation
   const settings = data as DatabasePortalSettings;
   
   return {
