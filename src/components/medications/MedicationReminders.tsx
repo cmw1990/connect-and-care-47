@@ -5,106 +5,88 @@ import { Loader2 } from "lucide-react";
 import { OverdueAlert } from "./components/OverdueAlert";  
 import { ReminderSettings } from "./components/ReminderSettings";
 import { UpcomingReminders } from "./components/UpcomingReminders";
-import type { MedicationSchedule } from "@/types/medication";
+import type { MedicationSchedule, MedicationPortalSettings } from "@/types/medication";
 
 interface MedicationRemindersProps {
   groupId: string;
 }
 
-// Explicitly define the shape of data returned from database
-interface DBMedicationPortalSettings {
-  id: string;
-  group_id: string;
-  reminder_preferences: {
-    preferred_channels: string[];
-  };
-  accessibility_settings: {
-    voice_reminders: boolean;
-  };
-  created_at: string;
-  updated_at: string;
-}
-
-// Define the shape of processed settings data
-interface ProcessedPortalSettings {
-  reminder_preferences: {
-    preferred_channels: string[];
-  };
-  accessibility_settings: {
-    voice_reminders: boolean;
-  };
-}
-
-// Default settings
-const defaultSettings: ProcessedPortalSettings = {
-  reminder_preferences: {
-    preferred_channels: []
-  },
-  accessibility_settings: {
-    voice_reminders: false
+const fetchPortalSettings = async (groupId: string): Promise<MedicationPortalSettings> => {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    return {
+      id: '',
+      group_id: groupId,
+      reminder_preferences: {
+        preferred_channels: []
+      },
+      accessibility_settings: {
+        voice_reminders: false
+      }
+    };
   }
+
+  const { data, error } = await supabase
+    .from('medication_portal_settings')
+    .select('*')
+    .eq('group_id', groupId)
+    .single();
+
+  if (error && error.code !== 'PGRST116') throw error;
+  
+  if (!data) {
+    return {
+      id: '',
+      group_id: groupId,
+      reminder_preferences: {
+        preferred_channels: []
+      },
+      accessibility_settings: {
+        voice_reminders: false
+      }
+    };
+  }
+
+  return data as MedicationPortalSettings;
+};
+
+const fetchOverdueCount = async (groupId: string): Promise<number> => {
+  const { count, error } = await supabase
+    .from('medication_logs')
+    .select('*', { count: 'exact', head: true })
+    .eq('group_id', groupId)
+    .eq('status', 'overdue');
+
+  if (error) throw error;
+  return count ?? 0;
+};
+
+const fetchMedicationSchedules = async (groupId: string): Promise<MedicationSchedule[]> => {
+  const { data, error } = await supabase
+    .from('medication_schedules')
+    .select('*')
+    .eq('group_id', groupId)
+    .order('created_at', { ascending: false });
+
+  if (error) throw error;
+  return data ?? [];
 };
 
 export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
-  // Query portal settings with explicit type annotations
-  const portalSettingsQuery = useQuery<ProcessedPortalSettings, Error>({
+  const portalSettingsQuery = useQuery({
     queryKey: ['portal-settings', groupId],
-    queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return defaultSettings;
-
-      const { data, error } = await supabase
-        .from('medication_portal_settings')
-        .select('*')
-        .eq('group_id', groupId)
-        .single();
-
-      if (error && error.code !== 'PGRST116') throw error;
-      
-      if (!data) return defaultSettings;
-
-      const dbSettings = data as DBMedicationPortalSettings;
-      
-      return {
-        reminder_preferences: {
-          preferred_channels: dbSettings.reminder_preferences?.preferred_channels || []
-        },
-        accessibility_settings: {
-          voice_reminders: dbSettings.accessibility_settings?.voice_reminders ?? false
-        }
-      };
-    }
+    queryFn: () => fetchPortalSettings(groupId)
   });
 
-  // Overdue medications count 
-  const overdueQuery = useQuery<number, Error>({
+  const overdueQuery = useQuery({
     queryKey: ['overduemedications', groupId],
-    queryFn: async () => {
-      const { count, error } = await supabase
-        .from('medication_logs')
-        .select('*', { count: 'exact', head: true })
-        .eq('group_id', groupId)
-        .eq('status', 'overdue');
-
-      if (error) throw error;
-      return count ?? 0;
-    },
+    queryFn: () => fetchOverdueCount(groupId),
     refetchInterval: 60000 // Refresh every minute
   });
 
-  // Medication schedules 
-  const schedulesQuery = useQuery<MedicationSchedule[], Error>({
+  const schedulesQuery = useQuery({
     queryKey: ['medicationSchedules', groupId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('medication_schedules')
-        .select('*')
-        .eq('group_id', groupId)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      return (data ?? []) as MedicationSchedule[];
-    }
+    queryFn: () => fetchMedicationSchedules(groupId)
   });
 
   if (portalSettingsQuery.error) {
@@ -127,7 +109,7 @@ export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
           
           <div className="grid gap-4 md:grid-cols-2">
             <ReminderSettings 
-              settings={portalSettingsQuery.data || defaultSettings} 
+              settings={portalSettingsQuery.data!} 
               groupId={groupId} 
             />
             <UpcomingReminders 

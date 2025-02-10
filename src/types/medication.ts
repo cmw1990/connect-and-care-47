@@ -27,8 +27,10 @@ export interface MedicationPortalSettings {
   id: string;
   group_id: string;
   reminder_preferences: {
-    voice_reminders?: boolean;
-    preferred_voice?: string;
+    preferred_channels: string[];
+  };
+  accessibility_settings: {
+    voice_reminders: boolean;
   };
   created_at?: string;
   updated_at?: string;
@@ -41,16 +43,13 @@ export interface MedicationLog {
   administered_at?: string;
   administered_by?: string;
   verified_by?: string;
-  status?: string;
+  status?: 'pending' | 'taken' | 'missed' | 'overdue';
   notes?: string;
   photo_verification_url?: string;
-  side_effects?: any;
-  symptoms?: any;
+  side_effects?: Record<string, unknown>;
+  symptoms?: Record<string, unknown>;
   created_at?: string;
-  medication_schedules?: {
-    medication_name: string;
-    dosage: string;
-  };
+  medication_schedules?: MedicationSchedule;
 }
 
 export interface MedicationSchedule {
