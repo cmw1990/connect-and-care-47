@@ -4,28 +4,32 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { Check, X, AlertCircle } from "lucide-react";
-import type { MedicationSupervisionSummary, MedicationLog } from "@/types/medication";
+import type { MedicationSupervisionSummary, MedicationLog, MedicationScheduleBase } from "@/types/medication";
 
 interface SupervisorPanelProps {
   groupId: string;
   data: MedicationSupervisionSummary | null;
 }
 
+interface DBMedicationLog extends Omit<MedicationLog, 'taken_at'> {
+  administered_at: string;
+  medication_schedule?: MedicationScheduleBase;
+}
+
 export const SupervisorPanel = ({ groupId, data }: SupervisorPanelProps) => {
   const { data: pendingVerifications } = useQuery({
     queryKey: ['pendingVerifications', groupId],
     queryFn: async () => {
-      type DBMedicationLog = Omit<MedicationLog, 'taken_at'> & {
-        administered_at: string;
-      };
-
       const { data, error } = await supabase
         .from('medication_logs')
         .select(`
           *,
           medication_schedule (
             medication_name,
-            dosage
+            dosage,
+            time_of_day,
+            group_id,
+            id
           )
         `)
         .eq('group_id', groupId)
@@ -35,9 +39,10 @@ export const SupervisorPanel = ({ groupId, data }: SupervisorPanelProps) => {
       if (error) throw error;
       
       // Transform the data to match our MedicationLog type
-      return (data as DBMedicationLog[]).map(log => ({
+      return (data as unknown as DBMedicationLog[]).map(log => ({
         ...log,
-        taken_at: log.administered_at
+        taken_at: log.administered_at,
+        medication_schedule: log.medication_schedule || undefined
       }));
     }
   });
