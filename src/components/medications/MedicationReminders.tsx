@@ -40,6 +40,22 @@ const DEFAULT_SETTINGS: MedicationPortalSettings = {
   }
 };
 
+const validatePreferences = (data: unknown): DatabaseReminderPreferences | null => {
+  if (!data || typeof data !== 'object') return null;
+  const pref = data as Record<string, unknown>;
+  return {
+    preferred_channels: Array.isArray(pref.preferred_channels) ? pref.preferred_channels.map(String) : []
+  };
+};
+
+const validateAccessibility = (data: unknown): DatabaseAccessibilitySettings | null => {
+  if (!data || typeof data !== 'object') return null;
+  const settings = data as Record<string, unknown>;
+  return {
+    voice_reminders: Boolean(settings.voice_reminders)
+  };
+};
+
 const fetchPortalSettings = async (groupId: string): Promise<MedicationPortalSettings> => {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
@@ -58,19 +74,17 @@ const fetchPortalSettings = async (groupId: string): Promise<MedicationPortalSet
     return { ...DEFAULT_SETTINGS, group_id: groupId };
   }
 
-  const settings = data as DatabasePortalSettings;
-  
   return {
-    id: settings.id || '',
-    group_id: settings.group_id,
+    id: data.id || '',
+    group_id: data.group_id,
     reminder_preferences: {
-      preferred_channels: settings.reminder_preferences?.preferred_channels || []
+      preferred_channels: validatePreferences(data.reminder_preferences)?.preferred_channels || []
     },
     accessibility_settings: {
-      voice_reminders: settings.accessibility_settings?.voice_reminders || false
+      voice_reminders: validateAccessibility(data.accessibility_settings)?.voice_reminders || false
     },
-    created_at: settings.created_at,
-    updated_at: settings.updated_at
+    created_at: data.created_at,
+    updated_at: data.updated_at
   };
 };
 
