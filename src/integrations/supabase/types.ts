@@ -4932,6 +4932,24 @@ export type Database = {
           },
         ]
       }
+      system_config: {
+        Row: {
+          key: string
+          updated_at: string | null
+          value: Json
+        }
+        Insert: {
+          key: string
+          updated_at?: string | null
+          value: Json
+        }
+        Update: {
+          key?: string
+          updated_at?: string | null
+          value?: Json
+        }
+        Relationships: []
+      }
       tasks: {
         Row: {
           assigned_to: string | null
