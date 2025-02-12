@@ -1,21 +1,23 @@
 
-// Break circular dependency by making a base type
-export interface MedicationScheduleBase {
+// Base types for medication-related entities
+export interface MedicationBase {
   id: string;
-  medication_name: string;
-  dosage: string;
-  time_of_day: string[];
-  group_id: string;
   created_at?: string;
   updated_at?: string;
 }
 
-export interface MedicationSchedule extends MedicationScheduleBase {
-  medication_logs?: Array<Omit<MedicationLog, 'medication_schedule'>>;
+export interface MedicationScheduleBase extends MedicationBase {
+  medication_name: string;
+  dosage: string;
+  time_of_day: string[];
+  group_id: string;
 }
 
-export interface MedicationLog {
-  id: string;
+export interface MedicationSchedule extends MedicationScheduleBase {
+  logs?: MedicationLogBase[];
+}
+
+export interface MedicationLogBase extends MedicationBase {
   schedule_id: string;
   taken_at: string;
   administered_at?: string;
@@ -26,23 +28,21 @@ export interface MedicationLog {
   photo_verification_url?: string;
   side_effects?: Record<string, unknown>;
   symptoms?: Record<string, unknown>;
-  created_at?: string;
-  medication_schedule?: MedicationScheduleBase;
 }
 
-export interface MedicationAdherenceTrend {
-  id: string;
+export interface MedicationLog extends MedicationLogBase {
+  schedule?: MedicationScheduleBase;
+}
+
+export interface MedicationAdherenceTrend extends MedicationBase {
   group_id: string;
   date: string;
   adherence_rate: number;
   total_doses: number;
   taken_doses: number;
-  created_at?: string;
-  updated_at?: string;
 }
 
-export interface MedicationSupervisionSummary {
-  id: string;
+export interface MedicationSupervisionSummary extends MedicationBase {
   group_id: string;
   supervisor_id: string;
   total_medications: number;
@@ -50,12 +50,9 @@ export interface MedicationSupervisionSummary {
   approved_medications: number;
   missed_medications: number;
   avg_verification_time_minutes: number;
-  created_at?: string;
-  updated_at?: string;
 }
 
-export interface MedicationPortalSettings {
-  id: string;
+export interface MedicationPortalSettings extends MedicationBase {
   group_id: string;
   reminder_preferences: {
     preferred_channels: string[];
@@ -63,6 +60,4 @@ export interface MedicationPortalSettings {
   accessibility_settings: {
     voice_reminders: boolean;
   };
-  created_at?: string;
-  updated_at?: string;
 }

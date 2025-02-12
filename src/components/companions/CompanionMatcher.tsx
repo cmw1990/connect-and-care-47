@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -26,6 +27,7 @@ interface CompanionMatch {
   mental_health_specialties: string[];
   support_tools_proficiency: Json;
   virtual_meeting_tools: string[];
+  interests_text: string;
   cognitive_engagement_activities?: {
     memory_games?: string[];
     brain_teasers?: string[];
@@ -37,15 +39,32 @@ interface CompanionMatch {
   art_therapy_certified?: boolean;
 }
 
+interface CompanionFilters {
+  expertiseArea: string;
+  communicationType: string;
+  dementiaExperience: boolean;
+  mentalHealthSupport: boolean;
+  maxRate: number;
+  supportTools: string[];
+}
+
+const convertInterestsToArray = (interestsText: string): string[] => {
+  return interestsText.split(',').map(interest => interest.trim()).filter(Boolean);
+};
+
+const convertInterestsToString = (interests: string[]): string => {
+  return interests.join(', ');
+};
+
 export const CompanionMatcher = () => {
   const [matches, setMatches] = useState<CompanionMatch[]>([]);
-  const [filters, setFilters] = useState({
+  const [filters, setFilters] = useState<CompanionFilters>({
     expertiseArea: "",
     communicationType: "",
     dementiaExperience: false,
     mentalHealthSupport: false,
     maxRate: 100,
-    supportTools: [] as string[],
+    supportTools: [],
   });
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
@@ -160,7 +179,16 @@ export const CompanionMatcher = () => {
         <Input
           placeholder="Search companions..."
           className="ml-2"
-          onChange={(e) => setFilters({ ...filters, search: e.target.value })}
+          onChange={(e) => {
+            const value = e.target.value;
+            // Filter companions based on the search input
+            const filteredCompanions = matches.filter(companion => 
+              companion.interests_text.toLowerCase().includes(value.toLowerCase()) ||
+              companion.user.first_name.toLowerCase().includes(value.toLowerCase()) ||
+              companion.user.last_name.toLowerCase().includes(value.toLowerCase())
+            );
+            setMatches(filteredCompanions);
+          }}
         />
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
