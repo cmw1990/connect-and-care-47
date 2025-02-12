@@ -5,31 +5,31 @@ import { Loader2 } from "lucide-react";
 import { OverdueAlert } from "./components/OverdueAlert";  
 import { ReminderSettings } from "./components/ReminderSettings";
 import { UpcomingReminders } from "./components/UpcomingReminders";
-import type { MedicationSchedule, MedicationPortalSettings } from "@/types/medication";
+import type { MedicationSchedule } from "@/types/medication";
 
 interface MedicationRemindersProps {
   groupId: string;
 }
 
-// Database interface for type safety
-interface DatabaseReminderPreferences {
+// Define the settings types without circular references
+interface ReminderPreferences {
   preferred_channels: string[];
 }
 
-interface DatabaseAccessibilitySettings {
+interface AccessibilitySettings {
   voice_reminders: boolean;
 }
 
-interface DatabasePortalSettings {
+interface PortalSettings {
   id: string;
   group_id: string;
-  reminder_preferences: DatabaseReminderPreferences | null;
-  accessibility_settings: DatabaseAccessibilitySettings | null;
+  reminder_preferences: ReminderPreferences;
+  accessibility_settings: AccessibilitySettings;
   created_at?: string;
   updated_at?: string;
 }
 
-const DEFAULT_SETTINGS: MedicationPortalSettings = {
+const DEFAULT_SETTINGS: PortalSettings = {
   id: '',
   group_id: '',
   reminder_preferences: {
@@ -40,23 +40,27 @@ const DEFAULT_SETTINGS: MedicationPortalSettings = {
   }
 };
 
-const validatePreferences = (data: unknown): DatabaseReminderPreferences | null => {
-  if (!data || typeof data !== 'object') return null;
+const validatePreferences = (data: unknown): ReminderPreferences => {
+  if (!data || typeof data !== 'object') {
+    return { preferred_channels: [] };
+  }
   const pref = data as Record<string, unknown>;
   return {
     preferred_channels: Array.isArray(pref.preferred_channels) ? pref.preferred_channels.map(String) : []
   };
 };
 
-const validateAccessibility = (data: unknown): DatabaseAccessibilitySettings | null => {
-  if (!data || typeof data !== 'object') return null;
+const validateAccessibility = (data: unknown): AccessibilitySettings => {
+  if (!data || typeof data !== 'object') {
+    return { voice_reminders: false };
+  }
   const settings = data as Record<string, unknown>;
   return {
     voice_reminders: Boolean(settings.voice_reminders)
   };
 };
 
-const fetchPortalSettings = async (groupId: string): Promise<MedicationPortalSettings> => {
+const fetchPortalSettings = async (groupId: string): Promise<PortalSettings> => {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
     return { ...DEFAULT_SETTINGS, group_id: groupId };
@@ -77,12 +81,8 @@ const fetchPortalSettings = async (groupId: string): Promise<MedicationPortalSet
   return {
     id: data.id || '',
     group_id: data.group_id,
-    reminder_preferences: {
-      preferred_channels: validatePreferences(data.reminder_preferences)?.preferred_channels || []
-    },
-    accessibility_settings: {
-      voice_reminders: validateAccessibility(data.accessibility_settings)?.voice_reminders || false
-    },
+    reminder_preferences: validatePreferences(data.reminder_preferences),
+    accessibility_settings: validateAccessibility(data.accessibility_settings),
     created_at: data.created_at,
     updated_at: data.updated_at
   };
