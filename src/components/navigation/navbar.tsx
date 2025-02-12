@@ -1,4 +1,3 @@
-
 import { Link, useNavigate } from "react-router-dom";
 import { ButtonPrimary } from "../ui/button-primary";
 import { supabase } from "@/integrations/supabase/client";
@@ -89,7 +88,6 @@ export const Navbar = () => {
             
             <NavigationMenu>
               <NavigationMenuList>
-                {/* Find Care Services */}
                 <NavigationMenuItem>
                   <NavigationMenuTrigger>Find Care</NavigationMenuTrigger>
                   <NavigationMenuContent>
@@ -146,7 +144,6 @@ export const Navbar = () => {
                   </NavigationMenuContent>
                 </NavigationMenuItem>
 
-                {/* Resources & Guides */}
                 <NavigationMenuItem>
                   <NavigationMenuTrigger>Resources</NavigationMenuTrigger>
                   <NavigationMenuContent>
@@ -177,7 +174,6 @@ export const Navbar = () => {
                   </NavigationMenuContent>
                 </NavigationMenuItem>
 
-                {/* Care Team Platform */}
                 <NavigationMenuItem>
                   <NavigationMenuTrigger>Care Team Platform</NavigationMenuTrigger>
                   <NavigationMenuContent>
@@ -185,28 +181,39 @@ export const Navbar = () => {
                       <div className="space-y-3">
                         <h4 className="text-sm font-medium leading-none">Care Team Collaboration</h4>
                         <p className="text-sm text-muted-foreground">
-                          Our advanced platform for coordinating care with your team
+                          Create or join care teams to coordinate care effectively
                         </p>
                         <div className="space-y-4">
                           <NavigationMenuLink asChild>
                             <Link
                               className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
-                              to="/groups"
+                              to="/groups/create"
                             >
-                              <div className="text-sm font-medium leading-none">Get Started</div>
+                              <div className="text-sm font-medium leading-none">Create Care Group</div>
                               <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
-                                Create or join a care team to coordinate care
+                                Start a new care team for coordinating care
                               </p>
                             </Link>
                           </NavigationMenuLink>
                           <NavigationMenuLink asChild>
                             <Link
                               className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
-                              to="/demo"
+                              to="/groups/join"
                             >
-                              <div className="text-sm font-medium leading-none">Watch Demo</div>
+                              <div className="text-sm font-medium leading-none">Join Existing Group</div>
                               <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
-                                See how our care team platform works
+                                Find and join existing care teams
+                              </p>
+                            </Link>
+                          </NavigationMenuLink>
+                          <NavigationMenuLink asChild>
+                            <Link
+                              className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                              to="/groups"
+                            >
+                              <div className="text-sm font-medium leading-none">My Care Groups</div>
+                              <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+                                View and manage your care teams
                               </p>
                             </Link>
                           </NavigationMenuLink>
@@ -216,7 +223,6 @@ export const Navbar = () => {
                   </NavigationMenuContent>
                 </NavigationMenuItem>
 
-                {/* About */}
                 <NavigationMenuItem>
                   <NavigationMenuTrigger>About</NavigationMenuTrigger>
                   <NavigationMenuContent>
@@ -310,5 +316,3 @@ export const Navbar = () => {
         </div>
       </div>
     </nav>
-  );
-};

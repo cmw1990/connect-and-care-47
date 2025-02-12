@@ -5,6 +5,8 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import Index from "@/pages/Index";
 import Groups from "@/pages/Groups";
 import GroupDetails from "@/pages/GroupDetails";
+import { CreateGroup } from "@/pages/groups/CreateGroup";
+import { JoinGroup } from "@/pages/groups/JoinGroup";
 import Auth from "@/pages/Auth";
 import Subscribe from "@/pages/Subscribe";
 import NotFound from "@/pages/NotFound";
@@ -48,6 +50,8 @@ const AppContent = () => {
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/groups" element={<Groups />} />
+            <Route path="/groups/create" element={<CreateGroup />} />
+            <Route path="/groups/join" element={<JoinGroup />} />
             <Route path="/groups/:groupId" element={<GroupDetails />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/subscribe" element={<Subscribe />} />
