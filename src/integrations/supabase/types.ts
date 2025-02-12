@@ -5133,6 +5133,33 @@ export type Database = {
           },
         ]
       }
+      user_engagement: {
+        Row: {
+          created_at: string | null
+          engagement_type: string
+          feature_used: string
+          id: string
+          metadata: Json | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          engagement_type: string
+          feature_used: string
+          id?: string
+          metadata?: Json | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          engagement_type?: string
+          feature_used?: string
+          id?: string
+          metadata?: Json | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       user_journey: {
         Row: {
           completed_at: string | null
