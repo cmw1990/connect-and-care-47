@@ -1,4 +1,35 @@
 
+// Break circular dependency by making a base type
+export interface MedicationScheduleBase {
+  id: string;
+  medication_name: string;
+  dosage: string;
+  time_of_day: string[];
+  group_id: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface MedicationSchedule extends MedicationScheduleBase {
+  medication_logs?: Array<Omit<MedicationLog, 'medication_schedule'>>;
+}
+
+export interface MedicationLog {
+  id: string;
+  schedule_id: string;
+  taken_at: string;
+  administered_at?: string;
+  administered_by?: string;
+  verified_by?: string;
+  status?: 'pending' | 'taken' | 'missed' | 'overdue';
+  notes?: string;
+  photo_verification_url?: string;
+  side_effects?: Record<string, unknown>;
+  symptoms?: Record<string, unknown>;
+  created_at?: string;
+  medication_schedule?: MedicationScheduleBase;
+}
+
 export interface MedicationAdherenceTrend {
   id: string;
   group_id: string;
@@ -34,35 +65,4 @@ export interface MedicationPortalSettings {
   };
   created_at?: string;
   updated_at?: string;
-}
-
-// Break circular dependency by making a base type
-export interface MedicationScheduleBase {
-  id: string;
-  medication_name: string;
-  dosage: string;
-  time_of_day: string[];
-  group_id: string;
-  created_at?: string;
-  updated_at?: string;
-}
-
-export interface MedicationSchedule extends MedicationScheduleBase {
-  medication_logs?: MedicationLog[];
-}
-
-export interface MedicationLog {
-  id: string;
-  schedule_id: string;
-  taken_at: string;
-  administered_at?: string;
-  administered_by?: string;
-  verified_by?: string;
-  status?: 'pending' | 'taken' | 'missed' | 'overdue';
-  notes?: string;
-  photo_verification_url?: string;
-  side_effects?: Record<string, unknown>;
-  symptoms?: Record<string, unknown>;
-  created_at?: string;
-  medication_schedule?: MedicationScheduleBase;
 }

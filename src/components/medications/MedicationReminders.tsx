@@ -5,31 +5,13 @@ import { Loader2 } from "lucide-react";
 import { OverdueAlert } from "./components/OverdueAlert";  
 import { ReminderSettings } from "./components/ReminderSettings";
 import { UpcomingReminders } from "./components/UpcomingReminders";
-import type { MedicationSchedule } from "@/types/medication";
+import type { MedicationSchedule, MedicationPortalSettings } from "@/types/medication";
 
 interface MedicationRemindersProps {
   groupId: string;
 }
 
-// Define the settings types without circular references
-interface ReminderPreferences {
-  preferred_channels: string[];
-}
-
-interface AccessibilitySettings {
-  voice_reminders: boolean;
-}
-
-interface PortalSettings {
-  id: string;
-  group_id: string;
-  reminder_preferences: ReminderPreferences;
-  accessibility_settings: AccessibilitySettings;
-  created_at?: string;
-  updated_at?: string;
-}
-
-const DEFAULT_SETTINGS: PortalSettings = {
+const DEFAULT_SETTINGS: MedicationPortalSettings = {
   id: '',
   group_id: '',
   reminder_preferences: {
@@ -40,7 +22,7 @@ const DEFAULT_SETTINGS: PortalSettings = {
   }
 };
 
-const validatePreferences = (data: unknown): ReminderPreferences => {
+const validatePreferences = (data: unknown): { preferred_channels: string[] } => {
   if (!data || typeof data !== 'object') {
     return { preferred_channels: [] };
   }
@@ -50,7 +32,7 @@ const validatePreferences = (data: unknown): ReminderPreferences => {
   };
 };
 
-const validateAccessibility = (data: unknown): AccessibilitySettings => {
+const validateAccessibility = (data: unknown): { voice_reminders: boolean } => {
   if (!data || typeof data !== 'object') {
     return { voice_reminders: false };
   }
@@ -60,7 +42,7 @@ const validateAccessibility = (data: unknown): AccessibilitySettings => {
   };
 };
 
-const fetchPortalSettings = async (groupId: string): Promise<PortalSettings> => {
+const fetchPortalSettings = async (groupId: string): Promise<MedicationPortalSettings> => {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
     return { ...DEFAULT_SETTINGS, group_id: groupId };
