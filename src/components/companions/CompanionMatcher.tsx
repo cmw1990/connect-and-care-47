@@ -27,7 +27,7 @@ interface CompanionMatch {
   mental_health_specialties: string[];
   support_tools_proficiency: Json;
   virtual_meeting_tools: string[];
-  interests_text: string;
+  interests_text?: string; // Made optional since it might not exist in old records
   cognitive_engagement_activities?: {
     memory_games?: string[];
     brain_teasers?: string[];
@@ -37,6 +37,10 @@ interface CompanionMatch {
   cultural_competencies?: string[];
   music_therapy_certified?: boolean;
   art_therapy_certified?: boolean;
+  availability?: Json;
+  background_check_date?: string;
+  bio?: string;
+  child_engagement_activities?: Json;
 }
 
 interface CompanionFilters {
@@ -110,9 +114,10 @@ export const CompanionMatcher = () => {
 
       if (error) throw error;
 
-      // Parse the JSON fields before setting state
+      // Parse the JSON fields and handle type conversion
       const parsedData = (data || []).map(companion => ({
         ...companion,
+        interests_text: companion.interests_text || '',
         cognitive_engagement_activities: typeof companion.cognitive_engagement_activities === 'string' 
           ? JSON.parse(companion.cognitive_engagement_activities)
           : companion.cognitive_engagement_activities || {
@@ -180,12 +185,12 @@ export const CompanionMatcher = () => {
           placeholder="Search companions..."
           className="ml-2"
           onChange={(e) => {
-            const value = e.target.value;
+            const value = e.target.value.toLowerCase();
             // Filter companions based on the search input
             const filteredCompanions = matches.filter(companion => 
-              companion.interests_text.toLowerCase().includes(value.toLowerCase()) ||
-              companion.user.first_name.toLowerCase().includes(value.toLowerCase()) ||
-              companion.user.last_name.toLowerCase().includes(value.toLowerCase())
+              (companion.interests_text || '').toLowerCase().includes(value) ||
+              companion.user.first_name.toLowerCase().includes(value) ||
+              companion.user.last_name.toLowerCase().includes(value)
             );
             setMatches(filteredCompanions);
           }}

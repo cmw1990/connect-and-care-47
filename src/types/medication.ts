@@ -14,7 +14,7 @@ export interface MedicationScheduleBase extends MedicationBase {
 }
 
 export interface MedicationSchedule extends MedicationScheduleBase {
-  logs?: MedicationLogBase[];
+  logs?: Array<Omit<MedicationLogBase, 'schedule'>>;
 }
 
 export interface MedicationLogBase extends MedicationBase {
@@ -31,7 +31,7 @@ export interface MedicationLogBase extends MedicationBase {
 }
 
 export interface MedicationLog extends MedicationLogBase {
-  schedule?: MedicationScheduleBase;
+  schedule?: Omit<MedicationScheduleBase, 'logs'>;
 }
 
 export interface MedicationAdherenceTrend extends MedicationBase {
