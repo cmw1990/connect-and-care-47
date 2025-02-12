@@ -1,3 +1,4 @@
+
 import { Link, useNavigate } from "react-router-dom";
 import { ButtonPrimary } from "../ui/button-primary";
 import { supabase } from "@/integrations/supabase/client";
@@ -316,3 +317,7 @@ export const Navbar = () => {
         </div>
       </div>
     </nav>
+  );
+};
+
+export default Navbar;
