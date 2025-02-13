@@ -6,7 +6,15 @@ export interface MedicationBase {
   updated_at?: string;
 }
 
-export interface MedicationLogSummary {
+// Simplified schedules and logs to prevent circular references
+export interface SimpleMedicationSchedule {
+  id: string;
+  medication_name: string;
+  dosage: string;
+  time_of_day: string[];
+}
+
+export interface SimpleMedicationLog {
   id: string;
   taken_at: string;
   administered_at?: string;
@@ -21,7 +29,7 @@ export interface MedicationScheduleBase extends MedicationBase {
 }
 
 export interface MedicationSchedule extends MedicationScheduleBase {
-  logs?: MedicationLogSummary[];
+  logs?: SimpleMedicationLog[];
 }
 
 export interface MedicationLogBase extends MedicationBase {
@@ -38,7 +46,7 @@ export interface MedicationLogBase extends MedicationBase {
 }
 
 export interface MedicationLog extends MedicationLogBase {
-  schedule?: MedicationScheduleBase;
+  schedule?: SimpleMedicationSchedule;
 }
 
 export interface MedicationAdherenceTrend extends MedicationBase {
