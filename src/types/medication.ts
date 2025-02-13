@@ -6,7 +6,13 @@ export interface MedicationBase {
   updated_at?: string;
 }
 
-// Break circular dependency by using simpler types
+export interface MedicationLogSummary {
+  id: string;
+  taken_at: string;
+  administered_at?: string;
+  status?: 'pending' | 'taken' | 'missed' | 'overdue';
+}
+
 export interface MedicationScheduleBase extends MedicationBase {
   medication_name: string;
   dosage: string;
@@ -14,17 +20,8 @@ export interface MedicationScheduleBase extends MedicationBase {
   group_id: string;
 }
 
-// Separate the log reference to avoid circular dependency
 export interface MedicationSchedule extends MedicationScheduleBase {
   logs?: MedicationLogSummary[];
-}
-
-// Simple log type without circular reference
-export interface MedicationLogSummary {
-  id: string;
-  taken_at: string;
-  administered_at?: string;
-  status?: 'pending' | 'taken' | 'missed' | 'overdue';
 }
 
 export interface MedicationLogBase extends MedicationBase {
