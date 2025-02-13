@@ -6,47 +6,37 @@ export interface MedicationBase {
   updated_at?: string;
 }
 
-// Simplified schedules and logs to prevent circular references
-export interface SimpleMedicationSchedule {
+// Core schedule type without circular references
+export interface MedicationScheduleCore {
   id: string;
-  medication_name: string;
-  dosage: string;
-  time_of_day: string[];
-}
-
-export interface SimpleMedicationLog {
-  id: string;
-  taken_at: string;
-  administered_at?: string;
-  status?: 'pending' | 'taken' | 'missed' | 'overdue';
-}
-
-export interface MedicationScheduleBase extends MedicationBase {
   medication_name: string;
   dosage: string;
   time_of_day: string[];
   group_id: string;
 }
 
-export interface MedicationSchedule extends MedicationScheduleBase {
-  logs?: SimpleMedicationLog[];
-}
-
-export interface MedicationLogBase extends MedicationBase {
-  schedule_id: string;
+// Core log type without circular references
+export interface MedicationLogCore {
+  id: string;
   taken_at: string;
   administered_at?: string;
+  status?: 'pending' | 'taken' | 'missed' | 'overdue';
+  schedule_id: string;
+}
+
+// Extended types that reference core types
+export interface MedicationSchedule extends MedicationBase, MedicationScheduleCore {
+  logs?: MedicationLogCore[];
+}
+
+export interface MedicationLog extends MedicationBase, MedicationLogCore {
   administered_by?: string;
   verified_by?: string;
-  status?: 'pending' | 'taken' | 'missed' | 'overdue';
   notes?: string;
   photo_verification_url?: string;
   side_effects?: Record<string, unknown>;
   symptoms?: Record<string, unknown>;
-}
-
-export interface MedicationLog extends MedicationLogBase {
-  schedule?: SimpleMedicationSchedule;
+  schedule?: MedicationScheduleCore;
 }
 
 export interface MedicationAdherenceTrend extends MedicationBase {
