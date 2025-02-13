@@ -5,26 +5,35 @@ import { Loader2 } from "lucide-react";
 import { OverdueAlert } from "./components/OverdueAlert";  
 import { ReminderSettings } from "./components/ReminderSettings";
 import { UpcomingReminders } from "./components/UpcomingReminders";
-import type { MedicationPortalSettings, MedicationScheduleBase } from "@/types/medication";
+import type { 
+  MedicationPortalSettings,
+  MedicationScheduleBase,
+  MedicationReminderPreferences,
+  MedicationAccessibilitySettings
+} from "@/types/medication";
 
 interface MedicationRemindersProps {
   groupId: string;
 }
 
+const DEFAULT_REMINDER_PREFERENCES: MedicationReminderPreferences = {
+  preferred_channels: []
+};
+
+const DEFAULT_ACCESSIBILITY_SETTINGS: MedicationAccessibilitySettings = {
+  voice_reminders: false
+};
+
 const DEFAULT_SETTINGS: MedicationPortalSettings = {
   id: '',
   group_id: '',
-  reminder_preferences: {
-    preferred_channels: []
-  },
-  accessibility_settings: {
-    voice_reminders: false
-  }
+  reminder_preferences: DEFAULT_REMINDER_PREFERENCES,
+  accessibility_settings: DEFAULT_ACCESSIBILITY_SETTINGS
 };
 
-const validatePreferences = (data: unknown): { preferred_channels: string[] } => {
+const validatePreferences = (data: unknown): MedicationReminderPreferences => {
   if (!data || typeof data !== 'object') {
-    return { preferred_channels: [] };
+    return DEFAULT_REMINDER_PREFERENCES;
   }
   const pref = data as Record<string, unknown>;
   return {
@@ -32,9 +41,9 @@ const validatePreferences = (data: unknown): { preferred_channels: string[] } =>
   };
 };
 
-const validateAccessibility = (data: unknown): { voice_reminders: boolean } => {
+const validateAccessibility = (data: unknown): MedicationAccessibilitySettings => {
   if (!data || typeof data !== 'object') {
-    return { voice_reminders: false };
+    return DEFAULT_ACCESSIBILITY_SETTINGS;
   }
   const settings = data as Record<string, unknown>;
   return {
@@ -92,7 +101,7 @@ const fetchMedicationSchedules = async (groupId: string): Promise<MedicationSche
   return data ?? [];
 };
 
-export const MedicationReminders: React.FC<MedicationRemindersProps> = ({ groupId }) => {
+export const MedicationReminders = ({ groupId }: MedicationRemindersProps) => {
   const portalSettingsQuery = useQuery({
     queryKey: ['portal-settings', groupId],
     queryFn: () => fetchPortalSettings(groupId)

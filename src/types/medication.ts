@@ -1,12 +1,11 @@
-
-// Base types for medication-related entities
+// Simple base types without circular references
 export interface MedicationBase {
   id: string;
   created_at?: string;
   updated_at?: string;
 }
 
-// Core medication types without circular references
+// Flat type definitions without nesting
 export interface MedicationScheduleBase {
   id: string;
   medication_name: string;
@@ -30,23 +29,22 @@ export interface MedicationLogBase {
   photo_verification_url?: string;
 }
 
-// Complete types that extend the base types
-export interface MedicationSchedule extends MedicationBase, MedicationScheduleBase {}
+// Settings interface without circular references
+export interface MedicationReminderPreferences {
+  preferred_channels: string[];
+}
 
-export interface MedicationLog extends MedicationBase, MedicationLogBase {
-  schedule?: MedicationScheduleBase;
+export interface MedicationAccessibilitySettings {
+  voice_reminders: boolean;
 }
 
 export interface MedicationPortalSettings extends MedicationBase {
   group_id: string;
-  reminder_preferences: {
-    preferred_channels: string[];
-  };
-  accessibility_settings: {
-    voice_reminders: boolean;
-  };
+  reminder_preferences: MedicationReminderPreferences;
+  accessibility_settings: MedicationAccessibilitySettings;
 }
 
+// Other flat type definitions
 export interface MedicationAdherenceTrend extends MedicationBase {
   group_id: string;
   date: string;
