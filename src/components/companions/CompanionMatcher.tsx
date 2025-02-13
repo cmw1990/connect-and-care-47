@@ -27,8 +27,8 @@ interface CompanionMatch {
   mental_health_specialties: string[];
   support_tools_proficiency: Json;
   virtual_meeting_tools: string[];
-  interests_text?: string; // Made optional since it might not exist in old records
-  cognitive_engagement_activities?: {
+  interests: string[] | null;
+  cognitive_engagement_activities: {
     memory_games?: string[];
     brain_teasers?: string[];
     social_activities?: string[];
@@ -51,14 +51,6 @@ interface CompanionFilters {
   maxRate: number;
   supportTools: string[];
 }
-
-const convertInterestsToArray = (interestsText: string): string[] => {
-  return interestsText.split(',').map(interest => interest.trim()).filter(Boolean);
-};
-
-const convertInterestsToString = (interests: string[]): string => {
-  return interests.join(', ');
-};
 
 export const CompanionMatcher = () => {
   const [matches, setMatches] = useState<CompanionMatch[]>([]);
@@ -114,10 +106,9 @@ export const CompanionMatcher = () => {
 
       if (error) throw error;
 
-      // Parse the JSON fields and handle type conversion
       const parsedData = (data || []).map(companion => ({
         ...companion,
-        interests_text: companion.interests_text || '',
+        interests: companion.interests || [],
         cognitive_engagement_activities: typeof companion.cognitive_engagement_activities === 'string' 
           ? JSON.parse(companion.cognitive_engagement_activities)
           : companion.cognitive_engagement_activities || {
@@ -188,7 +179,7 @@ export const CompanionMatcher = () => {
             const value = e.target.value.toLowerCase();
             // Filter companions based on the search input
             const filteredCompanions = matches.filter(companion => 
-              (companion.interests_text || '').toLowerCase().includes(value) ||
+              companion.bio?.toLowerCase().includes(value) ||
               companion.user.first_name.toLowerCase().includes(value) ||
               companion.user.last_name.toLowerCase().includes(value)
             );
