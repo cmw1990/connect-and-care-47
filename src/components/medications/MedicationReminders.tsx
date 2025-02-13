@@ -5,7 +5,7 @@ import { Loader2 } from "lucide-react";
 import { OverdueAlert } from "./components/OverdueAlert";  
 import { ReminderSettings } from "./components/ReminderSettings";
 import { UpcomingReminders } from "./components/UpcomingReminders";
-import type { SimpleMedicationSchedule, MedicationPortalSettings } from "@/types/medication";
+import type { MedicationPortalSettings } from "@/types/medication";
 
 interface MedicationRemindersProps {
   groupId: string;
@@ -81,7 +81,14 @@ const fetchOverdueCount = async (groupId: string): Promise<number> => {
   return count ?? 0;
 };
 
-const fetchMedicationSchedules = async (groupId: string): Promise<SimpleMedicationSchedule[]> => {
+interface Schedule {
+  id: string;
+  medication_name: string;
+  dosage: string;
+  time_of_day: string[];
+}
+
+const fetchMedicationSchedules = async (groupId: string): Promise<Schedule[]> => {
   const { data, error } = await supabase
     .from('medication_schedules')
     .select('id, medication_name, dosage, time_of_day')
