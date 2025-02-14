@@ -3092,6 +3092,85 @@ export type Database = {
           },
         ]
       }
+      insurance_documents: {
+        Row: {
+          created_at: string | null
+          document_type: string
+          file_url: string
+          id: string
+          insurance_id: string | null
+          metadata: Json | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          document_type: string
+          file_url: string
+          id?: string
+          insurance_id?: string | null
+          metadata?: Json | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          document_type?: string
+          file_url?: string
+          id?: string
+          insurance_id?: string | null
+          metadata?: Json | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "insurance_documents_insurance_id_fkey"
+            columns: ["insurance_id"]
+            isOneToOne: false
+            referencedRelation: "user_insurance"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      insurance_network_providers: {
+        Row: {
+          contact_info: Json | null
+          created_at: string | null
+          id: string
+          insurance_plan_id: string | null
+          location: Json | null
+          provider_name: string
+          specialty: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          contact_info?: Json | null
+          created_at?: string | null
+          id?: string
+          insurance_plan_id?: string | null
+          location?: Json | null
+          provider_name: string
+          specialty?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          contact_info?: Json | null
+          created_at?: string | null
+          id?: string
+          insurance_plan_id?: string | null
+          location?: Json | null
+          provider_name?: string
+          specialty?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "insurance_network_providers_insurance_plan_id_fkey"
+            columns: ["insurance_plan_id"]
+            isOneToOne: false
+            referencedRelation: "insurance_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       insurance_plans: {
         Row: {
           auto_verification: boolean | null
@@ -3127,6 +3206,44 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      insurance_verification_attempts: {
+        Row: {
+          error_message: string | null
+          id: string
+          insurance_id: string | null
+          response_data: Json | null
+          status: string
+          verification_method: string
+          verified_at: string | null
+        }
+        Insert: {
+          error_message?: string | null
+          id?: string
+          insurance_id?: string | null
+          response_data?: Json | null
+          status: string
+          verification_method: string
+          verified_at?: string | null
+        }
+        Update: {
+          error_message?: string | null
+          id?: string
+          insurance_id?: string | null
+          response_data?: Json | null
+          status?: string
+          verification_method?: string
+          verified_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "insurance_verification_attempts_insurance_id_fkey"
+            columns: ["insurance_id"]
+            isOneToOne: false
+            referencedRelation: "user_insurance"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       insurance_verification_history: {
         Row: {
