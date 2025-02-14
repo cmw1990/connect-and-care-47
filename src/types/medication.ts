@@ -1,3 +1,4 @@
+
 // Simple base types without circular references
 export interface MedicationBase {
   id: string;
@@ -27,6 +28,7 @@ export interface MedicationLogBase {
   verification_status?: 'approved' | 'rejected';
   notes?: string;
   photo_verification_url?: string;
+  medication_schedule?: MedicationScheduleBase;
 }
 
 // Settings interface without circular references

@@ -4,16 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { Check, X, AlertCircle } from "lucide-react";
-import type { MedicationSupervisionSummary, MedicationLog, MedicationScheduleBase } from "@/types/medication";
+import type { MedicationSupervisionSummary, MedicationLogBase, MedicationScheduleBase } from "@/types/medication";
 
 interface SupervisorPanelProps {
   groupId: string;
   data: MedicationSupervisionSummary | null;
-}
-
-interface DBMedicationLog extends Omit<MedicationLog, 'taken_at'> {
-  administered_at: string;
-  medication_schedule?: MedicationScheduleBase;
 }
 
 export const SupervisorPanel = ({ groupId, data }: SupervisorPanelProps) => {
@@ -38,12 +33,7 @@ export const SupervisorPanel = ({ groupId, data }: SupervisorPanelProps) => {
 
       if (error) throw error;
       
-      // Transform the data to match our MedicationLog type
-      return (data as unknown as DBMedicationLog[]).map(log => ({
-        ...log,
-        taken_at: log.administered_at,
-        medication_schedule: log.medication_schedule || undefined
-      }));
+      return data as MedicationLogBase[];
     }
   });
 
