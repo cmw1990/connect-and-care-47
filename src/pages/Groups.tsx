@@ -1,3 +1,4 @@
+
 import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -13,7 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Users, Search, UserPlus, UserRound } from "lucide-react";
-import { GroupsList } from "@/components/groups/GroupsList";
+import GroupsList from "@/components/groups/GroupsList";
 import { CaregiverCard } from "@/components/caregivers/CaregiverCard";
 import { CompanionCard } from "@/components/companions/CompanionCard";
 import { CareTeamPresence } from "@/components/groups/CareTeamPresence";
