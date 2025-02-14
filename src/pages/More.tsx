@@ -46,6 +46,13 @@ export const More = () => {
       color: "text-green-500",
     },
     {
+      icon: Shield,
+      label: "Insurance",
+      description: "Manage your insurance coverage",
+      route: "/insurance",
+      color: "text-purple-500",
+    },
+    {
       icon: Users2,
       label: "Care Team",
       description: "Collaborate with your care team",
