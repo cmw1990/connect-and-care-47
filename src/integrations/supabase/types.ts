@@ -6235,6 +6235,13 @@ export type Database = {
         }
         Returns: boolean
       }
+      check_service_coverage: {
+        Args: {
+          insurance_id: string
+          service_type: string
+        }
+        Returns: boolean
+      }
       disablelongtransactions: {
         Args: Record<PropertyKey, never>
         Returns: string
