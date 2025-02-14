@@ -1,5 +1,6 @@
 
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -15,11 +16,22 @@ export const InsuranceForm = ({ onSuccess }: InsuranceFormProps) => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [insuranceData, setInsuranceData] = useState({
-    type: "",
-    provider: "",
+    insurancePlanId: "",
     policyNumber: "",
     groupNumber: "",
     coverageStartDate: "",
+  });
+
+  const { data: insurancePlans } = useQuery({
+    queryKey: ['insurancePlans'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('insurance_plans')
+        .select('*');
+      
+      if (error) throw error;
+      return data;
+    }
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -35,6 +47,7 @@ export const InsuranceForm = ({ onSuccess }: InsuranceFormProps) => {
 
       const { error } = await supabase.from('user_insurance').insert({
         user_id: user.id,
+        insurance_plan_id: insuranceData.insurancePlanId,
         policy_number: insuranceData.policyNumber,
         group_number: insuranceData.groupNumber,
         coverage_start_date: insuranceData.coverageStartDate,
@@ -72,29 +85,22 @@ export const InsuranceForm = ({ onSuccess }: InsuranceFormProps) => {
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <label>Insurance Type</label>
+            <label>Insurance Plan</label>
             <Select
-              value={insuranceData.type}
-              onValueChange={(value) => setInsuranceData(prev => ({ ...prev, type: value }))}
+              value={insuranceData.insurancePlanId}
+              onValueChange={(value) => setInsuranceData(prev => ({ ...prev, insurancePlanId: value }))}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Select insurance type" />
+                <SelectValue placeholder="Select insurance plan" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="medicare">Medicare</SelectItem>
-                <SelectItem value="medicaid">Medicaid</SelectItem>
-                <SelectItem value="private">Private Insurance</SelectItem>
+                {insurancePlans?.map((plan) => (
+                  <SelectItem key={plan.id} value={plan.id}>
+                    {plan.name} - {plan.provider}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
-          </div>
-
-          <div className="space-y-2">
-            <label>Insurance Provider</label>
-            <Input
-              placeholder="Enter provider name"
-              value={insuranceData.provider}
-              onChange={(e) => setInsuranceData(prev => ({ ...prev, provider: e.target.value }))}
-            />
           </div>
 
           <div className="space-y-2">
