@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { InsuranceForm } from "@/components/insurance/InsuranceForm";
@@ -7,6 +6,7 @@ import { InsuranceAnalytics } from "@/components/insurance/InsuranceAnalytics";
 import { InsurancePlanBenefitsTable } from "@/components/insurance/InsurancePlanBenefitsTable";
 import { InsuranceDeductiblesCard } from "@/components/insurance/InsuranceDeductiblesCard";
 import { InsurancePreauthorizationForm } from "@/components/insurance/InsurancePreauthorizationForm";
+import { InsuranceDocumentUpload } from "@/components/insurance/InsuranceDocumentUpload";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus } from "lucide-react";
@@ -56,6 +56,7 @@ const Insurance = () => {
             <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
             <TabsTrigger value="benefits">Benefits</TabsTrigger>
             <TabsTrigger value="preauth">Pre-Authorization</TabsTrigger>
+            <TabsTrigger value="documents">Documents</TabsTrigger>
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
           </TabsList>
 
@@ -77,6 +78,15 @@ const Insurance = () => {
           <TabsContent value="preauth">
             {activeInsurance && (
               <InsurancePreauthorizationForm insuranceId={activeInsurance.id} />
+            )}
+          </TabsContent>
+
+          <TabsContent value="documents">
+            {activeInsurance && (
+              <InsuranceDocumentUpload
+                insuranceId={activeInsurance.id}
+                documentType="insurance_card"
+              />
             )}
           </TabsContent>
 
