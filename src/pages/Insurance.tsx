@@ -2,7 +2,9 @@
 import { useState } from "react";
 import { InsuranceForm } from "@/components/insurance/InsuranceForm";
 import { InsuranceDashboard } from "@/components/insurance/InsuranceDashboard";
+import { InsuranceAnalytics } from "@/components/insurance/InsuranceAnalytics";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus } from "lucide-react";
 
 const Insurance = () => {
@@ -24,7 +26,18 @@ const Insurance = () => {
       {showForm ? (
         <InsuranceForm onSuccess={() => setShowForm(false)} />
       ) : (
-        <InsuranceDashboard />
+        <Tabs defaultValue="dashboard" className="space-y-4">
+          <TabsList>
+            <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+            <TabsTrigger value="analytics">Analytics</TabsTrigger>
+          </TabsList>
+          <TabsContent value="dashboard">
+            <InsuranceDashboard />
+          </TabsContent>
+          <TabsContent value="analytics">
+            <InsuranceAnalytics />
+          </TabsContent>
+        </Tabs>
       )}
     </div>
   );
