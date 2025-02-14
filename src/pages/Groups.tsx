@@ -1,4 +1,3 @@
-
 import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -72,7 +71,11 @@ const Groups = () => {
           privacy_settings,
           care_group_members!inner (
             id,
-            role
+            user:profiles!care_group_members_user_id_fkey (
+              id,
+              first_name,
+              last_name
+            )
           )
         `)
         .eq('care_group_members.user_id', user.id);
@@ -134,9 +137,12 @@ const Groups = () => {
       .from('caregiver_profiles')
       .select(`
         *,
-        user:profiles(first_name, last_name)
+        user:profiles!caregiver_profiles_user_id_fkey (
+          first_name,
+          last_name
+        )
       `)
-      .ilike('skills', `%${searchQuery}%`);
+      .textSearch('skills', searchQuery); // Using text search instead of ILIKE
 
     if (error) {
       toast({

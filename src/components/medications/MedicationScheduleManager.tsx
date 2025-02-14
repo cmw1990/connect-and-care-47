@@ -25,9 +25,10 @@ export const MedicationScheduleManager = ({ groupId }: MedicationScheduleManager
             id,
             supervisor_id,
             supervision_level,
-            user:supervisor_id (
+            supervisor:profiles!medication_supervision_supervisor_id_fkey (
               id,
-              email
+              first_name,
+              last_name
             )
           )
         `)
@@ -87,7 +88,7 @@ export const MedicationScheduleManager = ({ groupId }: MedicationScheduleManager
                   {schedule.medication_supervision?.map((supervisor: any) => (
                     <div key={supervisor.supervisor_id} className="flex items-center justify-between">
                       <span>
-                        {supervisor.user.email}
+                        {supervisor.supervisor.first_name} {supervisor.supervisor.last_name}
                       </span>
                       <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-full">
                         {supervisor.supervision_level}
