@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,18 +14,20 @@ export const CareMetrics = ({ groupId }: CareMetricsProps) => {
   const { data: metrics } = useQuery({
     queryKey: ['careMetrics', groupId],
     queryFn: async () => {
+      // First verify access using care_group_members
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      // First verify user is a member of the group
-      const { data: membership } = await supabase
+      const { data: membership, error: membershipError } = await supabase
         .from('care_group_members')
         .select('id')
         .eq('group_id', groupId)
         .eq('user_id', user.id)
         .single();
 
-      if (!membership) throw new Error('Not authorized');
+      if (membershipError || !membership) {
+        throw new Error('Not authorized to view metrics');
+      }
 
       const { data, error } = await supabase
         .from('care_quality_metrics')
