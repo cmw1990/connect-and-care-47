@@ -15,6 +15,19 @@ export const CareMetrics = ({ groupId }: CareMetricsProps) => {
   const { data: metrics } = useQuery({
     queryKey: ['careMetrics', groupId],
     queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      // First verify user is a member of the group
+      const { data: membership } = await supabase
+        .from('care_group_members')
+        .select('id')
+        .eq('group_id', groupId)
+        .eq('user_id', user.id)
+        .single();
+
+      if (!membership) throw new Error('Not authorized');
+
       const { data, error } = await supabase
         .from('care_quality_metrics')
         .select('*')
