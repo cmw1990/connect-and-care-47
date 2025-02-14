@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Download, Upload, Trash2, Eye } from 'lucide-react';
-import type { InsuranceDocument } from '@/types/insurance';
+import type { InsuranceDocument } from '@/types/supabase';
 
 export const InsuranceDocumentManager = () => {
   const [file, setFile] = useState<File | null>(null);
@@ -31,11 +31,10 @@ export const InsuranceDocumentManager = () => {
       const { data, error } = await supabase
         .from('insurance_documents')
         .select('*')
-        .eq('user_id', user.id)
-        .returns<InsuranceDocument[]>();
+        .eq('user_id', user.id);
 
       if (error) throw error;
-      return data;
+      return data as InsuranceDocument[];
     }
   });
 
@@ -70,7 +69,7 @@ export const InsuranceDocumentManager = () => {
       if (dbError) throw dbError;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['insuranceDocuments']);
+      queryClient.invalidateQueries({ queryKey: ['insuranceDocuments'] });
       toast({
         title: "Success",
         description: "Document uploaded successfully",
@@ -99,8 +98,10 @@ export const InsuranceDocumentManager = () => {
       const a = document.createElement('a');
       a.href = url;
       a.download = document.metadata.filename || 'document';
+      document.body.appendChild(a);
       a.click();
       URL.revokeObjectURL(url);
+      document.body.removeChild(a);
     } catch (error) {
       toast({
         title: "Error",

@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -15,7 +16,7 @@ interface Message {
   sender?: {
     first_name: string | null;
     last_name: string | null;
-  };
+  } | null;
 }
 
 export const CareTeamChat = ({ groupId }: { groupId: string }) => {
@@ -49,7 +50,7 @@ export const CareTeamChat = ({ groupId }: { groupId: string }) => {
         .order("created_at", { ascending: true });
 
       if (error) throw error;
-      setMessages(data || []);
+      setMessages(data as Message[]);
     } catch (error) {
       console.error("Error fetching messages:", error);
       toast({

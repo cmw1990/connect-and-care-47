@@ -32,7 +32,6 @@ export const CareQualityMetrics = ({ groupId }: CareMetricsProps) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      // Use the new secure function
       const { data, error } = await supabase
         .rpc('get_care_quality_metrics', {
           p_group_id: groupId
@@ -45,13 +44,14 @@ export const CareQualityMetrics = ({ groupId }: CareMetricsProps) => {
 
       return data as MetricData[];
     },
-    retry: 1,
-    onError: (error) => {
-      toast({
-        title: "Error loading metrics",
-        description: "Unable to load care quality metrics. Please try again later.",
-        variant: "destructive",
-      });
+    meta: {
+      onError: () => {
+        toast({
+          title: "Error loading metrics",
+          description: "Unable to load care quality metrics. Please try again later.",
+          variant: "destructive",
+        });
+      }
     }
   });
 
