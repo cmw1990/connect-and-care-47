@@ -1,4 +1,3 @@
-
 import {
   Table,
   TableBody,
@@ -11,18 +10,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Check, X } from "lucide-react";
 import { InsuranceBenefitsSkeleton } from "@/components/ui/skeletons/InsuranceBenefitsSkeleton";
-
-interface InsuranceBenefit {
-  id: string;
-  plan_id: string;
-  benefit_name: string;
-  coverage_percentage: number;
-  annual_limit: number | null;
-  requires_preauthorization: boolean;
-  waiting_period_days: number;
-  created_at: string;
-  updated_at: string;
-}
+import type { InsuranceBenefit } from "@/types/insurance";
 
 interface InsurancePlanBenefitsTableProps {
   planId: string;
@@ -34,11 +22,12 @@ export const InsurancePlanBenefitsTable = ({ planId }: InsurancePlanBenefitsTabl
     queryFn: async () => {
       const { data, error } = await supabase
         .from('insurance_plan_benefits')
-        .select('id, plan_id, benefit_name, coverage_percentage, annual_limit, requires_preauthorization, waiting_period_days, created_at, updated_at')
-        .eq('plan_id', planId);
+        .select('*')
+        .eq('plan_id', planId)
+        .returns<InsuranceBenefit[]>();
 
       if (error) throw error;
-      return data as InsuranceBenefit[];
+      return data;
     }
   });
 

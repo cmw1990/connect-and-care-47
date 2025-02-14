@@ -1,7 +1,7 @@
-
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import type { InsuranceProvider } from "@/types/insurance";
 import { Input } from "@/components/ui/input";
 import { 
   Table, 
@@ -20,24 +20,17 @@ export default function Network() {
   const { data: providers } = useQuery({
     queryKey: ['providers', searchTerm],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
-
-      let query = supabase
+      const { data, error } = await supabase
         .from('insurance_providers')
         .select(`
           *,
           insurance_plan_providers!inner(
-            plan_id,
             network_status
           )
-        `);
+        `)
+        .ilike('name', `%${searchTerm}%`)
+        .returns<InsuranceProvider[]>();
 
-      if (searchTerm) {
-        query = query.ilike('name', `%${searchTerm}%`);
-      }
-
-      const { data, error } = await query;
       if (error) throw error;
       return data;
     }

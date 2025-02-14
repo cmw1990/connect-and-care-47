@@ -4,17 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
 import { InsuranceDeductiblesSkeleton } from "@/components/ui/skeletons/InsuranceDeductiblesSkeleton";
-
-interface InsuranceDeductible {
-  id: string;
-  insurance_id: string;
-  deductible_type: 'individual' | 'family';
-  total_amount: number;
-  met_amount: number;
-  year: number;
-  created_at: string;
-  updated_at: string;
-}
+import type { InsuranceDeductible } from "@/types/insurance";
 
 interface InsuranceDeductiblesCardProps {
   insuranceId: string;
@@ -28,12 +18,13 @@ export const InsuranceDeductiblesCard = ({ insuranceId }: InsuranceDeductiblesCa
     queryFn: async () => {
       const { data, error } = await supabase
         .from('insurance_deductibles')
-        .select('id, insurance_id, deductible_type, total_amount, met_amount, year, created_at, updated_at')
+        .select('*')
         .eq('insurance_id', insuranceId)
-        .eq('year', currentYear);
+        .eq('year', currentYear)
+        .returns<InsuranceDeductible[]>();
 
       if (error) throw error;
-      return data as InsuranceDeductible[];
+      return data;
     }
   });
 

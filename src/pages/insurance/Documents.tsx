@@ -1,6 +1,6 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import type { InsuranceDocument } from "@/types/insurance";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Download, FileText } from "lucide-react";
@@ -17,7 +17,8 @@ export default function Documents() {
         .from('insurance_documents')
         .select('*')
         .eq('user_id', user.id)
-        .order('uploaded_at', { ascending: false });
+        .order('uploaded_at', { ascending: false })
+        .returns<InsuranceDocument[]>();
 
       if (error) throw error;
       return data;
