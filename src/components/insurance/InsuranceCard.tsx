@@ -1,13 +1,12 @@
 
 import { Card, CardContent } from "@/components/ui/card";
-import { format } from "date-fns";
 
 interface InsuranceCardProps {
   insurance: {
     policy_number: string;
-    group_number?: string | null;
+    group_number?: string;
     coverage_start_date: string;
-    coverage_end_date?: string | null;
+    coverage_end_date?: string;
     insurance_plan: {
       name: string;
       provider: string;
@@ -49,12 +48,12 @@ export const InsuranceCard = ({ insurance }: InsuranceCardProps) => {
           <div className="flex justify-between text-sm pt-2">
             <div>
               <p className="text-blue-100">Valid From</p>
-              <p>{format(new Date(insurance.coverage_start_date), 'MM/dd/yyyy')}</p>
+              <p>{new Date(insurance.coverage_start_date).toLocaleDateString()}</p>
             </div>
             {insurance.coverage_end_date && (
               <div className="text-right">
                 <p className="text-blue-100">Valid Until</p>
-                <p>{format(new Date(insurance.coverage_end_date), 'MM/dd/yyyy')}</p>
+                <p>{new Date(insurance.coverage_end_date).toLocaleDateString()}</p>
               </div>
             )}
           </div>
