@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { motion, AnimatePresence } from "framer-motion";
@@ -21,15 +22,18 @@ export const AnimatedCareGuide = ({ disease, description, guidelines }: Animated
   useEffect(() => {
     const generateImage = async () => {
       try {
+        // Set a default fallback image first
+        const fallbackImage = `https://placehold.co/600x400/e2e8f0/64748b?text=${encodeURIComponent(disease)}+Care+Guide`;
+        
         const { data, error } = await supabase.functions.invoke('generate-care-image', {
           body: { disease, description }
         });
 
         if (error) {
           console.error('Supabase function error:', error);
-          // Try to parse the error body to get the fallback image
+          // Parse the error response
           try {
-            const errorBody = JSON.parse(error.body);
+            const errorBody = JSON.parse(error.body || '{}');
             if (errorBody.fallbackImage) {
               setImageUrl(errorBody.fallbackImage);
               if (errorBody.details) {
@@ -44,33 +48,39 @@ export const AnimatedCareGuide = ({ disease, description, guidelines }: Animated
           } catch (parseError) {
             console.error('Error parsing error body:', parseError);
           }
-          throw error;
+          
+          // If we couldn't get a fallback from the error, use our default
+          setImageUrl(fallbackImage);
+          toast({
+            title: "Using placeholder image",
+            description: "Image generation is temporarily unavailable",
+            variant: "default",
+          });
+          return;
         }
 
         // Handle successful response
-        if (data.imageUrl) {
+        if (data?.imageUrl) {
           setImageUrl(data.imageUrl);
-        } else if (data.fallbackImage) {
+        } else if (data?.fallbackImage) {
           setImageUrl(data.fallbackImage);
           toast({
             title: "Using placeholder image",
             description: data.details || "Image generation is temporarily unavailable",
             variant: "default",
           });
+        } else {
+          setImageUrl(fallbackImage);
         }
       } catch (err) {
         console.error('Error generating image:', err);
-        setError(err.message || 'Failed to generate care guide image');
-        
-        // Set a generic fallback image if no image is set yet
-        if (!imageUrl) {
-          setImageUrl(`https://placehold.co/600x400/e2e8f0/64748b?text=${encodeURIComponent(disease)}+Care+Guide`);
-        }
+        setError('Failed to generate care guide image');
+        setImageUrl(`https://placehold.co/600x400/e2e8f0/64748b?text=${encodeURIComponent(disease)}+Care+Guide`);
       }
     };
 
     generateImage();
-  }, [disease, description]);
+  }, [disease, description, toast]);
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
