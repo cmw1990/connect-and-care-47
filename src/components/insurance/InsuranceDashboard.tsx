@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,7 +9,9 @@ import { AlertCircle, CheckCircle2, Clock, DollarSign, FileText, Search, Users }
 import { InsuranceCard } from "./InsuranceCard";
 import { InsuranceClaimsList } from "./InsuranceClaimsList";
 import { InsuranceProviderSearch } from "./InsuranceProviderSearch";
-import { InsuranceDocumentUpload } from "./InsuranceDocumentUpload";
+import { InsuranceDocumentManager } from "./InsuranceDocumentManager";
+import { InsuranceNotificationManager } from "./InsuranceNotificationManager";
+import { InsuranceAnalyticsDashboard } from "../analytics/InsuranceAnalyticsDashboard";
 import { useToast } from "@/hooks/use-toast";
 
 interface InsuranceDashboardProps {
@@ -122,70 +123,53 @@ export const InsuranceDashboard = ({ userId }: InsuranceDashboardProps) => {
         </Card>
       </div>
 
-      {activeInsurance && (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-          <Card className="col-span-4">
-            <CardHeader>
-              <CardTitle>Insurance Coverage</CardTitle>
-              <CardDescription>Your current insurance plan and coverage details</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ScrollArea className="h-[300px] pr-4">
-                <InsuranceCard insurance={activeInsurance} />
-                <div className="mt-4 space-y-4">
-                  <h4 className="font-semibold">Coverage Details</h4>
-                  <div className="grid grid-cols-2 gap-4">
-                    {Object.entries(activeInsurance.insurance_plan.coverage_details || {}).map(([key, value]) => (
-                      <div key={key} className="flex items-center space-x-2">
-                        {value ? (
-                          <CheckCircle2 className="h-4 w-4 text-green-500" />
-                        ) : (
-                          <AlertCircle className="h-4 w-4 text-red-500" />
-                        )}
-                        <span className="capitalize">{key.replace(/_/g, ' ')}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </ScrollArea>
-            </CardContent>
-          </Card>
-
-          <Card className="col-span-3">
-            <CardHeader>
-              <CardTitle>Recent Claims</CardTitle>
-              <CardDescription>Status of your recent insurance claims</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ScrollArea className="h-[300px]">
-                <div className="space-y-4">
-                  {recentClaims?.map(claim => (
-                    <div key={claim.id} className="flex items-center justify-between space-x-4">
-                      <div className="space-y-1">
-                        <p className="text-sm font-medium">{claim.service_type}</p>
-                        <p className="text-sm text-muted-foreground">
-                          ${claim.claim_amount}
-                        </p>
-                      </div>
-                      <Badge
-                        variant={
-                          claim.status === 'approved' 
-                            ? 'default' 
-                            : claim.status === 'denied' 
-                            ? 'destructive' 
-                            : 'secondary'
-                        }
-                      >
-                        {claim.status}
-                      </Badge>
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
+        <Card className="col-span-4">
+          <CardHeader>
+            <CardTitle>Insurance Coverage</CardTitle>
+            <CardDescription>Your current insurance plan and coverage details</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ScrollArea className="h-[300px] pr-4">
+              <InsuranceCard insurance={activeInsurance} />
+              <div className="mt-4 space-y-4">
+                <h4 className="font-semibold">Coverage Details</h4>
+                <div className="grid grid-cols-2 gap-4">
+                  {Object.entries(activeInsurance.insurance_plan.coverage_details || {}).map(([key, value]) => (
+                    <div key={key} className="flex items-center space-x-2">
+                      {value ? (
+                        <CheckCircle2 className="h-4 w-4 text-green-500" />
+                      ) : (
+                        <AlertCircle className="h-4 w-4 text-red-500" />
+                      )}
+                      <span className="capitalize">{key.replace(/_/g, ' ')}</span>
                     </div>
                   ))}
                 </div>
-              </ScrollArea>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+              </div>
+            </ScrollArea>
+          </CardContent>
+        </Card>
+
+        <Card className="col-span-3">
+          <CardHeader>
+            <CardTitle>Recent Claims</CardTitle>
+            <CardDescription>Status of your recent insurance claims</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ScrollArea className="h-[300px]">
+              <InsuranceClaimsList />
+            </ScrollArea>
+          </CardContent>
+        </Card>
+      </div>
+
+      <InsuranceAnalyticsDashboard />
+
+      <div className="grid gap-4 md:grid-cols-2">
+        <InsuranceDocumentManager />
+        <InsuranceNotificationManager />
+      </div>
 
       <Tabs defaultValue="claims" className="space-y-4">
         <TabsList>
@@ -201,10 +185,7 @@ export const InsuranceDashboard = ({ userId }: InsuranceDashboardProps) => {
         </TabsContent>
         <TabsContent value="documents" className="space-y-4">
           {activeInsuranceId && (
-            <InsuranceDocumentUpload
-              insuranceId={activeInsuranceId}
-              documentType="insurance_card"
-            />
+            <InsuranceDocumentManager />
           )}
         </TabsContent>
       </Tabs>
