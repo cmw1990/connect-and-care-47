@@ -31,8 +31,8 @@ interface ProviderResponse {
   id: string;
   provider_name: string;
   specialty: string | null;
-  location: ProviderLocation;
-  contact_info: ContactInfo;
+  location: unknown;
+  contact_info: unknown;
 }
 
 export const InsuranceProviderSearch = () => {
@@ -56,13 +56,32 @@ export const InsuranceProviderSearch = () => {
 
       const { data, error } = await query;
       if (error) throw error;
-      return (data as ProviderResponse[]).map(provider => ({
-        id: provider.id,
-        provider_name: provider.provider_name,
-        specialty: provider.specialty || undefined,
-        location: provider.location,
-        contact_info: provider.contact_info
-      }));
+
+      // First cast to ProviderResponse[] which has unknown types for location and contact_info
+      const rawData = data as ProviderResponse[];
+      
+      // Then map and validate the data structure
+      return rawData.map(provider => {
+        // Parse and validate location
+        const location = provider.location as ProviderLocation;
+        if (!location?.address || !location?.city) {
+          throw new Error(`Invalid location data for provider ${provider.id}`);
+        }
+
+        // Parse and validate contact_info
+        const contact_info = provider.contact_info as ContactInfo;
+        if (typeof contact_info !== 'object') {
+          throw new Error(`Invalid contact info for provider ${provider.id}`);
+        }
+
+        return {
+          id: provider.id,
+          provider_name: provider.provider_name,
+          specialty: provider.specialty || undefined,
+          location: location,
+          contact_info: contact_info
+        };
+      });
     },
     enabled: !!searchTerm || !!specialty
   });
