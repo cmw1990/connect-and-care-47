@@ -116,7 +116,7 @@ export const InsuranceDashboard = ({ userId }: InsuranceDashboardProps) => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              ${recentClaims?.reduce((sum, claim) => sum + (claim.reimbursement_amount || 0), 0).toFixed(2)}
+              ${recentClaims?.reduce((sum, claim) => sum + (claim.claim_amount || 0), 0).toFixed(2)}
             </div>
           </CardContent>
         </Card>
