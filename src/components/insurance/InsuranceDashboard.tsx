@@ -18,9 +18,18 @@ interface InsuranceDashboardProps {
   userId?: string;
 }
 
-export const InsuranceDashboard = ({ userId }: InsuranceDashboardProps) => {
+export const InsuranceDashboard = () => {
   const { toast } = useToast();
   const [activeInsuranceId, setActiveInsuranceId] = useState<string>();
+
+  const { data: user } = useQuery({
+    queryKey: ['user'],
+    queryFn: async () => {
+      const { data: { user }, error } = await supabase.auth.getUser();
+      if (error) throw error;
+      return user;
+    }
+  });
 
   // Fetch user's insurance information
   const { data: insurances, isLoading: isLoadingInsurance } = useQuery({
@@ -44,7 +53,7 @@ export const InsuranceDashboard = ({ userId }: InsuranceDashboardProps) => {
             year
           )
         `)
-        .eq('user_id', userId || user.id);
+        .eq('user_id', user.id);
 
       if (error) throw error;
       return data;
@@ -164,7 +173,7 @@ export const InsuranceDashboard = ({ userId }: InsuranceDashboardProps) => {
         </Card>
       </div>
 
-      <InsuranceAnalyticsDashboard />
+      {user && <InsuranceAnalyticsDashboard userId={user.id} />}
 
       <div className="grid gap-4 md:grid-cols-2">
         <InsuranceDocumentManager />

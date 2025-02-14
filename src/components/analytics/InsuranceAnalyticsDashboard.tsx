@@ -16,6 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { format } from "date-fns";
+import type { InsuranceAnalytics } from "@/types/supabase";
 
 interface InsuranceAnalyticsDashboardProps {
   userId: string;
@@ -25,9 +26,8 @@ export const InsuranceAnalyticsDashboard = ({ userId }: InsuranceAnalyticsDashbo
   const { t } = useTranslation();
   const { toast } = useToast();
   const [timeRange, setTimeRange] = useState("30");
-  const [chartType, setChartType] = useState("claims");
 
-  const { data: analyticsData } = useQuery({
+  const { data: analytics } = useQuery({
     queryKey: ['insurance-analytics', userId, timeRange],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -37,35 +37,14 @@ export const InsuranceAnalyticsDashboard = ({ userId }: InsuranceAnalyticsDashbo
         .order('created_at', { ascending: true });
 
       if (error) throw error;
-      return data;
+      return data as InsuranceAnalytics[];
     }
   });
-
-  const { data: trendsData } = useQuery({
-    queryKey: ['insurance-trends', userId, timeRange],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('insurance_claims')
-        .select('*')
-        .eq('user_id', userId)
-        .order('created_at', { ascending: true });
-
-      if (error) throw error;
-      return data;
-    }
-  });
-
-  const processedData = trendsData?.map(claim => ({
-    date: format(new Date(claim.created_at), 'MMM dd'),
-    amount: claim.claim_amount,
-    status: claim.status
-  })) || [];
 
   const downloadReport = async () => {
     try {
       const reportData = {
-        analytics: analyticsData,
-        trends: trendsData,
+        analytics,
         generatedAt: new Date().toISOString(),
         userId
       };
@@ -116,75 +95,23 @@ export const InsuranceAnalyticsDashboard = ({ userId }: InsuranceAnalyticsDashbo
         </div>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader>
-            <CardTitle>{t("Total Claims")}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {trendsData?.length || 0}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>{t("Approved Claims")}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">
-              {trendsData?.filter(claim => claim.status === 'approved').length || 0}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>{t("Pending Claims")}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-yellow-600">
-              {trendsData?.filter(claim => claim.status === 'pending').length || 0}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>{t("Total Amount")}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              ${trendsData?.reduce((sum, claim) => sum + (claim.claim_amount || 0), 0).toFixed(2)}
-            </div>
-          </CardContent>
-        </Card>
+      <div className="grid gap-6 md:grid-cols-2">
+        {analytics?.map((item) => (
+          <Card key={item.id}>
+            <CardHeader>
+              <CardTitle>{t(item.type)}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {item.type.includes('amount') ? `$${item.value.toFixed(2)}` : item.value}
+              </div>
+              <p className="text-sm text-muted-foreground">
+                {format(new Date(item.created_at), 'PPP')}
+              </p>
+            </CardContent>
+          </Card>
+        ))}
       </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>{t("Claims Trend")}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="h-[400px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={processedData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="date" />
-                <YAxis />
-                <Tooltip />
-                <Line 
-                  type="monotone" 
-                  dataKey="amount" 
-                  stroke="#2563eb" 
-                  name={t("Claim Amount")}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 };
