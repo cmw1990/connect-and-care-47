@@ -27,8 +27,14 @@ export const InsuranceForm = ({ onSuccess }: InsuranceFormProps) => {
     setLoading(true);
 
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        throw new Error('User not authenticated');
+      }
+
       const { error } = await supabase.from('user_insurance').insert({
-        insurance_plan_id: null, // Will be updated once plan is verified
+        user_id: user.id,
         policy_number: insuranceData.policyNumber,
         group_number: insuranceData.groupNumber,
         coverage_start_date: insuranceData.coverageStartDate,
