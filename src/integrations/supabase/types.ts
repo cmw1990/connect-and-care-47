@@ -2963,6 +2963,36 @@ export type Database = {
           },
         ]
       }
+      insurance_plans: {
+        Row: {
+          coverage_details: Json | null
+          created_at: string | null
+          id: string
+          name: string
+          provider: string
+          type: string
+          updated_at: string | null
+        }
+        Insert: {
+          coverage_details?: Json | null
+          created_at?: string | null
+          id?: string
+          name: string
+          provider: string
+          type: string
+          updated_at?: string | null
+        }
+        Update: {
+          coverage_details?: Json | null
+          created_at?: string | null
+          id?: string
+          name?: string
+          provider?: string
+          type?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       knowledge_base: {
         Row: {
           category: string | null
@@ -4101,6 +4131,36 @@ export type Database = {
           },
         ]
       }
+      payment_methods: {
+        Row: {
+          created_at: string | null
+          details: Json | null
+          id: string
+          is_default: boolean | null
+          payment_type: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          details?: Json | null
+          id?: string
+          is_default?: boolean | null
+          payment_type: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          details?: Json | null
+          id?: string
+          is_default?: boolean | null
+          payment_type?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       pet_profiles: {
         Row: {
           age: number | null
@@ -5168,6 +5228,59 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: []
+      }
+      user_insurance: {
+        Row: {
+          coverage_details: Json | null
+          coverage_end_date: string | null
+          coverage_start_date: string
+          created_at: string | null
+          group_number: string | null
+          id: string
+          insurance_plan_id: string | null
+          policy_number: string
+          updated_at: string | null
+          user_id: string
+          verification_date: string | null
+          verification_status: string | null
+        }
+        Insert: {
+          coverage_details?: Json | null
+          coverage_end_date?: string | null
+          coverage_start_date: string
+          created_at?: string | null
+          group_number?: string | null
+          id?: string
+          insurance_plan_id?: string | null
+          policy_number: string
+          updated_at?: string | null
+          user_id: string
+          verification_date?: string | null
+          verification_status?: string | null
+        }
+        Update: {
+          coverage_details?: Json | null
+          coverage_end_date?: string | null
+          coverage_start_date?: string
+          created_at?: string | null
+          group_number?: string | null
+          id?: string
+          insurance_plan_id?: string | null
+          policy_number?: string
+          updated_at?: string | null
+          user_id?: string
+          verification_date?: string | null
+          verification_status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_insurance_insurance_plan_id_fkey"
+            columns: ["insurance_plan_id"]
+            isOneToOne: false
+            referencedRelation: "insurance_plans"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_journey: {
         Row: {
