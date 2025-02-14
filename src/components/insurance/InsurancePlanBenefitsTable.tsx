@@ -11,12 +11,22 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Check, X } from "lucide-react";
 
+interface InsuranceBenefit {
+  id: string;
+  plan_id: string;
+  benefit_name: string;
+  coverage_percentage: number;
+  annual_limit: number | null;
+  requires_preauthorization: boolean;
+  waiting_period_days: number;
+}
+
 interface InsurancePlanBenefitsTableProps {
   planId: string;
 }
 
 export const InsurancePlanBenefitsTable = ({ planId }: InsurancePlanBenefitsTableProps) => {
-  const { data: benefits } = useQuery({
+  const { data: benefits } = useQuery<InsuranceBenefit[]>({
     queryKey: ['planBenefits', planId],
     queryFn: async () => {
       const { data, error } = await supabase

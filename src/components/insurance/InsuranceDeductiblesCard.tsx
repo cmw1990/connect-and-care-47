@@ -4,6 +4,17 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
 
+interface InsuranceDeductible {
+  id: string;
+  insurance_id: string;
+  deductible_type: 'individual' | 'family';
+  total_amount: number;
+  met_amount: number;
+  year: number;
+  created_at: string;
+  updated_at: string;
+}
+
 interface InsuranceDeductiblesCardProps {
   insuranceId: string;
 }
@@ -11,7 +22,7 @@ interface InsuranceDeductiblesCardProps {
 export const InsuranceDeductiblesCard = ({ insuranceId }: InsuranceDeductiblesCardProps) => {
   const currentYear = new Date().getFullYear();
 
-  const { data: deductibles } = useQuery({
+  const { data: deductibles } = useQuery<InsuranceDeductible[]>({
     queryKey: ['deductibles', insuranceId, currentYear],
     queryFn: async () => {
       const { data, error } = await supabase

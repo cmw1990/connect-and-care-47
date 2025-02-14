@@ -17,6 +17,17 @@ interface InsurancePreauthorizationFormProps {
   insuranceId: string;
 }
 
+interface Preauthorization {
+  id: string;
+  insurance_id: string;
+  service_type: string;
+  status: 'pending' | 'approved' | 'denied';
+  supporting_documents: {
+    notes?: string;
+  };
+  expires_at: string | null;
+}
+
 export const InsurancePreauthorizationForm = ({ insuranceId }: InsurancePreauthorizationFormProps) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -47,7 +58,7 @@ export const InsurancePreauthorizationForm = ({ insuranceId }: InsurancePreautho
         description: "Preauthorization request submitted successfully",
       });
 
-      queryClient.invalidateQueries(['preauthorizations']);
+      queryClient.invalidateQueries({ queryKey: ['preauthorizations'] });
       setServiceType("");
       setNotes("");
       setDate(undefined);
