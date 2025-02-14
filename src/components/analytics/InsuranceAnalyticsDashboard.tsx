@@ -1,12 +1,12 @@
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useTranslation } from "react-i18next";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Button } from "@/components/ui/button";
-import { Download, Filter } from "lucide-react";
+import { Download } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import {
   Select,
@@ -30,14 +30,14 @@ export const InsuranceAnalyticsDashboard = ({ userId }: InsuranceAnalyticsDashbo
   const { data: analytics } = useQuery({
     queryKey: ['insurance-analytics', userId, timeRange],
     queryFn: async () => {
-      const { data: analyticsData, error } = await supabase
+      const { data, error } = await supabase
         .from('insurance_analytics')
-        .select('*')
+        .select()
         .eq('user_id', userId)
         .order('created_at', { ascending: true });
 
       if (error) throw error;
-      return analyticsData as InsuranceAnalytics[];
+      return data;
     }
   });
 
@@ -95,7 +95,7 @@ export const InsuranceAnalyticsDashboard = ({ userId }: InsuranceAnalyticsDashbo
         </div>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {analytics?.map((item) => (
           <Card key={item.id}>
             <CardHeader>

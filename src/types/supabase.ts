@@ -1,4 +1,8 @@
 
+import { Database } from '@/integrations/supabase/types'
+
+export type DatabaseSchema = Database['public']['Tables']
+
 export interface Tables {
   insurance_analytics: {
     Row: InsuranceAnalytics;
@@ -25,6 +29,32 @@ export interface Tables {
     Insert: Omit<InsurancePreauthorization, 'id' | 'created_at' | 'updated_at'>;
     Update: Partial<InsurancePreauthorization>;
   };
+  insurance_providers: {
+    Row: InsuranceProvider;
+    Insert: Omit<InsuranceProvider, 'id' | 'created_at' | 'updated_at'>;
+    Update: Partial<InsuranceProvider>;
+  };
+}
+
+export interface InsuranceProvider {
+  id: string;
+  provider_name: string;
+  specialty: string;
+  network_status: 'in-network' | 'out-of-network';
+  location: {
+    address: string;
+    city?: string;
+    state?: string;
+    zip?: string;
+  };
+  rating?: number;
+  contact_info?: {
+    phone?: string;
+    email?: string;
+    website?: string;
+  };
+  created_at: string;
+  updated_at: string;
 }
 
 export interface InsuranceAnalytics {
@@ -93,4 +123,22 @@ export interface InsuranceDocument {
     type: string;
   };
   uploaded_at: string;
+}
+
+// Custom type guard for insurance provider location
+export function isValidProviderLocation(obj: any): obj is InsuranceProvider['location'] {
+  return obj && typeof obj.address === 'string';
+}
+
+// Custom type for Supabase query responses
+export type PostgrestResponse<T> = {
+  data: T[] | null;
+  error: Error | null;
+};
+
+// Type for query filters
+export interface QueryFilter {
+  column: string;
+  operator: string;
+  value: any;
 }
