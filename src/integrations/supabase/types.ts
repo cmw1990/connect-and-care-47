@@ -2995,6 +2995,50 @@ export type Database = {
           },
         ]
       }
+      insurance_claim_status_updates: {
+        Row: {
+          claim_id: string | null
+          created_at: string | null
+          id: string
+          notes: string | null
+          processing_details: Json | null
+          status: string
+          status_date: string | null
+          updated_at: string | null
+          updated_by: string | null
+        }
+        Insert: {
+          claim_id?: string | null
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          processing_details?: Json | null
+          status: string
+          status_date?: string | null
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Update: {
+          claim_id?: string | null
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          processing_details?: Json | null
+          status?: string
+          status_date?: string | null
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "insurance_claim_status_updates_claim_id_fkey"
+            columns: ["claim_id"]
+            isOneToOne: false
+            referencedRelation: "insurance_claims"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       insurance_claims: {
         Row: {
           auto_processed: boolean | null
@@ -3083,6 +3127,50 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      insurance_verification_history: {
+        Row: {
+          created_at: string | null
+          id: string
+          insurance_id: string | null
+          status: Database["public"]["Enums"]["verification_status"]
+          updated_at: string | null
+          verification_date: string | null
+          verification_details: Json | null
+          verification_method: string | null
+          verified_by: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          insurance_id?: string | null
+          status: Database["public"]["Enums"]["verification_status"]
+          updated_at?: string | null
+          verification_date?: string | null
+          verification_details?: Json | null
+          verification_method?: string | null
+          verified_by?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          insurance_id?: string | null
+          status?: Database["public"]["Enums"]["verification_status"]
+          updated_at?: string | null
+          verification_date?: string | null
+          verification_details?: Json | null
+          verification_method?: string | null
+          verified_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "insurance_verification_history_insurance_id_fkey"
+            columns: ["insurance_id"]
+            isOneToOne: false
+            referencedRelation: "user_insurance"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       knowledge_base: {
         Row: {

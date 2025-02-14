@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { InsuranceForm } from "@/components/insurance/InsuranceForm";
 import { InsuranceList } from "@/components/insurance/InsuranceList";
+import { InsuranceClaimsList } from "@/components/insurance/InsuranceClaimsList";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 
@@ -24,7 +25,10 @@ const Insurance = () => {
       {showForm ? (
         <InsuranceForm onSuccess={() => setShowForm(false)} />
       ) : (
-        <InsuranceList />
+        <>
+          <InsuranceList />
+          <InsuranceClaimsList />
+        </>
       )}
     </div>
   );
