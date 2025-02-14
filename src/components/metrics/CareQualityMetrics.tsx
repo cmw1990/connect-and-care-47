@@ -1,69 +1,115 @@
 
-import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
-import { useToast } from "@/hooks/use-toast";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Activity, Heart, Brain, Sun } from "lucide-react";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { useTranslation } from 'react-i18next';
+import { useToast } from "@/hooks/use-toast";
+import { AlertCircle } from "lucide-react";
 
-interface CareQualityMetricsProps {
+interface CareMetricsProps {
   groupId: string;
 }
 
-export const CareQualityMetrics = ({ groupId }: CareQualityMetricsProps) => {
-  const [metrics, setMetrics] = useState<any>(null);
+interface MetricData {
+  id: string;
+  metric_type: 'physical' | 'mental' | 'social' | 'general';
+  metric_value: {
+    value: number;
+    notes?: string;
+  };
+  recorded_at: string;
+  created_by: string;
+}
+
+export const CareQualityMetrics = ({ groupId }: CareMetricsProps) => {
+  const { t } = useTranslation();
   const { toast } = useToast();
 
-  useEffect(() => {
-    fetchMetrics();
-  }, [groupId]);
+  const { data: metrics, error, isLoading } = useQuery({
+    queryKey: ['careMetrics', groupId],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
 
-  const fetchMetrics = async () => {
-    try {
+      // Use the new secure function
       const { data, error } = await supabase
-        .from('care_quality_metrics')
-        .select('*')
-        .eq('group_id', groupId)
-        .order('recorded_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
+        .rpc('get_care_quality_metrics', {
+          p_group_id: groupId
+        });
 
-      if (error) throw error;
-      setMetrics(data?.metric_value || null);
-    } catch (error) {
-      console.error('Error fetching metrics:', error);
+      if (error) {
+        console.error('Error fetching metrics:', error);
+        throw error;
+      }
+
+      return data as MetricData[];
+    },
+    retry: 1,
+    onError: (error) => {
       toast({
-        title: "Error",
-        description: "Failed to load care quality metrics",
+        title: "Error loading metrics",
+        description: "Unable to load care quality metrics. Please try again later.",
         variant: "destructive",
       });
     }
-  };
+  });
 
-  const metricItems = [
-    { icon: Heart, label: "Physical Health", value: metrics?.physical || 0, color: "text-red-500" },
-    { icon: Brain, label: "Mental Health", value: metrics?.mental || 0, color: "text-blue-500" },
-    { icon: Sun, label: "Mood", value: metrics?.mood || 0, color: "text-yellow-500" },
-    { icon: Activity, label: "Activity", value: metrics?.activity || 0, color: "text-green-500" },
-  ];
+  if (error) {
+    return (
+      <Card>
+        <CardContent className="flex items-center justify-center p-6">
+          <div className="text-center">
+            <AlertCircle className="mx-auto h-8 w-8 text-destructive mb-2" />
+            <p className="text-sm text-muted-foreground">
+              {t('Unable to load metrics')}
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardContent className="p-6">
+          <div className="animate-pulse space-y-4">
+            <div className="h-4 bg-muted rounded w-1/4"></div>
+            <div className="h-[200px] bg-muted rounded"></div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const chartData = metrics?.map(metric => ({
+    date: new Date(metric.recorded_at).toLocaleDateString(),
+    value: metric.metric_value.value,
+    type: metric.metric_type
+  }));
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Care Quality Metrics</CardTitle>
+        <CardTitle>{t('careQuality')}</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {metricItems.map((item, index) => (
-            <div key={index} className="space-y-2">
-              <div className="flex items-center gap-2">
-                <item.icon className={`h-5 w-5 ${item.color}`} />
-                <span className="font-medium">{item.label}</span>
-              </div>
-              <Progress value={item.value} className="h-2" />
-              <span className="text-sm text-muted-foreground">{item.value}%</span>
-            </div>
-          ))}
+        <div className="h-[300px]">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={chartData}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="date" />
+              <YAxis />
+              <Tooltip />
+              <Line 
+                type="monotone" 
+                dataKey="value" 
+                stroke="#8884d8"
+                name={t('metricValue')}
+              />
+            </LineChart>
+          </ResponsiveContainer>
         </div>
       </CardContent>
     </Card>
