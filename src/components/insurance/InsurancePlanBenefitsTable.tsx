@@ -19,6 +19,8 @@ interface InsuranceBenefit {
   annual_limit: number | null;
   requires_preauthorization: boolean;
   waiting_period_days: number;
+  created_at: string;
+  updated_at: string;
 }
 
 interface InsurancePlanBenefitsTableProps {
@@ -26,16 +28,16 @@ interface InsurancePlanBenefitsTableProps {
 }
 
 export const InsurancePlanBenefitsTable = ({ planId }: InsurancePlanBenefitsTableProps) => {
-  const { data: benefits } = useQuery<InsuranceBenefit[]>({
+  const { data: benefits } = useQuery({
     queryKey: ['planBenefits', planId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('insurance_plan_benefits')
-        .select('*')
+        .select('id, plan_id, benefit_name, coverage_percentage, annual_limit, requires_preauthorization, waiting_period_days, created_at, updated_at')
         .eq('plan_id', planId);
 
       if (error) throw error;
-      return data;
+      return data as InsuranceBenefit[];
     }
   });
 

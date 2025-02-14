@@ -22,17 +22,17 @@ interface InsuranceDeductiblesCardProps {
 export const InsuranceDeductiblesCard = ({ insuranceId }: InsuranceDeductiblesCardProps) => {
   const currentYear = new Date().getFullYear();
 
-  const { data: deductibles } = useQuery<InsuranceDeductible[]>({
+  const { data: deductibles } = useQuery({
     queryKey: ['deductibles', insuranceId, currentYear],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('insurance_deductibles')
-        .select('*')
+        .select('id, insurance_id, deductible_type, total_amount, met_amount, year, created_at, updated_at')
         .eq('insurance_id', insuranceId)
         .eq('year', currentYear);
 
       if (error) throw error;
-      return data;
+      return data as InsuranceDeductible[];
     }
   });
 

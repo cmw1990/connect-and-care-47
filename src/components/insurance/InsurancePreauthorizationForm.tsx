@@ -26,7 +26,11 @@ interface Preauthorization {
     notes?: string;
   };
   expires_at: string | null;
+  created_at: string;
+  updated_at: string;
 }
+
+interface PreauthorizationInsert extends Omit<Preauthorization, 'id' | 'created_at' | 'updated_at'> {}
 
 export const InsurancePreauthorizationForm = ({ insuranceId }: InsurancePreauthorizationFormProps) => {
   const { toast } = useToast();
@@ -41,15 +45,17 @@ export const InsurancePreauthorizationForm = ({ insuranceId }: InsurancePreautho
     setLoading(true);
 
     try {
+      const insertData: PreauthorizationInsert = {
+        insurance_id: insuranceId,
+        service_type: serviceType,
+        status: 'pending',
+        supporting_documents: { notes },
+        expires_at: date?.toISOString() || null
+      };
+
       const { error } = await supabase
         .from('insurance_preauthorizations')
-        .insert({
-          insurance_id: insuranceId,
-          service_type: serviceType,
-          status: 'pending',
-          supporting_documents: { notes },
-          expires_at: date?.toISOString(),
-        });
+        .insert(insertData);
 
       if (error) throw error;
 
