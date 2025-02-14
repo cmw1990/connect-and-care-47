@@ -33,19 +33,24 @@ export const InsuranceClaimProcessor = ({
   const { toast } = useToast();
 
   const handleClaimSubmission = async () => {
-    if (!coverageInfo?.insuranceId) return;
+    if (!coverageInfo?.insuranceId || !coverageInfo?.userId) return;
     
     setProcessing(true);
     try {
+      const claimData = {
+        user_id: coverageInfo.userId,
+        insurance_id: coverageInfo.insuranceId,
+        service_type: serviceType,
+        service_date: new Date().toISOString(),
+        provider_id: providerId,
+        claim_amount: amount,
+        status: 'pending',
+        processing_notes: []
+      };
+
       const { error } = await supabase
         .from('insurance_claims')
-        .insert({
-          insurance_id: coverageInfo.insuranceId,
-          service_type: serviceType,
-          service_date: new Date().toISOString(),
-          provider_id: providerId,
-          claim_amount: amount
-        });
+        .insert(claimData);
 
       if (error) throw error;
 

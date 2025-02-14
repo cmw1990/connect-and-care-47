@@ -27,7 +27,12 @@ export const useInsuranceCoverage = (serviceType: string) => {
 
       if (insuranceError) throw insuranceError;
 
-      const isCovered = userInsurance?.insurance_plan?.covered_services?.includes(serviceType);
+      // Type guard to check if covered_services is an array
+      const coveredServices = Array.isArray(userInsurance?.insurance_plan?.covered_services) 
+        ? userInsurance?.insurance_plan?.covered_services
+        : [];
+
+      const isCovered = coveredServices.includes(serviceType);
       const canAutoProcess = userInsurance?.insurance_plan?.auto_verification;
 
       return {
@@ -35,7 +40,8 @@ export const useInsuranceCoverage = (serviceType: string) => {
         isCovered,
         canAutoProcess,
         insuranceId: userInsurance?.id,
-        planDetails: userInsurance?.insurance_plan
+        planDetails: userInsurance?.insurance_plan,
+        userId: user.id // Include user ID for claims
       };
     }
   });
