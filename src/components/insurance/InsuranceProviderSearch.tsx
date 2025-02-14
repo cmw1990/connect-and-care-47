@@ -28,9 +28,14 @@ export const InsuranceProviderSearch = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('insurance_network_providers')
-        .select('*')
+        .select(`
+          *,
+          location,
+          network_status,
+          rating
+        `)
         .ilike('provider_name', `%${searchTerm}%`)
-        .eq(specialty ? 'specialty' : true, specialty || true)
+        .eq(specialty ? 'specialty' : 'specialty', specialty || undefined)
         .order('provider_name');
 
       if (error) throw error;
@@ -109,11 +114,15 @@ export const InsuranceProviderSearch = () => {
                         <p className="text-sm text-muted-foreground">{provider.specialty}</p>
                         <div className="flex items-center gap-2 mt-2">
                           <MapPin className="h-4 w-4 text-muted-foreground" />
-                          <span className="text-sm">{provider.location.address}</span>
+                          <span className="text-sm">{
+                            typeof provider.location === 'object' && provider.location 
+                              ? provider.location.address 
+                              : 'Address not available'
+                          }</span>
                         </div>
                         <div className="flex items-center gap-2 mt-1">
                           <Star className="h-4 w-4 text-yellow-500" />
-                          <span className="text-sm">{provider.rating} / 5</span>
+                          <span className="text-sm">{provider.rating || 'No rating'} / 5</span>
                         </div>
                       </div>
                       <Badge variant={provider.network_status === 'in-network' ? 'default' : 'secondary'}>
