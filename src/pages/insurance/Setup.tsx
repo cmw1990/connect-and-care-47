@@ -1,26 +1,22 @@
 
-import { useNavigate } from "react-router-dom";
-import { useToast } from "@/hooks/use-toast";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { InsuranceForm } from "@/components/insurance/InsuranceForm";
 
 export default function Setup() {
-  const navigate = useNavigate();
-  const { toast } = useToast();
-
-  const handleSetupComplete = () => {
-    toast({
-      title: "Success",
-      description: "Your insurance information has been saved.",
-    });
-    navigate("/insurance");
-  };
-
   return (
-    <div className="max-w-2xl mx-auto">
-      <h1 className="text-3xl font-bold tracking-tight mb-6">
-        Insurance Setup
-      </h1>
-      <InsuranceForm onSuccess={handleSetupComplete} />
+    <div className="space-y-6">
+      <h1 className="text-2xl font-bold">Insurance Setup</h1>
+      <Card>
+        <CardHeader>
+          <CardTitle>Add Insurance Coverage</CardTitle>
+          <CardDescription>
+            Enter your insurance information to get started
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <InsuranceForm />
+        </CardContent>
+      </Card>
     </div>
   );
 }
