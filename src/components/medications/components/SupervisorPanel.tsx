@@ -65,8 +65,11 @@ export const SupervisorPanel = ({ groupId, data }: SupervisorPanelProps) => {
 
       if (error) throw error;
       
+      // First cast to unknown, then to RawMedicationLog[]
+      const rawData = queryResult as unknown as RawMedicationLog[];
+      
       // Transform the raw data to match MedicationLogBase type
-      const transformedData = (queryResult as RawMedicationLog[] || []).map(log => ({
+      const transformedData = (rawData || []).map(log => ({
         id: log.id,
         taken_at: log.taken_at || log.administered_at,
         administered_at: log.administered_at,
