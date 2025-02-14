@@ -3384,6 +3384,7 @@ export type Database = {
           status: string | null
           symptoms: Json | null
           taken_at: string | null
+          verified_at: string | null
           verified_by: string | null
         }
         Insert: {
@@ -3399,6 +3400,7 @@ export type Database = {
           status?: string | null
           symptoms?: Json | null
           taken_at?: string | null
+          verified_at?: string | null
           verified_by?: string | null
         }
         Update: {
@@ -3414,6 +3416,7 @@ export type Database = {
           status?: string | null
           symptoms?: Json | null
           taken_at?: string | null
+          verified_at?: string | null
           verified_by?: string | null
         }
         Relationships: [

@@ -37,7 +37,7 @@ export const SupervisorPanel = ({ groupId, data }: SupervisorPanelProps) => {
   const { data: pendingVerifications } = useQuery<MedicationLogBase[]>({
     queryKey: ['pendingVerifications', groupId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data: queryResult, error } = await supabase
         .from('medication_logs')
         .select(`
           id,
@@ -66,7 +66,7 @@ export const SupervisorPanel = ({ groupId, data }: SupervisorPanelProps) => {
       if (error) throw error;
       
       // Transform the raw data to match MedicationLogBase type
-      const transformedData = (data as RawMedicationLog[]).map(log => ({
+      const transformedData = (queryResult || []).map((log: RawMedicationLog) => ({
         id: log.id,
         taken_at: log.taken_at || log.administered_at,
         administered_at: log.administered_at,
