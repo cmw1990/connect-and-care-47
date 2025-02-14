@@ -23,8 +23,16 @@ interface Provider {
   id: string;
   provider_name: string;
   specialty?: string;
-  location?: ProviderLocation;
-  contact_info?: ContactInfo;
+  location: ProviderLocation;
+  contact_info: ContactInfo;
+}
+
+interface ProviderResponse {
+  id: string;
+  provider_name: string;
+  specialty: string | null;
+  location: ProviderLocation;
+  contact_info: ContactInfo;
 }
 
 export const InsuranceProviderSearch = () => {
@@ -48,7 +56,13 @@ export const InsuranceProviderSearch = () => {
 
       const { data, error } = await query;
       if (error) throw error;
-      return data;
+      return (data as ProviderResponse[]).map(provider => ({
+        id: provider.id,
+        provider_name: provider.provider_name,
+        specialty: provider.specialty || undefined,
+        location: provider.location,
+        contact_info: provider.contact_info
+      }));
     },
     enabled: !!searchTerm || !!specialty
   });
@@ -62,7 +76,10 @@ export const InsuranceProviderSearch = () => {
         .filter('specialty', 'not.is', null);
 
       if (error) throw error;
-      const uniqueSpecialties = new Set(data.map(d => d.specialty).filter(Boolean));
+      const uniqueSpecialties = new Set(data
+        .map(d => d.specialty)
+        .filter((s): s is string => s !== null)
+      );
       return Array.from(uniqueSpecialties);
     }
   });
@@ -143,7 +160,7 @@ export const InsuranceProviderSearch = () => {
               </div>
             ))}
 
-            {providers?.length === 0 && (
+            {!providers?.length && (
               <p className="text-center text-muted-foreground">
                 No providers found matching your search criteria.
               </p>

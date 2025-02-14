@@ -7,15 +7,27 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/com
 import { UploadCloud, File, Trash2 } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
+interface DocumentMetadata {
+  original_name?: string;
+  size?: number;
+  type?: string;
+}
+
 interface InsuranceDocument {
   id: string;
   file_url: string;
   created_at: string;
-  metadata: {
-    original_name?: string;
-    size?: number;
-    type?: string;
-  };
+  metadata: DocumentMetadata | null;
+}
+
+interface InsuranceDocumentResponse {
+  id: string;
+  file_url: string;
+  created_at: string;
+  metadata: DocumentMetadata | null;
+  insurance_id: string | null;
+  document_type: string;
+  user_id: string | null;
 }
 
 interface InsuranceDocumentUploadProps {
@@ -41,7 +53,12 @@ export const InsuranceDocumentUpload = ({
         .eq('document_type', documentType);
 
       if (error) throw error;
-      return data;
+      return (data as InsuranceDocumentResponse[]).map(doc => ({
+        id: doc.id,
+        file_url: doc.file_url,
+        created_at: doc.created_at,
+        metadata: doc.metadata as DocumentMetadata
+      }));
     }
   });
 
