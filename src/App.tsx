@@ -21,6 +21,11 @@ import More from "@/pages/More";
 import Analytics from "@/pages/Analytics";
 import Caregivers from "@/pages/Caregivers";
 import Insurance from "@/pages/Insurance";
+import Claims from "@/pages/insurance/Claims";
+import Coverage from "@/pages/insurance/Coverage";
+import Network from "@/pages/insurance/Network";
+import Documents from "@/pages/insurance/Documents";
+import InsuranceSetup from "@/pages/insurance/Setup";
 import { motion, AnimatePresence } from "framer-motion";
 import { ThemeSwitcher } from "@/components/ui/theme-switcher";
 import { I18nextProvider } from 'react-i18next';
@@ -64,7 +69,14 @@ const AppContent = () => {
             <Route path="/more" element={<More />} />
             <Route path="/analytics" element={<Analytics />} />
             <Route path="/caregivers" element={<Caregivers />} />
-            <Route path="/insurance" element={<Insurance />} />
+            <Route path="/insurance" element={<Insurance />}>
+              <Route index element={<Coverage />} />
+              <Route path="claims" element={<Claims />} />
+              <Route path="coverage" element={<Coverage />} />
+              <Route path="network" element={<Network />} />
+              <Route path="documents" element={<Documents />} />
+              <Route path="setup" element={<InsuranceSetup />} />
+            </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
         </motion.main>
