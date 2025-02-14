@@ -3,6 +3,7 @@ import { useState } from "react";
 import { InsuranceForm } from "@/components/insurance/InsuranceForm";
 import { InsuranceList } from "@/components/insurance/InsuranceList";
 import { InsuranceClaimsList } from "@/components/insurance/InsuranceClaimsList";
+import { InsuranceVerificationHistory } from "@/components/insurance/InsuranceVerificationHistory";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 
@@ -28,6 +29,7 @@ const Insurance = () => {
         <>
           <InsuranceList />
           <InsuranceClaimsList />
+          <InsuranceVerificationHistory />
         </>
       )}
     </div>

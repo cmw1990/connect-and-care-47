@@ -84,7 +84,7 @@ export const InsuranceClaimsList = () => {
                 <p>Submitted: {format(new Date(claim.created_at), 'PPP')}</p>
               </div>
               
-              {claim.processing_notes && claim.processing_notes.length > 0 && (
+              {Array.isArray(claim.processing_notes) && claim.processing_notes.length > 0 && (
                 <div className="border-t pt-3 mt-2">
                   <h5 className="text-sm font-medium mb-2">Processing Notes</h5>
                   <ul className="text-sm space-y-1">
