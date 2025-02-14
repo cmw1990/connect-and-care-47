@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -12,6 +11,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { CalendarIcon } from "lucide-react";
+import { Loader2 } from "lucide-react";
 
 interface InsurancePreauthorizationFormProps {
   insuranceId: string;
@@ -81,31 +81,32 @@ export const InsurancePreauthorizationForm = ({ insuranceId }: InsurancePreautho
   };
 
   return (
-    <Card>
+    <Card className="dark:bg-gray-800">
       <CardHeader>
-        <CardTitle>Request Preauthorization</CardTitle>
+        <CardTitle className="dark:text-white">Request Preauthorization</CardTitle>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <label htmlFor="serviceType">Service Type</label>
+            <label htmlFor="serviceType" className="dark:text-gray-300">Service Type</label>
             <Input
               id="serviceType"
               value={serviceType}
               onChange={(e) => setServiceType(e.target.value)}
               placeholder="Enter service type"
               required
+              className="dark:bg-gray-700 dark:text-white dark:border-gray-600"
             />
           </div>
 
           <div className="space-y-2">
-            <label>Desired Service Date</label>
+            <label className="dark:text-gray-300">Desired Service Date</label>
             <Popover>
               <PopoverTrigger asChild>
                 <Button
                   variant={"outline"}
                   className={cn(
-                    "w-full justify-start text-left font-normal",
+                    "w-full justify-start text-left font-normal dark:bg-gray-700 dark:text-white dark:border-gray-600",
                     !date && "text-muted-foreground"
                   )}
                 >
@@ -113,28 +114,35 @@ export const InsurancePreauthorizationForm = ({ insuranceId }: InsurancePreautho
                   {date ? format(date, "PPP") : <span>Pick a date</span>}
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-auto p-0">
+              <PopoverContent className="w-auto p-0 dark:bg-gray-800">
                 <Calendar
                   mode="single"
                   selected={date}
                   onSelect={setDate}
                   initialFocus
+                  className="dark:bg-gray-800"
                 />
               </PopoverContent>
             </Popover>
           </div>
 
           <div className="space-y-2">
-            <label htmlFor="notes">Additional Notes</label>
+            <label htmlFor="notes" className="dark:text-gray-300">Additional Notes</label>
             <Textarea
               id="notes"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               placeholder="Enter any additional information"
+              className="dark:bg-gray-700 dark:text-white dark:border-gray-600"
             />
           </div>
 
-          <Button type="submit" className="w-full" disabled={loading}>
+          <Button 
+            type="submit" 
+            className="w-full dark:bg-primary dark:text-white" 
+            disabled={loading}
+          >
+            {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             {loading ? "Submitting..." : "Submit Request"}
           </Button>
         </form>
