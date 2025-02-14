@@ -4,7 +4,28 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { Check, X, AlertCircle } from "lucide-react";
-import type { MedicationSupervisionSummary, MedicationLogBase, MedicationScheduleBase } from "@/types/medication";
+import type { MedicationSupervisionSummary, MedicationLogBase } from "@/types/medication";
+
+// Define the shape of raw data from Supabase
+interface RawMedicationLog {
+  id: string;
+  administered_at: string;
+  administered_by?: string;
+  schedule_id: string;
+  group_id: string;
+  verified_by?: string;
+  verified_at?: string;
+  status: string;
+  notes?: string;
+  photo_verification_url?: string;
+  medication_schedule?: {
+    id: string;
+    medication_name: string;
+    dosage: string;
+    time_of_day: string[];
+    group_id: string;
+  };
+}
 
 interface SupervisorPanelProps {
   groupId: string;
@@ -18,22 +39,45 @@ export const SupervisorPanel = ({ groupId, data }: SupervisorPanelProps) => {
       const { data, error } = await supabase
         .from('medication_logs')
         .select(`
-          *,
+          id,
+          administered_at,
+          administered_by,
+          schedule_id,
+          group_id,
+          verified_by,
+          verified_at,
+          status,
+          notes,
+          photo_verification_url,
           medication_schedule (
+            id,
             medication_name,
             dosage,
             time_of_day,
-            group_id,
-            id
+            group_id
           )
         `)
         .eq('group_id', groupId)
         .eq('status', 'pending_verification')
-        .order('created_at', { ascending: false });
+        .order('administered_at', { ascending: false });
 
       if (error) throw error;
       
-      return data as MedicationLogBase[];
+      // Transform the raw data to match MedicationLogBase type
+      return (data as RawMedicationLog[]).map(log => ({
+        id: log.id,
+        taken_at: log.administered_at, // Map administered_at to taken_at
+        administered_at: log.administered_at,
+        status: log.status as MedicationLogBase['status'],
+        schedule_id: log.schedule_id,
+        group_id: log.group_id,
+        administered_by: log.administered_by,
+        verified_by: log.verified_by,
+        verified_at: log.verified_at,
+        notes: log.notes,
+        photo_verification_url: log.photo_verification_url,
+        medication_schedule: log.medication_schedule
+      }));
     }
   });
 
