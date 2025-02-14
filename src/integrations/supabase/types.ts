@@ -3375,6 +3375,7 @@ export type Database = {
           administered_at: string
           administered_by: string | null
           created_at: string | null
+          group_id: string | null
           id: string
           notes: string | null
           photo_verification_url: string | null
@@ -3382,12 +3383,14 @@ export type Database = {
           side_effects: Json | null
           status: string | null
           symptoms: Json | null
+          taken_at: string | null
           verified_by: string | null
         }
         Insert: {
           administered_at: string
           administered_by?: string | null
           created_at?: string | null
+          group_id?: string | null
           id?: string
           notes?: string | null
           photo_verification_url?: string | null
@@ -3395,12 +3398,14 @@ export type Database = {
           side_effects?: Json | null
           status?: string | null
           symptoms?: Json | null
+          taken_at?: string | null
           verified_by?: string | null
         }
         Update: {
           administered_at?: string
           administered_by?: string | null
           created_at?: string | null
+          group_id?: string | null
           id?: string
           notes?: string | null
           photo_verification_url?: string | null
@@ -3408,6 +3413,7 @@ export type Database = {
           side_effects?: Json | null
           status?: string | null
           symptoms?: Json | null
+          taken_at?: string | null
           verified_by?: string | null
         }
         Relationships: [

@@ -10,6 +10,7 @@ import type { MedicationSupervisionSummary, MedicationLogBase } from "@/types/me
 interface RawMedicationLog {
   id: string;
   administered_at: string;
+  taken_at: string;
   administered_by?: string;
   schedule_id: string;
   group_id: string;
@@ -33,7 +34,7 @@ interface SupervisorPanelProps {
 }
 
 export const SupervisorPanel = ({ groupId, data }: SupervisorPanelProps) => {
-  const { data: pendingVerifications } = useQuery({
+  const { data: pendingVerifications } = useQuery<MedicationLogBase[]>({
     queryKey: ['pendingVerifications', groupId],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -41,6 +42,7 @@ export const SupervisorPanel = ({ groupId, data }: SupervisorPanelProps) => {
         .select(`
           id,
           administered_at,
+          taken_at,
           administered_by,
           schedule_id,
           group_id,
@@ -64,9 +66,9 @@ export const SupervisorPanel = ({ groupId, data }: SupervisorPanelProps) => {
       if (error) throw error;
       
       // Transform the raw data to match MedicationLogBase type
-      return (data as RawMedicationLog[]).map(log => ({
+      const transformedData = (data as RawMedicationLog[]).map(log => ({
         id: log.id,
-        taken_at: log.administered_at, // Map administered_at to taken_at
+        taken_at: log.taken_at || log.administered_at,
         administered_at: log.administered_at,
         status: log.status as MedicationLogBase['status'],
         schedule_id: log.schedule_id,
@@ -78,6 +80,8 @@ export const SupervisorPanel = ({ groupId, data }: SupervisorPanelProps) => {
         photo_verification_url: log.photo_verification_url,
         medication_schedule: log.medication_schedule
       }));
+
+      return transformedData;
     }
   });
 
