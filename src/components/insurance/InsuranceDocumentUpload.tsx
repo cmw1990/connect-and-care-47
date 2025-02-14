@@ -7,6 +7,17 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/com
 import { UploadCloud, File, Trash2 } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
+interface InsuranceDocument {
+  id: string;
+  file_url: string;
+  created_at: string;
+  metadata: {
+    original_name?: string;
+    size?: number;
+    type?: string;
+  };
+}
+
 interface InsuranceDocumentUploadProps {
   insuranceId: string;
   documentType: string;
@@ -20,7 +31,7 @@ export const InsuranceDocumentUpload = ({
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: documents, isLoading } = useQuery({
+  const { data: documents, isLoading } = useQuery<InsuranceDocument[]>({
     queryKey: ['insuranceDocuments', insuranceId, documentType],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -78,7 +89,7 @@ export const InsuranceDocumentUpload = ({
         description: "Your insurance document has been saved.",
       });
 
-      queryClient.invalidateQueries(['insuranceDocuments']);
+      queryClient.invalidateQueries({ queryKey: ['insuranceDocuments'] });
     } catch (error) {
       console.error('Error uploading document:', error);
       toast({
@@ -116,7 +127,7 @@ export const InsuranceDocumentUpload = ({
         description: "The insurance document has been removed.",
       });
 
-      queryClient.invalidateQueries(['insuranceDocuments']);
+      queryClient.invalidateQueries({ queryKey: ['insuranceDocuments'] });
     } catch (error) {
       console.error('Error deleting document:', error);
       toast({
@@ -154,7 +165,7 @@ export const InsuranceDocumentUpload = ({
                       {doc.metadata?.original_name || 'Insurance Document'}
                     </p>
                     <p className="text-sm text-muted-foreground">
-                      {new Date(doc.created_at!).toLocaleDateString()}
+                      {new Date(doc.created_at).toLocaleDateString()}
                     </p>
                   </div>
                 </div>

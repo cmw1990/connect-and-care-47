@@ -4,20 +4,39 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Search, MapPin, Phone, Mail } from "lucide-react";
+
+interface ProviderLocation {
+  address: string;
+  city: string;
+  state?: string;
+  zip?: string;
+}
+
+interface ContactInfo {
+  phone?: string;
+  email?: string;
+}
+
+interface Provider {
+  id: string;
+  provider_name: string;
+  specialty?: string;
+  location?: ProviderLocation;
+  contact_info?: ContactInfo;
+}
 
 export const InsuranceProviderSearch = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [specialty, setSpecialty] = useState("");
 
-  const { data: providers, isLoading } = useQuery({
+  const { data: providers, isLoading } = useQuery<Provider[]>({
     queryKey: ['networkProviders', searchTerm, specialty],
     queryFn: async () => {
       let query = supabase
         .from('insurance_network_providers')
-        .select('*');
+        .select('id, provider_name, specialty, location, contact_info');
 
       if (searchTerm) {
         query = query.ilike('provider_name', `%${searchTerm}%`);
@@ -34,17 +53,17 @@ export const InsuranceProviderSearch = () => {
     enabled: !!searchTerm || !!specialty
   });
 
-  const { data: specialties } = useQuery({
+  const { data: specialties } = useQuery<string[]>({
     queryKey: ['providerSpecialties'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('insurance_network_providers')
         .select('specialty')
-        .not('specialty', 'is', null)
-        .distinct();
+        .filter('specialty', 'not.is', null);
 
       if (error) throw error;
-      return data.map(s => s.specialty);
+      const uniqueSpecialties = new Set(data.map(d => d.specialty).filter(Boolean));
+      return Array.from(uniqueSpecialties);
     }
   });
 
@@ -100,9 +119,7 @@ export const InsuranceProviderSearch = () => {
                   <div className="flex items-center gap-2 text-sm">
                     <MapPin className="h-4 w-4" />
                     <span>
-                      {typeof provider.location === 'string' 
-                        ? provider.location 
-                        : `${provider.location.address}, ${provider.location.city}`}
+                      {`${provider.location.address}, ${provider.location.city}`}
                     </span>
                   </div>
                 )}
