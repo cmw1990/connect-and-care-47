@@ -11,21 +11,21 @@ interface RawMedicationLog {
   id: string;
   administered_at: string;
   taken_at: string;
-  administered_by?: string;
+  administered_by?: string | null;
   schedule_id: string;
   group_id: string;
-  verified_by?: string;
-  verified_at?: string;
+  verified_by?: string | null;
+  verified_at?: string | null;
   status: string;
-  notes?: string;
-  photo_verification_url?: string;
+  notes?: string | null;
+  photo_verification_url?: string | null;
   medication_schedule?: {
     id: string;
     medication_name: string;
     dosage: string;
     time_of_day: string[];
     group_id: string;
-  };
+  } | null;
 }
 
 interface SupervisorPanelProps {
@@ -66,19 +66,19 @@ export const SupervisorPanel = ({ groupId, data }: SupervisorPanelProps) => {
       if (error) throw error;
       
       // Transform the raw data to match MedicationLogBase type
-      const transformedData = (queryResult || []).map((log: RawMedicationLog) => ({
+      const transformedData = (queryResult as RawMedicationLog[] || []).map(log => ({
         id: log.id,
         taken_at: log.taken_at || log.administered_at,
         administered_at: log.administered_at,
         status: log.status as MedicationLogBase['status'],
         schedule_id: log.schedule_id,
         group_id: log.group_id,
-        administered_by: log.administered_by,
-        verified_by: log.verified_by,
-        verified_at: log.verified_at,
-        notes: log.notes,
-        photo_verification_url: log.photo_verification_url,
-        medication_schedule: log.medication_schedule
+        administered_by: log.administered_by || undefined,
+        verified_by: log.verified_by || undefined,
+        verified_at: log.verified_at || undefined,
+        notes: log.notes || undefined,
+        photo_verification_url: log.photo_verification_url || undefined,
+        medication_schedule: log.medication_schedule || undefined
       }));
 
       return transformedData;
