@@ -1,10 +1,9 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
 import { InsuranceDeductiblesSkeleton } from "@/components/ui/skeletons/InsuranceDeductiblesSkeleton";
-import type { InsuranceDeductible } from "@/types/insurance";
+import type { InsuranceDeductible } from "@/types/supabase";
 
 interface InsuranceDeductiblesCardProps {
   insuranceId: string;
@@ -20,11 +19,10 @@ export const InsuranceDeductiblesCard = ({ insuranceId }: InsuranceDeductiblesCa
         .from('insurance_deductibles')
         .select('*')
         .eq('insurance_id', insuranceId)
-        .eq('year', currentYear)
-        .returns<InsuranceDeductible[]>();
+        .eq('year', currentYear);
 
       if (error) throw error;
-      return data;
+      return data as InsuranceDeductible[];
     }
   });
 

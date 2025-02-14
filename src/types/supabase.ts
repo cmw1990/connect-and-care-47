@@ -1,31 +1,32 @@
 
-import { Database } from '@/integrations/supabase/types'
-
-export type Tables = Database['public']['Tables']
-
-// Network Providers
-export interface InsuranceProvider {
-  id: string;
-  provider_name: string;
-  specialty: string;
-  network_status: 'in-network' | 'out-of-network';
-  location: {
-    address: string;
-    city?: string;
-    state?: string;
-    zip?: string;
+export interface Tables {
+  insurance_analytics: {
+    Row: InsuranceAnalytics;
+    Insert: Omit<InsuranceAnalytics, 'id' | 'created_at'>;
+    Update: Partial<InsuranceAnalytics>;
   };
-  rating?: number;
-  contact_info?: {
-    phone?: string;
-    email?: string;
-    website?: string;
+  insurance_deductibles: {
+    Row: InsuranceDeductible;
+    Insert: Omit<InsuranceDeductible, 'id' | 'created_at'>;
+    Update: Partial<InsuranceDeductible>;
   };
-  created_at: string;
-  updated_at: string;
+  insurance_notifications: {
+    Row: InsuranceNotification;
+    Insert: Omit<InsuranceNotification, 'id' | 'created_at'>;
+    Update: Partial<InsuranceNotification>;
+  };
+  insurance_plan_benefits: {
+    Row: InsurancePlanBenefit;
+    Insert: Omit<InsurancePlanBenefit, 'id' | 'created_at'>;
+    Update: Partial<InsurancePlanBenefit>;
+  };
+  insurance_preauthorizations: {
+    Row: InsurancePreauthorization;
+    Insert: Omit<InsurancePreauthorization, 'id' | 'created_at' | 'updated_at'>;
+    Update: Partial<InsurancePreauthorization>;
+  };
 }
 
-// Analytics
 export interface InsuranceAnalytics {
   id: string;
   user_id: string;
@@ -35,7 +36,6 @@ export interface InsuranceAnalytics {
   created_at: string;
 }
 
-// Deductibles
 export interface InsuranceDeductible {
   id: string;
   insurance_id: string;
@@ -46,18 +46,16 @@ export interface InsuranceDeductible {
   created_at: string;
 }
 
-// Notifications
 export interface InsuranceNotification {
   id: string;
   user_id: string;
-  type: string;
+  type: 'claim_update' | 'document_status' | 'coverage_alert' | 'preauth_required';
   title: string;
   message: string;
   read: boolean;
   created_at: string;
 }
 
-// Plan Benefits
 export interface InsurancePlanBenefit {
   id: string;
   plan_id: string;
@@ -65,4 +63,34 @@ export interface InsurancePlanBenefit {
   coverage_percentage: number;
   requires_preauth: boolean;
   created_at: string;
+}
+
+export interface InsurancePreauthorization {
+  id: string;
+  insurance_id: string;
+  service_type: string;
+  status: string;
+  supporting_documents?: Record<string, any>;
+  expires_at?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ProviderSearchFilters {
+  specialty?: string;
+  distance?: string;
+  networkStatus?: 'all' | 'in-network' | 'out-of-network';
+}
+
+export interface InsuranceDocument {
+  id: string;
+  user_id: string;
+  file_url: string;
+  document_type: string;
+  metadata: {
+    filename: string;
+    size: number;
+    type: string;
+  };
+  uploaded_at: string;
 }

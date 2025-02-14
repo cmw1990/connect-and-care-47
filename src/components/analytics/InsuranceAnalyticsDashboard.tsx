@@ -30,14 +30,14 @@ export const InsuranceAnalyticsDashboard = ({ userId }: InsuranceAnalyticsDashbo
   const { data: analytics } = useQuery({
     queryKey: ['insurance-analytics', userId, timeRange],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data: analyticsData, error } = await supabase
         .from('insurance_analytics')
         .select('*')
         .eq('user_id', userId)
         .order('created_at', { ascending: true });
 
       if (error) throw error;
-      return data as InsuranceAnalytics[];
+      return analyticsData as InsuranceAnalytics[];
     }
   });
 
