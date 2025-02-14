@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -7,19 +6,14 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Send, MessageSquare } from "lucide-react";
+import { Message } from "@/types/supabase";
+import { supabaseQueryWithTransform } from "@/utils/supabase";
 
-interface Message {
-  id: string;
-  sender_id: string;
-  content: string;
-  created_at: string;
-  sender?: {
-    first_name: string | null;
-    last_name: string | null;
-  } | null;
+interface CareTeamChatProps {
+  groupId: string;
 }
 
-export const CareTeamChat = ({ groupId }: { groupId: string }) => {
+export const CareTeamChat = ({ groupId }: CareTeamChatProps) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const { toast } = useToast();
@@ -34,23 +28,25 @@ export const CareTeamChat = ({ groupId }: { groupId: string }) => {
 
   const fetchMessages = async () => {
     try {
-      const { data, error } = await supabase
-        .from("team_messages")
-        .select(`
-          id,
-          content,
-          created_at,
-          sender_id,
-          sender:profiles!team_messages_sender_id_fkey (
-            first_name,
-            last_name
-          )
-        `)
-        .eq("group_id", groupId)
-        .order("created_at", { ascending: true });
+      const result = await supabaseQueryWithTransform<Message[]>(
+        supabase
+          .from("team_messages")
+          .select(`
+            id,
+            content,
+            created_at,
+            sender_id,
+            sender:profiles!team_messages_sender_id_fkey (
+              first_name,
+              last_name
+            )
+          `)
+          .eq("group_id", groupId)
+          .order("created_at", { ascending: true })
+      );
 
-      if (error) throw error;
-      setMessages(data as Message[]);
+      if (result.error) throw result.error;
+      if (result.data) setMessages(result.data);
     } catch (error) {
       console.error("Error fetching messages:", error);
       toast({

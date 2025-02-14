@@ -3,115 +3,50 @@ import { Database } from '@/integrations/supabase/types'
 
 export type DatabaseSchema = Database['public']['Tables']
 
-export interface Tables {
-  insurance_analytics: {
-    Row: InsuranceAnalytics;
-    Insert: Omit<InsuranceAnalytics, 'id' | 'created_at'>;
-    Update: Partial<InsuranceAnalytics>;
-  };
-  insurance_deductibles: {
-    Row: InsuranceDeductible;
-    Insert: Omit<InsuranceDeductible, 'id' | 'created_at'>;
-    Update: Partial<InsuranceDeductible>;
-  };
-  insurance_notifications: {
-    Row: InsuranceNotification;
-    Insert: Omit<InsuranceNotification, 'id' | 'created_at'>;
-    Update: Partial<InsuranceNotification>;
-  };
-  insurance_plan_benefits: {
-    Row: InsurancePlanBenefit;
-    Insert: Omit<InsurancePlanBenefit, 'id' | 'created_at'>;
-    Update: Partial<InsurancePlanBenefit>;
-  };
-  insurance_preauthorizations: {
-    Row: InsurancePreauthorization;
-    Insert: Omit<InsurancePreauthorization, 'id' | 'created_at' | 'updated_at'>;
-    Update: Partial<InsurancePreauthorization>;
-  };
-  insurance_providers: {
-    Row: InsuranceProvider;
-    Insert: Omit<InsuranceProvider, 'id' | 'created_at' | 'updated_at'>;
-    Update: Partial<InsuranceProvider>;
-  };
+// Shared profile type
+export interface UserProfile {
+  first_name: string | null;
+  last_name: string | null;
 }
 
-export interface InsuranceProvider {
+// Message types
+export interface Message {
   id: string;
-  provider_name: string;
-  specialty: string;
-  network_status: 'in-network' | 'out-of-network';
-  location: {
-    address: string;
-    city?: string;
-    state?: string;
-    zip?: string;
-  };
-  rating?: number;
-  contact_info?: {
-    phone?: string;
-    email?: string;
-    website?: string;
-  };
+  sender_id: string;
+  content: string;
   created_at: string;
-  updated_at: string;
+  sender?: UserProfile | null;
 }
 
-export interface InsuranceAnalytics {
+// Care Update types
+export interface CareUpdate {
   id: string;
-  user_id: string;
-  type: string;
-  value: number;
-  period: string;
+  content: string;
+  update_type: string;
   created_at: string;
+  profiles: UserProfile | null;
 }
 
-export interface InsuranceDeductible {
+// Post types
+export interface Post {
   id: string;
-  insurance_id: string;
-  deductible_type: string;
-  total_amount: number;
-  met_amount: number;
-  year: number;
+  content: string;
   created_at: string;
+  created_by: string;
+  profiles?: UserProfile | null;
 }
 
-export interface InsuranceNotification {
+// Task types
+export interface Task {
   id: string;
-  user_id: string;
-  type: 'claim_update' | 'document_status' | 'coverage_alert' | 'preauth_required';
   title: string;
-  message: string;
-  read: boolean;
-  created_at: string;
-}
-
-export interface InsurancePlanBenefit {
-  id: string;
-  plan_id: string;
-  name: string;
-  coverage_percentage: number;
-  requires_preauth: boolean;
-  created_at: string;
-}
-
-export interface InsurancePreauthorization {
-  id: string;
-  insurance_id: string;
-  service_type: string;
   status: string;
-  supporting_documents?: Record<string, any>;
-  expires_at?: string;
-  created_at: string;
-  updated_at: string;
+  priority: string;
+  assigned_to: string | null;
+  assigned_user: UserProfile | null;
 }
 
-export interface ProviderSearchFilters {
-  specialty?: string;
-  distance?: string;
-  networkStatus?: 'all' | 'in-network' | 'out-of-network';
-}
-
+// Insurance Document types
 export interface InsuranceDocument {
   id: string;
   user_id: string;
@@ -125,20 +60,68 @@ export interface InsuranceDocument {
   uploaded_at: string;
 }
 
-// Custom type guard for insurance provider location
-export function isValidProviderLocation(obj: any): obj is InsuranceProvider['location'] {
-  return obj && typeof obj.address === 'string';
+// Insurance Plan types
+export interface InsurancePlan {
+  id: string;
+  name: string;
+  type: string;
+  covered_services: Record<string, boolean>;
+  auto_verification: boolean;
 }
 
-// Custom type for Supabase query responses
-export type PostgrestResponse<T> = {
-  data: T[] | null;
-  error: Error | null;
-};
+// Care Report types
+export interface CareReport {
+  id: string;
+  recorded_at: string;
+  metric_value: {
+    notes: string;
+    timestamp: string;
+  };
+  created_by: string;
+  profiles: UserProfile | null;
+}
 
-// Type for query filters
-export interface QueryFilter {
-  column: string;
-  operator: string;
-  value: any;
+// Helper type guards
+export function isUserProfile(obj: any): obj is UserProfile {
+  return obj && typeof obj.first_name !== 'undefined' && typeof obj.last_name !== 'undefined';
+}
+
+export function isSingleItemArray<T>(arr: T | T[]): arr is T[] {
+  return Array.isArray(arr) && arr.length === 1;
+}
+
+// Helper function to safely transform Supabase responses
+export function transformSupabaseResponse<T>(data: any): T {
+  if (!data) return data;
+  
+  // If it's an array, transform each item
+  if (Array.isArray(data)) {
+    return data.map(item => transformSupabaseResponse<T>(item)) as unknown as T;
+  }
+
+  // If it has a nested profiles array with one item, convert it to an object
+  if (data.profiles && Array.isArray(data.profiles) && data.profiles.length === 1) {
+    return {
+      ...data,
+      profiles: data.profiles[0]
+    } as T;
+  }
+
+  // If it has a nested sender array with one item, convert it to an object
+  if (data.sender && Array.isArray(data.sender) && data.sender.length === 1) {
+    return {
+      ...data,
+      sender: data.sender[0]
+    } as T;
+  }
+
+  // If it has a nested assigned_user array with one item, convert it to an object
+  if (data.assigned_user && Array.isArray(data.assigned_user) && data.assigned_user.length === 1) {
+    return {
+      ...data,
+      assigned_user: data.assigned_user[0]
+    } as T;
+  }
+
+  return data as T;
 }

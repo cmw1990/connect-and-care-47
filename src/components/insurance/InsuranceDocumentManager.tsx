@@ -15,6 +15,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { Download, Upload, Trash2, Eye } from 'lucide-react';
 import type { InsuranceDocument } from '@/types/supabase';
+import { supabaseQueryWithTransform } from '@/utils/supabase';
 
 export const InsuranceDocumentManager = () => {
   const [file, setFile] = useState<File | null>(null);
@@ -28,13 +29,15 @@ export const InsuranceDocumentManager = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      const { data, error } = await supabase
-        .from('insurance_documents')
-        .select('*')
-        .eq('user_id', user.id);
+      const result = await supabaseQueryWithTransform<InsuranceDocument[]>(
+        supabase
+          .from('insurance_documents')
+          .select('*')
+          .eq('user_id', user.id)
+      );
 
-      if (error) throw error;
-      return data as InsuranceDocument[];
+      if (result.error) throw result.error;
+      return result.data;
     }
   });
 
@@ -95,13 +98,13 @@ export const InsuranceDocumentManager = () => {
       if (error) throw error;
 
       const url = URL.createObjectURL(data);
-      const a = document.createElement('a');
+      const a = window.document.createElement('a');
       a.href = url;
       a.download = document.metadata.filename || 'document';
-      document.body.appendChild(a);
+      window.document.body.appendChild(a);
       a.click();
       URL.revokeObjectURL(url);
-      document.body.removeChild(a);
+      window.document.body.removeChild(a);
     } catch (error) {
       toast({
         title: "Error",
