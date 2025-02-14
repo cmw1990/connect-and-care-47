@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -8,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CompanionCard } from "./CompanionCard";
 import type { Json } from "@/integrations/supabase/types";
+import { InsuranceClaimProcessor } from "@/components/insurance/InsuranceClaimProcessor";
 
 interface CompanionMatch {
   id: string;
@@ -52,7 +52,7 @@ interface CompanionFilters {
   supportTools: string[];
 }
 
-export const CompanionMatcher = () => {
+const CompanionMatcher = () => {
   const [matches, setMatches] = useState<CompanionMatch[]>([]);
   const [filters, setFilters] = useState<CompanionFilters>({
     expertiseArea: "",
@@ -192,14 +192,28 @@ export const CompanionMatcher = () => {
           <div className="flex justify-center">Loading...</div>
         ) : (
           matches.map((companion) => (
-            <CompanionCard
+            <InsuranceClaimProcessor
               key={companion.id}
-              companion={companion}
-              onConnect={handleConnect}
-            />
+              serviceType="companion_care"
+              amount={companion.hourly_rate}
+              providerId={companion.id}
+              onSuccess={() => {
+                toast({
+                  title: "Connection request sent",
+                  description: "The companion will be notified of your request.",
+                });
+              }}
+            >
+              <CompanionCard
+                companion={companion}
+                onConnect={handleConnect}
+              />
+            </InsuranceClaimProcessor>
           ))
         )}
       </div>
     </Card>
   );
 };
+
+export { CompanionMatcher };

@@ -2963,9 +2963,96 @@ export type Database = {
           },
         ]
       }
+      insurance_claim_documents: {
+        Row: {
+          claim_id: string | null
+          document_type: string
+          file_url: string
+          id: string
+          uploaded_at: string | null
+        }
+        Insert: {
+          claim_id?: string | null
+          document_type: string
+          file_url: string
+          id?: string
+          uploaded_at?: string | null
+        }
+        Update: {
+          claim_id?: string | null
+          document_type?: string
+          file_url?: string
+          id?: string
+          uploaded_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "insurance_claim_documents_claim_id_fkey"
+            columns: ["claim_id"]
+            isOneToOne: false
+            referencedRelation: "insurance_claims"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      insurance_claims: {
+        Row: {
+          auto_processed: boolean | null
+          claim_amount: number
+          created_at: string | null
+          id: string
+          insurance_id: string | null
+          processing_notes: Json | null
+          provider_id: string | null
+          service_date: string
+          service_type: string
+          status: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          auto_processed?: boolean | null
+          claim_amount: number
+          created_at?: string | null
+          id?: string
+          insurance_id?: string | null
+          processing_notes?: Json | null
+          provider_id?: string | null
+          service_date: string
+          service_type: string
+          status?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          auto_processed?: boolean | null
+          claim_amount?: number
+          created_at?: string | null
+          id?: string
+          insurance_id?: string | null
+          processing_notes?: Json | null
+          provider_id?: string | null
+          service_date?: string
+          service_type?: string
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "insurance_claims_insurance_id_fkey"
+            columns: ["insurance_id"]
+            isOneToOne: false
+            referencedRelation: "user_insurance"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       insurance_plans: {
         Row: {
+          auto_verification: boolean | null
           coverage_details: Json | null
+          covered_services: Json | null
           created_at: string | null
           id: string
           name: string
@@ -2974,7 +3061,9 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          auto_verification?: boolean | null
           coverage_details?: Json | null
+          covered_services?: Json | null
           created_at?: string | null
           id?: string
           name: string
@@ -2983,7 +3072,9 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          auto_verification?: boolean | null
           coverage_details?: Json | null
+          covered_services?: Json | null
           created_at?: string | null
           id?: string
           name?: string
