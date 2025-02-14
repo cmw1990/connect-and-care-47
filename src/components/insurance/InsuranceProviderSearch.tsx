@@ -15,31 +15,42 @@ import {
 } from "@/components/ui/select";
 import { Search, MapPin, Star, Filter } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import type { InsuranceProvider, ProviderSearchFilters } from "@/types/supabase";
 
 export const InsuranceProviderSearch = () => {
   const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState("");
-  const [specialty, setSpecialty] = useState("");
-  const [distance, setDistance] = useState("10");
-  const [networkStatus, setNetworkStatus] = useState("all");
+  const [filters, setFilters] = useState<ProviderSearchFilters>({
+    specialty: "",
+    distance: "10",
+    networkStatus: "all"
+  });
 
   const { data: providers, isLoading } = useQuery({
-    queryKey: ['insurance-providers', searchTerm, specialty, distance, networkStatus],
+    queryKey: ['insurance-providers', searchTerm, filters],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from('insurance_network_providers')
-        .select(`
-          *,
-          location,
-          network_status,
-          rating
-        `)
-        .ilike('provider_name', `%${searchTerm}%`)
-        .eq(specialty ? 'specialty' : 'specialty', specialty || undefined)
-        .order('provider_name');
+        .select()
+        .ilike('provider_name', `%${searchTerm}%`);
 
+      if (filters.specialty) {
+        query = query.eq('specialty', filters.specialty);
+      }
+
+      if (filters.networkStatus !== 'all') {
+        query = query.eq('network_status', filters.networkStatus);
+      }
+
+      if (filters.distance) {
+        // For now we're just filtering by distance without geo calculations
+        query = query.lte('distance', parseFloat(filters.distance));
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
-      return data;
+      
+      return data as InsuranceProvider[];
     }
   });
 
@@ -60,7 +71,9 @@ export const InsuranceProviderSearch = () => {
                 icon={<Search className="h-4 w-4" />}
               />
             </div>
-            <Select value={specialty} onValueChange={setSpecialty}>
+            <Select 
+              value={filters.specialty} 
+              onValueChange={(value) => setFilters(f => ({ ...f, specialty: value }))}>
               <SelectTrigger className="w-[200px]">
                 <SelectValue placeholder={t("Specialty")} />
               </SelectTrigger>
@@ -72,7 +85,9 @@ export const InsuranceProviderSearch = () => {
                 <SelectItem value="orthopedics">{t("Orthopedics")}</SelectItem>
               </SelectContent>
             </Select>
-            <Select value={distance} onValueChange={setDistance}>
+            <Select 
+              value={filters.distance}
+              onValueChange={(value) => setFilters(f => ({ ...f, distance: value }))}>
               <SelectTrigger className="w-[150px]">
                 <SelectValue placeholder={t("Distance")} />
               </SelectTrigger>
@@ -83,7 +98,10 @@ export const InsuranceProviderSearch = () => {
                 <SelectItem value="50">{t("Within 50 miles")}</SelectItem>
               </SelectContent>
             </Select>
-            <Select value={networkStatus} onValueChange={setNetworkStatus}>
+            <Select 
+              value={filters.networkStatus}
+              onValueChange={(value: 'all' | 'in-network' | 'out-of-network') => 
+                setFilters(f => ({ ...f, networkStatus: value }))}>
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder={t("Network Status")} />
               </SelectTrigger>
@@ -114,18 +132,19 @@ export const InsuranceProviderSearch = () => {
                         <p className="text-sm text-muted-foreground">{provider.specialty}</p>
                         <div className="flex items-center gap-2 mt-2">
                           <MapPin className="h-4 w-4 text-muted-foreground" />
-                          <span className="text-sm">{
-                            typeof provider.location === 'object' && provider.location 
-                              ? provider.location.address 
-                              : 'Address not available'
-                          }</span>
+                          <span className="text-sm">
+                            {provider.location?.address || t('Address not available')}
+                          </span>
                         </div>
                         <div className="flex items-center gap-2 mt-1">
                           <Star className="h-4 w-4 text-yellow-500" />
-                          <span className="text-sm">{provider.rating || 'No rating'} / 5</span>
+                          <span className="text-sm">
+                            {provider.rating ? `${provider.rating} / 5` : t('No rating')}
+                          </span>
                         </div>
                       </div>
-                      <Badge variant={provider.network_status === 'in-network' ? 'default' : 'secondary'}>
+                      <Badge 
+                        variant={provider.network_status === 'in-network' ? 'default' : 'secondary'}>
                         {t(provider.network_status === 'in-network' ? 'In-Network' : 'Out-of-Network')}
                       </Badge>
                     </div>
