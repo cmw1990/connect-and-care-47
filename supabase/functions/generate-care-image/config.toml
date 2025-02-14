@@ -1,1 +1,3 @@
-project_id = "csngjtaxbnebqfismwvs"
+
+[functions.generate-care-image]
+verify_jwt = true

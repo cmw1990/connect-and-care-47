@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Heart, Activity, Brain, Sun } from "lucide-react";
 import { useEffect, useState } from "react";
