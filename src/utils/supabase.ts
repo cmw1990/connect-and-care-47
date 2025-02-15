@@ -1,25 +1,9 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import type { Database } from '@/types/supabase';
+import type { PostgrestResponse, Database } from '@/types/supabase';
 
-export type PostgrestResponse<T> = {
-  data: T | null;
-  error: Error | null;
-};
-
-// Transform helper functions
-export function transformSupabaseResponse<T>(data: any): T {
-  if (!data) return data;
-
-  if (Array.isArray(data)) {
-    return data.map(transformObject) as T;
-  }
-  return transformObject(data) as T;
-}
-
-export function transformObject(obj: any): any {
+export function transformObject<T>(obj: any): T {
   if (!obj) return obj;
-
   const transformed = { ...obj };
 
   // Transform arrays of profiles/sender/assigned_user into single objects
@@ -37,22 +21,21 @@ export function transformObject(obj: any): any {
     transformed.assigned_user = transformed.assigned_user[0];
   }
 
-  return transformed;
+  return transformed as T;
 }
 
-// Supabase query helper
-export async function supabaseQueryWithTransform<T>(
-  query: ReturnType<typeof supabase.from>
-): Promise<PostgrestResponse<T>> {
+export async function supabaseQueryWithTransform<T>(query: ReturnType<typeof supabase.from>): Promise<PostgrestResponse<T>> {
   try {
-    const { data, error } = await query;
+    const result = await query;
     
-    if (error) {
-      return { data: null, error };
+    if (result.error) {
+      return { data: null, error: result.error };
     }
 
     // Transform arrays of profiles/sender/assigned_user into single objects
-    const transformedData = transformSupabaseResponse<T>(data);
+    const transformedData = Array.isArray(result.data) 
+      ? result.data.map(item => transformObject<T>(item))
+      : transformObject<T>(result.data);
 
     return { data: transformedData, error: null };
   } catch (error) {

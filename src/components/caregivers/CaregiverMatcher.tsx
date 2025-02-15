@@ -108,7 +108,9 @@ interface CompanionFilters {
   specialNeeds: string;
 }
 
-export const CaregiverMatcher = () => {
+interface CaregiverMatcherProps {}
+
+export function CaregiverMatcher({}: CaregiverMatcherProps) {
   const [caregivers, setCaregivers] = useState<SimplifiedCaregiverProfile[]>([]);
   const [filters, setFilters] = useState({
     specialization: "",
@@ -401,6 +403,6 @@ export const CaregiverMatcher = () => {
       </CardContent>
     </Card>
   );
-};
+}
 
 export { CaregiverMatcher };
