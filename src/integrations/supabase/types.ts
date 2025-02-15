@@ -3189,6 +3189,33 @@ export type Database = {
           },
         ]
       }
+      insurance_analytics: {
+        Row: {
+          created_at: string
+          id: string
+          period: unknown | null
+          type: string
+          user_id: string | null
+          value: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          period?: unknown | null
+          type: string
+          user_id?: string | null
+          value: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          period?: unknown | null
+          type?: string
+          user_id?: string | null
+          value?: number
+        }
+        Relationships: []
+      }
       insurance_claim_documents: {
         Row: {
           claim_id: string | null
@@ -3318,6 +3345,47 @@ export type Database = {
           },
         ]
       }
+      insurance_deductibles: {
+        Row: {
+          created_at: string
+          deductible_type: string
+          id: string
+          insurance_id: string | null
+          met_amount: number
+          total_amount: number
+          updated_at: string
+          year: number
+        }
+        Insert: {
+          created_at?: string
+          deductible_type: string
+          id?: string
+          insurance_id?: string | null
+          met_amount?: number
+          total_amount?: number
+          updated_at?: string
+          year: number
+        }
+        Update: {
+          created_at?: string
+          deductible_type?: string
+          id?: string
+          insurance_id?: string | null
+          met_amount?: number
+          total_amount?: number
+          updated_at?: string
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "insurance_deductibles_insurance_id_fkey"
+            columns: ["insurance_id"]
+            isOneToOne: false
+            referencedRelation: "user_insurance"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       insurance_documents: {
         Row: {
           created_at: string | null
@@ -3397,6 +3465,83 @@ export type Database = {
           },
         ]
       }
+      insurance_notifications: {
+        Row: {
+          created_at: string
+          id: string
+          message: string
+          metadata: Json | null
+          read: boolean | null
+          title: string
+          type: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message: string
+          metadata?: Json | null
+          read?: boolean | null
+          title: string
+          type: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message?: string
+          metadata?: Json | null
+          read?: boolean | null
+          title?: string
+          type?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      insurance_plan_benefits: {
+        Row: {
+          annual_limit: number | null
+          benefit_name: string
+          coverage_percentage: number
+          created_at: string
+          id: string
+          plan_id: string | null
+          requires_preauthorization: boolean | null
+          updated_at: string
+          waiting_period_days: number | null
+        }
+        Insert: {
+          annual_limit?: number | null
+          benefit_name: string
+          coverage_percentage: number
+          created_at?: string
+          id?: string
+          plan_id?: string | null
+          requires_preauthorization?: boolean | null
+          updated_at?: string
+          waiting_period_days?: number | null
+        }
+        Update: {
+          annual_limit?: number | null
+          benefit_name?: string
+          coverage_percentage?: number
+          created_at?: string
+          id?: string
+          plan_id?: string | null
+          requires_preauthorization?: boolean | null
+          updated_at?: string
+          waiting_period_days?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "insurance_plan_benefits_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "insurance_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       insurance_plans: {
         Row: {
           auto_verification: boolean | null
@@ -3432,6 +3577,47 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      insurance_preauthorizations: {
+        Row: {
+          created_at: string
+          expires_at: string | null
+          id: string
+          insurance_id: string | null
+          service_type: string
+          status: string
+          supporting_documents: Json | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          insurance_id?: string | null
+          service_type: string
+          status?: string
+          supporting_documents?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          insurance_id?: string | null
+          service_type?: string
+          status?: string
+          supporting_documents?: Json | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "insurance_preauthorizations_insurance_id_fkey"
+            columns: ["insurance_id"]
+            isOneToOne: false
+            referencedRelation: "user_insurance"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       insurance_verification_attempts: {
         Row: {

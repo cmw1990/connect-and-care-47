@@ -3,6 +3,11 @@ import type { Database as GeneratedDatabase } from '@/integrations/supabase/type
 export type Database = GeneratedDatabase;
 export type Tables = Database['public']['Tables'];
 
+export interface PostgrestResponse<T> {
+  data: T | null;
+  error: Error | null;
+}
+
 // Shared profile type
 export interface UserProfile {
   first_name: string | null;
@@ -30,15 +35,22 @@ export interface CareUpdate {
 // Insurance types
 export interface InsuranceAnalytics {
   id: string;
-  data: Record<string, any>;
-  period: string;
+  type: string;
+  value: number;
+  period: any; // TSTZRANGE type
+  user_id: string;
+  created_at: string;
 }
 
 export interface InsuranceDeductible {
   id: string;
-  amount: number;
+  insurance_id: string;
+  total_amount: number;
   met_amount: number;
-  type: string;
+  deductible_type: string;
+  year: number;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface MedicationScheduleBase {
@@ -282,7 +294,6 @@ export interface InsuranceProvider {
   specialty: string;
   network_status: 'in-network' | 'out-of-network';
   accepting_new_patients: boolean;
-  rating?: number;
   locations: Array<{
     address: string;
     phone: string;
@@ -296,3 +307,4 @@ export interface ProviderSearchFilters {
   accepting_new_patients?: boolean;
   distance: number;
 }
+
