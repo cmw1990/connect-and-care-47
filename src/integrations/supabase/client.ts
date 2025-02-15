@@ -9,9 +9,9 @@ const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS
 export const supabase = createClient<Database>(supabaseUrl, supabaseKey);
 
 // Helper function to ensure queries return proper promises
-export async function asPromise<T, S = any>(
-  query: PostgrestFilterBuilder<Database['public'], S, T>
+export async function asPromise<T>(
+  query: PostgrestFilterBuilder<Database['public'], any, T[]>
 ) {
   const { data, error } = await query;
-  return { data: data as T[], error };
+  return { data, error };
 }

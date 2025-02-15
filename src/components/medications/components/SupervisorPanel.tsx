@@ -46,7 +46,7 @@ export const SupervisorPanel = ({ groupId, supervisionData }: SupervisorPanelPro
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        {pendingVerifications?.map((log: MedicationLogBase) => (
+        {pendingVerifications?.map((log) => (
           <div key={log.id} className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <Avatar>

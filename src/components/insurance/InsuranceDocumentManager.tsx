@@ -15,7 +15,6 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { Download, Upload, Trash2, Eye } from 'lucide-react';
 import type { InsuranceDocument } from '@/types/supabase';
-import { supabaseQueryWithTransform } from '@/utils/supabase';
 
 export const InsuranceDocumentManager = () => {
   const [file, setFile] = useState<File | null>(null);
@@ -86,6 +85,31 @@ export const InsuranceDocumentManager = () => {
       });
     }
   });
+
+  const handleDownload = async (doc: InsuranceDocument) => {
+    try {
+      const { data, error } = await supabase.storage
+        .from('insurance-documents')
+        .download(doc.file_url);
+
+      if (error) throw error;
+
+      const url = URL.createObjectURL(data);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = doc.file_url.split('/').pop() || 'document';
+      document.body.appendChild(a);
+      a.click();
+      URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to download document",
+        variant: "destructive",
+      });
+    }
+  };
 
   return (
     <Card>
