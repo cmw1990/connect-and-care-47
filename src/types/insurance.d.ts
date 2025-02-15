@@ -23,14 +23,18 @@ export interface InsuranceProvider {
 
 export interface InsuranceBenefit {
   id: string;
+  benefit_name: string;
   name: string;
   description: string;
   coverage_percentage: number;
   deductible_applies: boolean;
   requires_preauth: boolean;
+  requires_preauthorization: boolean;
   network_restrictions?: string;
   limitations?: string;
   copay_amount?: number;
+  annual_limit?: number;
+  waiting_period_days?: number;
 }
 
 export interface InsuranceNetworkProviderRow {
