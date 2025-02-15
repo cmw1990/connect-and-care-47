@@ -32,6 +32,7 @@ export function transformObject<T>(obj: any): T {
   if (!obj) return obj;
   const transformed = { ...obj };
 
+  // Transform arrays of profiles/sender/assigned_user into single objects
   if (transformed.profiles && Array.isArray(transformed.profiles) && transformed.profiles.length === 1) {
     transformed.profiles = transformed.profiles[0];
   }
@@ -42,6 +43,23 @@ export function transformObject<T>(obj: any): T {
 
   if (transformed.assigned_user && Array.isArray(transformed.assigned_user) && transformed.assigned_user.length === 1) {
     transformed.assigned_user = transformed.assigned_user[0];
+  }
+
+  // Convert any Json types to proper objects
+  if (transformed.metadata && typeof transformed.metadata === 'string') {
+    try {
+      transformed.metadata = JSON.parse(transformed.metadata);
+    } catch (e) {
+      transformed.metadata = {};
+    }
+  }
+
+  if (transformed.reminder_preferences && typeof transformed.reminder_preferences === 'string') {
+    try {
+      transformed.reminder_preferences = JSON.parse(transformed.reminder_preferences);
+    } catch (e) {
+      transformed.reminder_preferences = { voice_reminders: false, preferred_channels: [] };
+    }
   }
 
   return transformed as T;

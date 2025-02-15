@@ -5,13 +5,14 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Clock, CheckCircle, XCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import type { MedicationLogBase } from "@/types/supabase";
+import type { MedicationLogBase, MedicationSupervisionSummary } from "@/types/supabase";
 
 interface SupervisorPanelProps {
   groupId: string;
+  supervisionData?: MedicationSupervisionSummary;
 }
 
-export const SupervisorPanel = ({ groupId }: SupervisorPanelProps) => {
+export const SupervisorPanel = ({ groupId, supervisionData }: SupervisorPanelProps) => {
   const { data: pendingVerifications } = useQuery({
     queryKey: ['pendingVerifications', groupId],
     queryFn: async () => {

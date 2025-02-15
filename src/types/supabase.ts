@@ -66,18 +66,12 @@ export interface DementiaTopicCard {
 }
 
 // Medication types
-export interface MedicationLogBase {
+export interface MedicationSupervisionSummary {
   id: string;
-  schedule_id: string;
-  taken_at: string;
-  administered_at: string;
-  status: 'taken' | 'missed' | 'pending' | 'pending_verification' | 'rejected';
-  administered_by?: string;
-  verified_by?: string;
-  verified_at?: string;
-  notes?: string;
-  photo_verification_url?: string;
-  medication_schedule?: MedicationScheduleBase;
+  group_id: string;
+  pending_verifications: number;
+  total_medications: number;
+  last_updated: string;
 }
 
 export interface MedicationScheduleBase {
@@ -92,26 +86,20 @@ export interface MedicationScheduleBase {
   end_date?: string;
 }
 
-export interface MedicationReminderPreferences {
-  voice_reminders: boolean;
-  preferred_voice?: string;
-  preferred_channels: string[];
+export interface MedicationLogBase {
+  id: string;
+  schedule_id: string;
+  taken_at: string;
+  administered_at: string;
+  status: 'taken' | 'missed' | 'pending' | 'pending_verification' | 'rejected';
+  administered_by?: string;
+  verified_by?: string;
+  verified_at?: string;
+  notes?: string;
+  photo_verification_url?: string;
+  medication_schedule?: MedicationScheduleBase;
 }
 
-export interface MedicationAccessibilitySettings {
-  voice_reminders: boolean;
-}
-
-export interface MedicationPortalSettings {
-  id?: string;
-  group_id?: string;
-  reminder_preferences: MedicationReminderPreferences;
-  accessibility_settings: MedicationAccessibilitySettings;
-  created_at?: string;
-  updated_at?: string;
-}
-
-// Utility types and functions
 export interface PostgrestResponse<T> {
   data: T | null;
   error: Error | null;

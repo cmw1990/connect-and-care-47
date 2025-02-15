@@ -23,21 +23,19 @@ export const InsuranceDocumentManager = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: documents } = useQuery({
+  const { data: documents, isLoading: isLoadingDocuments } = useQuery({
     queryKey: ['insuranceDocuments'],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      const result = await supabaseQueryWithTransform<InsuranceDocument[]>(
-        supabase
-          .from('insurance_documents')
-          .select('*')
-          .eq('user_id', user.id)
-      );
+      const { data, error } = await supabase
+        .from('insurance_documents')
+        .select('*')
+        .eq('user_id', user.id);
 
-      if (result.error) throw result.error;
-      return result.data;
+      if (error) throw error;
+      return data as InsuranceDocument[];
     }
   });
 
@@ -89,31 +87,6 @@ export const InsuranceDocumentManager = () => {
     }
   });
 
-  const handleDownload = async (document: InsuranceDocument) => {
-    try {
-      const { data, error } = await supabase.storage
-        .from('insurance-documents')
-        .download(document.file_url);
-
-      if (error) throw error;
-
-      const url = URL.createObjectURL(data);
-      const a = window.document.createElement('a');
-      a.href = url;
-      a.download = document.metadata.filename || 'document';
-      window.document.body.appendChild(a);
-      a.click();
-      URL.revokeObjectURL(url);
-      window.document.body.removeChild(a);
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to download document",
-        variant: "destructive",
-      });
-    }
-  };
-
   return (
     <Card>
       <CardHeader>
@@ -121,6 +94,7 @@ export const InsuranceDocumentManager = () => {
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
+          {/* Upload Form */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Input
               type="file"
@@ -142,19 +116,20 @@ export const InsuranceDocumentManager = () => {
 
           <Button 
             onClick={() => uploadMutation.mutate()}
-            disabled={!file || !documentType || uploadMutation.isLoading}
+            disabled={!file || !documentType || uploadMutation.isPending}
           >
             <Upload className="mr-2 h-4 w-4" />
             Upload Document
           </Button>
 
+          {/* Document List */}
           <div className="space-y-4 mt-8">
             {documents?.map((doc) => (
               <div key={doc.id} className="flex items-center justify-between border-b pb-4">
                 <div>
                   <p className="font-medium">{doc.document_type}</p>
                   <p className="text-sm text-muted-foreground">
-                    {new Date(doc.uploaded_at).toLocaleDateString()}
+                    {new Date(doc.created_at).toLocaleDateString()}
                   </p>
                 </div>
                 <div className="flex gap-2">
