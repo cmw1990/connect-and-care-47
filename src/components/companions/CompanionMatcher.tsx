@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { CompanionCard } from "./CompanionCard";
 import type { Json } from "@/integrations/supabase/types";
 import { InsuranceClaimProcessor } from "@/components/insurance/InsuranceClaimProcessor";
+import { DementiaSupport } from "@/components/caregivers/DementiaSupport";
 
 interface CompanionMatch {
   id: string;
@@ -50,6 +51,7 @@ interface CompanionFilters {
   mentalHealthSupport: boolean;
   maxRate: number;
   supportTools: string[];
+  dementiaOnly: boolean;
 }
 
 const CompanionMatcher = () => {
@@ -61,6 +63,7 @@ const CompanionMatcher = () => {
     mentalHealthSupport: false,
     maxRate: 100,
     supportTools: [],
+    dementiaOnly: false,
   });
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
@@ -77,6 +80,13 @@ const CompanionMatcher = () => {
           *,
           user:profiles(first_name, last_name)
         `);
+
+      // Add dementia-specific filtering
+      if (filters.dementiaOnly) {
+        query = query
+          .eq('dementia_care_certified', true)
+          .order('dementia_experience_years', { ascending: false });
+      }
 
       if (filters.expertiseArea) {
         query = query.contains('expertise_areas', [filters.expertiseArea]);
@@ -170,48 +180,67 @@ const CompanionMatcher = () => {
 
   return (
     <Card className="w-full">
-      <div className="flex items-center mb-4">
-        <Search className="h-5 w-5 text-gray-400" />
-        <Input
-          placeholder="Search companions..."
-          className="ml-2"
-          onChange={(e) => {
-            const value = e.target.value.toLowerCase();
-            // Filter companions based on the search input
-            const filteredCompanions = matches.filter(companion => 
-              companion.bio?.toLowerCase().includes(value) ||
-              companion.user.first_name.toLowerCase().includes(value) ||
-              companion.user.last_name.toLowerCase().includes(value)
-            );
-            setMatches(filteredCompanions);
-          }}
-        />
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {isLoading ? (
-          <div className="flex justify-center">Loading...</div>
-        ) : (
-          matches.map((companion) => (
-            <InsuranceClaimProcessor
-              key={companion.id}
-              serviceType="companion_care"
-              amount={companion.hourly_rate}
-              providerId={companion.id}
-              onSuccess={() => {
-                toast({
-                  title: "Connection request sent",
-                  description: "The companion will be notified of your request.",
-                });
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Heart className="h-5 w-5" />
+          Find Your Companion
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-6">
+          {filters.dementiaOnly && (
+            <DementiaSupport
+              onProfileUpdate={(profile) => {
+                console.log("Updating dementia profile:", profile);
+                // Handle profile update
               }}
-            >
-              <CompanionCard
-                companion={companion}
-                onConnect={handleConnect}
-              />
-            </InsuranceClaimProcessor>
-          ))
-        )}
-      </div>
+            />
+          )}
+          
+          <div className="flex items-center mb-4">
+            <Search className="h-5 w-5 text-gray-400" />
+            <Input
+              placeholder="Search companions..."
+              className="ml-2"
+              onChange={(e) => {
+                const value = e.target.value.toLowerCase();
+                // Filter companions based on the search input
+                const filteredCompanions = matches.filter(companion => 
+                  companion.bio?.toLowerCase().includes(value) ||
+                  companion.user.first_name.toLowerCase().includes(value) ||
+                  companion.user.last_name.toLowerCase().includes(value)
+                );
+                setMatches(filteredCompanions);
+              }}
+            />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {isLoading ? (
+              <div className="flex justify-center">Loading...</div>
+            ) : (
+              matches.map((companion) => (
+                <InsuranceClaimProcessor
+                  key={companion.id}
+                  serviceType="companion_care"
+                  amount={companion.hourly_rate}
+                  providerId={companion.id}
+                  onSuccess={() => {
+                    toast({
+                      title: "Connection request sent",
+                      description: "The companion will be notified of your request.",
+                    });
+                  }}
+                >
+                  <CompanionCard
+                    companion={companion}
+                    onConnect={handleConnect}
+                  />
+                </InsuranceClaimProcessor>
+              ))
+            )}
+          </div>
+        </div>
+      </CardContent>
     </Card>
   );
 };

@@ -258,6 +258,54 @@ export type Database = {
           },
         ]
       }
+      care_applications: {
+        Row: {
+          care_request_id: string | null
+          caregiver_id: string | null
+          cover_letter: string | null
+          created_at: string | null
+          id: string
+          proposed_rate: number | null
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          care_request_id?: string | null
+          caregiver_id?: string | null
+          cover_letter?: string | null
+          created_at?: string | null
+          id?: string
+          proposed_rate?: number | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          care_request_id?: string | null
+          caregiver_id?: string | null
+          cover_letter?: string | null
+          created_at?: string | null
+          id?: string
+          proposed_rate?: number | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "care_applications_care_request_id_fkey"
+            columns: ["care_request_id"]
+            isOneToOne: false
+            referencedRelation: "care_requests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "care_applications_caregiver_id_fkey"
+            columns: ["caregiver_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       care_assessments: {
         Row: {
           adl_scores: Json | null
@@ -1239,6 +1287,56 @@ export type Database = {
           },
         ]
       }
+      care_requests: {
+        Row: {
+          care_type: string
+          created_at: string | null
+          description: string | null
+          hourly_rate_range: Json | null
+          id: string
+          location: Json | null
+          requester_id: string | null
+          requirements: string[] | null
+          schedule_preferences: Json | null
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          care_type: string
+          created_at?: string | null
+          description?: string | null
+          hourly_rate_range?: Json | null
+          id?: string
+          location?: Json | null
+          requester_id?: string | null
+          requirements?: string[] | null
+          schedule_preferences?: Json | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          care_type?: string
+          created_at?: string | null
+          description?: string | null
+          hourly_rate_range?: Json | null
+          id?: string
+          location?: Json | null
+          requester_id?: string | null
+          requirements?: string[] | null
+          schedule_preferences?: Json | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "care_requests_requester_id_fkey"
+            columns: ["requester_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       care_requirements: {
         Row: {
           created_at: string | null
@@ -1435,6 +1533,50 @@ export type Database = {
             columns: ["group_id"]
             isOneToOne: false
             referencedRelation: "care_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      care_schedules: {
+        Row: {
+          caregiver_id: string | null
+          created_at: string | null
+          end_time: string
+          id: string
+          notes: string | null
+          recurring: boolean | null
+          schedule_type: string
+          start_time: string
+          status: string | null
+        }
+        Insert: {
+          caregiver_id?: string | null
+          created_at?: string | null
+          end_time: string
+          id?: string
+          notes?: string | null
+          recurring?: boolean | null
+          schedule_type: string
+          start_time: string
+          status?: string | null
+        }
+        Update: {
+          caregiver_id?: string | null
+          created_at?: string | null
+          end_time?: string
+          id?: string
+          notes?: string | null
+          recurring?: boolean | null
+          schedule_type?: string
+          start_time?: string
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "care_schedules_caregiver_id_fkey"
+            columns: ["caregiver_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]

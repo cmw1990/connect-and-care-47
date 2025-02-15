@@ -221,6 +221,40 @@ export interface CareReport {
   profiles: UserProfile;
 }
 
+// Dementia Support Types
+export interface DementiaProfile {
+  stage: 'early' | 'middle' | 'late';
+  primary_interests: string[];
+  communication_preferences: {
+    preferred_name: string;
+    preferred_language: string;
+    communication_style: 'visual' | 'verbal' | 'written';
+    trigger_topics?: string[];
+    comfort_topics: string[];
+  };
+  daily_routines: {
+    morning: string[];
+    afternoon: string[];
+    evening: string[];
+  };
+  memory_support: {
+    important_dates: Array<{ date: string; description: string }>;
+    key_people: Array<{ name: string; relation: string; photo_url?: string }>;
+    life_stories: Array<{ title: string; content: string; photos?: string[] }>;
+  };
+}
+
+export interface DementiaTopicCard {
+  id: string;
+  title: string;
+  category: 'memories' | 'activities' | 'family' | 'interests';
+  content: string;
+  visual_aids?: string[];
+  difficulty_level: 'easy' | 'medium' | 'challenging';
+  engagement_duration: number; // in minutes
+  success_indicators: string[];
+}
+
 // Upcoming Schedule types
 export interface ScheduleItem {
   id: string;
