@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -45,7 +44,7 @@ export const InsuranceNotificationManager = () => {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['insuranceNotifications']);
+      queryClient.invalidateQueries({ queryKey: ['insuranceNotifications'] });
     }
   });
 

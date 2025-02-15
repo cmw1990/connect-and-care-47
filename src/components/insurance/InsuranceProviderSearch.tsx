@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
@@ -15,15 +14,15 @@ import {
 } from "@/components/ui/select";
 import { Search, MapPin, Star, Filter } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import type { InsuranceProvider, ProviderSearchFilters } from "@/types/supabase";
+import type { InsuranceProvider, ProviderSearchFilters } from "@/types/insurance";
 
 export const InsuranceProviderSearch = () => {
   const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState("");
   const [filters, setFilters] = useState<ProviderSearchFilters>({
     specialty: "",
-    distance: "10",
-    networkStatus: "all"
+    distance: 10,
+    network_status: "in-network",
   });
 
   const { data: providers, isLoading } = useQuery({
@@ -38,19 +37,25 @@ export const InsuranceProviderSearch = () => {
         query = query.eq('specialty', filters.specialty);
       }
 
-      if (filters.networkStatus !== 'all') {
-        query = query.eq('network_status', filters.networkStatus);
+      if (filters.network_status) {
+        query = query.eq('network_status', filters.network_status);
       }
 
       if (filters.distance) {
-        // For now we're just filtering by distance without geo calculations
-        query = query.lte('distance', parseFloat(filters.distance));
+        query = query.lte('distance', filters.distance);
       }
 
       const { data, error } = await query;
       if (error) throw error;
       
-      return data as InsuranceProvider[];
+      return (data as unknown[]).map(provider => ({
+        ...provider,
+        name: provider.provider_name,
+        locations: [{
+          address: provider.location?.address || '',
+          phone: provider.contact_info?.phone || ''
+        }]
+      })) as InsuranceProvider[];
     }
   });
 
@@ -86,8 +91,8 @@ export const InsuranceProviderSearch = () => {
               </SelectContent>
             </Select>
             <Select 
-              value={filters.distance}
-              onValueChange={(value) => setFilters(f => ({ ...f, distance: value }))}>
+              value={filters.distance.toString()}
+              onValueChange={(value) => setFilters(f => ({ ...f, distance: parseInt(value) }))}>
               <SelectTrigger className="w-[150px]">
                 <SelectValue placeholder={t("Distance")} />
               </SelectTrigger>
@@ -99,14 +104,13 @@ export const InsuranceProviderSearch = () => {
               </SelectContent>
             </Select>
             <Select 
-              value={filters.networkStatus}
-              onValueChange={(value: 'all' | 'in-network' | 'out-of-network') => 
-                setFilters(f => ({ ...f, networkStatus: value }))}>
+              value={filters.network_status}
+              onValueChange={(value: 'in-network' | 'out-of-network') => 
+                setFilters(f => ({ ...f, network_status: value }))}>
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder={t("Network Status")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">{t("All Providers")}</SelectItem>
                 <SelectItem value="in-network">{t("In-Network")}</SelectItem>
                 <SelectItem value="out-of-network">{t("Out-of-Network")}</SelectItem>
               </SelectContent>
@@ -133,7 +137,7 @@ export const InsuranceProviderSearch = () => {
                         <div className="flex items-center gap-2 mt-2">
                           <MapPin className="h-4 w-4 text-muted-foreground" />
                           <span className="text-sm">
-                            {provider.location?.address || t('Address not available')}
+                            {provider.locations?.[0].address || t('Address not available')}
                           </span>
                         </div>
                         <div className="flex items-center gap-2 mt-1">

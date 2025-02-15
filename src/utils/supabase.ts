@@ -25,7 +25,7 @@ export function transformObject<T>(obj: any): T {
   return transformed as T;
 }
 
-export async function supabaseQueryWithTransform<T>(query: Promise<PostgrestSingleResponse<any>>): Promise<PostgrestResponse<T>> {
+export async function supabaseQueryWithTransform<T>(query: ReturnType<typeof supabase.from>): Promise<PostgrestResponse<T>> {
   try {
     const { data, error } = await query;
     
@@ -33,12 +33,17 @@ export async function supabaseQueryWithTransform<T>(query: Promise<PostgrestSing
       return { data: null, error: error as PostgrestError };
     }
 
-    // Transform arrays of profiles/sender/assigned_user into single objects
-    const transformedData = Array.isArray(data) 
-      ? data.map(item => transformObject<T>(item))
-      : transformObject<T>(data);
+    if (Array.isArray(data)) {
+      return { 
+        data: data.map(item => transformObject<T>(item)) as T,
+        error: null
+      };
+    }
 
-    return { data: transformedData, error: null };
+    return { 
+      data: transformObject<T>(data),
+      error: null
+    };
   } catch (error) {
     console.error('Error in supabaseQueryWithTransform:', error);
     return { data: null, error: error as Error };

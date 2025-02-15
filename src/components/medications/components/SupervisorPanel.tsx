@@ -19,16 +19,18 @@ export const SupervisorPanel = ({ groupId, data }: SupervisorPanelProps) => {
         .from('medication_logs')
         .select(`
           id,
+          schedule_id,
           taken_at,
           administered_at,
           status,
           notes,
           photo_verification_url,
-          medication_schedule (
+          medication_schedule:medication_schedules!medication_logs_schedule_id_fkey(
             id,
             medication_name,
             dosage,
-            time_of_day
+            time_of_day,
+            frequency
           )
         `)
         .eq('group_id', groupId)
