@@ -6,48 +6,21 @@ import { supabase } from "@/integrations/supabase/client";
 import { Check, X, AlertCircle } from "lucide-react";
 import type { MedicationSupervisionSummary, MedicationLogBase } from "@/types/medication";
 
-// Define the shape of raw data from Supabase
-interface RawMedicationLog {
-  id: string;
-  administered_at: string;
-  taken_at: string;
-  administered_by?: string | null;
-  schedule_id: string;
-  group_id: string;
-  verified_by?: string | null;
-  verified_at?: string | null;
-  status: string;
-  notes?: string | null;
-  photo_verification_url?: string | null;
-  medication_schedule?: {
-    id: string;
-    medication_name: string;
-    dosage: string;
-    time_of_day: string[];
-    group_id: string;
-  } | null;
-}
-
 interface SupervisorPanelProps {
   groupId: string;
   data: MedicationSupervisionSummary | null;
 }
 
 export const SupervisorPanel = ({ groupId, data }: SupervisorPanelProps) => {
-  const { data: pendingVerifications } = useQuery<MedicationLogBase[]>({
+  const { data: pendingVerifications } = useQuery({
     queryKey: ['pendingVerifications', groupId],
     queryFn: async () => {
       const { data: queryResult, error } = await supabase
         .from('medication_logs')
         .select(`
           id,
-          administered_at,
           taken_at,
-          administered_by,
-          schedule_id,
-          group_id,
-          verified_by,
-          verified_at,
+          administered_at,
           status,
           notes,
           photo_verification_url,
@@ -55,8 +28,7 @@ export const SupervisorPanel = ({ groupId, data }: SupervisorPanelProps) => {
             id,
             medication_name,
             dosage,
-            time_of_day,
-            group_id
+            time_of_day
           )
         `)
         .eq('group_id', groupId)
@@ -64,27 +36,7 @@ export const SupervisorPanel = ({ groupId, data }: SupervisorPanelProps) => {
         .order('administered_at', { ascending: false });
 
       if (error) throw error;
-      
-      // First cast to unknown, then to RawMedicationLog[]
-      const rawData = queryResult as unknown as RawMedicationLog[];
-      
-      // Transform the raw data to match MedicationLogBase type
-      const transformedData = (rawData || []).map(log => ({
-        id: log.id,
-        taken_at: log.taken_at || log.administered_at,
-        administered_at: log.administered_at,
-        status: log.status as MedicationLogBase['status'],
-        schedule_id: log.schedule_id,
-        group_id: log.group_id,
-        administered_by: log.administered_by || undefined,
-        verified_by: log.verified_by || undefined,
-        verified_at: log.verified_at || undefined,
-        notes: log.notes || undefined,
-        photo_verification_url: log.photo_verification_url || undefined,
-        medication_schedule: log.medication_schedule || undefined
-      }));
-
-      return transformedData;
+      return queryResult as MedicationLogBase[];
     }
   });
 
@@ -92,7 +44,6 @@ export const SupervisorPanel = ({ groupId, data }: SupervisorPanelProps) => {
     const { error } = await supabase
       .from('medication_logs')
       .update({
-        verification_status: status,
         status: status === 'approved' ? 'taken' : 'rejected',
         verified_at: new Date().toISOString()
       })
@@ -105,27 +56,6 @@ export const SupervisorPanel = ({ groupId, data }: SupervisorPanelProps) => {
 
   return (
     <div className="space-y-4">
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-2xl font-bold">{data?.total_medications ?? 0}</div>
-            <p className="text-xs text-muted-foreground">Total Medications</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-2xl font-bold">{data?.approved_medications ?? 0}</div>
-            <p className="text-xs text-muted-foreground">Approved</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-2xl font-bold">{Math.round(data?.avg_verification_time_minutes ?? 0)}m</div>
-            <p className="text-xs text-muted-foreground">Avg. Verification Time</p>
-          </CardContent>
-        </Card>
-      </div>
-
       <div className="rounded-md border">
         <div className="p-4">
           <h3 className="text-lg font-medium">Pending Verifications</h3>

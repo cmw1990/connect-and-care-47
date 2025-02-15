@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -6,10 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { VoiceReminder } from "./VoiceReminder";
-import { SupervisorPanel } from "./SupervisorPanel";
-import { AdherenceChart } from "./AdherenceChart";
-import { UpcomingReminders } from "./UpcomingReminders"; 
+import { VoiceReminder } from "./components/VoiceReminder";
+import { SupervisorPanel } from "./components/SupervisorPanel";
+import { AdherenceChart } from "./components/AdherenceChart";
+import { UpcomingReminders } from "./components/UpcomingReminders"; 
 import { Loader2, Bell, Activity, ShieldCheck } from "lucide-react";
 import type { MedicationAdherenceTrend, MedicationSupervisionSummary, MedicationPortalSettings } from "@/types/medication";
 
@@ -18,6 +17,10 @@ interface PortalSettings {
     voice_reminders?: boolean;
     preferred_voice?: string;
   } | null;
+}
+
+interface MedicationDashboardProps {
+  groupId: string;
 }
 
 export const MedicationDashboard = ({ groupId }: MedicationDashboardProps) => {
