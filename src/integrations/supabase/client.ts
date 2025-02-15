@@ -1,14 +1,17 @@
 
 import { createClient } from '@supabase/supabase-js';
-import type { Tables } from '@/types/supabase';
+import type { Database } from '@/types/supabase';
 
-const SUPABASE_URL = "https://csngjtaxbnebqfismwvs.supabase.co";
-const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNzbmdqdGF4Ym5lYnFmaXNtd3ZzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzg0NDAzMjgsImV4cCI6MjA1NDAxNjMyOH0.WvdTMRrV7sWCA100UqYbLfjKG2ggf13avBweS0BOAbc";
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-type Database = {
-  public: {
-    Tables: Tables;
-  };
-};
+if (!supabaseUrl || !supabaseKey) {
+  throw new Error('Missing Supabase environment variables');
+}
 
-export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+export const supabase = createClient<Database>(supabaseUrl, supabaseKey);
+
+// Helper function to ensure queries return proper promises
+export function asPromise<T>(query: ReturnType<typeof supabase.from>): Promise<{ data: T | null; error: any }> {
+  return query;
+}

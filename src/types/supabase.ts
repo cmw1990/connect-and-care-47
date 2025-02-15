@@ -41,50 +41,10 @@ export function transformObject(obj: any): any {
   return transformed;
 }
 
-// Insurance types
-export interface InsuranceAnalytics {
-  id: string;
-  user_id: string;
-  metrics: {
-    claims_submitted: number;
-    claims_approved: number;
-    total_cost: number;
-    out_of_pocket: number;
-    created_at: string;
-  };
-}
-
-export interface InsuranceDeductible {
-  id: string;
-  insurance_id: string;
-  deductible_type: string;
-  total_amount: number;
-  met_amount: number;
-  year: number;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface InsuranceProvider {
-  id: string;
-  name: string;
-  provider_name: string;
-  specialty: string;
-  network_status: 'in-network' | 'out-of-network';
-  accepting_new_patients: boolean;
-  rating?: number;
-  locations: Array<{
-    address: string;
-    phone: string;
-  }>;
-}
-
-export interface ProviderSearchFilters {
-  specialty?: string;
-  locations?: string[];
-  network_status?: 'in-network' | 'out-of-network';
-  accepting_new_patients?: boolean;
-  distance: number;
+// Interface with known properties for user profile
+export interface UserProfile {
+  first_name: string | null;
+  last_name: string | null;
 }
 
 // Message types
@@ -261,4 +221,27 @@ export interface ScheduleItem {
   name: string;
   time: string;
   type: string;
+}
+
+// Insurance Provider types
+export interface InsuranceProvider {
+  id: string;
+  name: string;
+  provider_name: string;
+  specialty: string;
+  network_status: 'in-network' | 'out-of-network';
+  accepting_new_patients: boolean;
+  rating?: number;
+  locations: Array<{
+    address: string;
+    phone: string;
+  }>;
+}
+
+export interface ProviderSearchFilters {
+  specialty?: string;
+  locations?: string[];
+  network_status?: 'in-network' | 'out-of-network';
+  accepting_new_patients?: boolean;
+  distance: number;
 }
