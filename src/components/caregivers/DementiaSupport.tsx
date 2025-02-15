@@ -37,8 +37,7 @@ export function DementiaSupport({ onProfileUpdate }: DementiaSupportProps) {
       difficulty_level: "medium",
       engagement_duration: 30,
       success_indicators: ["Shows interest in plants", "Follows simple instructions", "Enjoys sensory experience"]
-    },
-    // Add more topic cards as needed
+    }
   ];
 
   const handleTopicCardSelect = (card: DementiaTopicCard) => {
@@ -47,6 +46,8 @@ export function DementiaSupport({ onProfileUpdate }: DementiaSupportProps) {
       description: `${card.title} has been added to your activities`,
     });
   };
+
+  const [comfortTopics, setComfortTopics] = useState<string[]>([]);
 
   return (
     <Card className="w-full">
@@ -84,7 +85,8 @@ export function DementiaSupport({ onProfileUpdate }: DementiaSupportProps) {
                       communication_preferences: {
                         preferred_name: e.target.value,
                         preferred_language: "English",
-                        communication_style: "verbal"
+                        communication_style: "verbal",
+                        comfort_topics: comfortTopics
                       }
                     })}
                   />
@@ -99,6 +101,16 @@ export function DementiaSupport({ onProfileUpdate }: DementiaSupportProps) {
                         size="sm"
                         className="rounded-full"
                         onClick={() => {
+                          const newTopics = [...comfortTopics, topic];
+                          setComfortTopics(newTopics);
+                          onProfileUpdate({
+                            communication_preferences: {
+                              preferred_name: "",
+                              preferred_language: "English",
+                              communication_style: "verbal",
+                              comfort_topics: newTopics
+                            }
+                          });
                           toast({
                             title: "Topic Added",
                             description: `${topic} added to comfort topics`,

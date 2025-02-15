@@ -2424,7 +2424,10 @@ export type Database = {
           communication_preferences: string[] | null
           created_at: string | null
           cultural_competencies: string[] | null
+          dementia_care_certified: boolean | null
           dementia_experience: boolean | null
+          dementia_experience_years: number | null
+          dementia_specializations: string[] | null
           expertise_areas: string[] | null
           hourly_rate: number | null
           id: string
@@ -2457,7 +2460,10 @@ export type Database = {
           communication_preferences?: string[] | null
           created_at?: string | null
           cultural_competencies?: string[] | null
+          dementia_care_certified?: boolean | null
           dementia_experience?: boolean | null
+          dementia_experience_years?: number | null
+          dementia_specializations?: string[] | null
           expertise_areas?: string[] | null
           hourly_rate?: number | null
           id?: string
@@ -2490,7 +2496,10 @@ export type Database = {
           communication_preferences?: string[] | null
           created_at?: string | null
           cultural_competencies?: string[] | null
+          dementia_care_certified?: boolean | null
           dementia_experience?: boolean | null
+          dementia_experience_years?: number | null
+          dementia_specializations?: string[] | null
           expertise_areas?: string[] | null
           hourly_rate?: number | null
           id?: string
@@ -2544,6 +2553,81 @@ export type Database = {
           icon?: string | null
           id?: string
           name?: string
+        }
+        Relationships: []
+      }
+      dementia_profiles: {
+        Row: {
+          communication_preferences: Json | null
+          created_at: string | null
+          daily_routines: Json | null
+          id: string
+          memory_support: Json | null
+          primary_interests: string[] | null
+          stage: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          communication_preferences?: Json | null
+          created_at?: string | null
+          daily_routines?: Json | null
+          id?: string
+          memory_support?: Json | null
+          primary_interests?: string[] | null
+          stage?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          communication_preferences?: Json | null
+          created_at?: string | null
+          daily_routines?: Json | null
+          id?: string
+          memory_support?: Json | null
+          primary_interests?: string[] | null
+          stage?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      dementia_topic_cards: {
+        Row: {
+          category: string | null
+          content: string
+          created_at: string | null
+          difficulty_level: string | null
+          engagement_duration: number | null
+          id: string
+          success_indicators: string[] | null
+          title: string
+          updated_at: string | null
+          visual_aids: string[] | null
+        }
+        Insert: {
+          category?: string | null
+          content: string
+          created_at?: string | null
+          difficulty_level?: string | null
+          engagement_duration?: number | null
+          id?: string
+          success_indicators?: string[] | null
+          title: string
+          updated_at?: string | null
+          visual_aids?: string[] | null
+        }
+        Update: {
+          category?: string | null
+          content?: string
+          created_at?: string | null
+          difficulty_level?: string | null
+          engagement_duration?: number | null
+          id?: string
+          success_indicators?: string[] | null
+          title?: string
+          updated_at?: string | null
+          visual_aids?: string[] | null
         }
         Relationships: []
       }
