@@ -1,6 +1,6 @@
 
 import { motion } from "framer-motion";
-import { Calendar, Activity } from "lucide-react";
+import { Calendar, Activity, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { VitalSignsMonitor } from "@/components/health/VitalSignsMonitor";
@@ -13,6 +13,7 @@ import { CareMetrics } from "@/components/analytics/CareMetrics";
 import { EmergencySOSButton } from "@/components/emergency/EmergencySOSButton";
 import { TaskScheduler } from "@/components/tasks/TaskScheduler";
 import { CareAnalyticsDashboard } from "@/components/analytics/CareAnalyticsDashboard";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface DashboardContentProps {
   primaryGroup?: {
@@ -24,91 +25,161 @@ interface DashboardContentProps {
 export const DashboardContent = ({ primaryGroup, upcomingAppointments }: DashboardContentProps) => {
   const navigate = useNavigate();
 
-  return (
-    <div className="space-y-6">
-      {primaryGroup?.id && (
-        <>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-            <EmergencySOSButton groupId={primaryGroup.id} />
-            <VitalSignsMonitor groupId={primaryGroup.id} />
-          </div>
-          <CareAnalyticsDashboard groupId={primaryGroup.id} />
-        </>
-      )}
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  };
 
-      {upcomingAppointments && upcomingAppointments.length > 0 && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-lg p-4 shadow-sm"
-        >
-          <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
-            <Calendar className="h-5 w-5 text-primary" />
-            Upcoming Appointments
-          </h3>
-          <div className="space-y-2">
-            {upcomingAppointments.map((appointment) => (
-              <div 
-                key={appointment.id}
-                className="flex justify-between items-center p-3 bg-gray-50 rounded-md"
-              >
-                <div>
-                  <p className="font-medium">{appointment.title}</p>
-                  <p className="text-sm text-gray-600">
-                    {new Date(appointment.scheduled_time).toLocaleString()}
-                  </p>
-                </div>
-                <Button variant="outline" size="sm" onClick={() => navigate(`/appointments/${appointment.id}`)}>
-                  View Details
-                </Button>
-              </div>
-            ))}
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+      opacity: 1,
+      y: 0
+    }
+  };
+
+  return (
+    <motion.div 
+      className="space-y-8"
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+    >
+      {primaryGroup?.id && (
+        <motion.div variants={itemVariants}>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <Card className="hover:shadow-lg transition-all duration-300">
+              <CardContent className="p-6">
+                <EmergencySOSButton groupId={primaryGroup.id} />
+              </CardContent>
+            </Card>
+            <Card className="hover:shadow-lg transition-all duration-300 overflow-hidden">
+              <CardContent className="p-0">
+                <VitalSignsMonitor groupId={primaryGroup.id} />
+              </CardContent>
+            </Card>
           </div>
+          <Card className="mb-8 hover:shadow-lg transition-all duration-300">
+            <CardContent className="p-6">
+              <CareAnalyticsDashboard groupId={primaryGroup.id} />
+            </CardContent>
+          </Card>
         </motion.div>
       )}
 
-      <QuickActions />
+      {upcomingAppointments && upcomingAppointments.length > 0 && (
+        <motion.div variants={itemVariants}>
+          <Card className="hover:shadow-lg transition-all duration-300">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-xl">
+                <Calendar className="h-5 w-5 text-primary" />
+                Upcoming Appointments
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {upcomingAppointments.map((appointment) => (
+                  <div 
+                    key={appointment.id}
+                    className="flex justify-between items-center p-4 bg-muted/50 rounded-lg hover:bg-muted transition-colors"
+                  >
+                    <div>
+                      <p className="font-medium">{appointment.title}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {new Date(appointment.scheduled_time).toLocaleString()}
+                      </p>
+                    </div>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => navigate(`/appointments/${appointment.id}`)}
+                      className="hover:translate-x-1 transition-transform"
+                    >
+                      View Details
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+      )}
 
-      <div className="grid md:grid-cols-3 gap-6">
-        <div className="md:col-span-2">
+      <motion.div variants={itemVariants}>
+        <QuickActions />
+      </motion.div>
+
+      <div className="grid md:grid-cols-3 gap-8">
+        <motion.div variants={itemVariants} className="md:col-span-2 space-y-8">
           {primaryGroup?.id ? (
             <>
-              <CareOverview groupId={primaryGroup.id} />
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
-                <MedicationReminder groupId={primaryGroup.id} />
-                <TaskScheduler groupId={primaryGroup.id} />
+              <Card className="hover:shadow-lg transition-all duration-300">
+                <CardContent className="p-6">
+                  <CareOverview groupId={primaryGroup.id} />
+                </CardContent>
+              </Card>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <Card className="hover:shadow-lg transition-all duration-300">
+                  <CardContent className="p-6">
+                    <MedicationReminder groupId={primaryGroup.id} />
+                  </CardContent>
+                </Card>
+                <Card className="hover:shadow-lg transition-all duration-300">
+                  <CardContent className="p-6">
+                    <TaskScheduler groupId={primaryGroup.id} />
+                  </CardContent>
+                </Card>
               </div>
-              <div className="mt-6">
-                <CareMetrics groupId={primaryGroup.id} />
-              </div>
+              
+              <Card className="hover:shadow-lg transition-all duration-300">
+                <CardContent className="p-6">
+                  <CareMetrics groupId={primaryGroup.id} />
+                </CardContent>
+              </Card>
             </>
           ) : (
             <motion.div 
-              className="text-center py-8 bg-white rounded-lg shadow-sm"
+              className="bg-gradient-to-br from-primary/5 to-secondary/5 rounded-lg p-8 text-center"
               initial={{ scale: 0.95 }}
               animate={{ scale: 1 }}
               transition={{ duration: 0.3 }}
             >
-              <Activity className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-              <h3 className="text-lg font-medium mb-2">No Care Group Found</h3>
-              <p className="text-muted-foreground mb-4">
+              <Activity className="h-12 w-12 mx-auto text-primary mb-4" />
+              <h3 className="text-xl font-semibold mb-3">No Care Group Found</h3>
+              <p className="text-muted-foreground mb-6">
                 Join a care group to access check-ins and other features
               </p>
               <Button 
                 onClick={() => navigate('/groups')}
-                className="transition-all duration-300 hover:scale-105"
+                size="lg"
+                className="hover:scale-105 transition-transform"
               >
+                <Plus className="mr-2 h-4 w-4" />
                 Find or Create a Care Group
               </Button>
             </motion.div>
           )}
-        </div>
+        </motion.div>
         
-        <div className="space-y-6">
-          <RecentActivity groupId={primaryGroup?.id} />
-          <CareGuideExamples />
-        </div>
+        <motion.div variants={itemVariants} className="space-y-6">
+          <Card className="hover:shadow-lg transition-all duration-300">
+            <CardContent className="p-6">
+              <RecentActivity groupId={primaryGroup?.id} />
+            </CardContent>
+          </Card>
+          <Card className="hover:shadow-lg transition-all duration-300">
+            <CardContent className="p-6">
+              <CareGuideExamples />
+            </CardContent>
+          </Card>
+        </motion.div>
       </div>
-    </div>
+    </motion.div>
   );
 };
