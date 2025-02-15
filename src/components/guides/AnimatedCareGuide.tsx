@@ -5,6 +5,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Play, CheckCircle2, AlertCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { CareGuideProgress } from "./CareGuideProgress";
+import { Button } from "@/components/ui/button";
 
 interface AnimatedGuideProps {
   disease: string;
@@ -17,6 +19,8 @@ export const AnimatedCareGuide = ({ disease, description, guidelines }: Animated
   const [error, setError] = useState<string | null>(null);
   const [currentStep, setCurrentStep] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [completedSteps, setCompletedSteps] = useState<number[]>([]);
+  const [streakDays, setStreakDays] = useState(0);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -105,6 +109,40 @@ export const AnimatedCareGuide = ({ disease, description, guidelines }: Animated
     }
   };
 
+  const handleStepComplete = async () => {
+    if (!completedSteps.includes(currentStep)) {
+      const newCompletedSteps = [...completedSteps, currentStep];
+      setCompletedSteps(newCompletedSteps);
+      
+      // Update streak
+      const lastUpdateDate = localStorage.getItem('lastGuideUpdate');
+      const today = new Date().toISOString().split('T')[0];
+      
+      if (lastUpdateDate !== today) {
+        const currentStreak = Number(localStorage.getItem('streakDays') || '0');
+        const newStreak = currentStreak + 1;
+        setStreakDays(newStreak);
+        localStorage.setItem('streakDays', newStreak.toString());
+        localStorage.setItem('lastGuideUpdate', today);
+      }
+
+      // Show encouraging toast
+      if (newCompletedSteps.length === guidelines.length) {
+        toast({
+          title: "Congratulations! 🎉",
+          description: "You've completed all the care guide steps!",
+          variant: "default",
+        });
+      } else {
+        toast({
+          title: "Great progress! 👏",
+          description: "Keep going with the care guide steps!",
+          variant: "default",
+        });
+      }
+    }
+  };
+
   return (
     <Card className="w-full">
       <CardHeader>
@@ -137,6 +175,12 @@ export const AnimatedCareGuide = ({ disease, description, guidelines }: Animated
           )}
         </div>
 
+        <CareGuideProgress
+          completedSteps={completedSteps.length}
+          totalSteps={guidelines.length}
+          streakDays={streakDays}
+        />
+
         <div className="space-y-4">
           <div className="flex justify-between items-center">
             <motion.button
@@ -164,8 +208,26 @@ export const AnimatedCareGuide = ({ disease, description, guidelines }: Animated
               className="bg-muted p-4 rounded-lg"
             >
               <div className="flex items-start gap-3">
-                <CheckCircle2 className="h-5 w-5 text-primary mt-0.5" />
-                <p className="text-sm">{guidelines[currentStep]}</p>
+                <CheckCircle2 
+                  className={`h-5 w-5 ${
+                    completedSteps.includes(currentStep) 
+                      ? 'text-green-500' 
+                      : 'text-primary'
+                  }`} 
+                />
+                <div className="flex-1 space-y-2">
+                  <p className="text-sm">{guidelines[currentStep]}</p>
+                  {!completedSteps.includes(currentStep) && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleStepComplete}
+                      className="w-full sm:w-auto mt-2"
+                    >
+                      Mark as Complete
+                    </Button>
+                  )}
+                </div>
               </div>
             </motion.div>
           </AnimatePresence>
