@@ -1,10 +1,11 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Clock, CheckCircle, XCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import type { MedicationLogBase } from "@/types/medication";
+import type { MedicationLogBase } from "@/types/supabase";
 
 interface SupervisorPanelProps {
   groupId: string;
@@ -31,7 +32,7 @@ export const SupervisorPanel = ({ groupId }: SupervisorPanelProps) => {
         .order('administered_at', { ascending: false });
 
       if (error) throw error;
-      return data;
+      return data as MedicationLogBase[];
     }
   });
 

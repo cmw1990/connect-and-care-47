@@ -4,7 +4,7 @@ import type { PostgrestResponse } from '@/types/supabase';
 import type { PostgrestFilterBuilder } from '@supabase/postgrest-js';
 
 export async function supabaseQueryWithTransform<T>(
-  query: PostgrestFilterBuilder<any>
+  query: PostgrestFilterBuilder<any, any, T>
 ): Promise<PostgrestResponse<T>> {
   try {
     const { data, error } = await query;
@@ -15,7 +15,7 @@ export async function supabaseQueryWithTransform<T>(
 
     if (Array.isArray(data)) {
       const transformed = data.map(item => transformObject<T>(item));
-      return { data: transformed, error: null };
+      return { data: transformed as unknown as T, error: null };
     }
 
     return { 
