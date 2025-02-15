@@ -1,11 +1,10 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client"; 
 import { Loader2 } from "lucide-react";
 import { OverdueAlert } from "./components/OverdueAlert";  
 import { ReminderSettings } from "./components/ReminderSettings";
 import { UpcomingReminders } from "./components/UpcomingReminders";
-import type { MedicationPortalSettings, MedicationScheduleBase } from "@/types/supabase";
+import type { MedicationPortalSettings, MedicationScheduleBase } from "@/types/medication";
 
 interface MedicationRemindersProps {
   groupId: string;

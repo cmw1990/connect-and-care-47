@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from "@/integrations/supabase/client";
-import type { InsuranceProvider, InsuranceNetworkProviderRow, ProviderSearchFilters } from '@/types/insurance';
+import type { InsuranceProvider, ProviderSearchFilters, InsuranceNetworkProviderRow } from '@/types/insurance';
 
 export const InsuranceProviderSearch = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -21,6 +21,7 @@ export const InsuranceProviderSearch = () => {
         .eq('specialty', filters.specialty || null)
         .eq('network_status', filters.network_status || null)
         .lte('distance', filters.distance)
+        .limit(50)
         .returns<InsuranceNetworkProviderRow[]>();
 
       if (error) throw error;

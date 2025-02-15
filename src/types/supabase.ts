@@ -1,4 +1,3 @@
-
 import type { Database as GeneratedDatabase } from '@/integrations/supabase/types';
 import type { PostgrestSingleResponse, PostgrestResponse as SupabaseResponse } from '@supabase/supabase-js';
 
@@ -116,3 +115,4 @@ export function isUserProfile(obj: any): obj is UserProfile {
 
 export type PostgrestQueryResponse<T> = SupabaseResponse<T>;
 export type PostgrestSingleQueryResponse<T> = PostgrestSingleResponse<T>;
+

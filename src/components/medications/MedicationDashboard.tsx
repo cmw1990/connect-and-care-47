@@ -23,7 +23,7 @@ interface MedicationDashboardProps {
   groupId: string;
 }
 
-export const MedicationDashboard = ({ groupId }: MedicationDashboardProps) => {
+export const MedicationDashboard = ({ groupId }: { groupId: string }) => {
   const { toast } = useToast();
 
   const { data: adherenceData, isLoading: isLoadingAdherence } = useQuery({
@@ -151,7 +151,10 @@ export const MedicationDashboard = ({ groupId }: MedicationDashboardProps) => {
         </TabsContent>
 
         <TabsContent value="supervision" className="space-y-4">
-          <SupervisorPanel groupId={groupId} data={supervisorData} />
+          <SupervisorPanel 
+            groupId={groupId}
+            supervisionData={supervisorData}
+          />
         </TabsContent>
       </Tabs>
     </div>

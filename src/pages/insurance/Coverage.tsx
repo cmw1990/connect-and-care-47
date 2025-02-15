@@ -1,42 +1,33 @@
-
-import { InsurancePlanBenefitsTable } from "@/components/insurance/InsurancePlanBenefitsTable";
-import { InsuranceDeductiblesCard } from "@/components/insurance/InsuranceDeductiblesCard";
-import { InsuranceCard } from "@/components/insurance/InsuranceCard";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery } from '@tanstack/react-query';
 import { supabase } from "@/integrations/supabase/client";
+import type { InsuranceBenefit } from '@/types/insurance';
 
-export default function Coverage() {
-  const { data: activeInsurance } = useQuery({
-    queryKey: ['activeInsurance'],
+export const Coverage = () => {
+  const { data: benefits } = useQuery({
+    queryKey: ['insurance-benefits'],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
-
       const { data, error } = await supabase
-        .from('user_insurance')
-        .select('*, insurance_plan:insurance_plan_id(*)')
-        .eq('user_id', user.id)
-        .eq('status', 'active')
-        .single();
+        .from('insurance_benefits')
+        .select('*')
+        .limit(50);
 
       if (error) throw error;
-      return data;
+      return data as InsuranceBenefit[];
     }
   });
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Coverage Details</h1>
-      
-      {activeInsurance && (
-        <>
-          <InsuranceCard insurance={activeInsurance} />
-          <div className="grid gap-6 md:grid-cols-2">
-            <InsuranceDeductiblesCard insuranceId={activeInsurance.id} />
-            <InsurancePlanBenefitsTable planId={activeInsurance.insurance_plan.id} />
-          </div>
-        </>
+    <div>
+      <h1>Insurance Coverage Benefits</h1>
+      {benefits ? (
+        <ul>
+          {benefits.map((benefit) => (
+            <li key={benefit.id}>{benefit.benefit_name}</li>
+          ))}
+        </ul>
+      ) : (
+        <p>Loading benefits...</p>
       )}
     </div>
   );
-}
+};
