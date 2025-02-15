@@ -52,7 +52,7 @@ export interface ProviderSearchFilters {
   locations?: string[];
   network_status?: 'in-network' | 'out-of-network';
   accepting_new_patients?: boolean;
-  distance?: number;
+  distance: number;
 }
 
 // Message types
@@ -114,6 +114,9 @@ export interface MedicationScheduleBase {
   time_of_day: string[];
   group_id: string;
   frequency: string;
+  instructions?: string;
+  start_date?: string;
+  end_date?: string;
 }
 
 export interface MedicationLogBase {
@@ -133,12 +136,12 @@ export interface MedicationLogBase {
 export interface MedicationReminderPreferences {
   voice_reminders: boolean;
   preferred_voice?: string;
-  preferred_channels?: string[];
+  preferred_channels: string[];
 }
 
 export interface MedicationPortalSettings {
-  id: string;
-  group_id: string;
+  id?: string;
+  group_id?: string;
   reminder_preferences: MedicationReminderPreferences;
   accessibility_settings: {
     voice_reminders: boolean;
@@ -147,67 +150,73 @@ export interface MedicationPortalSettings {
   updated_at?: string;
 }
 
-// Tables type for Supabase client
-export interface Tables {
-  care_updates: {
-    Row: CareUpdate;
-    Insert: Omit<CareUpdate, 'id' | 'created_at'>;
-    Update: Partial<Omit<CareUpdate, 'id'>>;
-  };
-  team_messages: {
-    Row: Message;
-    Insert: Omit<Message, 'id' | 'created_at'>;
-    Update: Partial<Omit<Message, 'id'>>;
-  };
-  // Add other table definitions as needed
-}
-
 // Helper type guards
 export function isUserProfile(obj: any): obj is UserProfile {
   return obj && typeof obj.first_name !== 'undefined' && typeof obj.last_name !== 'undefined';
 }
 
-export function isSingleItemArray<T>(arr: T | T[]): arr is T[] {
-  return Array.isArray(arr) && arr.length === 1;
-}
-
-// Helper function to safely transform Supabase responses
-export function transformSupabaseResponse<T>(data: any): T {
-  if (!data) return data;
+// Supabase query helper
+export async function supabaseQueryWithTransform<T>(query: any): Promise<{ data: T | null; error: any }> {
+  const { data, error } = await query;
   
-  // If it's an array, transform each item
-  if (Array.isArray(data)) {
-    return data.map(item => transformSupabaseResponse<T>(item)) as unknown as T;
+  if (error) {
+    return { data: null, error };
   }
 
-  // If it has a nested profiles array with one item, convert it to an object
-  if (data.profiles && Array.isArray(data.profiles) && data.profiles.length === 1) {
-    return {
-      ...data,
-      profiles: data.profiles[0]
-    } as T;
-  }
+  // Transform arrays of profiles/sender/assigned_user into single objects
+  const transformedData = Array.isArray(data) 
+    ? data.map(transformObject)
+    : transformObject(data);
 
-  // If it has a nested sender array with one item, convert it to an object
-  if (data.sender && Array.isArray(data.sender) && data.sender.length === 1) {
-    return {
-      ...data,
-      sender: data.sender[0]
-    } as T;
-  }
-
-  // If it has a nested assigned_user array with one item, convert it to an object
-  if (data.assigned_user && Array.isArray(data.assigned_user) && data.assigned_user.length === 1) {
-    return {
-      ...data,
-      assigned_user: data.assigned_user[0]
-    } as T;
-  }
-
-  return data as T;
+  return { data: transformedData as T, error: null };
 }
 
-// Helper function for network status conversion
-export function networkStatusToDisplay(status: 'in-network' | 'out-of-network'): string {
-  return status === 'in-network' ? 'In-Network' : 'Out-of-Network';
+function transformObject(obj: any): any {
+  if (!obj) return obj;
+
+  const transformed = { ...obj };
+
+  // Transform profiles array to single object
+  if (transformed.profiles && Array.isArray(transformed.profiles) && transformed.profiles.length === 1) {
+    transformed.profiles = transformed.profiles[0];
+  }
+
+  // Transform sender array to single object
+  if (transformed.sender && Array.isArray(transformed.sender) && transformed.sender.length === 1) {
+    transformed.sender = transformed.sender[0];
+  }
+
+  // Transform assigned_user array to single object
+  if (transformed.assigned_user && Array.isArray(transformed.assigned_user) && transformed.assigned_user.length === 1) {
+    transformed.assigned_user = transformed.assigned_user[0];
+  }
+
+  return transformed;
 }
+
+// Insurance Coverage types
+export interface InsuranceCoverage {
+  id: string;
+  name: string;
+  type: string;
+  covered_services: string[];
+  auto_verification: boolean;
+}
+
+// Care Report types
+export interface CareReport {
+  id: string;
+  recorded_at: string;
+  metric_value: any;
+  created_by: string;
+  profiles: UserProfile;
+}
+
+// Upcoming Schedule types
+export interface ScheduleItem {
+  id: string;
+  name: string;
+  time: string;
+  type: string;
+}
+
