@@ -36,9 +36,11 @@ export interface InsuranceDeductible {
 export interface InsuranceProvider {
   id: string;
   name: string;
+  provider_name: string;
   specialty: string;
   network_status: 'in-network' | 'out-of-network';
   accepting_new_patients: boolean;
+  rating?: number;
   locations: Array<{
     address: string;
     phone: string;
@@ -47,9 +49,10 @@ export interface InsuranceProvider {
 
 export interface ProviderSearchFilters {
   specialty?: string;
-  location?: string;
+  locations?: string[];
   network_status?: 'in-network' | 'out-of-network';
   accepting_new_patients?: boolean;
+  distance?: number;
 }
 
 // Message types
@@ -87,6 +90,61 @@ export interface Task {
   priority: string;
   assigned_to: string | null;
   assigned_user: UserProfile | null;
+}
+
+// Insurance Document types
+export interface InsuranceDocument {
+  id: string;
+  user_id: string;
+  document_type: string;
+  file_url: string;
+  uploaded_at: string;
+  metadata: {
+    filename: string;
+    size: number;
+    type: string;
+  };
+}
+
+// Medication types
+export interface MedicationScheduleBase {
+  id: string;
+  medication_name: string;
+  dosage: string;
+  time_of_day: string[];
+  group_id: string;
+  frequency: string;
+}
+
+export interface MedicationLogBase {
+  id: string;
+  schedule_id: string;
+  taken_at: string;
+  administered_at: string;
+  status: 'taken' | 'missed' | 'pending' | 'pending_verification' | 'rejected';
+  administered_by?: string;
+  verified_by?: string;
+  verified_at?: string;
+  notes?: string;
+  photo_verification_url?: string;
+  medication_schedule?: MedicationScheduleBase;
+}
+
+export interface MedicationReminderPreferences {
+  voice_reminders: boolean;
+  preferred_voice?: string;
+  preferred_channels?: string[];
+}
+
+export interface MedicationPortalSettings {
+  id: string;
+  group_id: string;
+  reminder_preferences: MedicationReminderPreferences;
+  accessibility_settings: {
+    voice_reminders: boolean;
+  };
+  created_at?: string;
+  updated_at?: string;
 }
 
 // Tables type for Supabase client
@@ -147,4 +205,9 @@ export function transformSupabaseResponse<T>(data: any): T {
   }
 
   return data as T;
+}
+
+// Helper function for network status conversion
+export function networkStatusToDisplay(status: 'in-network' | 'out-of-network'): string {
+  return status === 'in-network' ? 'In-Network' : 'Out-of-Network';
 }
