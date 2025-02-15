@@ -9,13 +9,56 @@ export interface UserProfile {
   last_name: string | null;
 }
 
+// Insurance types
+export interface InsuranceAnalytics {
+  id: string;
+  user_id: string;
+  metrics: {
+    claims_submitted: number;
+    claims_approved: number;
+    total_cost: number;
+    out_of_pocket: number;
+    created_at: string;
+  };
+}
+
+export interface InsuranceDeductible {
+  id: string;
+  insurance_id: string;
+  deductible_type: string;
+  total_amount: number;
+  met_amount: number;
+  year: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface InsuranceProvider {
+  id: string;
+  name: string;
+  specialty: string;
+  network_status: 'in-network' | 'out-of-network';
+  accepting_new_patients: boolean;
+  locations: Array<{
+    address: string;
+    phone: string;
+  }>;
+}
+
+export interface ProviderSearchFilters {
+  specialty?: string;
+  location?: string;
+  network_status?: 'in-network' | 'out-of-network';
+  accepting_new_patients?: boolean;
+}
+
 // Message types
 export interface Message {
   id: string;
   sender_id: string;
   content: string;
   created_at: string;
-  sender?: UserProfile | null;
+  sender?: UserProfile;
 }
 
 // Care Update types
@@ -24,7 +67,7 @@ export interface CareUpdate {
   content: string;
   update_type: string;
   created_at: string;
-  profiles: UserProfile | null;
+  profiles: UserProfile;
 }
 
 // Post types
@@ -33,7 +76,7 @@ export interface Post {
   content: string;
   created_at: string;
   created_by: string;
-  profiles?: UserProfile | null;
+  profiles?: UserProfile;
 }
 
 // Task types
@@ -46,39 +89,19 @@ export interface Task {
   assigned_user: UserProfile | null;
 }
 
-// Insurance Document types
-export interface InsuranceDocument {
-  id: string;
-  user_id: string;
-  file_url: string;
-  document_type: string;
-  metadata: {
-    filename: string;
-    size: number;
-    type: string;
+// Tables type for Supabase client
+export interface Tables {
+  care_updates: {
+    Row: CareUpdate;
+    Insert: Omit<CareUpdate, 'id' | 'created_at'>;
+    Update: Partial<Omit<CareUpdate, 'id'>>;
   };
-  uploaded_at: string;
-}
-
-// Insurance Plan types
-export interface InsurancePlan {
-  id: string;
-  name: string;
-  type: string;
-  covered_services: Record<string, boolean>;
-  auto_verification: boolean;
-}
-
-// Care Report types
-export interface CareReport {
-  id: string;
-  recorded_at: string;
-  metric_value: {
-    notes: string;
-    timestamp: string;
+  team_messages: {
+    Row: Message;
+    Insert: Omit<Message, 'id' | 'created_at'>;
+    Update: Partial<Omit<Message, 'id'>>;
   };
-  created_by: string;
-  profiles: UserProfile | null;
+  // Add other table definitions as needed
 }
 
 // Helper type guards
