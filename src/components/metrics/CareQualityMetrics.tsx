@@ -33,16 +33,17 @@ export const CareQualityMetrics = ({ groupId }: CareMetricsProps) => {
       if (!user) throw new Error('Not authenticated');
 
       const { data, error } = await supabase
-        .rpc('get_care_quality_metrics', {
-          p_group_id: groupId
-        });
+        .from('care_quality_metrics')
+        .select('*')
+        .eq('group_id', groupId)
+        .returns<MetricData[]>();
 
       if (error) {
         console.error('Error fetching metrics:', error);
         throw error;
       }
 
-      return data as MetricData[];
+      return data;
     },
     meta: {
       onError: () => {

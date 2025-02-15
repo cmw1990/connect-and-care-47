@@ -1,7 +1,31 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import type { PostgrestResponse } from '@/types/supabase';
-import type { PostgrestSingleResponse, PostgrestError } from '@supabase/supabase-js';
+import type { PostgrestResponse, PostgrestResult } from '@/types/supabase';
+
+export async function supabaseQueryWithTransform<T>(
+  query: ReturnType<typeof supabase.from>
+): Promise<PostgrestResponse<T>> {
+  try {
+    const result = await query as unknown as PostgrestResult<any>;
+    
+    if (result.error) {
+      return { data: null, error: result.error };
+    }
+
+    if (Array.isArray(result.data)) {
+      const transformed = result.data.map(item => transformObject<T>(item));
+      return { data: transformed as T, error: null };
+    }
+
+    return { 
+      data: transformObject<T>(result.data),
+      error: null
+    };
+  } catch (error) {
+    console.error('Error in supabaseQueryWithTransform:', error);
+    return { data: null, error: error as Error };
+  }
+}
 
 export function transformObject<T>(obj: any): T {
   if (!obj) return obj;
@@ -23,29 +47,4 @@ export function transformObject<T>(obj: any): T {
   }
 
   return transformed as T;
-}
-
-export async function supabaseQueryWithTransform<T>(query: ReturnType<typeof supabase.from>): Promise<PostgrestResponse<T>> {
-  try {
-    const { data, error } = await query;
-    
-    if (error) {
-      return { data: null, error: error as PostgrestError };
-    }
-
-    if (Array.isArray(data)) {
-      return { 
-        data: data.map(item => transformObject<T>(item)) as T,
-        error: null
-      };
-    }
-
-    return { 
-      data: transformObject<T>(data),
-      error: null
-    };
-  } catch (error) {
-    console.error('Error in supabaseQueryWithTransform:', error);
-    return { data: null, error: error as Error };
-  }
 }

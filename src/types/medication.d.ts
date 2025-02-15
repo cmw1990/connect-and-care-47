@@ -12,7 +12,11 @@ export interface MedicationAccessibilitySettings {
 export interface MedicationPortalSettings {
   id?: string;
   group_id?: string;
-  reminder_preferences: MedicationReminderPreferences;
+  reminder_preferences: {
+    voice_reminders: boolean;
+    preferred_voice?: string;
+    preferred_channels: string[];
+  };
   accessibility_settings: MedicationAccessibilitySettings;
   created_at?: string;
   updated_at?: string;

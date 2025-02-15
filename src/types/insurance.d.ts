@@ -20,3 +20,29 @@ export interface InsuranceProvider {
   }>;
   rating?: number;
 }
+
+export interface InsuranceBenefit {
+  id: string;
+  name: string;
+  description: string;
+  coverage_percentage: number;
+  deductible_applies: boolean;
+  requires_preauth: boolean;
+  network_restrictions?: string;
+  limitations?: string;
+  copay_amount?: number;
+}
+
+export interface InsuranceNetworkProviderRow {
+  id: string;
+  provider_name: string;
+  specialty: string;
+  location: {
+    address: string;
+  };
+  contact_info: {
+    phone: string;
+  };
+  network_status: 'in-network' | 'out-of-network';
+  accepting_new_patients: boolean;
+}

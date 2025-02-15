@@ -210,6 +210,106 @@ export function isUserProfile(obj: any): obj is UserProfile {
   return obj && typeof obj.first_name !== 'undefined' && typeof obj.last_name !== 'undefined';
 }
 
+// Message types
+export interface Message {
+  id: string;
+  sender_id: string;
+  content: string;
+  created_at: string;
+  sender?: UserProfile;
+}
+
+// Care Update types
+export interface CareUpdate {
+  id: string;
+  content: string;
+  update_type: string;
+  created_at: string;
+  profiles: UserProfile;
+}
+
+// Post types
+export interface Post {
+  id: string;
+  content: string;
+  created_at: string;
+  created_by: string;
+  profiles?: UserProfile;
+}
+
+// Task types
+export interface Task {
+  id: string;
+  title: string;
+  status: string;
+  priority: string;
+  assigned_to: string | null;
+  assigned_user: UserProfile | null;
+}
+
+// Insurance Document types
+export interface InsuranceDocument {
+  id: string;
+  user_id: string;
+  document_type: string;
+  file_url: string;
+  uploaded_at: string;
+  metadata: {
+    filename: string;
+    size: number;
+    type: string;
+  };
+}
+
+// Medication types
+export interface MedicationScheduleBase {
+  id: string;
+  medication_name: string;
+  dosage: string;
+  time_of_day: string[];
+  group_id: string;
+  frequency: string;
+  instructions?: string;
+  start_date?: string;
+  end_date?: string;
+}
+
+export interface MedicationLogBase {
+  id: string;
+  schedule_id: string;
+  taken_at: string;
+  administered_at: string;
+  status: 'taken' | 'missed' | 'pending' | 'pending_verification' | 'rejected';
+  administered_by?: string;
+  verified_by?: string;
+  verified_at?: string;
+  notes?: string;
+  photo_verification_url?: string;
+  medication_schedule?: MedicationScheduleBase;
+}
+
+export interface MedicationReminderPreferences {
+  voice_reminders: boolean;
+  preferred_voice?: string;
+  preferred_channels: string[];
+}
+
+export interface MedicationPortalSettings {
+  id?: string;
+  group_id?: string;
+  reminder_preferences: MedicationReminderPreferences;
+  accessibility_settings: {
+    voice_reminders: boolean;
+  };
+  created_at?: string;
+  updated_at?: string;
+}
+
+// Helper type guards
+export function isUserProfile(obj: any): obj is UserProfile {
+  return obj && typeof obj.first_name !== 'undefined' && typeof obj.last_name !== 'undefined';
+}
+
 // Supabase query helper
 export async function supabaseQueryWithTransform<T>(query: any): Promise<{ data: T | null; error: any }> {
   const { data, error } = await query;
@@ -308,3 +408,13 @@ export interface ProviderSearchFilters {
   distance: number;
 }
 
+
+export type PostgrestQuery<T> = Promise<{
+  data: T | null;
+  error: any;
+}>;
+
+export type PostgrestResult<T> = {
+  data: T | null;
+  error: any;
+};
