@@ -1,4 +1,3 @@
-
 import { Database } from '@/integrations/supabase/types'
 
 export type DatabaseSchema = Database['public']['Tables']
@@ -7,6 +6,39 @@ export type DatabaseSchema = Database['public']['Tables']
 export interface UserProfile {
   first_name: string | null;
   last_name: string | null;
+}
+
+// Transform helper functions
+export function transformSupabaseResponse<T>(data: any): T {
+  if (!data) return data;
+
+  if (Array.isArray(data)) {
+    return data.map(transformObject) as T;
+  }
+  return transformObject(data) as T;
+}
+
+export function transformObject(obj: any): any {
+  if (!obj) return obj;
+
+  const transformed = { ...obj };
+
+  // Transform profiles array to single object
+  if (transformed.profiles && Array.isArray(transformed.profiles) && transformed.profiles.length === 1) {
+    transformed.profiles = transformed.profiles[0];
+  }
+
+  // Transform sender array to single object
+  if (transformed.sender && Array.isArray(transformed.sender) && transformed.sender.length === 1) {
+    transformed.sender = transformed.sender[0];
+  }
+
+  // Transform assigned_user array to single object
+  if (transformed.assigned_user && Array.isArray(transformed.assigned_user) && transformed.assigned_user.length === 1) {
+    transformed.assigned_user = transformed.assigned_user[0];
+  }
+
+  return transformed;
 }
 
 // Insurance types
@@ -171,29 +203,6 @@ export async function supabaseQueryWithTransform<T>(query: any): Promise<{ data:
   return { data: transformedData as T, error: null };
 }
 
-function transformObject(obj: any): any {
-  if (!obj) return obj;
-
-  const transformed = { ...obj };
-
-  // Transform profiles array to single object
-  if (transformed.profiles && Array.isArray(transformed.profiles) && transformed.profiles.length === 1) {
-    transformed.profiles = transformed.profiles[0];
-  }
-
-  // Transform sender array to single object
-  if (transformed.sender && Array.isArray(transformed.sender) && transformed.sender.length === 1) {
-    transformed.sender = transformed.sender[0];
-  }
-
-  // Transform assigned_user array to single object
-  if (transformed.assigned_user && Array.isArray(transformed.assigned_user) && transformed.assigned_user.length === 1) {
-    transformed.assigned_user = transformed.assigned_user[0];
-  }
-
-  return transformed;
-}
-
 // Insurance Coverage types
 export interface InsuranceCoverage {
   id: string;
@@ -219,4 +228,3 @@ export interface ScheduleItem {
   time: string;
   type: string;
 }
-
