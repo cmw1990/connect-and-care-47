@@ -1,24 +1,25 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import type { PostgrestResponse } from '@/types/supabase';
+import type { PostgrestFilterBuilder } from '@supabase/postgrest-js';
 
 export async function supabaseQueryWithTransform<T>(
-  query: ReturnType<typeof supabase.from>
+  query: PostgrestFilterBuilder<any>
 ): Promise<PostgrestResponse<T>> {
   try {
-    const result = await query;
+    const { data, error } = await query;
     
-    if (result.error) {
-      return { data: null, error: result.error };
+    if (error) {
+      return { data: null, error };
     }
 
-    if (Array.isArray(result.data)) {
-      const transformed = result.data.map(item => transformObject<T>(item));
-      return { data: transformed as T[], error: null };
+    if (Array.isArray(data)) {
+      const transformed = data.map(item => transformObject<T>(item));
+      return { data: transformed, error: null };
     }
 
     return { 
-      data: transformObject<T>(result.data),
+      data: transformObject<T>(data),
       error: null
     };
   } catch (error) {
@@ -31,7 +32,6 @@ export function transformObject<T>(obj: any): T {
   if (!obj) return obj;
   const transformed = { ...obj };
 
-  // Transform arrays of profiles/sender/assigned_user into single objects
   if (transformed.profiles && Array.isArray(transformed.profiles) && transformed.profiles.length === 1) {
     transformed.profiles = transformed.profiles[0];
   }

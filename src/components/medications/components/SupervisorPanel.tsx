@@ -1,21 +1,20 @@
-
 import { useQuery } from "@tanstack/react-query";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Clock, CheckCircle, XCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { Check, X, AlertCircle } from "lucide-react";
-import type { MedicationSupervisionSummary, MedicationLogBase } from "@/types/medication";
+import type { MedicationLogBase } from "@/types/medication";
 
 interface SupervisorPanelProps {
   groupId: string;
-  data: MedicationSupervisionSummary | null;
 }
 
-export const SupervisorPanel = ({ groupId, data }: SupervisorPanelProps) => {
+export const SupervisorPanel = ({ groupId }: SupervisorPanelProps) => {
   const { data: pendingVerifications } = useQuery({
     queryKey: ['pendingVerifications', groupId],
     queryFn: async () => {
-      const { data: queryResult, error } = await supabase
+      const { data, error } = await supabase
         .from('medication_logs')
         .select(`
           id,
@@ -25,82 +24,55 @@ export const SupervisorPanel = ({ groupId, data }: SupervisorPanelProps) => {
           status,
           notes,
           photo_verification_url,
-          medication_schedule:medication_schedules!medication_logs_schedule_id_fkey(
-            id,
-            medication_name,
-            dosage,
-            time_of_day,
-            frequency
-          )
+          medication_schedule:medication_schedules(*)
         `)
         .eq('group_id', groupId)
         .eq('status', 'pending_verification')
         .order('administered_at', { ascending: false });
 
       if (error) throw error;
-      return queryResult as MedicationLogBase[];
+      return data;
     }
   });
 
-  const handleVerification = async (logId: string, status: 'approved' | 'rejected') => {
-    const { error } = await supabase
-      .from('medication_logs')
-      .update({
-        status: status === 'approved' ? 'taken' : 'rejected',
-        verified_at: new Date().toISOString()
-      })
-      .eq('id', logId);
-
-    if (error) {
-      console.error('Error updating verification status:', error);
-    }
-  };
-
   return (
-    <div className="space-y-4">
-      <div className="rounded-md border">
-        <div className="p-4">
-          <h3 className="text-lg font-medium">Pending Verifications</h3>
-        </div>
-        <div className="divide-y">
-          {pendingVerifications?.map((log) => (
-            <div key={log.id} className="flex items-center justify-between p-4">
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Clock className="h-5 w-5" />
+          Medication Supervision
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {pendingVerifications?.map((log: MedicationLogBase) => (
+          <div key={log.id} className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <Avatar>
+                <AvatarImage src={log.photo_verification_url} />
+                <AvatarFallback>UV</AvatarFallback>
+              </Avatar>
               <div>
-                <p className="font-medium">
+                <p className="text-sm font-medium">
                   {log.medication_schedule?.medication_name}
                 </p>
-                <p className="text-sm text-muted-foreground">
-                  {log.medication_schedule?.dosage} - {new Date(log.taken_at).toLocaleTimeString()}
+                <p className="text-xs text-muted-foreground">
+                  Taken at: {new Date(log.taken_at).toLocaleTimeString()}
                 </p>
               </div>
-              <div className="flex space-x-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="text-green-600"
-                  onClick={() => handleVerification(log.id, 'approved')}
-                >
-                  <Check className="h-4 w-4" />
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="text-red-600"
-                  onClick={() => handleVerification(log.id, 'rejected')}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
             </div>
-          ))}
-          {(!pendingVerifications || pendingVerifications.length === 0) && (
-            <div className="flex items-center justify-center p-4 text-muted-foreground">
-              <AlertCircle className="mr-2 h-4 w-4" />
-              No pending verifications
+            <div className="flex items-center space-x-2">
+              <Badge variant="outline" className="text-green-500">
+                <CheckCircle className="h-4 w-4 mr-1" />
+                Approve
+              </Badge>
+              <Badge variant="outline" className="text-red-500">
+                <XCircle className="h-4 w-4 mr-1" />
+                Reject
+              </Badge>
             </div>
-          )}
-        </div>
-      </div>
-    </div>
+          </div>
+        ))}
+      </CardContent>
+    </Card>
   );
 };
