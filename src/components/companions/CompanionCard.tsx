@@ -1,4 +1,3 @@
-
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -23,6 +22,9 @@ interface CompanionCardProps {
     art_therapy_certified?: boolean;
     rating?: number;
     hourly_rate?: number;
+    dementia_care_certified?: boolean;
+    dementia_care_experience_years?: number;
+    cognitive_support_specialties?: string[];
   };
   onConnect: (id: string) => void;
 }
@@ -44,6 +46,20 @@ export const CompanionCard = ({ companion, onConnect }: CompanionCardProps) => {
         </div>
 
         <div className="space-y-4">
+          {companion.dementia_care_certified && (
+            <Badge variant="secondary" className="flex items-center gap-1">
+              <Brain className="h-3 w-3" />
+              Dementia Care Certified
+            </Badge>
+          )}
+
+          {companion.dementia_care_experience_years > 0 && (
+            <div className="flex items-center gap-2 text-sm">
+              <Brain className="h-4 w-4 text-blue-500" />
+              {companion.dementia_care_experience_years} years dementia care experience
+            </div>
+          )}
+
           {companion.cognitive_engagement_activities && (
             <div className="flex flex-wrap gap-2">
               {Object.entries(companion.cognitive_engagement_activities).map(([key, activities]) => 
@@ -84,6 +100,16 @@ export const CompanionCard = ({ companion, onConnect }: CompanionCardProps) => {
               </Badge>
             )}
           </div>
+
+          {companion.cognitive_support_specialties && companion.cognitive_support_specialties.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {companion.cognitive_support_specialties.map((specialty) => (
+                <Badge key={specialty} variant="outline">
+                  {specialty}
+                </Badge>
+              ))}
+            </div>
+          )}
 
           <LegalDisclaimer type="platform_disclaimer" />
 

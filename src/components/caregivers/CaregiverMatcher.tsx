@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -65,6 +64,48 @@ interface SimplifiedCaregiverProfile {
   age_groups_experience?: string[] | null;
   pet_types_experience?: string[] | null;
   special_needs_certifications?: Json[] | null;
+}
+
+interface CompanionMatch {
+  id: string;
+  user_id: string;
+  bio: string | null;
+  experience_years: number | null;
+  hourly_rate: number | null;
+  skills: string[] | null;
+  rating: number | null;
+  reviews_count: number | null;
+  background_check_status: string | null;
+  identity_verified: boolean | null;
+  service_radius: number | null;
+  user: {
+    first_name: string;
+    last_name: string;
+  };
+  certifications: Json[];
+  availability: Availability | null;
+  location: LocationData | null;
+  age_groups_experience?: string[] | null;
+  pet_types_experience?: string[] | null;
+  special_needs_certifications?: Json[] | null;
+  dementia_care_certified?: boolean;
+  dementia_care_experience_years?: number;
+  cognitive_support_specialties?: string[];
+}
+
+interface CompanionFilters {
+  specialization: string;
+  maxRate: number;
+  experienceYears: number;
+  verifiedOnly: boolean;
+  dementiaOnly: boolean;
+  mentalHealthOnly: boolean;
+  emergencyResponse: boolean;
+  maxDistance: number;
+  careType: string;
+  ageGroup: string;
+  petType: string;
+  specialNeeds: string;
 }
 
 export const CaregiverMatcher = () => {
@@ -361,3 +402,5 @@ export const CaregiverMatcher = () => {
     </Card>
   );
 };
+
+export { CaregiverMatcher };
