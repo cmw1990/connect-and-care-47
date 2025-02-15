@@ -66,28 +66,7 @@ interface SimplifiedCaregiverProfile {
   special_needs_certifications?: Json[] | null;
 }
 
-interface CompanionMatch {
-  id: string;
-  user_id: string;
-  bio: string | null;
-  experience_years: number | null;
-  hourly_rate: number | null;
-  skills: string[] | null;
-  rating: number | null;
-  reviews_count: number | null;
-  background_check_status: string | null;
-  identity_verified: boolean | null;
-  service_radius: number | null;
-  user: {
-    first_name: string;
-    last_name: string;
-  };
-  certifications: Json[];
-  availability: Availability | null;
-  location: LocationData | null;
-  age_groups_experience?: string[] | null;
-  pet_types_experience?: string[] | null;
-  special_needs_certifications?: Json[] | null;
+interface CompanionMatch extends SimplifiedCaregiverProfile {
   dementia_care_certified?: boolean;
   dementia_care_experience_years?: number;
   cognitive_support_specialties?: string[];
@@ -112,7 +91,7 @@ interface CaregiverMatcherProps {}
 
 export function CaregiverMatcher() {
   const [caregivers, setCaregivers] = useState<SimplifiedCaregiverProfile[]>([]);
-  const [filters, setFilters] = useState({
+  const [filters, setFilters] = useState<CompanionFilters>({
     specialization: "",
     maxRate: 100,
     experienceYears: 0,
@@ -157,7 +136,7 @@ export function CaregiverMatcher() {
 
   const fetchCaregivers = async () => {
     try {
-      let query = supabase
+      const query = supabase
         .from('caregiver_profiles')
         .select(`
           *,
@@ -166,38 +145,38 @@ export function CaregiverMatcher() {
 
       // Apply care type specific filters
       if (filters.careType === 'children') {
-        query = query.contains('age_groups_experience', [filters.ageGroup]);
+        query.contains('age_groups_experience', [filters.ageGroup]);
       } else if (filters.careType === 'pets') {
-        query = query.contains('pet_types_experience', [filters.petType]);
+        query.contains('pet_types_experience', [filters.petType]);
       } else if (filters.careType === 'special-needs') {
-        query = query.contains('special_needs_certifications', [filters.specialNeeds]);
+        query.contains('special_needs_certifications', [filters.specialNeeds]);
       }
 
       if (filters.specialization) {
-        query = query.contains('specializations', [filters.specialization]);
+        query.contains('specializations', [filters.specialization]);
       }
 
       if (filters.verifiedOnly) {
-        query = query.eq('identity_verified', true);
+        query.eq('identity_verified', true);
       }
 
       if (filters.dementiaOnly) {
-        query = query.eq('dementia_care_certified', true);
+        query.eq('dementia_care_certified', true);
       }
 
       if (filters.mentalHealthOnly) {
-        query = query.eq('mental_health_certified', true);
+        query.eq('mental_health_certified', true);
       }
 
       if (filters.emergencyResponse) {
-        query = query.eq('emergency_response', true);
+        query.eq('emergency_response', true);
       }
 
       if (filters.experienceYears > 0) {
-        query = query.gte('experience_years', filters.experienceYears);
+        query.gte('experience_years', filters.experienceYears);
       }
 
-      query = query.lte('hourly_rate', filters.maxRate);
+      query.lte('hourly_rate', filters.maxRate);
 
       const { data, error } = await query;
 
@@ -404,5 +383,3 @@ export function CaregiverMatcher() {
     </Card>
   );
 }
-
-export { CaregiverMatcher };

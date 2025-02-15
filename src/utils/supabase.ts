@@ -1,6 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import type { PostgrestResponse } from '@/types/supabase';
+import type { PostgrestSingleResponse, PostgrestError } from '@supabase/supabase-js';
 
 export function transformObject<T>(obj: any): T {
   if (!obj) return obj;
@@ -24,18 +25,18 @@ export function transformObject<T>(obj: any): T {
   return transformed as T;
 }
 
-export async function supabaseQueryWithTransform<T>(query: ReturnType<typeof supabase.from>): Promise<PostgrestResponse<T>> {
+export async function supabaseQueryWithTransform<T>(query: Promise<PostgrestSingleResponse<any>>): Promise<PostgrestResponse<T>> {
   try {
-    const queryResult = await query;
+    const { data, error } = await query;
     
-    if (queryResult.error) {
-      return { data: null, error: queryResult.error };
+    if (error) {
+      return { data: null, error: error as PostgrestError };
     }
 
     // Transform arrays of profiles/sender/assigned_user into single objects
-    const transformedData = Array.isArray(queryResult.data) 
-      ? queryResult.data.map(item => transformObject<T>(item))
-      : transformObject<T>(queryResult.data);
+    const transformedData = Array.isArray(data) 
+      ? data.map(item => transformObject<T>(item))
+      : transformObject<T>(data);
 
     return { data: transformedData, error: null };
   } catch (error) {
