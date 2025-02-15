@@ -6,15 +6,18 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { VoiceReminder } from "./components/VoiceReminder";
-import { SupervisorPanel } from "./components/SupervisorPanel";
-import { AdherenceChart } from "./components/AdherenceChart";
-import { UpcomingReminders } from "./components/UpcomingReminders"; 
+import { VoiceReminder } from "./VoiceReminder";
+import { SupervisorPanel } from "./SupervisorPanel";
+import { AdherenceChart } from "./AdherenceChart";
+import { UpcomingReminders } from "./UpcomingReminders"; 
 import { Loader2, Bell, Activity, ShieldCheck } from "lucide-react";
 import type { MedicationAdherenceTrend, MedicationSupervisionSummary, MedicationPortalSettings } from "@/types/medication";
 
-interface MedicationDashboardProps {
-  groupId: string;
+interface PortalSettings {
+  reminder_preferences?: {
+    voice_reminders?: boolean;
+    preferred_voice?: string;
+  } | null;
 }
 
 export const MedicationDashboard = ({ groupId }: MedicationDashboardProps) => {

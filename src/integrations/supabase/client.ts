@@ -12,6 +12,9 @@ if (!supabaseUrl || !supabaseKey) {
 export const supabase = createClient<Database>(supabaseUrl, supabaseKey);
 
 // Helper function to ensure queries return proper promises
-export function asPromise<T>(query: ReturnType<typeof supabase.from>): Promise<{ data: T | null; error: any }> {
-  return query;
+export async function asPromise<T>(
+  query: ReturnType<typeof supabase.from>
+): Promise<{ data: T | null; error: any }> {
+  const { data, error } = await query;
+  return { data, error };
 }

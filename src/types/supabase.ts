@@ -1,6 +1,7 @@
-import { Database } from '@/integrations/supabase/types'
+import type { Database as GeneratedDatabase } from '@/integrations/supabase/types';
 
-export type DatabaseSchema = Database['public']['Tables']
+export type Database = GeneratedDatabase;
+export type Tables = Database['public']['Tables'];
 
 // Shared profile type
 export interface UserProfile {
@@ -8,37 +9,87 @@ export interface UserProfile {
   last_name: string | null;
 }
 
-// Transform helper functions
-export function transformSupabaseResponse<T>(data: any): T {
-  if (!data) return data;
-
-  if (Array.isArray(data)) {
-    return data.map(transformObject) as T;
-  }
-  return transformObject(data) as T;
+// Message types
+export interface Message {
+  id: string;
+  sender_id: string;
+  content: string;
+  created_at: string;
+  sender?: UserProfile;
 }
 
-export function transformObject(obj: any): any {
-  if (!obj) return obj;
+// Care Update types
+export interface CareUpdate {
+  id: string;
+  content: string;
+  update_type: string;
+  created_at: string;
+  profiles: UserProfile;
+}
 
-  const transformed = { ...obj };
+// Insurance types
+export interface InsuranceAnalytics {
+  id: string;
+  data: Record<string, any>;
+  period: string;
+}
 
-  // Transform profiles array to single object
-  if (transformed.profiles && Array.isArray(transformed.profiles) && transformed.profiles.length === 1) {
-    transformed.profiles = transformed.profiles[0];
-  }
+export interface InsuranceDeductible {
+  id: string;
+  amount: number;
+  met_amount: number;
+  type: string;
+}
 
-  // Transform sender array to single object
-  if (transformed.sender && Array.isArray(transformed.sender) && transformed.sender.length === 1) {
-    transformed.sender = transformed.sender[0];
-  }
+export interface MedicationScheduleBase {
+  id: string;
+  medication_name: string;
+  dosage: string;
+  time_of_day: string[];
+  group_id: string;
+  frequency: string;
+  instructions?: string;
+  start_date?: string;
+  end_date?: string;
+}
 
-  // Transform assigned_user array to single object
-  if (transformed.assigned_user && Array.isArray(transformed.assigned_user) && transformed.assigned_user.length === 1) {
-    transformed.assigned_user = transformed.assigned_user[0];
-  }
+export interface MedicationLogBase {
+  id: string;
+  schedule_id: string;
+  taken_at: string;
+  administered_at: string;
+  status: 'taken' | 'missed' | 'pending' | 'pending_verification' | 'rejected';
+  administered_by?: string;
+  verified_by?: string;
+  verified_at?: string;
+  notes?: string;
+  photo_verification_url?: string;
+  medication_schedule?: MedicationScheduleBase;
+}
 
-  return transformed;
+export interface MedicationReminderPreferences {
+  voice_reminders: boolean;
+  preferred_voice?: string;
+  preferred_channels: string[];
+}
+
+export interface MedicationPortalSettings {
+  id?: string;
+  group_id?: string;
+  reminder_preferences: MedicationReminderPreferences;
+  accessibility_settings: {
+    voice_reminders: boolean;
+  };
+  created_at?: string;
+  updated_at?: string;
+}
+
+// Schedule type
+export interface ScheduleItem {
+  id: string;
+  name: string;
+  time: string;
+  type: string;
 }
 
 // Interface with known properties for user profile

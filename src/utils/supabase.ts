@@ -1,9 +1,11 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { Database } from '@/integrations/supabase/types';
-import { UserProfile } from '@/types/supabase';
+import type { Database } from '@/types/supabase';
 
-export type DatabaseSchema = Database['public']['Tables']
+export type PostgrestResponse<T> = {
+  data: T | null;
+  error: Error | null;
+};
 
 // Transform helper functions
 export function transformSupabaseResponse<T>(data: any): T {
@@ -20,7 +22,7 @@ export function transformObject(obj: any): any {
 
   const transformed = { ...obj };
 
-  // Transform profiles array to single object
+  // Transform arrays of profiles/sender/assigned_user into single objects
   if (transformed.profiles && Array.isArray(transformed.profiles) && transformed.profiles.length === 1) {
     transformed.profiles = transformed.profiles[0];
   }
@@ -39,7 +41,9 @@ export function transformObject(obj: any): any {
 }
 
 // Supabase query helper
-export async function supabaseQueryWithTransform<T>(query: ReturnType<typeof supabase.from>): Promise<{ data: T | null; error: any }> {
+export async function supabaseQueryWithTransform<T>(
+  query: ReturnType<typeof supabase.from>
+): Promise<PostgrestResponse<T>> {
   try {
     const { data, error } = await query;
     
@@ -53,6 +57,6 @@ export async function supabaseQueryWithTransform<T>(query: ReturnType<typeof sup
     return { data: transformedData, error: null };
   } catch (error) {
     console.error('Error in supabaseQueryWithTransform:', error);
-    return { data: null, error };
+    return { data: null, error: error as Error };
   }
 }
