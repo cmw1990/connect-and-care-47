@@ -3368,6 +3368,60 @@ export type Database = {
         }
         Relationships: []
       }
+      insurance_benefits: {
+        Row: {
+          annual_limit: number | null
+          benefit_name: string
+          copay_amount: number | null
+          coverage_percentage: number
+          created_at: string | null
+          deductible_applies: boolean | null
+          description: string
+          id: string
+          limitations: string | null
+          name: string
+          network_restrictions: string | null
+          requires_preauth: boolean | null
+          requires_preauthorization: boolean | null
+          updated_at: string | null
+          waiting_period_days: number | null
+        }
+        Insert: {
+          annual_limit?: number | null
+          benefit_name: string
+          copay_amount?: number | null
+          coverage_percentage: number
+          created_at?: string | null
+          deductible_applies?: boolean | null
+          description: string
+          id?: string
+          limitations?: string | null
+          name: string
+          network_restrictions?: string | null
+          requires_preauth?: boolean | null
+          requires_preauthorization?: boolean | null
+          updated_at?: string | null
+          waiting_period_days?: number | null
+        }
+        Update: {
+          annual_limit?: number | null
+          benefit_name?: string
+          copay_amount?: number | null
+          coverage_percentage?: number
+          created_at?: string | null
+          deductible_applies?: boolean | null
+          description?: string
+          id?: string
+          limitations?: string | null
+          name?: string
+          network_restrictions?: string | null
+          requires_preauth?: boolean | null
+          requires_preauthorization?: boolean | null
+          updated_at?: string | null
+          waiting_period_days?: number | null
+        }
+        Relationships: []
+      }
       insurance_claim_documents: {
         Row: {
           claim_id: string | null

@@ -1,9 +1,27 @@
-
 import type { Database as GeneratedDatabase } from '@/integrations/supabase/types';
 import type { PostgrestSingleResponse, PostgrestResponse as SupabaseResponse } from '@supabase/supabase-js';
 
 export type Database = GeneratedDatabase;
 export type Tables = Database['public']['Tables'];
+
+// Add insurance benefits type
+export interface InsuranceBenefitRow {
+  id: string;
+  benefit_name: string;
+  name: string;
+  description: string;
+  coverage_percentage: number;
+  deductible_applies: boolean;
+  requires_preauth: boolean;
+  requires_preauthorization: boolean;
+  network_restrictions?: string;
+  limitations?: string;
+  copay_amount?: number;
+  annual_limit?: number;
+  waiting_period_days?: number;
+  created_at: string;
+  updated_at: string;
+}
 
 // Message types
 export interface Message {
@@ -170,4 +188,3 @@ export function isUserProfile(obj: any): obj is UserProfile {
 
 export type PostgrestQueryResponse<T> = SupabaseResponse<T>;
 export type PostgrestSingleQueryResponse<T> = PostgrestSingleResponse<T>;
-

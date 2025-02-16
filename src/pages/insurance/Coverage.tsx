@@ -1,20 +1,18 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from "@/integrations/supabase/client";
-import type { InsuranceBenefit } from '@/types/insurance';
+import type { InsuranceBenefitRow } from '@/types/supabase';
 
-// Add 'default' keyword for default export
 export default function Coverage() {
   const { data: benefits } = useQuery({
     queryKey: ['insurance-benefits'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('insurance_benefits')
-        .select('*')
-        .limit(50);
+        .select('*');
 
       if (error) throw error;
-      return data as InsuranceBenefit[];
+      return data as InsuranceBenefitRow[];
     }
   });
 
