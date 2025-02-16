@@ -216,6 +216,53 @@ export type Database = {
         }
         Relationships: []
       }
+      behavior_logs: {
+        Row: {
+          behavior_type: string
+          created_at: string | null
+          id: string
+          intensity: number | null
+          intervention_success: boolean | null
+          intervention_used: string | null
+          notes: string | null
+          occurred_at: string | null
+          profile_id: string | null
+          triggers: string[] | null
+        }
+        Insert: {
+          behavior_type: string
+          created_at?: string | null
+          id?: string
+          intensity?: number | null
+          intervention_success?: boolean | null
+          intervention_used?: string | null
+          notes?: string | null
+          occurred_at?: string | null
+          profile_id?: string | null
+          triggers?: string[] | null
+        }
+        Update: {
+          behavior_type?: string
+          created_at?: string | null
+          id?: string
+          intensity?: number | null
+          intervention_success?: boolean | null
+          intervention_used?: string | null
+          notes?: string | null
+          occurred_at?: string | null
+          profile_id?: string | null
+          triggers?: string[] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "behavior_logs_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "dementia_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       care_analytics: {
         Row: {
           created_by: string | null
@@ -2239,6 +2286,90 @@ export type Database = {
           },
         ]
       }
+      cognitive_exercise_progress: {
+        Row: {
+          completion_time: number | null
+          created_at: string | null
+          difficulty_level: string | null
+          exercise_id: string | null
+          id: string
+          notes: string | null
+          profile_id: string | null
+          score: number | null
+        }
+        Insert: {
+          completion_time?: number | null
+          created_at?: string | null
+          difficulty_level?: string | null
+          exercise_id?: string | null
+          id?: string
+          notes?: string | null
+          profile_id?: string | null
+          score?: number | null
+        }
+        Update: {
+          completion_time?: number | null
+          created_at?: string | null
+          difficulty_level?: string | null
+          exercise_id?: string | null
+          id?: string
+          notes?: string | null
+          profile_id?: string | null
+          score?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cognitive_exercise_progress_exercise_id_fkey"
+            columns: ["exercise_id"]
+            isOneToOne: false
+            referencedRelation: "cognitive_exercises"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cognitive_exercise_progress_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "dementia_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cognitive_exercises: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          description: string
+          difficulty_level: string | null
+          duration_minutes: number | null
+          id: string
+          instructions: Json
+          success_metrics: Json | null
+          title: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          description: string
+          difficulty_level?: string | null
+          duration_minutes?: number | null
+          id?: string
+          instructions: Json
+          success_metrics?: Json | null
+          title: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          description?: string
+          difficulty_level?: string | null
+          duration_minutes?: number | null
+          id?: string
+          instructions?: Json
+          success_metrics?: Json | null
+          title?: string
+        }
+        Relationships: []
+      }
       community_posts: {
         Row: {
           author_id: string | null
@@ -2558,34 +2689,55 @@ export type Database = {
       }
       dementia_profiles: {
         Row: {
+          behavioral_symptoms: Json | null
+          cognitive_assessment_scores: Json | null
           communication_preferences: Json | null
           created_at: string | null
           daily_routines: Json | null
+          emotional_triggers: Json | null
           id: string
+          medication_adherence: Json | null
           memory_support: Json | null
+          preferred_activities: Json | null
           primary_interests: string[] | null
+          safety_concerns: Json | null
+          sleep_patterns: Json | null
           stage: string | null
           updated_at: string | null
           user_id: string | null
         }
         Insert: {
+          behavioral_symptoms?: Json | null
+          cognitive_assessment_scores?: Json | null
           communication_preferences?: Json | null
           created_at?: string | null
           daily_routines?: Json | null
+          emotional_triggers?: Json | null
           id?: string
+          medication_adherence?: Json | null
           memory_support?: Json | null
+          preferred_activities?: Json | null
           primary_interests?: string[] | null
+          safety_concerns?: Json | null
+          sleep_patterns?: Json | null
           stage?: string | null
           updated_at?: string | null
           user_id?: string | null
         }
         Update: {
+          behavioral_symptoms?: Json | null
+          cognitive_assessment_scores?: Json | null
           communication_preferences?: Json | null
           created_at?: string | null
           daily_routines?: Json | null
+          emotional_triggers?: Json | null
           id?: string
+          medication_adherence?: Json | null
           memory_support?: Json | null
+          preferred_activities?: Json | null
           primary_interests?: string[] | null
+          safety_concerns?: Json | null
+          sleep_patterns?: Json | null
           stage?: string | null
           updated_at?: string | null
           user_id?: string | null
@@ -5362,6 +5514,47 @@ export type Database = {
             columns: ["group_id"]
             isOneToOne: false
             referencedRelation: "care_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      routine_schedules: {
+        Row: {
+          completion_tracking: Json | null
+          created_at: string | null
+          id: string
+          notes: string | null
+          profile_id: string | null
+          routine_type: string
+          schedule: Json
+          updated_at: string | null
+        }
+        Insert: {
+          completion_tracking?: Json | null
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          profile_id?: string | null
+          routine_type: string
+          schedule: Json
+          updated_at?: string | null
+        }
+        Update: {
+          completion_tracking?: Json | null
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          profile_id?: string | null
+          routine_type?: string
+          schedule?: Json
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "routine_schedules_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "dementia_profiles"
             referencedColumns: ["id"]
           },
         ]

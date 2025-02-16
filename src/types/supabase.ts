@@ -1,3 +1,4 @@
+
 import type { Database as GeneratedDatabase } from '@/integrations/supabase/types';
 import type { PostgrestSingleResponse, PostgrestResponse as SupabaseResponse } from '@supabase/supabase-js';
 
@@ -50,6 +51,13 @@ export interface DementiaProfile {
   daily_routines?: Record<string, any>;
   communication_preferences?: Record<string, any>;
   primary_interests?: string[];
+  behavioral_symptoms?: any[];
+  cognitive_assessment_scores?: Record<string, any>;
+  safety_concerns?: any[];
+  medication_adherence?: Record<string, any>;
+  preferred_activities?: any[];
+  emotional_triggers?: any[];
+  sleep_patterns?: Record<string, any>;
   updated_at?: string;
 }
 
@@ -62,6 +70,53 @@ export interface DementiaTopicCard {
   visual_aids?: string[];
   engagement_duration?: number;
   success_indicators?: string[];
+}
+
+export interface CognitiveExercise {
+  id: string;
+  title: string;
+  description: string;
+  difficulty_level: 'easy' | 'medium' | 'hard';
+  category: 'memory' | 'attention' | 'language' | 'visual' | 'problem_solving';
+  instructions: Record<string, any>;
+  duration_minutes?: number;
+  success_metrics?: any[];
+  created_at: string;
+}
+
+export interface CognitiveExerciseProgress {
+  id: string;
+  profile_id: string;
+  exercise_id: string;
+  completion_time?: number;
+  score?: number;
+  difficulty_level?: string;
+  notes?: string;
+  created_at: string;
+}
+
+export interface BehaviorLog {
+  id: string;
+  profile_id: string;
+  behavior_type: string;
+  intensity: number;
+  triggers?: string[];
+  intervention_used?: string;
+  intervention_success?: boolean;
+  notes?: string;
+  occurred_at: string;
+  created_at: string;
+}
+
+export interface RoutineSchedule {
+  id: string;
+  profile_id: string;
+  routine_type: string;
+  schedule: Record<string, any>;
+  completion_tracking?: Record<string, any>;
+  notes?: string;
+  created_at: string;
+  updated_at: string;
 }
 
 // Medication types
