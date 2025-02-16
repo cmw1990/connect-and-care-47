@@ -1,8 +1,10 @@
+
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from "@/integrations/supabase/client";
 import type { InsuranceBenefit } from '@/types/insurance';
 
-export const Coverage = () => {
+// Add 'default' keyword for default export
+export default function Coverage() {
   const { data: benefits } = useQuery({
     queryKey: ['insurance-benefits'],
     queryFn: async () => {
@@ -30,4 +32,4 @@ export const Coverage = () => {
       )}
     </div>
   );
-};
+}
