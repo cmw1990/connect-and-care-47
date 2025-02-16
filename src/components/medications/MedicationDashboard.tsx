@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -46,7 +47,7 @@ export const MedicationDashboard = ({ groupId }: { groupId: string }) => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('medication_supervision_summary')
-        .select('*')
+        .select('*, updated_at as last_updated')
         .eq('group_id', groupId)
         .single();
 

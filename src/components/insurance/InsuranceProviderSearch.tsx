@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from "@/integrations/supabase/client";
@@ -14,19 +15,22 @@ export const InsuranceProviderSearch = () => {
   const { data: providers, isLoading } = useQuery({
     queryKey: ['insurance-providers', searchTerm, filters],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const baseQuery = supabase
         .from('insurance_network_providers')
-        .select('*')
+        .select('*');
+
+      const finalQuery = baseQuery
         .ilike('provider_name', `%${searchTerm}%`)
         .eq('specialty', filters.specialty || null)
         .eq('network_status', filters.network_status || null)
         .lte('distance', filters.distance)
-        .limit(50)
-        .returns<InsuranceNetworkProviderRow[]>();
+        .limit(50);
+
+      const { data, error } = await finalQuery;
 
       if (error) throw error;
 
-      return data.map((provider): InsuranceProvider => ({
+      return (data as InsuranceNetworkProviderRow[]).map((provider): InsuranceProvider => ({
         id: provider.id,
         name: provider.provider_name,
         provider_name: provider.provider_name,

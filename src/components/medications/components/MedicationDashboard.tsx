@@ -23,7 +23,7 @@ interface MedicationDashboardProps {
   groupId: string;
 }
 
-export const MedicationDashboard = ({ groupId }: MedicationDashboardProps) => {
+export const MedicationDashboard = ({ groupId }: { groupId: string }) => {
   const { toast } = useToast();
 
   const { data: adherenceData, isLoading: isLoadingAdherence } = useQuery({

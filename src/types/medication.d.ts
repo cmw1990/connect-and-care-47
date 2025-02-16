@@ -43,3 +43,14 @@ export interface MedicationLogBase {
   photo_verification_url?: string;
   medication_schedule?: MedicationScheduleBase;
 }
+
+export interface MedicationSupervisionSummary {
+  id: string;
+  total_medications: number;
+  pending_verifications: number;
+  approved_medications: number;
+  missed_medications: number;
+  avg_verification_time_minutes: number;
+  group_id: string;
+  last_updated: string;
+}
