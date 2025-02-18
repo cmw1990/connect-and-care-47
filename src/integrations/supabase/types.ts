@@ -3632,31 +3632,37 @@ export type Database = {
       }
       insurance_network_providers: {
         Row: {
+          accepting_new_patients: boolean | null
           contact_info: Json | null
           created_at: string | null
           id: string
           insurance_plan_id: string | null
           location: Json | null
+          network_status: string | null
           provider_name: string
           specialty: string | null
           updated_at: string | null
         }
         Insert: {
+          accepting_new_patients?: boolean | null
           contact_info?: Json | null
           created_at?: string | null
           id?: string
           insurance_plan_id?: string | null
           location?: Json | null
+          network_status?: string | null
           provider_name: string
           specialty?: string | null
           updated_at?: string | null
         }
         Update: {
+          accepting_new_patients?: boolean | null
           contact_info?: Json | null
           created_at?: string | null
           id?: string
           insurance_plan_id?: string | null
           location?: Json | null
+          network_status?: string | null
           provider_name?: string
           specialty?: string | null
           updated_at?: string | null
