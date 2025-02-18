@@ -18,6 +18,11 @@ interface Settings {
   preferred_voice?: string;
 }
 
+interface ReminderPreferences {
+  voice_reminders: boolean;
+  preferred_voice?: string;
+}
+
 export const MedicationDashboard = ({ groupId }: { groupId: string }) => {
   const { toast } = useToast();
 
@@ -71,9 +76,10 @@ export const MedicationDashboard = ({ groupId }: { groupId: string }) => {
 
       if (error) throw error;
       
+      const reminderPrefs = data?.reminder_preferences as ReminderPreferences;
       return {
-        voice_reminders: data?.reminder_preferences?.voice_reminders ?? false,
-        preferred_voice: data?.reminder_preferences?.preferred_voice
+        voice_reminders: reminderPrefs?.voice_reminders ?? false,
+        preferred_voice: reminderPrefs?.preferred_voice
       };
     }
   });

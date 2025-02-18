@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from "@/integrations/supabase/client";
-import type { InsuranceProvider, ProviderSearchFilters } from '@/types/insurance';
+import type { InsuranceProvider, ProviderSearchFilters, InsuranceNetworkProviderRow } from '@/types/insurance';
 
 export const InsuranceProviderSearch = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -25,16 +25,18 @@ export const InsuranceProviderSearch = () => {
 
       if (error) throw error;
 
-      return (data || []).map((provider): InsuranceProvider => ({
+      return (data || []).map((provider: InsuranceNetworkProviderRow): InsuranceProvider => ({
         id: provider.id,
         name: provider.provider_name,
         provider_name: provider.provider_name,
         specialty: provider.specialty || '',
-        network_status: provider.network_status || 'out-of-network',
+        network_status: provider.network_status === 'in-network' ? 'in-network' : 'out-of-network',
         accepting_new_patients: provider.accepting_new_patients || false,
         locations: [{
-          address: provider.location?.address || '',
-          phone: provider.contact_info?.phone || ''
+          address: typeof provider.location === 'object' && provider.location !== null ? 
+                  (provider.location as { address: string }).address || '' : '',
+          phone: typeof provider.contact_info === 'object' && provider.contact_info !== null ? 
+                 (provider.contact_info as { phone: string }).phone || '' : ''
         }]
       }));
     }
