@@ -36,7 +36,10 @@ export const MedicationDashboard = ({ groupId }: { groupId: string }) => {
         .order('date', { ascending: false })
         .limit(30);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching adherence data:', error);
+        throw error;
+      }
       return data || [];
     }
   });
@@ -50,15 +53,20 @@ export const MedicationDashboard = ({ groupId }: { groupId: string }) => {
         .eq('group_id', groupId)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching supervision data:', error);
+        throw error;
+      }
 
       const result: MedicationSupervisionSummary = {
         id: data.id,
+        group_id: groupId,
         total_medications: data.total_medications || 0,
         pending_verifications: data.pending_verifications || 0,
         approved_medications: data.approved_medications || 0,
         missed_medications: data.missed_medications || 0,
-        avg_verification_time_minutes: data.avg_verification_time_minutes || 0
+        avg_verification_time_minutes: data.avg_verification_time_minutes || 0,
+        last_updated: data.updated_at || new Date().toISOString()
       };
 
       return result;
@@ -74,7 +82,10 @@ export const MedicationDashboard = ({ groupId }: { groupId: string }) => {
         .eq('group_id', groupId)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching settings:', error);
+        throw error;
+      }
       
       const reminderPrefs = data?.reminder_preferences as unknown as ReminderPreferences;
       return {

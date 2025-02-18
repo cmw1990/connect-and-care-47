@@ -1017,6 +1017,48 @@ export type Database = {
           },
         ]
       }
+      care_homes: {
+        Row: {
+          address: string
+          capacity: number
+          created_at: string
+          current_occupancy: number
+          description: string | null
+          email: string
+          id: string
+          name: string
+          phone: string
+          rating: number | null
+          updated_at: string
+        }
+        Insert: {
+          address: string
+          capacity: number
+          created_at?: string
+          current_occupancy?: number
+          description?: string | null
+          email: string
+          id?: string
+          name: string
+          phone: string
+          rating?: number | null
+          updated_at?: string
+        }
+        Update: {
+          address?: string
+          capacity?: number
+          created_at?: string
+          current_occupancy?: number
+          description?: string | null
+          email?: string
+          id?: string
+          name?: string
+          phone?: string
+          rating?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       care_insights: {
         Row: {
           created_at: string | null

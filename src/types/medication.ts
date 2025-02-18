@@ -8,11 +8,13 @@ export interface MedicationAdherenceTrend {
 
 export interface MedicationSupervisionSummary {
   id: string;
+  group_id: string;
   total_medications: number;
   pending_verifications: number;
   approved_medications: number;
   missed_medications: number;
   avg_verification_time_minutes: number;
+  last_updated: string;
 }
 
 export interface MedicationPortalSettings {
