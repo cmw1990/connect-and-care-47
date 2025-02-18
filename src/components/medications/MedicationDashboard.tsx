@@ -54,13 +54,11 @@ export const MedicationDashboard = ({ groupId }: { groupId: string }) => {
 
       const result: MedicationSupervisionSummary = {
         id: data.id,
-        group_id: groupId,
         total_medications: data.total_medications || 0,
         pending_verifications: data.pending_verifications || 0,
         approved_medications: data.approved_medications || 0,
         missed_medications: data.missed_medications || 0,
-        avg_verification_time_minutes: data.avg_verification_time_minutes || 0,
-        last_updated: data.updated_at
+        avg_verification_time_minutes: data.avg_verification_time_minutes || 0
       };
 
       return result;

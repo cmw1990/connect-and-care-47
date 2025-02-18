@@ -40,6 +40,8 @@ export interface MedicationScheduleBase {
 }
 
 export interface MedicationReminderPreferences {
+  voice_reminders: boolean;
+  preferred_voice?: string;
   preferred_channels: string[];
 }
 
