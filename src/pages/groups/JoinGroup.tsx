@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Search, Users, UserPlus, Shield, MapPin, ArrowRight } from "lucide-react";
+import { Search, Users, UserPlus, Shield, ArrowRight } from "lucide-react";
 import type { CareGroup } from "@/types/groups";
 import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
@@ -33,8 +33,7 @@ export const JoinGroup = () => {
           privacy_settings,
           care_group_members (
             id
-          ),
-          location
+          )
         `)
         .eq('privacy_settings->>visibility', 'public')
         .ilike('name', `%${searchQuery}%`);
@@ -47,8 +46,7 @@ export const JoinGroup = () => {
         description: group.description || '',
         created_at: group.created_at,
         member_count: group.care_group_members?.length || 0,
-        is_public: true,
-        location: (group.location as any)?.city || ''
+        is_public: true
       })));
     } catch (error) {
       console.error('Error searching groups:', error);
@@ -160,12 +158,6 @@ export const JoinGroup = () => {
                           <Users className="h-4 w-4 mr-1" />
                           {group.member_count} members
                         </div>
-                        {group.location && (
-                          <div className="flex items-center">
-                            <MapPin className="h-4 w-4 mr-1" />
-                            {group.location}
-                          </div>
-                        )}
                       </div>
                     </div>
                     

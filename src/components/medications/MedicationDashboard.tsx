@@ -11,24 +11,18 @@ import { SupervisorPanel } from "./components/SupervisorPanel";
 import { AdherenceChart } from "./components/AdherenceChart";
 import { UpcomingReminders } from "./components/UpcomingReminders"; 
 import { Loader2, Bell, Activity, ShieldCheck } from "lucide-react";
-import type { MedicationAdherenceTrend, MedicationSupervisionSummary, MedicationPortalSettings } from "@/types/medication";
+import type { MedicationAdherenceTrend, MedicationSupervisionSummary } from "@/types/medication";
 
-interface PortalSettings {
-  reminder_preferences?: {
-    voice_reminders?: boolean;
-    preferred_voice?: string;
-  } | null;
-}
-
-interface MedicationDashboardProps {
-  groupId: string;
+interface Settings {
+  voice_reminders: boolean;
+  preferred_voice?: string;
 }
 
 export const MedicationDashboard = ({ groupId }: { groupId: string }) => {
   const { toast } = useToast();
 
-  const { data: adherenceData, isLoading: isLoadingAdherence } = useQuery({
-    queryKey: ['medicationAdherence', groupId],
+  const { data: adherenceData, isLoading: isLoadingAdherence } = useQuery<MedicationAdherenceTrend[]>({
+    queryKey: ['medicationAdherence', groupId] as const,
     queryFn: async () => {
       const { data, error } = await supabase
         .from('medication_adherence_trends')
@@ -38,44 +32,49 @@ export const MedicationDashboard = ({ groupId }: { groupId: string }) => {
         .limit(30);
 
       if (error) throw error;
-      return (data || []) as MedicationAdherenceTrend[];
+      return data || [];
     }
   });
 
-  const { data: supervisorData, isLoading: isLoadingSupervisor } = useQuery({
-    queryKey: ['medicationSupervision', groupId],
+  const { data: supervisorData, isLoading: isLoadingSupervisor } = useQuery<MedicationSupervisionSummary>({
+    queryKey: ['medicationSupervision', groupId] as const,
     queryFn: async () => {
       const { data, error } = await supabase
         .from('medication_supervision_summary')
-        .select('*, updated_at as last_updated')
-        .eq('group_id', groupId)
-        .single();
-
-      if (error) throw error;
-      return data as MedicationSupervisionSummary;
-    }
-  });
-
-  const { data: settings } = useQuery({
-    queryKey: ['medicationSettings', groupId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('medication_portal_settings')
         .select('*')
         .eq('group_id', groupId)
         .single();
 
       if (error) throw error;
-      
-      const rawData = data as PortalSettings;
-      
-      // Transform data to match required interface
-      const voiceSettings = {
-        voice_reminders: rawData?.reminder_preferences?.voice_reminders ?? false,
-        preferred_voice: rawData?.reminder_preferences?.preferred_voice
+
+      return {
+        id: data.id,
+        group_id: groupId,
+        total_medications: data.total_medications,
+        pending_verifications: data.pending_verifications,
+        approved_medications: data.approved_medications,
+        missed_medications: data.missed_medications,
+        avg_verification_time_minutes: data.avg_verification_time_minutes,
+        last_updated: data.updated_at
       };
+    }
+  });
+
+  const { data: settings } = useQuery<Settings>({
+    queryKey: ['medicationSettings', groupId] as const,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('medication_portal_settings')
+        .select('reminder_preferences')
+        .eq('group_id', groupId)
+        .single();
+
+      if (error) throw error;
       
-      return voiceSettings;
+      return {
+        voice_reminders: data?.reminder_preferences?.voice_reminders ?? false,
+        preferred_voice: data?.reminder_preferences?.preferred_voice
+      };
     }
   });
 

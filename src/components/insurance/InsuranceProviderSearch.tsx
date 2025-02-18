@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from "@/integrations/supabase/client";
-import type { InsuranceProvider, ProviderSearchFilters, InsuranceNetworkProviderRow } from '@/types/insurance';
+import type { InsuranceProvider, ProviderSearchFilters } from '@/types/insurance';
 
 export const InsuranceProviderSearch = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -12,31 +12,26 @@ export const InsuranceProviderSearch = () => {
     network_status: "in-network",
   });
 
-  const { data: providers, isLoading } = useQuery({
-    queryKey: ['insurance-providers', searchTerm, filters],
+  const { data: providers, isLoading } = useQuery<InsuranceProvider[]>({
+    queryKey: ['insurance-providers', searchTerm, filters] as const,
     queryFn: async () => {
-      const baseQuery = supabase
+      const { data, error } = await supabase
         .from('insurance_network_providers')
-        .select('*');
-
-      const finalQuery = baseQuery
+        .select('*')
         .ilike('provider_name', `%${searchTerm}%`)
         .eq('specialty', filters.specialty || null)
         .eq('network_status', filters.network_status || null)
-        .lte('distance', filters.distance)
         .limit(50);
-
-      const { data, error } = await finalQuery;
 
       if (error) throw error;
 
-      return (data as InsuranceNetworkProviderRow[]).map((provider): InsuranceProvider => ({
+      return (data || []).map((provider): InsuranceProvider => ({
         id: provider.id,
         name: provider.provider_name,
         provider_name: provider.provider_name,
-        specialty: provider.specialty,
-        network_status: provider.network_status,
-        accepting_new_patients: provider.accepting_new_patients,
+        specialty: provider.specialty || '',
+        network_status: provider.network_status || 'out-of-network',
+        accepting_new_patients: provider.accepting_new_patients || false,
         locations: [{
           address: provider.location?.address || '',
           phone: provider.contact_info?.phone || ''
