@@ -52,16 +52,18 @@ export const MedicationDashboard = ({ groupId }: { groupId: string }) => {
 
       if (error) throw error;
 
-      return {
+      const result: MedicationSupervisionSummary = {
         id: data.id,
         group_id: groupId,
-        total_medications: data.total_medications,
-        pending_verifications: data.pending_verifications,
-        approved_medications: data.approved_medications,
-        missed_medications: data.missed_medications,
-        avg_verification_time_minutes: data.avg_verification_time_minutes,
+        total_medications: data.total_medications || 0,
+        pending_verifications: data.pending_verifications || 0,
+        approved_medications: data.approved_medications || 0,
+        missed_medications: data.missed_medications || 0,
+        avg_verification_time_minutes: data.avg_verification_time_minutes || 0,
         last_updated: data.updated_at
       };
+
+      return result;
     }
   });
 
@@ -76,7 +78,7 @@ export const MedicationDashboard = ({ groupId }: { groupId: string }) => {
 
       if (error) throw error;
       
-      const reminderPrefs = data?.reminder_preferences as ReminderPreferences;
+      const reminderPrefs = data?.reminder_preferences as unknown as ReminderPreferences;
       return {
         voice_reminders: reminderPrefs?.voice_reminders ?? false,
         preferred_voice: reminderPrefs?.preferred_voice
