@@ -24,6 +24,13 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
@@ -88,6 +95,19 @@ interface CaregiverProfile {
   };
 }
 
+interface Availability {
+  id: string;
+  day_of_week: number;
+  start_time: string;
+  end_time: string;
+}
+
+interface BookingFormData {
+  start_time: string;
+  end_time: string;
+  notes: string;
+}
+
 export function CaregiverMatcher() {
   const [filters, setFilters] = useState<CaregiverFilters>({
     specialization: "",
@@ -116,6 +136,13 @@ export function CaregiverMatcher() {
   });
 
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [selectedCaregiver, setSelectedCaregiver] = useState<string | null>(null);
+  const [bookingData, setBookingData] = useState<BookingFormData>({
+    start_time: "",
+    end_time: "",
+    notes: ""
+  });
+  
   const { toast } = useToast();
 
   const { data: caregivers, isLoading } = useQuery({
@@ -215,6 +242,23 @@ export function CaregiverMatcher() {
     }
   });
 
+  const { data: availability } = useQuery({
+    queryKey: ['availability', selectedCaregiver],
+    enabled: !!selectedCaregiver,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('caregiver_availability')
+        .select('*')
+        .eq('caregiver_id', selectedCaregiver);
+
+      if (error) {
+        throw error;
+      }
+
+      return data as Availability[];
+    }
+  });
+
   useEffect(() => {
     initializeLocation();
   }, []);
@@ -231,6 +275,43 @@ export function CaregiverMatcher() {
       toast({
         title: "Location Access Failed",
         description: "Unable to access your location. Distance-based search will be disabled.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleBookingSubmit = async () => {
+    if (!selectedCaregiver) return;
+
+    try {
+      const { error } = await supabase
+        .from('caregiver_bookings')
+        .insert({
+          caregiver_id: selectedCaregiver,
+          start_time: bookingData.start_time,
+          end_time: bookingData.end_time,
+          notes: bookingData.notes,
+          rate: caregivers?.find(c => c.id === selectedCaregiver)?.hourly_rate || 0
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "Booking Requested",
+        description: "Your booking request has been sent to the caregiver.",
+      });
+
+      setSelectedCaregiver(null);
+      setBookingData({
+        start_time: "",
+        end_time: "",
+        notes: ""
+      });
+    } catch (error) {
+      console.error('Booking error:', error);
+      toast({
+        title: "Booking Failed",
+        description: "There was an error submitting your booking request. Please try again.",
         variant: "destructive",
       });
     }
@@ -367,9 +448,94 @@ export function CaregiverMatcher() {
                     exit={{ opacity: 0, y: -20 }}
                     transition={{ duration: 0.2 }}
                   >
-                    <CaregiverCard
-                      caregiver={caregiver}
-                    />
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <div onClick={() => setSelectedCaregiver(caregiver.id)}>
+                          <CaregiverCard
+                            caregiver={caregiver}
+                          />
+                        </div>
+                      </DialogTrigger>
+                      <DialogContent className="max-w-2xl">
+                        <DialogHeader>
+                          <DialogTitle>Book Caregiver</DialogTitle>
+                        </DialogHeader>
+                        <div className="space-y-4 py-4">
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                              <Label>Start Time</Label>
+                              <Input
+                                type="datetime-local"
+                                value={bookingData.start_time}
+                                onChange={(e) => setBookingData(prev => ({
+                                  ...prev,
+                                  start_time: e.target.value
+                                }))}
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label>End Time</Label>
+                              <Input
+                                type="datetime-local"
+                                value={bookingData.end_time}
+                                onChange={(e) => setBookingData(prev => ({
+                                  ...prev,
+                                  end_time: e.target.value
+                                }))}
+                              />
+                            </div>
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label>Notes</Label>
+                            <textarea
+                              className="w-full min-h-[100px] p-2 border rounded-md"
+                              value={bookingData.notes}
+                              onChange={(e) => setBookingData(prev => ({
+                                ...prev,
+                                notes: e.target.value
+                              }))}
+                              placeholder="Add any specific requirements or notes for the caregiver..."
+                            />
+                          </div>
+
+                          {availability && (
+                            <div className="space-y-2">
+                              <Label>Caregiver Availability</Label>
+                              <div className="grid grid-cols-7 gap-2">
+                                {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day, index) => {
+                                  const dayAvailability = availability.filter(a => a.day_of_week === index);
+                                  return (
+                                    <div key={day} className="text-center p-2 border rounded-md">
+                                      <div className="font-medium">{day}</div>
+                                      <div className="text-sm text-gray-500">
+                                        {dayAvailability.length > 0 ? (
+                                          dayAvailability.map((a, i) => (
+                                            <div key={i}>
+                                              {a.start_time.slice(0, 5)} - {a.end_time.slice(0, 5)}
+                                            </div>
+                                          ))
+                                        ) : (
+                                          <div>Unavailable</div>
+                                        )}
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          )}
+
+                          <Button
+                            className="w-full"
+                            onClick={handleBookingSubmit}
+                            disabled={!bookingData.start_time || !bookingData.end_time}
+                          >
+                            Request Booking
+                          </Button>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
                   </motion.div>
                 ))
               )}
