@@ -22,7 +22,6 @@ import {
   Settings,
   Pill,
 } from "lucide-react";
-import { BrandLogo } from "@/components/ui/brand-logo";
 
 export function Navbar() {
   const { t } = useTranslation();
@@ -31,8 +30,7 @@ export function Navbar() {
     <nav className="border-b">
       <div className="flex h-16 items-center px-4 container mx-auto">
         <Link to="/" className="flex items-center gap-2 font-bold text-xl mr-6">
-          <BrandLogo className="text-primary" />
-          <span className="bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/80">
+          <span className="text-primary">
             {t('appName')}
           </span>
         </Link>
