@@ -55,6 +55,14 @@ interface AdvancedFilters {
   ratings: number;
 }
 
+interface CareReview {
+  id: string;
+  reviewee_id: string;
+  reviewee_type: string;
+  rating: number;
+  review: string;
+}
+
 interface CaregiverProfile {
   id: string;
   user?: {
@@ -152,11 +160,12 @@ export function CaregiverMatcher() {
         throw reviewsError;
       }
 
-      let filteredData = (caregiverData || []) as unknown as CaregiverProfile[];
+      const caregivers = caregiverData as CaregiverProfile[];
+      const reviews = reviewsData as CareReview[];
 
       // Add ratings data to caregivers
-      filteredData = filteredData.map(caregiver => {
-        const caregiverReviews = (reviewsData || []).filter(r => r.reviewee_id === caregiver.id);
+      const enrichedCaregivers = caregivers.map(caregiver => {
+        const caregiverReviews = reviews.filter(r => r.reviewee_id === caregiver.id);
         const avgRating = caregiverReviews.length > 0
           ? caregiverReviews.reduce((acc, curr) => acc + (curr.rating || 0), 0) / caregiverReviews.length
           : 0;
@@ -169,6 +178,8 @@ export function CaregiverMatcher() {
           }
         };
       });
+
+      let filteredData = enrichedCaregivers;
 
       // Apply location filtering
       if (userLocation) {
