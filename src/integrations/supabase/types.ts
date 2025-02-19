@@ -2005,6 +2005,7 @@ export type Database = {
           hourly_rate: number | null
           id: string
           identity_verified: boolean | null
+          location_updated_at: string | null
           memory_support_tools: Json | null
           mental_health_certified: boolean | null
           pet_care_certifications: Json | null
@@ -2041,6 +2042,7 @@ export type Database = {
           hourly_rate?: number | null
           id?: string
           identity_verified?: boolean | null
+          location_updated_at?: string | null
           memory_support_tools?: Json | null
           mental_health_certified?: boolean | null
           pet_care_certifications?: Json | null
@@ -2077,6 +2079,7 @@ export type Database = {
           hourly_rate?: number | null
           id?: string
           identity_verified?: boolean | null
+          location_updated_at?: string | null
           memory_support_tools?: Json | null
           mental_health_certified?: boolean | null
           pet_care_certifications?: Json | null
