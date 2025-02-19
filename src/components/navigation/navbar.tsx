@@ -74,7 +74,7 @@ export const Navbar = () => {
   };
 
   return (
-    <nav className="bg-white shadow-sm sticky top-0 z-50">
+    <nav className="bg-white/80 backdrop-blur-md shadow-sm sticky top-0 z-50 border-b border-gray-100/50 dark:bg-gray-950/80 dark:border-gray-800/50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           <div className="flex items-center gap-8">
@@ -263,9 +263,9 @@ export const Navbar = () => {
               <div className="flex items-center gap-4">
                 <motion.button
                   whileHover={{ scale: 1.05 }}
-                  className="p-2 rounded-lg hover:bg-gray-100"
+                  className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
                 >
-                  <Bell className="h-5 w-5 text-gray-600" />
+                  <Bell className="h-5 w-5 text-gray-600 dark:text-gray-400" />
                 </motion.button>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -298,19 +298,21 @@ export const Navbar = () => {
               </div>
             ) : (
               <div className="flex items-center gap-2">
-                <ButtonPrimary 
+                <Button 
                   variant="outline" 
                   size="sm" 
                   onClick={() => navigate("/auth")}
+                  className="hover-scale"
                 >
                   {t("signIn")}
-                </ButtonPrimary>
-                <ButtonPrimary 
+                </Button>
+                <Button 
                   size="sm"
                   onClick={() => navigate("/auth")}
+                  className="hover-scale bg-primary-600 hover:bg-primary-700"
                 >
                   {t("signUp")}
-                </ButtonPrimary>
+                </Button>
               </div>
             )}
           </div>
