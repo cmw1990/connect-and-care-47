@@ -67,12 +67,14 @@ interface CaregiverProfile {
   specializations: string[];
   bio: string;
   avatar_url?: string;
-  ratings?: Array<{
-    rating: number;
-    review: string;
-  }>;
+  identity_verified: boolean;
+  dementia_care_certified: boolean;
   latitude?: number;
   longitude?: number;
+  ratings_aggregate?: {
+    avg_rating: number;
+    count: number;
+  };
 }
 
 export function CaregiverMatcher() {
@@ -112,8 +114,7 @@ export function CaregiverMatcher() {
         .from('caregiver_profiles')
         .select(`
           *,
-          user:profiles(first_name, last_name),
-          ratings:caregiver_ratings(rating, review)
+          user:profiles(first_name, last_name)
         `);
 
       // Apply filters
@@ -140,7 +141,33 @@ export function CaregiverMatcher() {
         throw error;
       }
 
+      // Get all caregiver ratings in a separate query
+      const { data: ratingsData, error: ratingsError } = await supabase
+        .from('caregiver_ratings')
+        .select('*');
+
+      if (ratingsError) {
+        console.error('Ratings query error:', ratingsError);
+        throw ratingsError;
+      }
+
       let filteredData = (caregiverData || []) as CaregiverProfile[];
+
+      // Add ratings data to caregivers
+      filteredData = filteredData.map(caregiver => {
+        const caregiverRatings = (ratingsData || []).filter(r => r.caregiver_id === caregiver.id);
+        const avgRating = caregiverRatings.length > 0
+          ? caregiverRatings.reduce((acc, curr) => acc + curr.rating, 0) / caregiverRatings.length
+          : 0;
+        
+        return {
+          ...caregiver,
+          ratings_aggregate: {
+            avg_rating: avgRating,
+            count: caregiverRatings.length
+          }
+        };
+      });
 
       // Apply location filtering
       if (userLocation) {
@@ -161,19 +188,14 @@ export function CaregiverMatcher() {
       // Apply rating filtering
       if (advancedFilters.ratings > 0) {
         filteredData = filteredData.filter(caregiver => {
-          const ratings = Array.isArray(caregiver.ratings) ? caregiver.ratings : [];
-          const avgRating = ratings.reduce((acc, curr) => acc + curr.rating, 0) / (ratings.length || 1);
-          return avgRating >= advancedFilters.ratings;
+          return (caregiver.ratings_aggregate?.avg_rating || 0) >= advancedFilters.ratings;
         });
       }
 
       // Sort by rating
       return filteredData.sort((a, b) => {
-        const aRatings = Array.isArray(a.ratings) ? a.ratings : [];
-        const bRatings = Array.isArray(b.ratings) ? b.ratings : [];
-        
-        const aRating = aRatings.reduce((acc, curr) => acc + curr.rating, 0) / (aRatings.length || 1);
-        const bRating = bRatings.reduce((acc, curr) => acc + curr.rating, 0) / (bRatings.length || 1);
+        const aRating = a.ratings_aggregate?.avg_rating || 0;
+        const bRating = b.ratings_aggregate?.avg_rating || 0;
         return bRating - aRating;
       });
     }
