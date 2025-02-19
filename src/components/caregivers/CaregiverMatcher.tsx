@@ -58,9 +58,12 @@ interface AdvancedFilters {
 interface CareReview {
   id: string;
   reviewee_id: string;
-  reviewee_type: string;
   rating: number;
-  review: string;
+  review_text: string;
+  created_at: string;
+  reviewer_id: string;
+  verified_review: boolean;
+  booking_id: string;
 }
 
 interface CaregiverProfile {
@@ -71,11 +74,11 @@ interface CaregiverProfile {
   };
   hourly_rate: number;
   experience_years: number;
-  background_check_verified: boolean;
+  identity_verified: boolean;
+  background_check_status: string;
   specializations: string[];
   bio: string;
   avatar_url?: string;
-  identity_verified: boolean;
   dementia_care_certified: boolean;
   latitude?: number;
   longitude?: number;
@@ -133,7 +136,7 @@ export function CaregiverMatcher() {
         query = query.eq('dementia_care_certified', true);
       }
       if (advancedFilters.backgroundChecked) {
-        query = query.eq('background_check_verified', true);
+        query = query.eq('background_check_status', 'verified');
       }
       if (filters.experienceYears > 0) {
         query = query.gte('experience_years', filters.experienceYears);
@@ -152,15 +155,14 @@ export function CaregiverMatcher() {
       // Get all care reviews in a separate query
       const { data: reviewsData, error: reviewsError } = await supabase
         .from('care_reviews')
-        .select('*')
-        .eq('reviewee_type', 'caregiver');
+        .select('*');
 
       if (reviewsError) {
         console.error('Reviews query error:', reviewsError);
         throw reviewsError;
       }
 
-      const caregivers = caregiverData as CaregiverProfile[];
+      const caregivers = caregiverData as unknown as CaregiverProfile[];
       const reviews = reviewsData as CareReview[];
 
       // Add ratings data to caregivers
