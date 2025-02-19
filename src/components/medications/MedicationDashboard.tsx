@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { VoiceReminder } from "./components/VoiceReminder";
 import { SupervisorPanel } from "./components/SupervisorPanel";
 import { AdherenceChart } from "./components/AdherenceChart";
-import { UpcomingReminders } from "./components/UpcomingReminders"; 
+import { UpcomingReminders } from "./UpcomingReminders"; 
 import { Loader2, Bell, Activity, ShieldCheck } from "lucide-react";
 import type { MedicationAdherenceTrend, MedicationSupervisionSummary } from "@/types/medication";
 
@@ -68,20 +67,13 @@ export const MedicationDashboard = ({ groupId }: { groupId: string }) => {
             approved_medications: 0,
             missed_medications: 0,
             avg_verification_time_minutes: 0,
-            last_updated: new Date().toISOString()
+            supervisor_id: '',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
           };
         }
 
-        return {
-          id: data.id,
-          group_id: data.group_id,
-          total_medications: data.total_medications || 0,
-          pending_verifications: data.pending_verifications || 0,
-          approved_medications: data.approved_medications || 0,
-          missed_medications: data.missed_medications || 0,
-          avg_verification_time_minutes: data.avg_verification_time_minutes || 0,
-          last_updated: data.updated_at || new Date().toISOString()
-        };
+        return data as MedicationSupervisionSummary;
       } catch (error) {
         console.error('Error fetching supervision data:', error);
         // Return default values on error
@@ -93,7 +85,9 @@ export const MedicationDashboard = ({ groupId }: { groupId: string }) => {
           approved_medications: 0,
           missed_medications: 0,
           avg_verification_time_minutes: 0,
-          last_updated: new Date().toISOString()
+          supervisor_id: '',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
         };
       }
     }

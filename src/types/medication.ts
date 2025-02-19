@@ -14,7 +14,9 @@ export interface MedicationSupervisionSummary {
   approved_medications: number;
   missed_medications: number;
   avg_verification_time_minutes: number;
-  last_updated: string;
+  supervisor_id?: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface MedicationPortalSettings {
