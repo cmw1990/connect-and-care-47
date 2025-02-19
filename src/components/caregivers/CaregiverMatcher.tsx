@@ -29,6 +29,21 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { motion, AnimatePresence } from "framer-motion";
 
+interface CaregiverFilters {
+  specialization: string;
+  maxRate: number;
+  experienceYears: number;
+  verifiedOnly: boolean;
+  dementiaOnly: boolean;
+  mentalHealthOnly: boolean;
+  emergencyResponse: boolean;
+  maxDistance: number;
+  careType: string;
+  ageGroup: string;
+  petType: string;
+  specialNeeds: string;
+}
+
 interface AdvancedFilters {
   availability: string[];
   languages: string[];
@@ -40,8 +55,30 @@ interface AdvancedFilters {
   ratings: number;
 }
 
+interface CaregiverProfile {
+  id: string;
+  user?: {
+    first_name: string;
+    last_name: string;
+  };
+  coordinates?: {
+    latitude: number;
+    longitude: number;
+  };
+  hourly_rate: number;
+  experience_years: number;
+  background_check_verified: boolean;
+  specializations: string[];
+  bio: string;
+  avatar_url?: string;
+  ratings?: Array<{
+    rating: number;
+    review: string;
+  }>;
+}
+
 export function CaregiverMatcher() {
-  const [filters, setFilters] = useState<CompanionFilters>({
+  const [filters, setFilters] = useState<CaregiverFilters>({
     specialization: "",
     maxRate: 100,
     experienceYears: 0,
@@ -73,48 +110,32 @@ export function CaregiverMatcher() {
   const { data: caregivers, isLoading } = useQuery({
     queryKey: ['caregivers', filters, advancedFilters],
     queryFn: async () => {
-      let query = supabase
+      let { data: caregiverData, error } = await supabase
         .from('caregiver_profiles')
         .select(`
           *,
           user:profiles(first_name, last_name),
-          verifications:background_checks(status, check_type),
+          coordinates,
           ratings:caregiver_ratings(rating, review)
-        `);
-
-      // Apply filters
-      if (filters.verifiedOnly) {
-        query = query.eq('identity_verified', true);
-      }
-
-      if (filters.dementiaOnly) {
-        query = query.eq('dementia_care_certified', true);
-      }
-
-      if (advancedFilters.backgroundChecked) {
-        query = query.eq('background_check_verified', true);
-      }
-
-      if (filters.experienceYears > 0) {
-        query = query.gte('experience_years', filters.experienceYears);
-      }
-
-      const { data, error } = await query;
+        `)
+        .eq(filters.verifiedOnly ? 'identity_verified' : 'id', filters.verifiedOnly ? true : 'id')
+        .eq(filters.dementiaOnly ? 'dementia_care_certified' : 'id', filters.dementiaOnly ? true : 'id')
+        .eq(advancedFilters.backgroundChecked ? 'background_check_verified' : 'id', advancedFilters.backgroundChecked ? true : 'id')
+        .gte(filters.experienceYears > 0 ? 'experience_years' : 'id', filters.experienceYears > 0 ? filters.experienceYears : 'id');
 
       if (error) throw error;
 
-      // Additional client-side filtering
-      let filteredData = data || [];
+      let filteredData = caregiverData as CaregiverProfile[] || [];
 
       if (userLocation) {
         filteredData = filteredData.filter(caregiver => {
-          if (!caregiver.location?.latitude || !caregiver.location?.longitude) return false;
+          if (!caregiver.coordinates?.latitude || !caregiver.coordinates?.longitude) return false;
           
           const distance = calculateDistance(
             userLocation.lat,
             userLocation.lng,
-            caregiver.location.latitude,
-            caregiver.location.longitude
+            caregiver.coordinates.latitude,
+            caregiver.coordinates.longitude
           );
           
           return distance <= filters.maxDistance;
@@ -123,8 +144,8 @@ export function CaregiverMatcher() {
 
       // Sort by rating
       filteredData.sort((a, b) => {
-        const aRating = a.ratings?.reduce((acc: number, curr: any) => acc + curr.rating, 0) / (a.ratings?.length || 1);
-        const bRating = b.ratings?.reduce((acc: number, curr: any) => acc + curr.rating, 0) / (b.ratings?.length || 1);
+        const aRating = (a.ratings || []).reduce((acc, curr) => acc + curr.rating, 0) / (a.ratings?.length || 1);
+        const bRating = (b.ratings || []).reduce((acc, curr) => acc + curr.rating, 0) / (b.ratings?.length || 1);
         return bRating - aRating;
       });
 
