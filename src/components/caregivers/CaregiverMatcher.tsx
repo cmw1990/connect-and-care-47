@@ -61,10 +61,6 @@ interface CaregiverProfile {
     first_name: string;
     last_name: string;
   };
-  coordinates?: {
-    latitude: number;
-    longitude: number;
-  };
   hourly_rate: number;
   experience_years: number;
   background_check_verified: boolean;
@@ -75,6 +71,8 @@ interface CaregiverProfile {
     rating: number;
     review: string;
   }>;
+  latitude?: number;
+  longitude?: number;
 }
 
 export function CaregiverMatcher() {
@@ -110,43 +108,67 @@ export function CaregiverMatcher() {
   const { data: caregivers, isLoading } = useQuery({
     queryKey: ['caregivers', filters, advancedFilters],
     queryFn: async () => {
-      let { data: caregiverData, error } = await supabase
+      let query = supabase
         .from('caregiver_profiles')
         .select(`
           *,
           user:profiles(first_name, last_name),
           ratings:caregiver_ratings(rating, review)
-        `)
-        .eq(filters.verifiedOnly ? 'identity_verified' : 'id', filters.verifiedOnly ? true : 'id')
-        .eq(filters.dementiaOnly ? 'dementia_care_certified' : 'id', filters.dementiaOnly ? true : 'id')
-        .eq(advancedFilters.backgroundChecked ? 'background_check_verified' : 'id', advancedFilters.backgroundChecked ? true : 'id')
-        .gte(filters.experienceYears > 0 ? 'experience_years' : 'id', filters.experienceYears > 0 ? filters.experienceYears : 'id');
+        `);
+
+      // Apply filters
+      if (filters.verifiedOnly) {
+        query = query.eq('identity_verified', true);
+      }
+      if (filters.dementiaOnly) {
+        query = query.eq('dementia_care_certified', true);
+      }
+      if (advancedFilters.backgroundChecked) {
+        query = query.eq('background_check_verified', true);
+      }
+      if (filters.experienceYears > 0) {
+        query = query.gte('experience_years', filters.experienceYears);
+      }
+      if (advancedFilters.maxHourlyRate > 0) {
+        query = query.lte('hourly_rate', advancedFilters.maxHourlyRate);
+      }
+
+      const { data: caregiverData, error } = await query;
 
       if (error) {
         console.error('Supabase query error:', error);
         throw error;
       }
 
-      let filteredData = (caregiverData || []) as unknown as CaregiverProfile[];
+      let filteredData = (caregiverData || []) as CaregiverProfile[];
 
+      // Apply location filtering
       if (userLocation) {
         filteredData = filteredData.filter(caregiver => {
-          const coordinates = caregiver as any;
-          if (!coordinates?.latitude || !coordinates?.longitude) return false;
+          if (!caregiver.latitude || !caregiver.longitude) return false;
           
           const distance = calculateDistance(
             userLocation.lat,
             userLocation.lng,
-            coordinates.latitude,
-            coordinates.longitude
+            caregiver.latitude,
+            caregiver.longitude
           );
           
           return distance <= filters.maxDistance;
         });
       }
 
+      // Apply rating filtering
+      if (advancedFilters.ratings > 0) {
+        filteredData = filteredData.filter(caregiver => {
+          const ratings = Array.isArray(caregiver.ratings) ? caregiver.ratings : [];
+          const avgRating = ratings.reduce((acc, curr) => acc + curr.rating, 0) / (ratings.length || 1);
+          return avgRating >= advancedFilters.ratings;
+        });
+      }
+
       // Sort by rating
-      filteredData.sort((a, b) => {
+      return filteredData.sort((a, b) => {
         const aRatings = Array.isArray(a.ratings) ? a.ratings : [];
         const bRatings = Array.isArray(b.ratings) ? b.ratings : [];
         
@@ -154,8 +176,6 @@ export function CaregiverMatcher() {
         const bRating = bRatings.reduce((acc, curr) => acc + curr.rating, 0) / (bRatings.length || 1);
         return bRating - aRating;
       });
-
-      return filteredData;
     }
   });
 
