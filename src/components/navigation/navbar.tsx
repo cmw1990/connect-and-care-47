@@ -8,6 +8,7 @@ import { LanguageSelector } from "../ui/language-selector";
 import { useTranslation } from "react-i18next";
 import { Home, Search, Building2, ShoppingCart, Users, Settings, Bell, LogOut } from "lucide-react";
 import { motion } from "framer-motion";
+import { Button } from "@/components/ui/button"; // Add this import
 import { cn } from "@/lib/utils";
 import {
   DropdownMenu,
