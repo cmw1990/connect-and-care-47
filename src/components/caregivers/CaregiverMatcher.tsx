@@ -1,10 +1,6 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { CaregiverCard } from "./CaregiverCard";
-import { SpecializedCareFilters } from "../filters/SpecializedCareFilters";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Heart, Search, MapPin, Clock, Shield, Star, Filter, Calendar } from "lucide-react";
@@ -35,6 +31,9 @@ import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { motion, AnimatePresence } from "framer-motion";
+import { AdvancedFiltersSheet } from "./components/AdvancedFiltersSheet";
+import { BookingDialog } from "./components/BookingDialog";
+import type { CaregiverProfile, CareReview, Availability } from "@/types/caregiver";
 
 interface CaregiverFilters {
   specialization: string;
@@ -60,46 +59,6 @@ interface AdvancedFilters {
   yearsOfExperience: number;
   maxHourlyRate: number;
   ratings: number;
-}
-
-interface CareReview {
-  id: string;
-  reviewee_id: string;
-  rating: number;
-  review_text: string;
-  created_at: string;
-  reviewer_id: string;
-  verified_review: boolean;
-  booking_id: string;
-}
-
-interface CaregiverProfile {
-  id: string;
-  user?: {
-    first_name: string;
-    last_name: string;
-  };
-  hourly_rate: number;
-  experience_years: number;
-  identity_verified: boolean;
-  background_check_status: string;
-  specializations: string[];
-  bio: string;
-  avatar_url?: string;
-  dementia_care_certified: boolean;
-  latitude?: number;
-  longitude?: number;
-  ratings_aggregate?: {
-    avg_rating: number;
-    count: number;
-  };
-}
-
-interface Availability {
-  id: string;
-  day_of_week: number;
-  start_time: string;
-  end_time: string;
 }
 
 interface BookingFormData {
@@ -317,6 +276,18 @@ export function CaregiverMatcher() {
     }
   };
 
+  const handleFilterChange = (key: string, value: any) => {
+    setFilters(prev => ({ ...prev, [key]: value }));
+  };
+
+  const handleAdvancedFilterChange = (key: string, value: any) => {
+    setAdvancedFilters(prev => ({ ...prev, [key]: value }));
+  };
+
+  const handleBookingDataChange = (data: Partial<BookingFormData>) => {
+    setBookingData(prev => ({ ...prev, ...data }));
+  };
+
   return (
     <Card className="w-full">
       <CardHeader>
@@ -327,7 +298,6 @@ export function CaregiverMatcher() {
       </CardHeader>
       <CardContent>
         <div className="space-y-6">
-          {/* Search and Quick Filters */}
           <div className="flex flex-wrap gap-4">
             <div className="flex-1 min-w-[200px]">
               <Input
@@ -340,95 +310,14 @@ export function CaregiverMatcher() {
               />
             </div>
             
-            <Sheet>
-              <SheetTrigger asChild>
-                <Button variant="outline" className="flex items-center gap-2">
-                  <Filter className="h-4 w-4" />
-                  Advanced Filters
-                </Button>
-              </SheetTrigger>
-              <SheetContent>
-                <SheetHeader>
-                  <SheetTitle>Advanced Filters</SheetTitle>
-                </SheetHeader>
-                <div className="mt-6 space-y-6">
-                  <div className="space-y-2">
-                    <Label>Maximum Hourly Rate</Label>
-                    <Slider
-                      value={[advancedFilters.maxHourlyRate]}
-                      onValueChange={([value]) => 
-                        setAdvancedFilters(prev => ({ ...prev, maxHourlyRate: value }))
-                      }
-                      max={100}
-                      step={5}
-                    />
-                    <span className="text-sm text-muted-foreground">
-                      Up to ${advancedFilters.maxHourlyRate}/hour
-                    </span>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>Minimum Rating</Label>
-                    <div className="flex items-center gap-2">
-                      {[1, 2, 3, 4, 5].map((rating) => (
-                        <Star
-                          key={rating}
-                          className={`h-5 w-5 cursor-pointer ${
-                            rating <= advancedFilters.ratings
-                              ? "text-yellow-400 fill-yellow-400"
-                              : "text-gray-300"
-                          }`}
-                          onClick={() => 
-                            setAdvancedFilters(prev => ({ ...prev, ratings: rating }))
-                          }
-                        />
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      id="background-check"
-                      checked={advancedFilters.backgroundChecked}
-                      onCheckedChange={(checked) =>
-                        setAdvancedFilters(prev => ({ ...prev, backgroundChecked: checked }))
-                      }
-                    />
-                    <Label htmlFor="background-check">Background Checked Only</Label>
-                  </div>
-
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      id="transportation"
-                      checked={advancedFilters.transportationProvided}
-                      onCheckedChange={(checked) =>
-                        setAdvancedFilters(prev => ({ ...prev, transportationProvided: checked }))
-                      }
-                    />
-                    <Label htmlFor="transportation">Provides Transportation</Label>
-                  </div>
-
-                  <Select
-                    value={filters.specialization}
-                    onValueChange={(value) => setFilters({ ...filters, specialization: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Specialization" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="dementia">Dementia Care</SelectItem>
-                      <SelectItem value="elderly">Elderly Care</SelectItem>
-                      <SelectItem value="disability">Disability Support</SelectItem>
-                      <SelectItem value="rehabilitation">Rehabilitation</SelectItem>
-                      <SelectItem value="palliative">Palliative Care</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </SheetContent>
-            </Sheet>
+            <AdvancedFiltersSheet
+              filters={filters}
+              advancedFilters={advancedFilters}
+              onFiltersChange={handleFilterChange}
+              onAdvancedFiltersChange={handleAdvancedFilterChange}
+            />
           </div>
 
-          {/* Results */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
             <AnimatePresence>
               {isLoading ? (
@@ -448,94 +337,13 @@ export function CaregiverMatcher() {
                     exit={{ opacity: 0, y: -20 }}
                     transition={{ duration: 0.2 }}
                   >
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <div onClick={() => setSelectedCaregiver(caregiver.id)}>
-                          <CaregiverCard
-                            caregiver={caregiver}
-                          />
-                        </div>
-                      </DialogTrigger>
-                      <DialogContent className="max-w-2xl">
-                        <DialogHeader>
-                          <DialogTitle>Book Caregiver</DialogTitle>
-                        </DialogHeader>
-                        <div className="space-y-4 py-4">
-                          <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                              <Label>Start Time</Label>
-                              <Input
-                                type="datetime-local"
-                                value={bookingData.start_time}
-                                onChange={(e) => setBookingData(prev => ({
-                                  ...prev,
-                                  start_time: e.target.value
-                                }))}
-                              />
-                            </div>
-                            <div className="space-y-2">
-                              <Label>End Time</Label>
-                              <Input
-                                type="datetime-local"
-                                value={bookingData.end_time}
-                                onChange={(e) => setBookingData(prev => ({
-                                  ...prev,
-                                  end_time: e.target.value
-                                }))}
-                              />
-                            </div>
-                          </div>
-
-                          <div className="space-y-2">
-                            <Label>Notes</Label>
-                            <textarea
-                              className="w-full min-h-[100px] p-2 border rounded-md"
-                              value={bookingData.notes}
-                              onChange={(e) => setBookingData(prev => ({
-                                ...prev,
-                                notes: e.target.value
-                              }))}
-                              placeholder="Add any specific requirements or notes for the caregiver..."
-                            />
-                          </div>
-
-                          {availability && (
-                            <div className="space-y-2">
-                              <Label>Caregiver Availability</Label>
-                              <div className="grid grid-cols-7 gap-2">
-                                {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day, index) => {
-                                  const dayAvailability = availability.filter(a => a.day_of_week === index);
-                                  return (
-                                    <div key={day} className="text-center p-2 border rounded-md">
-                                      <div className="font-medium">{day}</div>
-                                      <div className="text-sm text-gray-500">
-                                        {dayAvailability.length > 0 ? (
-                                          dayAvailability.map((a, i) => (
-                                            <div key={i}>
-                                              {a.start_time.slice(0, 5)} - {a.end_time.slice(0, 5)}
-                                            </div>
-                                          ))
-                                        ) : (
-                                          <div>Unavailable</div>
-                                        )}
-                                      </div>
-                                    </div>
-                                  );
-                                })}
-                              </div>
-                            </div>
-                          )}
-
-                          <Button
-                            className="w-full"
-                            onClick={handleBookingSubmit}
-                            disabled={!bookingData.start_time || !bookingData.end_time}
-                          >
-                            Request Booking
-                          </Button>
-                        </div>
-                      </DialogContent>
-                    </Dialog>
+                    <BookingDialog
+                      caregiver={caregiver}
+                      availability={availability}
+                      bookingData={bookingData}
+                      onBookingSubmit={handleBookingSubmit}
+                      onBookingDataChange={handleBookingDataChange}
+                    />
                   </motion.div>
                 ))
               )}
