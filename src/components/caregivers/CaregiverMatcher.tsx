@@ -141,30 +141,31 @@ export function CaregiverMatcher() {
         throw error;
       }
 
-      // Get all caregiver ratings in a separate query
-      const { data: ratingsData, error: ratingsError } = await supabase
-        .from('caregiver_ratings')
-        .select('*');
+      // Get all care reviews in a separate query
+      const { data: reviewsData, error: reviewsError } = await supabase
+        .from('care_reviews')
+        .select('*')
+        .eq('reviewee_type', 'caregiver');
 
-      if (ratingsError) {
-        console.error('Ratings query error:', ratingsError);
-        throw ratingsError;
+      if (reviewsError) {
+        console.error('Reviews query error:', reviewsError);
+        throw reviewsError;
       }
 
-      let filteredData = (caregiverData || []) as CaregiverProfile[];
+      let filteredData = (caregiverData || []) as unknown as CaregiverProfile[];
 
       // Add ratings data to caregivers
       filteredData = filteredData.map(caregiver => {
-        const caregiverRatings = (ratingsData || []).filter(r => r.caregiver_id === caregiver.id);
-        const avgRating = caregiverRatings.length > 0
-          ? caregiverRatings.reduce((acc, curr) => acc + curr.rating, 0) / caregiverRatings.length
+        const caregiverReviews = (reviewsData || []).filter(r => r.reviewee_id === caregiver.id);
+        const avgRating = caregiverReviews.length > 0
+          ? caregiverReviews.reduce((acc, curr) => acc + (curr.rating || 0), 0) / caregiverReviews.length
           : 0;
         
         return {
           ...caregiver,
           ratings_aggregate: {
             avg_rating: avgRating,
-            count: caregiverRatings.length
+            count: caregiverReviews.length
           }
         };
       });
