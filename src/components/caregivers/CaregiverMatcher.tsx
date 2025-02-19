@@ -115,7 +115,6 @@ export function CaregiverMatcher() {
         .select(`
           *,
           user:profiles(first_name, last_name),
-          coordinates,
           ratings:caregiver_ratings(rating, review)
         `)
         .eq(filters.verifiedOnly ? 'identity_verified' : 'id', filters.verifiedOnly ? true : 'id')
@@ -123,19 +122,23 @@ export function CaregiverMatcher() {
         .eq(advancedFilters.backgroundChecked ? 'background_check_verified' : 'id', advancedFilters.backgroundChecked ? true : 'id')
         .gte(filters.experienceYears > 0 ? 'experience_years' : 'id', filters.experienceYears > 0 ? filters.experienceYears : 'id');
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase query error:', error);
+        throw error;
+      }
 
-      let filteredData = caregiverData as CaregiverProfile[] || [];
+      let filteredData = (caregiverData || []) as unknown as CaregiverProfile[];
 
       if (userLocation) {
         filteredData = filteredData.filter(caregiver => {
-          if (!caregiver.coordinates?.latitude || !caregiver.coordinates?.longitude) return false;
+          const coordinates = caregiver as any;
+          if (!coordinates?.latitude || !coordinates?.longitude) return false;
           
           const distance = calculateDistance(
             userLocation.lat,
             userLocation.lng,
-            caregiver.coordinates.latitude,
-            caregiver.coordinates.longitude
+            coordinates.latitude,
+            coordinates.longitude
           );
           
           return distance <= filters.maxDistance;
@@ -144,8 +147,11 @@ export function CaregiverMatcher() {
 
       // Sort by rating
       filteredData.sort((a, b) => {
-        const aRating = (a.ratings || []).reduce((acc, curr) => acc + curr.rating, 0) / (a.ratings?.length || 1);
-        const bRating = (b.ratings || []).reduce((acc, curr) => acc + curr.rating, 0) / (b.ratings?.length || 1);
+        const aRatings = Array.isArray(a.ratings) ? a.ratings : [];
+        const bRatings = Array.isArray(b.ratings) ? b.ratings : [];
+        
+        const aRating = aRatings.reduce((acc, curr) => acc + curr.rating, 0) / (aRatings.length || 1);
+        const bRating = bRatings.reduce((acc, curr) => acc + curr.rating, 0) / (bRatings.length || 1);
         return bRating - aRating;
       });
 
