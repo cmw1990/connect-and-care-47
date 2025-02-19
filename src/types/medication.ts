@@ -17,6 +17,7 @@ export interface MedicationSupervisionSummary {
   supervisor_id?: string;
   created_at?: string;
   updated_at?: string;
+  last_updated: string;  // Added this field to match Supabase type
 }
 
 export interface MedicationPortalSettings {

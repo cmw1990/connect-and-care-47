@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { VoiceReminder } from "./components/VoiceReminder";
 import { SupervisorPanel } from "./components/SupervisorPanel";
 import { AdherenceChart } from "./components/AdherenceChart";
-import { UpcomingReminders } from "./UpcomingReminders"; 
+import { UpcomingReminders } from "./components/UpcomingReminders"; // Fixed import path
 import { Loader2, Bell, Activity, ShieldCheck } from "lucide-react";
 import type { MedicationAdherenceTrend, MedicationSupervisionSummary } from "@/types/medication";
 
@@ -58,7 +59,7 @@ export const MedicationDashboard = ({ groupId }: { groupId: string }) => {
         if (error) throw error;
 
         if (!data) {
-          // Return default values if no data exists
+          const now = new Date().toISOString();
           return {
             id: 'default',
             group_id: groupId,
@@ -68,15 +69,19 @@ export const MedicationDashboard = ({ groupId }: { groupId: string }) => {
             missed_medications: 0,
             avg_verification_time_minutes: 0,
             supervisor_id: '',
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
+            created_at: now,
+            updated_at: now,
+            last_updated: now
           };
         }
 
-        return data as MedicationSupervisionSummary;
+        return {
+          ...data,
+          last_updated: data.updated_at || new Date().toISOString()
+        } as MedicationSupervisionSummary;
       } catch (error) {
         console.error('Error fetching supervision data:', error);
-        // Return default values on error
+        const now = new Date().toISOString();
         return {
           id: 'default',
           group_id: groupId,
@@ -86,8 +91,9 @@ export const MedicationDashboard = ({ groupId }: { groupId: string }) => {
           missed_medications: 0,
           avg_verification_time_minutes: 0,
           supervisor_id: '',
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
+          created_at: now,
+          updated_at: now,
+          last_updated: now
         };
       }
     }
