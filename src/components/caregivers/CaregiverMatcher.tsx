@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,8 +7,9 @@ import { CaregiverCard } from "./CaregiverCard";
 import { SpecializedCareFilters } from "../filters/SpecializedCareFilters";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Heart, Search, MapPin, Clock, Shield, Star } from "lucide-react";
+import { Heart, Search, MapPin, Clock, Shield, Star, Filter, Calendar } from "lucide-react";
 import { getCurrentLocation, calculateDistance } from "@/utils/locationUtils";
+import { useQuery } from "@tanstack/react-query";
 import {
   Select,
   SelectContent,
@@ -15,82 +17,30 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Json } from "@/integrations/supabase/types";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import { Slider } from "@/components/ui/slider";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { motion, AnimatePresence } from "framer-motion";
 
-interface LocationData {
-  latitude: number;
-  longitude: number;
+interface AdvancedFilters {
+  availability: string[];
+  languages: string[];
+  specialNeeds: string[];
+  transportationProvided: boolean;
+  backgroundChecked: boolean;
+  yearsOfExperience: number;
+  maxHourlyRate: number;
+  ratings: number;
 }
-
-interface Schedule {
-  day: string;
-  times: Array<{
-    start: string;
-    end: string;
-  }>;
-}
-
-interface AvailabilityPreferences {
-  virtual?: boolean;
-  inPerson?: boolean;
-  radius?: number;
-}
-
-interface Availability {
-  location?: LocationData;
-  schedule?: Schedule[];
-  preferences?: AvailabilityPreferences;
-}
-
-interface SimplifiedCaregiverProfile {
-  id: string;
-  user_id: string;
-  bio: string | null;
-  experience_years: number | null;
-  hourly_rate: number | null;
-  skills: string[] | null;
-  rating: number | null;
-  reviews_count: number | null;
-  background_check_status: string | null;
-  identity_verified: boolean | null;
-  service_radius: number | null;
-  user: {
-    first_name: string;
-    last_name: string;
-  };
-  certifications: Json[];
-  availability: Availability | null;
-  location: LocationData | null;
-  age_groups_experience?: string[] | null;
-  pet_types_experience?: string[] | null;
-  special_needs_certifications?: Json[] | null;
-}
-
-interface CompanionMatch extends SimplifiedCaregiverProfile {
-  dementia_care_certified?: boolean;
-  dementia_care_experience_years?: number;
-  cognitive_support_specialties?: string[];
-}
-
-interface CompanionFilters {
-  specialization: string;
-  maxRate: number;
-  experienceYears: number;
-  verifiedOnly: boolean;
-  dementiaOnly: boolean;
-  mentalHealthOnly: boolean;
-  emergencyResponse: boolean;
-  maxDistance: number;
-  careType: string;
-  ageGroup: string;
-  petType: string;
-  specialNeeds: string;
-}
-
-interface CaregiverMatcherProps {}
 
 export function CaregiverMatcher() {
-  const [caregivers, setCaregivers] = useState<SimplifiedCaregiverProfile[]>([]);
   const [filters, setFilters] = useState<CompanionFilters>({
     specialization: "",
     maxRate: 100,
@@ -105,17 +55,86 @@ export function CaregiverMatcher() {
     petType: "",
     specialNeeds: ""
   });
+
+  const [advancedFilters, setAdvancedFilters] = useState<AdvancedFilters>({
+    availability: [],
+    languages: [],
+    specialNeeds: [],
+    transportationProvided: false,
+    backgroundChecked: false,
+    yearsOfExperience: 0,
+    maxHourlyRate: 50,
+    ratings: 4
+  });
+
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
+
+  const { data: caregivers, isLoading } = useQuery({
+    queryKey: ['caregivers', filters, advancedFilters],
+    queryFn: async () => {
+      let query = supabase
+        .from('caregiver_profiles')
+        .select(`
+          *,
+          user:profiles(first_name, last_name),
+          verifications:background_checks(status, check_type),
+          ratings:caregiver_ratings(rating, review)
+        `);
+
+      // Apply filters
+      if (filters.verifiedOnly) {
+        query = query.eq('identity_verified', true);
+      }
+
+      if (filters.dementiaOnly) {
+        query = query.eq('dementia_care_certified', true);
+      }
+
+      if (advancedFilters.backgroundChecked) {
+        query = query.eq('background_check_verified', true);
+      }
+
+      if (filters.experienceYears > 0) {
+        query = query.gte('experience_years', filters.experienceYears);
+      }
+
+      const { data, error } = await query;
+
+      if (error) throw error;
+
+      // Additional client-side filtering
+      let filteredData = data || [];
+
+      if (userLocation) {
+        filteredData = filteredData.filter(caregiver => {
+          if (!caregiver.location?.latitude || !caregiver.location?.longitude) return false;
+          
+          const distance = calculateDistance(
+            userLocation.lat,
+            userLocation.lng,
+            caregiver.location.latitude,
+            caregiver.location.longitude
+          );
+          
+          return distance <= filters.maxDistance;
+        });
+      }
+
+      // Sort by rating
+      filteredData.sort((a, b) => {
+        const aRating = a.ratings?.reduce((acc: number, curr: any) => acc + curr.rating, 0) / (a.ratings?.length || 1);
+        const bRating = b.ratings?.reduce((acc: number, curr: any) => acc + curr.rating, 0) / (b.ratings?.length || 1);
+        return bRating - aRating;
+      });
+
+      return filteredData;
+    }
+  });
 
   useEffect(() => {
     initializeLocation();
   }, []);
-
-  useEffect(() => {
-    fetchCaregivers();
-  }, [filters, userLocation]);
 
   const initializeLocation = async () => {
     try {
@@ -134,97 +153,6 @@ export function CaregiverMatcher() {
     }
   };
 
-  const fetchCaregivers = async () => {
-    try {
-      const query = supabase
-        .from('caregiver_profiles')
-        .select(`
-          *,
-          user:profiles(first_name, last_name)
-        `);
-
-      // Apply care type specific filters
-      if (filters.careType === 'children') {
-        query.contains('age_groups_experience', [filters.ageGroup]);
-      } else if (filters.careType === 'pets') {
-        query.contains('pet_types_experience', [filters.petType]);
-      } else if (filters.careType === 'special-needs') {
-        query.contains('special_needs_certifications', [filters.specialNeeds]);
-      }
-
-      if (filters.specialization) {
-        query.contains('specializations', [filters.specialization]);
-      }
-
-      if (filters.verifiedOnly) {
-        query.eq('identity_verified', true);
-      }
-
-      if (filters.dementiaOnly) {
-        query.eq('dementia_care_certified', true);
-      }
-
-      if (filters.mentalHealthOnly) {
-        query.eq('mental_health_certified', true);
-      }
-
-      if (filters.emergencyResponse) {
-        query.eq('emergency_response', true);
-      }
-
-      if (filters.experienceYears > 0) {
-        query.gte('experience_years', filters.experienceYears);
-      }
-
-      query.lte('hourly_rate', filters.maxRate);
-
-      const { data, error } = await query;
-
-      if (error) throw error;
-
-      let filteredCaregivers = (data || []).map(caregiver => {
-        const availabilityData = caregiver.availability as Availability | null;
-        const locationData = availabilityData?.location || null;
-        
-        return {
-          ...caregiver,
-          certifications: Array.isArray(caregiver.certifications) ? caregiver.certifications : [],
-          location: locationData,
-          availability: availabilityData,
-          special_needs_certifications: Array.isArray(caregiver.special_needs_certifications) 
-            ? caregiver.special_needs_certifications 
-            : []
-        } as SimplifiedCaregiverProfile;
-      });
-
-      if (userLocation && filters.maxDistance > 0) {
-        filteredCaregivers = filteredCaregivers.filter(caregiver => {
-          if (!caregiver.location?.latitude || !caregiver.location?.longitude) return false;
-          
-          const distance = calculateDistance(
-            userLocation.lat,
-            userLocation.lng,
-            caregiver.location.latitude,
-            caregiver.location.longitude
-          );
-          
-          return distance <= filters.maxDistance;
-        });
-      }
-
-      setCaregivers(filteredCaregivers);
-    } catch (error) {
-      console.error('Error fetching caregivers:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load caregivers",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   return (
     <Card className="w-full">
       <CardHeader>
@@ -234,149 +162,135 @@ export function CaregiverMatcher() {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <Select
-              value={filters.careType}
-              onValueChange={(value) => setFilters({ ...filters, careType: value })}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Care Type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="elderly">Senior Care</SelectItem>
-                <SelectItem value="children">Child Care</SelectItem>
-                <SelectItem value="special-needs">Special Needs Care</SelectItem>
-                <SelectItem value="pets">Pet Care</SelectItem>
-                <SelectItem value="family">Family Care</SelectItem>
-              </SelectContent>
-            </Select>
+        <div className="space-y-6">
+          {/* Search and Quick Filters */}
+          <div className="flex flex-wrap gap-4">
+            <div className="flex-1 min-w-[200px]">
+              <Input
+                type="text"
+                placeholder="Search caregivers..."
+                className="w-full"
+                onChange={(e) => {
+                  // Implement search functionality
+                }}
+              />
+            </div>
+            
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button variant="outline" className="flex items-center gap-2">
+                  <Filter className="h-4 w-4" />
+                  Advanced Filters
+                </Button>
+              </SheetTrigger>
+              <SheetContent>
+                <SheetHeader>
+                  <SheetTitle>Advanced Filters</SheetTitle>
+                </SheetHeader>
+                <div className="mt-6 space-y-6">
+                  <div className="space-y-2">
+                    <Label>Maximum Hourly Rate</Label>
+                    <Slider
+                      value={[advancedFilters.maxHourlyRate]}
+                      onValueChange={([value]) => 
+                        setAdvancedFilters(prev => ({ ...prev, maxHourlyRate: value }))
+                      }
+                      max={100}
+                      step={5}
+                    />
+                    <span className="text-sm text-muted-foreground">
+                      Up to ${advancedFilters.maxHourlyRate}/hour
+                    </span>
+                  </div>
 
-            {filters.careType === 'children' && (
-              <Select
-                value={filters.ageGroup}
-                onValueChange={(value) => setFilters({ ...filters, ageGroup: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Age Group" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="infant">Infant (0-1)</SelectItem>
-                  <SelectItem value="toddler">Toddler (1-3)</SelectItem>
-                  <SelectItem value="preschool">Preschool (3-5)</SelectItem>
-                  <SelectItem value="school-age">School Age (5-12)</SelectItem>
-                  <SelectItem value="teenager">Teenager (13+)</SelectItem>
-                </SelectContent>
-              </Select>
-            )}
+                  <div className="space-y-2">
+                    <Label>Minimum Rating</Label>
+                    <div className="flex items-center gap-2">
+                      {[1, 2, 3, 4, 5].map((rating) => (
+                        <Star
+                          key={rating}
+                          className={`h-5 w-5 cursor-pointer ${
+                            rating <= advancedFilters.ratings
+                              ? "text-yellow-400 fill-yellow-400"
+                              : "text-gray-300"
+                          }`}
+                          onClick={() => 
+                            setAdvancedFilters(prev => ({ ...prev, ratings: rating }))
+                          }
+                        />
+                      ))}
+                    </div>
+                  </div>
 
-            {filters.careType === 'pets' && (
-              <Select
-                value={filters.petType}
-                onValueChange={(value) => setFilters({ ...filters, petType: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Pet Type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="dog">Dogs</SelectItem>
-                  <SelectItem value="cat">Cats</SelectItem>
-                  <SelectItem value="bird">Birds</SelectItem>
-                  <SelectItem value="fish">Fish</SelectItem>
-                  <SelectItem value="small-animal">Small Animals</SelectItem>
-                </SelectContent>
-              </Select>
-            )}
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      id="background-check"
+                      checked={advancedFilters.backgroundChecked}
+                      onCheckedChange={(checked) =>
+                        setAdvancedFilters(prev => ({ ...prev, backgroundChecked: checked }))
+                      }
+                    />
+                    <Label htmlFor="background-check">Background Checked Only</Label>
+                  </div>
 
-            {filters.careType === 'special-needs' && (
-              <Select
-                value={filters.specialNeeds}
-                onValueChange={(value) => setFilters({ ...filters, specialNeeds: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Specialization" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="autism">Autism Support</SelectItem>
-                  <SelectItem value="physical">Physical Disabilities</SelectItem>
-                  <SelectItem value="developmental">Developmental Disabilities</SelectItem>
-                  <SelectItem value="behavioral">Behavioral Support</SelectItem>
-                  <SelectItem value="learning">Learning Disabilities</SelectItem>
-                </SelectContent>
-              </Select>
-            )}
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      id="transportation"
+                      checked={advancedFilters.transportationProvided}
+                      onCheckedChange={(checked) =>
+                        setAdvancedFilters(prev => ({ ...prev, transportationProvided: checked }))
+                      }
+                    />
+                    <Label htmlFor="transportation">Provides Transportation</Label>
+                  </div>
 
-            <Select
-              value={filters.specialization}
-              onValueChange={(value) => setFilters({ ...filters, specialization: value })}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Specialization" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="mental_health">Mental Health Support</SelectItem>
-                <SelectItem value="dementia_care">Dementia Care</SelectItem>
-                <SelectItem value="elderly_care">Elderly Care</SelectItem>
-                <SelectItem value="medication_management">Medication Management</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Input
-              type="number"
-              placeholder="Max distance (miles)"
-              value={filters.maxDistance}
-              onChange={(e) => setFilters({ ...filters, maxDistance: parseInt(e.target.value) })}
-              className="w-full"
-            />
-
-            <Input
-              type="number"
-              placeholder="Max hourly rate"
-              value={filters.maxRate}
-              onChange={(e) => setFilters({ ...filters, maxRate: parseInt(e.target.value) })}
-              className="w-full"
-            />
-
-            <Select
-              value={filters.experienceYears.toString()}
-              onValueChange={(value) => setFilters({ ...filters, experienceYears: parseInt(value) })}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Experience" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="0">Any Experience</SelectItem>
-                <SelectItem value="1">1+ Years</SelectItem>
-                <SelectItem value="3">3+ Years</SelectItem>
-                <SelectItem value="5">5+ Years</SelectItem>
-              </SelectContent>
-            </Select>
+                  <Select
+                    value={filters.specialization}
+                    onValueChange={(value) => setFilters({ ...filters, specialization: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Specialization" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="dementia">Dementia Care</SelectItem>
+                      <SelectItem value="elderly">Elderly Care</SelectItem>
+                      <SelectItem value="disability">Disability Support</SelectItem>
+                      <SelectItem value="rehabilitation">Rehabilitation</SelectItem>
+                      <SelectItem value="palliative">Palliative Care</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </SheetContent>
+            </Sheet>
           </div>
 
-          <SpecializedCareFilters
-            dementiaOnly={filters.dementiaOnly}
-            mentalHealthOnly={filters.mentalHealthOnly}
-            onDementiaChange={(value) => setFilters({ ...filters, dementiaOnly: value })}
-            onMentalHealthChange={(value) => setFilters({ ...filters, mentalHealthOnly: value })}
-          />
-
+          {/* Results */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-            {isLoading ? (
-              <div className="col-span-2 flex justify-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
-              </div>
-            ) : caregivers.length === 0 ? (
-              <div className="col-span-2 text-center py-8">
-                <p className="text-gray-500">No caregivers found matching your criteria</p>
-              </div>
-            ) : (
-              caregivers.map((caregiver) => (
-                <CaregiverCard
-                  key={caregiver.id}
-                  caregiver={caregiver}
-                />
-              ))
-            )}
+            <AnimatePresence>
+              {isLoading ? (
+                <div className="col-span-2 flex justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+                </div>
+              ) : caregivers?.length === 0 ? (
+                <div className="col-span-2 text-center py-8">
+                  <p className="text-gray-500">No caregivers found matching your criteria</p>
+                </div>
+              ) : (
+                caregivers?.map((caregiver) => (
+                  <motion.div
+                    key={caregiver.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <CaregiverCard
+                      caregiver={caregiver}
+                    />
+                  </motion.div>
+                ))
+              )}
+            </AnimatePresence>
           </div>
         </div>
       </CardContent>
