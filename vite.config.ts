@@ -8,8 +8,17 @@ import tailwindNesting from 'tailwindcss/nesting';
 
 export default defineConfig(({ mode }) => ({
   server: {
-    host: "localhost",
-    port: 8080,
+    port: 4001,
+    strictPort: true, // Force the specified port
+    host: true, // Listen on all addresses
+    hmr: {
+      overlay: true,
+    },
+  },
+  preview: {
+    port: 4001,
+    strictPort: true,
+    host: true,
   },
   plugins: [
     react(),
