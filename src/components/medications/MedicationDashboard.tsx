@@ -29,69 +29,97 @@ export const MedicationDashboard = ({ groupId }: { groupId: string }) => {
   const { data: adherenceData, isLoading: isLoadingAdherence } = useQuery<MedicationAdherenceTrend[]>({
     queryKey: ['medicationAdherence', groupId] as const,
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('medication_adherence_trends')
-        .select('*')
-        .eq('group_id', groupId)
-        .order('date', { ascending: false })
-        .limit(30);
+      try {
+        const { data, error } = await supabase
+          .from('medication_adherence_trends')
+          .select('*')
+          .eq('group_id', groupId)
+          .order('date', { ascending: false })
+          .limit(30);
 
-      if (error) {
+        if (error) throw error;
+        return data || [];
+      } catch (error) {
         console.error('Error fetching adherence data:', error);
-        throw error;
+        return [];
       }
-      return data || [];
     }
   });
 
   const { data: supervisorData, isLoading: isLoadingSupervisor } = useQuery<MedicationSupervisionSummary>({
     queryKey: ['medicationSupervision', groupId] as const,
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('medication_supervision_summary')
-        .select('*')
-        .eq('group_id', groupId)
-        .single();
+      try {
+        const { data, error } = await supabase
+          .from('medication_supervision_summary')
+          .select('*')
+          .eq('group_id', groupId)
+          .maybeSingle();
 
-      if (error) {
+        if (error) throw error;
+
+        if (!data) {
+          // Return default values if no data exists
+          return {
+            id: 'default',
+            group_id: groupId,
+            total_medications: 0,
+            pending_verifications: 0,
+            approved_medications: 0,
+            missed_medications: 0,
+            avg_verification_time_minutes: 0,
+            last_updated: new Date().toISOString()
+          };
+        }
+
+        return {
+          id: data.id,
+          group_id: data.group_id,
+          total_medications: data.total_medications || 0,
+          pending_verifications: data.pending_verifications || 0,
+          approved_medications: data.approved_medications || 0,
+          missed_medications: data.missed_medications || 0,
+          avg_verification_time_minutes: data.avg_verification_time_minutes || 0,
+          last_updated: data.updated_at || new Date().toISOString()
+        };
+      } catch (error) {
         console.error('Error fetching supervision data:', error);
-        throw error;
+        // Return default values on error
+        return {
+          id: 'default',
+          group_id: groupId,
+          total_medications: 0,
+          pending_verifications: 0,
+          approved_medications: 0,
+          missed_medications: 0,
+          avg_verification_time_minutes: 0,
+          last_updated: new Date().toISOString()
+        };
       }
-
-      const result: MedicationSupervisionSummary = {
-        id: data.id,
-        group_id: groupId,
-        total_medications: data.total_medications || 0,
-        pending_verifications: data.pending_verifications || 0,
-        approved_medications: data.approved_medications || 0,
-        missed_medications: data.missed_medications || 0,
-        avg_verification_time_minutes: data.avg_verification_time_minutes || 0,
-        last_updated: data.updated_at || new Date().toISOString()
-      };
-
-      return result;
     }
   });
 
   const { data: settings } = useQuery<Settings>({
     queryKey: ['medicationSettings', groupId] as const,
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('medication_portal_settings')
-        .select('reminder_preferences')
-        .eq('group_id', groupId)
-        .single();
+      try {
+        const { data, error } = await supabase
+          .from('medication_portal_settings')
+          .select('reminder_preferences')
+          .eq('group_id', groupId)
+          .maybeSingle();
 
-      if (error) {
+        if (error) throw error;
+        
+        const reminderPrefs = data?.reminder_preferences as unknown as ReminderPreferences;
+        return {
+          voice_reminders: reminderPrefs?.voice_reminders ?? false,
+          preferred_voice: reminderPrefs?.preferred_voice
+        };
+      } catch (error) {
         console.error('Error fetching settings:', error);
-        throw error;
+        return { voice_reminders: false };
       }
-      
-      const reminderPrefs = data?.reminder_preferences as unknown as ReminderPreferences;
-      return {
-        voice_reminders: reminderPrefs?.voice_reminders ?? false,
-        preferred_voice: reminderPrefs?.preferred_voice
-      };
     }
   });
 
