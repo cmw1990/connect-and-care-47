@@ -136,6 +136,91 @@ documentation:
       - document_new_features
       - update_architecture
 
+documentation_strategy:
+  structure:
+    base_path: "docs/"
+    directories:
+      - overview:
+          files:
+            - name: "ARCHITECTURE.md"
+              purpose: "System design & patterns"
+      - features:
+          files:
+            - name: "FEATURES.md"
+              purpose: "Feature documentation"
+      - name: "DEVELOPMENT_STATUS.md"
+        purpose: "Implementation tracking"
+
+  standards:
+    development_status:
+      format:
+        - feature_name: "Required with status emoji (⏳ or ✅)"
+        - location: "Path to feature implementation"
+        - status: 
+            - progress: "[In Progress/Complete]"
+            - metrics: "[Frontend: XX% | Backend: XX% | Integration: XX%]"
+        - last_updated: "YYYY-MM-DD format"
+        - test_coverage: "Percentage"
+        - dependencies: "List of dependencies"
+        - next_steps: "Upcoming tasks"
+
+    features:
+      format:
+        - feature_name: "Required"
+        - location: "Path to feature"
+        - description: "Feature purpose and functionality"
+        - implementation_details:
+            - frontend: "Key technical details"
+            - backend: "Key technical details"
+            - state_management: "Data flow patterns"
+        - apis_endpoints: "API documentation"
+        - data_models: "Database schema/models"
+        - usage_examples: "Code snippets/examples"
+
+    architecture:
+      format:
+        - component_name: "Required"
+        - type: "Component type"
+        - purpose: "Component's role"
+        - dependencies: "Required services/libraries"
+        - design_patterns: "Architectural patterns used"
+        - integration_points: "Service interactions"
+        - performance: "Optimization notes"
+
+  rules:
+    before_development:
+      - "Review DEVELOPMENT_STATUS.md to avoid duplicate work"
+      - "Check FEATURES.md for existing implementations"
+      - "Consult ARCHITECTURE.md for design patterns"
+      - "Update implementation plan in DEVELOPMENT_STATUS.md"
+
+    during_development:
+      - "Add inline documentation for complex logic"
+      - "Follow TypeScript type documentation standards"
+      - "Document API endpoints as they're created"
+      - "Track implementation progress percentages"
+
+    after_development:
+      - "Update feature status and completion percentages"
+      - "Add new feature documentation"
+      - "Update architectural documentation if patterns change"
+      - "Include usage examples and test coverage"
+
+  quality_standards:
+    - "All documentation must be in English"
+    - "Use markdown for consistent formatting"
+    - "Include code examples where applicable"
+    - "Keep documentation up-to-date with code changes"
+    - "Include last update timestamps"
+    - "Maintain clear status indicators (⏳, ✅)"
+
+  review_process:
+    - "Documentation reviews parallel code reviews"
+    - "Verify accuracy of status updates"
+    - "Ensure completeness of feature documentation"
+    - "Validate architectural documentation"
+    - "Check for clear and concise writing"
+
 end_of_conversation:
   requirement: true
   type: praise_message

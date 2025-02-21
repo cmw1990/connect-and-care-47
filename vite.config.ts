@@ -9,10 +9,14 @@ import tailwindNesting from 'tailwindcss/nesting';
 export default defineConfig(({ mode }) => ({
   server: {
     port: 4001,
-    strictPort: true, // Force the specified port
-    host: true, // Listen on all addresses
+    host: true,
+    strictPort: true,
+    watch: {
+      usePolling: false, // Disable polling to prevent excessive refreshes
+    },
     hmr: {
       overlay: true,
+      timeout: 5000, // Increase timeout
     },
   },
   preview: {
@@ -21,7 +25,9 @@ export default defineConfig(({ mode }) => ({
     host: true,
   },
   plugins: [
-    react(),
+    react({
+      fastRefresh: true, // Enable fast refresh
+    }),
     mode === 'development' && componentTagger(),
   ].filter(Boolean),
   resolve: {
@@ -39,6 +45,10 @@ export default defineConfig(({ mode }) => ({
     },
   },
   build: {
-    target: 'esnext'
+    target: 'esnext',
+    sourcemap: true,
+  },
+  optimizeDeps: {
+    force: true, // Force dependency pre-bundling
   }
 }));

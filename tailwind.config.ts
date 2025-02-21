@@ -19,16 +19,24 @@ export default {
     },
     extend: {
       colors: {
-        // Modern Medical Theme
-        "medical-blue": "#D3E4FD",
-        "medical-gray": "#F1F0FB",
-        "medical-neutral": "#8E9196",
-        "medical-dark": "#222222",
-        
-        // Apple Theme
-        "apple-light": "#F5F5F7",
-        "apple-gray": "#86868B",
-        "apple-dark": "#1D1D1F",
+        // Apple Design System Colors
+        "apple-blue": "#007AFF",
+        "apple-indigo": "#5856D6",
+        "apple-purple": "#AF52DE",
+        "apple-pink": "#FF2D55",
+        "apple-red": "#FF3B30",
+        "apple-orange": "#FF9500",
+        "apple-yellow": "#FFCC00",
+        "apple-green": "#34C759",
+        "apple-teal": "#5AC8FA",
+        "apple-gray": {
+          1: "#8E8E93",
+          2: "#AEAEB2",
+          3: "#C7C7CC",
+          4: "#D1D1D6",
+          5: "#E5E5EA",
+          6: "#F2F2F7",
+        },
         
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
@@ -70,7 +78,21 @@ export default {
         sm: "calc(var(--radius) - 4px)",
       },
       fontFamily: {
-        sans: ["-apple-system", "BlinkMacSystemFont", "San Francisco", "Helvetica Neue", "sans-serif"],
+        sans: [
+          "-apple-system",
+          "SF Pro Display",
+          "SF Pro Icons",
+          "Helvetica Neue",
+          "Helvetica",
+          "Arial",
+          "sans-serif"
+        ],
+      },
+      boxShadow: {
+        'apple-sm': '0 1px 2px 0 rgb(0 0 0 / 0.05)',
+        'apple': '0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)',
+        'apple-md': '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)',
+        'apple-lg': '0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)',
       },
       keyframes: {
         "accordion-down": {
@@ -93,13 +115,18 @@ export default {
           "0%": { transform: "scale(0.98)", opacity: "0" },
           "100%": { transform: "scale(1)", opacity: "1" },
         },
+        "slide-in": {
+          "0%": { transform: "translateX(-100%)" },
+          "100%": { transform: "translateX(0)" },
+        },
       },
       animation: {
-        "accordion-down": "accordion-down 0.3s ease-out",
-        "accordion-up": "accordion-up 0.3s ease-out",
-        "fade-in": "fade-in 0.4s ease-out",
-        "fade-out": "fade-out 0.4s ease-out",
-        "scale-in": "scale-in 0.3s ease-out",
+        "accordion-down": "accordion-down 0.2s ease-out",
+        "accordion-up": "accordion-up 0.2s ease-out",
+        "fade-in": "fade-in 0.3s ease-out",
+        "fade-out": "fade-out 0.3s ease-out",
+        "scale-in": "scale-in 0.2s ease-out",
+        "slide-in": "slide-in 0.3s ease-out",
       },
       padding: {
         'safe': 'env(safe-area-inset-bottom)',

@@ -1,8 +1,8 @@
-
 import React from "react";
 import { CaregiverMatcher } from "@/components/caregivers/CaregiverMatcher";
 import { DementiaAssessment } from "@/components/caregivers/DementiaAssessment";
 import { DementiaSupport } from "@/components/caregivers/DementiaSupport";
+import Jobs from "@/pages/caregivers/Jobs";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { motion } from "framer-motion";
 
@@ -33,6 +33,12 @@ const Caregivers = () => {
             Caregiver Matching
           </TabsTrigger>
           <TabsTrigger 
+            value="jobs"
+            className="data-[state=active]:bg-white data-[state=active]:text-primary-600 dark:data-[state=active]:bg-primary-900"
+          >
+            Job Opportunities
+          </TabsTrigger>
+          <TabsTrigger 
             value="dementia"
             className="data-[state=active]:bg-white data-[state=active]:text-primary-600 dark:data-[state=active]:bg-primary-900"
           >
@@ -43,6 +49,12 @@ const Caregivers = () => {
         <TabsContent value="matching" className="space-y-4">
           <div className="bg-gradient-to-br from-primary-50 to-white p-6 rounded-xl shadow-sm dark:from-primary-950/50 dark:to-background">
             <CaregiverMatcher />
+          </div>
+        </TabsContent>
+
+        <TabsContent value="jobs" className="space-y-4">
+          <div className="bg-gradient-to-br from-primary-50 to-white p-6 rounded-xl shadow-sm dark:from-primary-950/50 dark:to-background">
+            <Jobs />
           </div>
         </TabsContent>
 

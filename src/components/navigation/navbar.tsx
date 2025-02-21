@@ -2,7 +2,6 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "react-i18next";
 import { LanguageSwitcher } from "@/components/ui/language-switcher";
-import { ThemeToggle } from "@/components/theme-toggle";
 import {
   NavigationMenu,
   NavigationMenuContent,
@@ -21,6 +20,7 @@ import {
   Bell,
   Settings,
   Pill,
+  ShoppingCart,
 } from "lucide-react";
 
 export function Navbar() {
@@ -133,6 +133,26 @@ export function Navbar() {
               </NavigationMenuContent>
             </NavigationMenuItem>
 
+            {/* Products */}
+            <NavigationMenuItem>
+              <NavigationMenuTrigger>
+                <ShoppingCart className="w-4 h-4 mr-2" />
+                {t('products.title')}
+              </NavigationMenuTrigger>
+              <NavigationMenuContent>
+                <div className="grid gap-3 p-4 w-[400px]">
+                  <NavigationMenuLink asChild>
+                    <Link to="/products/essentials" className="block p-2 hover:bg-accent rounded-md">
+                      <div className="font-medium">{t('products.essentials.title')}</div>
+                      <p className="text-sm text-muted-foreground">
+                        {t('products.essentials.description')}
+                      </p>
+                    </Link>
+                  </NavigationMenuLink>
+                </div>
+              </NavigationMenuContent>
+            </NavigationMenuItem>
+
             {/* Care Guides */}
             <NavigationMenuItem>
               <NavigationMenuTrigger>
@@ -200,7 +220,6 @@ export function Navbar() {
             </Button>
           </Link>
           <LanguageSwitcher />
-          <ThemeToggle />
         </div>
       </div>
     </nav>
