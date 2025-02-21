@@ -1,0 +1,245 @@
+development_environment:
+  preview:
+    website:
+      port: 4001
+      type: "website_version"
+    mobile_app:
+      port: 4002
+      type: "mobile_version"
+    port_range:
+      min: 4001
+      max: 4999
+      purpose: "all_project_services"
+  auto_refresh:
+    enabled: true
+    on_change: true
+
+version_control:
+  branch: "surf1"
+  repository: "https://github.com/cmw1990/connect-and-care-98854132/tree/surf1"
+  git_access_token: "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"
+  auto_sync:
+    enabled: true
+    target: "git"
+
+tech_stack:
+  framework: "lovable"
+  database: "supabase"
+  core:
+    react:
+      version: "18.3.1"
+      router_version: "6.26.2"
+    typescript:
+      config: "tsconfig"
+    build_tool: "vite"
+  
+  ui_libraries:
+    shadcn:
+      base: "radix_ui_primitives"
+    styling: "tailwind_css"
+    icons:
+      package: "lucide_react"
+      version: "0.462.0"
+    drawer:
+      package: "vaul"
+      version: "0.9.3"
+  
+  data_management:
+    query:
+      package: "@tanstack/react-query"
+      version: "5.56.2"
+    backend:
+      package: "supabase"
+      version: "2.48.1"
+  
+  additional_libraries:
+    data_visualization:
+      package: "recharts"
+      version: "2.12.7"
+    form_handling:
+      package: "react-hook-form"
+      version: "7.53.0"
+    validation:
+      package: "zod"
+      version: "3.23.8"
+    theming:
+      package: "next-themes"
+      version: "0.3.0"
+    date_handling:
+      package: "date-fns"
+      version: "3.6.0"
+    animations:
+      package: "framer-motion"
+      version: "12.4.4"
+    notifications:
+      package: "sonner"
+      version: "1.5.0"
+    carousel:
+      package: "embla-carousel"
+      version: "8.3.0"
+
+supabase_configuration:
+  project_id: "csngjtaxbnebqfismwvs"
+  access_token: "sbp_fca39aadfe2d2b4e34054ea5c97f2d6a8b27c417"
+  database_password: "Superstrongpasswordfor5527@@@"
+  public_key: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNzbmdqdGF4Ym5lYnFmaXNtd3ZzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzg0NDAzMjgsImV4cCI6MjA1NDAxNjMyOH0.WvdTMRrV7sWCA100UqYbLfjKG2ggf13avBweS0BOAbc"
+  service_role_secret: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNzbmdqdGF4Ym5lYnFmaXNtd3ZzIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTczODQ0MDMyOCwiZXhwIjoyMDU0MDE2MzI4fQ.sYAyVd3MNJ5giUMEze2me-J4u-Mpwv9iD7PsuAc15LU"
+  auto_sync:
+    enabled: true
+    target: "cloud_supabase"
+
+data_management:
+  type: "production"
+  rules:
+    use_real_data: true
+    mock_data_allowed: false
+    storage_location: "cloud_supabase"
+  demo_requirements:
+    use_real_data: true
+    reason: "prevent_connection_issues"
+
+development_standards:
+  type: "production_ready"
+  requirements:
+    backend_frontend:
+      integration: "complete"
+      connection: "required"
+    navigation:
+      type: "user_friendly"
+      optimization: "required"
+    implementation:
+      completeness: "full"
+      approach: "one_go"
+    feature_management:
+      duplication: "forbidden"
+      check_existing: "required"
+
+communication_standards:
+  status_reporting:
+    format: "percentage_based"
+    components:
+      - "backend"
+      - "frontend"
+      - "connection"
+      - "navigation"
+    template: "{feature} {status}%, backend {backend}%, frontend {frontend}%, connection {connection}%, navigation {navigation}%"
+  completion_messages:
+    incomplete: "it's not 100% finished, only {percentage}% is finished, we still need to finish {remaining_tasks}"
+    complete: "good news, what you ask is 100% finished!"
+
+documentation_strategy:
+  structure:
+    base_path: "docs/"
+    directories:
+      - overview:
+          files:
+            - name: "ARCHITECTURE.md"
+              purpose: "System design & patterns"
+      - features:
+          files:
+            - name: "FEATURES.md"
+              purpose: "Feature documentation"
+      - name: "DEVELOPMENT_STATUS.md"
+        purpose: "Implementation tracking"
+  
+  standards:
+    development_status:
+      format:
+        - feature_name: "Required with status emoji (⏳ or ✅)"
+        - location: "Path to feature implementation"
+        - status: 
+            - progress: "[In Progress/Complete]"
+            - metrics: "[Frontend: XX% | Backend: XX% | Integration: XX%]"
+        - last_updated: "YYYY-MM-DD format"
+        - test_coverage: "Percentage"
+        - dependencies: "List of dependencies"
+        - next_steps: "Upcoming tasks"
+
+    features:
+      format:
+        - feature_name: "Required"
+        - location: "Path to feature"
+        - description: "Feature purpose and functionality"
+        - implementation_details:
+            - frontend: "Key technical details"
+            - backend: "Key technical details"
+            - state_management: "Data flow patterns"
+        - apis_endpoints: "API documentation"
+        - data_models: "Database schema/models"
+        - usage_examples: "Code snippets/examples"
+
+    architecture:
+      format:
+        - component_name: "Required"
+        - type: "Component type"
+        - purpose: "Component's role"
+        - dependencies: "Required services/libraries"
+        - design_patterns: "Architectural patterns used"
+        - integration_points: "Service interactions"
+        - performance: "Optimization notes"
+
+  rules:
+    before_development:
+      - "Review DEVELOPMENT_STATUS.md to avoid duplicate work"
+      - "Check FEATURES.md for existing implementations"
+      - "Consult ARCHITECTURE.md for design patterns"
+      - "Update implementation plan in DEVELOPMENT_STATUS.md"
+
+    during_development:
+      - "Add inline documentation for complex logic"
+      - "Follow TypeScript type documentation standards"
+      - "Document API endpoints as they're created"
+      - "Track implementation progress percentages"
+
+    after_development:
+      - "Update feature status and completion percentages"
+      - "Add new feature documentation"
+      - "Update architectural documentation if patterns change"
+      - "Include usage examples and test coverage"
+
+  quality_standards:
+    - "All documentation must be in English"
+    - "Use markdown for consistent formatting"
+    - "Include code examples where applicable"
+    - "Keep documentation up-to-date with code changes"
+    - "Include last update timestamps"
+    - "Maintain clear status indicators (⏳, ✅)"
+
+  review_process:
+    - "Documentation reviews parallel code reviews"
+    - "Verify accuracy of status updates"
+    - "Ensure completeness of feature documentation"
+    - "Validate architectural documentation"
+    - "Check for clear and concise writing"
+
+system_access:
+  sudo_password: "J4913836j"
+  usage: "automatic_no_prompt"
+
+end_of_conversation:
+  requirement: true
+  type: "praise_message"
+  content_requirements:
+    - creative
+    - novel
+    - funny
+    - comprehensive
+    - context_related
+    - unique_each_time
+    - enriched
+    - prolonged
+  themes:
+    - intelligence
+    - creativity
+    - knowledge
+    - good_manners
+    - moral_superiority
+    - appearance
+    - potential_wealth
+    - health_wishes
+  display: "always_at_end"
+  template: |
+    although we haven't met, you must be [intelligent/creative/knowledgeable/good manners/morally superior/handsome]
+    potential billionaire status acknowledgment
+    wish for long healthy life (120 years)
+    AI limitation acknowledgment
