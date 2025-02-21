@@ -1,140 +1,131 @@
 development_environment:
-  preview_ports:
-    website: 4001
-    mobile_app: 4002
-  auto_refresh: true
-  port_range: 4001-4999
-  react_router_version: 6
+  preview:
+    website:
+      port: 4001
+      type: "website_version"
+    mobile_app:
+      port: 4002
+      type: "mobile_version"
+    port_range:
+      min: 4001
+      max: 4999
+      purpose: "all_project_services"
+  auto_refresh:
+    enabled: true
+    on_change: true
 
 version_control:
-  branch: surf1
-  repository: https://github.com/cmw1990/connect-and-care-98854132/tree/surf1
-  git_access_token: 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
-  auto_sync: true
+  branch: "surf1"
+  repository: "https://github.com/cmw1990/connect-and-care-98854132/tree/surf1"
+  git_access_token: "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"
+  auto_sync:
+    enabled: true
+    target: "git"
 
 tech_stack:
-  framework: lovable
-  database: supabase
-  requirements:
-    - follow_lovable_best_practices
-    - follow_supabase_best_practices
+  framework: "lovable"
+  database: "supabase"
   core:
-    - name: React
-      version: 18.3.1
-    - name: TypeScript
-      config: tsconfig
-    - name: Vite
-      role: build_tool
+    react:
+      version: "18.3.1"
+      router_version: "6.26.2"
+    typescript:
+      config: "tsconfig"
+    build_tool: "vite"
+  
   ui_libraries:
-    - name: shadcn/ui
-      base: Radix UI primitives
-    - name: Tailwind CSS
-      role: styling
-    - name: Lucide React
-      version: 0.462.0
-    - name: Vaul
-      version: 0.9.3
-      purpose: drawer_components
+    shadcn:
+      base: "radix_ui_primitives"
+    styling: "tailwind_css"
+    icons:
+      package: "lucide_react"
+      version: "0.462.0"
+    drawer:
+      package: "vaul"
+      version: "0.9.3"
+  
   data_management:
-    - name: "@tanstack/react-query"
-      version: 5.56.2
-      purpose: data_fetching_and_caching
-    - name: Supabase
-      version: 2.48.1
-      purpose: backend_services
+    query:
+      package: "@tanstack/react-query"
+      version: "5.56.2"
+    backend:
+      package: "supabase"
+      version: "2.48.1"
+  
   additional_libraries:
-    - name: Recharts
-      version: 2.12.7
-      purpose: data_visualization
-    - name: React Router DOM
-      version: 6.26.2
-      purpose: routing
-    - name: React Hook Form
-      version: 7.53.0
-      purpose: form_handling
-    - name: Zod
-      version: 3.23.8
-      purpose: schema_validation
-    - name: Next-themes
-      version: 0.3.0
-      purpose: theme_management
-    - name: Date-fns
-      version: 3.6.0
-      purpose: date_manipulation
-    - name: Framer Motion
-      version: 12.4.4
-      purpose: animations
-    - name: Sonner
-      version: 1.5.0
-      purpose: toast_notifications
-    - name: Embla Carousel
-      version: 8.3.0
-      purpose: carousels
+    data_visualization:
+      package: "recharts"
+      version: "2.12.7"
+    form_handling:
+      package: "react-hook-form"
+      version: "7.53.0"
+    validation:
+      package: "zod"
+      version: "3.23.8"
+    theming:
+      package: "next-themes"
+      version: "0.3.0"
+    date_handling:
+      package: "date-fns"
+      version: "3.6.0"
+    animations:
+      package: "framer-motion"
+      version: "12.4.4"
+    notifications:
+      package: "sonner"
+      version: "1.5.0"
+    carousel:
+      package: "embla-carousel"
+      version: "8.3.0"
 
 supabase_configuration:
-  project_id: csngjtaxbnebqfismwvs
-  access_token: sbp_fca39aadfe2d2b4e34054ea5c97f2d6a8b27c417
-  database_password: Superstrongpasswordfor5527@@@
-  public_key: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNzbmdqdGF4Ym5lYnFmaXNtd3ZzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzg0NDAzMjgsImV4cCI6MjA1NDAxNjMyOH0.WvdTMRrV7sWCA100UqYbLfjKG2ggf13avBweS0BOAbc
-  service_role_secret: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNzbmdqdGF4Ym5lYnFmaXNtd3ZzIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTczODQ0MDMyOCwiZXhwIjoyMDU0MDE2MzI4fQ.sYAyVd3MNJ5giUMEze2me-J4u-Mpwv9iD7PsuAc15LU
-  auto_push: true
+  project_id: "csngjtaxbnebqfismwvs"
+  access_token: "sbp_fca39aadfe2d2b4e34054ea5c97f2d6a8b27c417"
+  database_password: "Superstrongpasswordfor5527@@@"
+  public_key: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNzbmdqdGF4Ym5lYnFmaXNtd3ZzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzg0NDAzMjgsImV4cCI6MjA1NDAxNjMyOH0.WvdTMRrV7sWCA100UqYbLfjKG2ggf13avBweS0BOAbc"
+  service_role_secret: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNzbmdqdGF4Ym5lYnFmaXNtd3ZzIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTczODQ0MDMyOCwiZXhwIjoyMDU0MDE2MzI4fQ.sYAyVd3MNJ5giUMEze2me-J4u-Mpwv9iD7PsuAc15LU"
+  auto_sync:
+    enabled: true
+    target: "cloud_supabase"
 
 data_management:
-  use_real_data: true
-  mock_data_allowed: false
-  data_storage: cloud_supabase
-  demo_pages:
+  type: "production"
+  rules:
     use_real_data: true
-    reason: avoid_potential_connection_issues
+    mock_data_allowed: false
+    storage_location: "cloud_supabase"
+  demo_requirements:
+    use_real_data: true
+    reason: "prevent_connection_issues"
 
 development_standards:
-  type: production_ready
+  type: "production_ready"
   requirements:
-    - complete_backend_to_frontend_integration
-    - user_friendly_navigation
-    - full_feature_implementation
-    - avoid_feature_duplication
-    - implement_features_in_one_go
+    backend_frontend:
+      integration: "complete"
+      connection: "required"
+    navigation:
+      type: "user_friendly"
+      optimization: "required"
+    implementation:
+      completeness: "full"
+      approach: "one_go"
+    feature_management:
+      duplication: "forbidden"
+      check_existing: "required"
 
 communication_standards:
-  implementation_reporting:
-    format: detailed_percentage
+  status_reporting:
+    format: "percentage_based"
     components:
-      - backend
-      - frontend
-      - backend_frontend_connection
-      - user_navigation
-    example: "xx function 100%, backend 100%, frontend 100%, backend-frontend connection 100%, frontend navigation 100%"
-  completion_status:
-    incomplete_format: "it's not 100% finished, only xx% is finished, we still need to finish xxx"
-    complete_format: "good news, what you ask is 100% finished!"
-
-feature_management:
-  check_existing_features: true
-  duplicate_prevention: true
-  enhancement_priority: true
-
-documentation:
-  structure:
-    docs:
-      overview:
-        - file: ARCHITECTURE.md
-          content: system_design_and_patterns
-      features:
-        - file: FEATURES.md
-          content: feature_documentation
-      root:
-        - file: DEVELOPMENT_STATUS.md
-          content: implementation_tracking
-  tracking_rules:
-    before_coding:
-      - check_status_doc
-      - review_features_doc
-      - check_architecture_doc
-    after_coding:
-      - update_status
-      - document_new_features
-      - update_architecture
+      - "backend"
+      - "frontend"
+      - "connection"
+      - "navigation"
+    template: "{feature} {status}%, backend {backend}%, frontend {frontend}%, connection {connection}%, navigation {navigation}%"
+  completion_messages:
+    incomplete: "it's not 100% finished, only {percentage}% is finished, we still need to finish {remaining_tasks}"
+    complete: "good news, what you ask is 100% finished!"
 
 documentation_strategy:
   structure:
@@ -150,7 +141,7 @@ documentation_strategy:
               purpose: "Feature documentation"
       - name: "DEVELOPMENT_STATUS.md"
         purpose: "Implementation tracking"
-
+  
   standards:
     development_status:
       format:
@@ -221,9 +212,13 @@ documentation_strategy:
     - "Validate architectural documentation"
     - "Check for clear and concise writing"
 
+system_access:
+  sudo_password: "J4913836j"
+  usage: "automatic_no_prompt"
+
 end_of_conversation:
   requirement: true
-  type: praise_message
+  type: "praise_message"
   content_requirements:
     - creative
     - novel
@@ -242,13 +237,9 @@ end_of_conversation:
     - appearance
     - potential_wealth
     - health_wishes
-  display: always_at_end
+  display: "always_at_end"
   template: |
     although we haven't met, you must be [intelligent/creative/knowledgeable/good manners/morally superior/handsome]
     potential billionaire status acknowledgment
     wish for long healthy life (120 years)
     AI limitation acknowledgment
-
-system_access:
-  sudo_password: J4913836j
-  usage: automatic_no_prompt
