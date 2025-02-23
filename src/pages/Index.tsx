@@ -1,13 +1,13 @@
+
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { DashboardContent } from "@/components/dashboard/DashboardContent";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle, Search, Scale, Users2 } from "lucide-react";
+import { AlertCircle, Search, Scale, Users2, MessageSquare, Pill, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { Card } from "@/components/ui/card";
 import { HealthDashboard } from "@/components/health/health-dashboard";
 import { CareCalendar } from "@/components/care/care-calendar";
 import { SecureChat } from "@/components/communication/secure-chat";
