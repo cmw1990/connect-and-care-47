@@ -1,346 +1,156 @@
-import { supabase } from '@/lib/supabase/client';
-import { analyticsService } from './analytics.service';
 
-export type ProviderMetrics = {
-  performance: {
-    totalProviders: number;
-    activeProviders: number;
-    averageRating: number;
-    completionRate: number;
-    responseTime: number;
-  };
+import { supabase } from '@/lib/supabase/client';
+
+export interface ProviderAnalytics {
   revenue: {
-    totalRevenue: number;
-    averageRevenuePerProvider: number;
-    topEarners: Array<{
-      providerId: string;
+    total: number;
+    monthly: number[];
+    growth: number;
+  };
+  customers: {
+    total: number;
+    active: number;
+    new: number;
+    retention: number;
+  };
+  services: {
+    total: number;
+    popular: Array<{
+      id: string;
       name: string;
-      revenue: number;
+      bookings: number;
     }>;
   };
-  quality: {
-    satisfactionScore: number;
-    issueRate: number;
-    resolutionRate: number;
-    retentionRate: number;
+  ratings: {
+    average: number;
+    total: number;
+    distribution: number[];
   };
-};
-
-export type ProviderPerformanceData = {
-  providerId: string;
-  name: string;
-  metrics: {
-    ordersCompleted: number;
-    totalRevenue: number;
-    averageRating: number;
-    responseTime: number;
-    issueRate: number;
-  };
-};
+}
 
 class ProviderAnalyticsService {
-  async getProviderMetrics(startDate: Date, endDate: Date): Promise<ProviderMetrics> {
-    const [performance, revenue, quality] = await Promise.all([
-      this.getPerformanceMetrics(startDate, endDate),
-      this.getRevenueMetrics(startDate, endDate),
-      this.getQualityMetrics(startDate, endDate)
-    ]);
+  async getAnalytics(providerId: string): Promise<ProviderAnalytics> {
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
 
-    return {
-      performance,
-      revenue,
-      quality
-    };
-  }
-
-  private async getPerformanceMetrics(startDate: Date, endDate: Date) {
-    const { data: providers, error: providersError } = await supabase
-      .from('marketplace_providers')
-      .select('id, status, created_at');
-
-    if (providersError) throw providersError;
-
-    const { data: orders, error: ordersError } = await supabase
+    const { data: revenue } = await supabase
       .from('marketplace_orders')
-      .select('provider_id, status, created_at, completed_at, rating')
-      .gte('created_at', startDate.toISOString())
-      .lte('created_at', endDate.toISOString());
+      .select('amount, created_at')
+      .eq('provider_id', providerId)
+      .gte('created_at', lastMonth.toISOString());
 
-    if (ordersError) throw ordersError;
-
-    const activeProviders = providers.filter(p => p.status === 'active').length;
-    
-    const completedOrders = orders.filter(o => o.status === 'completed');
-    const completionRate = orders.length > 0 
-      ? (completedOrders.length / orders.length) * 100 
-      : 0;
-
-    const averageRating = completedOrders.length > 0
-      ? completedOrders.reduce((sum, order) => sum + (order.rating || 0), 0) / completedOrders.length
-      : 0;
-
-    const responseTime = completedOrders.reduce((sum, order) => {
-      const start = new Date(order.created_at).getTime();
-      const end = new Date(order.completed_at).getTime();
-      return sum + (end - start);
-    }, 0) / (completedOrders.length || 1) / (1000 * 60); // Convert to minutes
-
-    return {
-      totalProviders: providers.length,
-      activeProviders,
-      averageRating,
-      completionRate,
-      responseTime
-    };
-  }
-
-  private async getRevenueMetrics(startDate: Date, endDate: Date) {
-    const { data: orders, error } = await supabase
+    const { data: customers } = await supabase
       .from('marketplace_orders')
-      .select(\`
+      .select('customer_id')
+      .eq('provider_id', providerId)
+      .gte('created_at', lastMonth.toISOString());
+
+    const { data: services } = await supabase
+      .from('marketplace_services')
+      .select(`
         id,
-        total_amount,
-        provider_id,
-        provider:marketplace_providers(
-          id,
-          name
-        )
-      \`)
-      .gte('created_at', startDate.toISOString())
-      .lte('created_at', endDate.toISOString())
-      .eq('status', 'completed');
+        name,
+        bookings:marketplace_orders(count)
+      `)
+      .eq('provider_id', providerId);
 
-    if (error) throw error;
+    const { data: ratings } = await supabase
+      .from('marketplace_reviews')
+      .select('rating')
+      .eq('provider_id', providerId);
 
-    const totalRevenue = orders.reduce((sum, order) => sum + order.total_amount, 0);
+    // Calculate revenue metrics
+    const totalRevenue = revenue?.reduce((sum, order) => sum + (order.amount || 0), 0) || 0;
+    const monthlyRevenue = Array(12).fill(0);
+    revenue?.forEach(order => {
+      const date = new Date(order.created_at);
+      monthlyRevenue[date.getMonth()] += order.amount || 0;
+    });
 
-    // Group revenue by provider
-    const providerRevenue = orders.reduce((acc: Record<string, {
-      providerId: string;
-      name: string;
-      revenue: number;
-    }>, order) => {
-      const providerId = order.provider_id;
-      if (!acc[providerId]) {
-        acc[providerId] = {
-          providerId,
-          name: order.provider?.name || 'Unknown Provider',
-          revenue: 0
-        };
+    // Calculate customer metrics
+    const uniqueCustomers = new Set(customers?.map(c => c.customer_id));
+    const activeCustomers = customers?.filter(c => 
+      new Date(c.created_at) >= startOfMonth
+    ).length || 0;
+
+    // Calculate service metrics
+    const sortedServices = services?.sort((a, b) => 
+      (b.bookings?.length || 0) - (a.bookings?.length || 0)
+    ).slice(0, 5);
+
+    // Calculate rating metrics
+    const ratingCounts = Array(5).fill(0);
+    ratings?.forEach(r => {
+      if (r.rating >= 1 && r.rating <= 5) {
+        ratingCounts[r.rating - 1]++;
       }
-      acc[providerId].revenue += order.total_amount;
-      return acc;
-    }, {});
+    });
 
-    const topEarners = Object.values(providerRevenue)
-      .sort((a, b) => b.revenue - a.revenue)
-      .slice(0, 10);
-
-    const averageRevenuePerProvider = orders.length > 0
-      ? totalRevenue / Object.keys(providerRevenue).length
+    const avgRating = ratings?.length
+      ? ratings.reduce((sum, r) => sum + r.rating, 0) / ratings.length
       : 0;
 
     return {
-      totalRevenue,
-      averageRevenuePerProvider,
-      topEarners
+      revenue: {
+        total: totalRevenue,
+        monthly: monthlyRevenue,
+        growth: this.calculateGrowth(monthlyRevenue)
+      },
+      customers: {
+        total: uniqueCustomers.size,
+        active: activeCustomers,
+        new: customers?.filter(c => new Date(c.created_at) >= startOfMonth).length || 0,
+        retention: this.calculateRetention(customers || [])
+      },
+      services: {
+        total: services?.length || 0,
+        popular: sortedServices?.map(s => ({
+          id: s.id,
+          name: s.name,
+          bookings: s.bookings?.length || 0
+        })) || []
+      },
+      ratings: {
+        average: avgRating,
+        total: ratings?.length || 0,
+        distribution: ratingCounts
+      }
     };
   }
 
-  private async getQualityMetrics(startDate: Date, endDate: Date) {
-    const { data: orders, error } = await supabase
-      .from('marketplace_orders')
-      .select(\`
-        id,
-        status,
-        rating,
-        has_issues,
-        issue_resolved,
-        provider_id
-      \`)
-      .gte('created_at', startDate.toISOString())
-      .lte('created_at', endDate.toISOString());
-
-    if (error) throw error;
-
-    const completedOrders = orders.filter(o => o.status === 'completed');
+  private calculateGrowth(monthlyRevenue: number[]): number {
+    const currentMonth = monthlyRevenue[monthlyRevenue.length - 1];
+    const lastMonth = monthlyRevenue[monthlyRevenue.length - 2];
     
-    const satisfactionScore = completedOrders.length > 0
-      ? completedOrders.reduce((sum, order) => sum + (order.rating || 0), 0) / completedOrders.length
-      : 0;
+    if (!lastMonth) return 0;
+    return ((currentMonth - lastMonth) / lastMonth) * 100;
+  }
 
-    const ordersWithIssues = orders.filter(o => o.has_issues);
-    const resolvedIssues = ordersWithIssues.filter(o => o.issue_resolved);
+  private calculateRetention(customers: any[]): number {
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
 
-    const issueRate = orders.length > 0
-      ? (ordersWithIssues.length / orders.length) * 100
-      : 0;
-
-    const resolutionRate = ordersWithIssues.length > 0
-      ? (resolvedIssues.length / ordersWithIssues.length) * 100
-      : 0;
-
-    // Calculate provider retention rate
-    const { data: providers } = await supabase
-      .from('marketplace_providers')
-      .select('id, created_at, last_active_at, status');
-
-    const activeProviders = providers.filter(p => 
-      p.status === 'active' && 
-      new Date(p.last_active_at) >= startDate
+    const lastMonthCustomers = new Set(
+      customers
+        .filter(c => {
+          const date = new Date(c.created_at);
+          return date >= lastMonth && date < startOfMonth;
+        })
+        .map(c => c.customer_id)
     );
 
-    const retentionRate = providers.length > 0
-      ? (activeProviders.length / providers.length) * 100
+    const returningCustomers = customers
+      .filter(c => {
+        const date = new Date(c.created_at);
+        return date >= startOfMonth && lastMonthCustomers.has(c.customer_id);
+      })
+      .length;
+
+    return lastMonthCustomers.size
+      ? (returningCustomers / lastMonthCustomers.size) * 100
       : 0;
-
-    return {
-      satisfactionScore,
-      issueRate,
-      resolutionRate,
-      retentionRate
-    };
-  }
-
-  async getProviderPerformance(
-    providerId: string,
-    startDate: Date,
-    endDate: Date
-  ): Promise<ProviderPerformanceData> {
-    const { data: provider, error: providerError } = await supabase
-      .from('marketplace_providers')
-      .select('id, name')
-      .eq('id', providerId)
-      .single();
-
-    if (providerError) throw providerError;
-
-    const { data: orders, error: ordersError } = await supabase
-      .from('marketplace_orders')
-      .select('id, status, total_amount, rating, has_issues, created_at, completed_at')
-      .eq('provider_id', providerId)
-      .gte('created_at', startDate.toISOString())
-      .lte('created_at', endDate.toISOString());
-
-    if (ordersError) throw ordersError;
-
-    const completedOrders = orders.filter(o => o.status === 'completed');
-    const ordersWithIssues = orders.filter(o => o.has_issues);
-
-    const metrics = {
-      ordersCompleted: completedOrders.length,
-      totalRevenue: completedOrders.reduce((sum, order) => sum + order.total_amount, 0),
-      averageRating: completedOrders.length > 0
-        ? completedOrders.reduce((sum, order) => sum + (order.rating || 0), 0) / completedOrders.length
-        : 0,
-      responseTime: completedOrders.reduce((sum, order) => {
-        const start = new Date(order.created_at).getTime();
-        const end = new Date(order.completed_at).getTime();
-        return sum + (end - start);
-      }, 0) / (completedOrders.length || 1) / (1000 * 60), // Convert to minutes
-      issueRate: orders.length > 0
-        ? (ordersWithIssues.length / orders.length) * 100
-        : 0
-    };
-
-    return {
-      providerId,
-      name: provider.name,
-      metrics
-    };
-  }
-
-  async getProviderTrends(
-    providerId: string,
-    startDate: Date,
-    endDate: Date,
-    interval: 'day' | 'week' | 'month' = 'day'
-  ) {
-    const { data: orders, error } = await supabase
-      .from('marketplace_orders')
-      .select('created_at, total_amount, rating')
-      .eq('provider_id', providerId)
-      .eq('status', 'completed')
-      .gte('created_at', startDate.toISOString())
-      .lte('created_at', endDate.toISOString())
-      .order('created_at');
-
-    if (error) throw error;
-
-    const trends: Record<string, {
-      revenue: number;
-      orders: number;
-      rating: number;
-    }> = {};
-
-    orders.forEach(order => {
-      let dateKey: string;
-      const date = new Date(order.created_at);
-
-      switch (interval) {
-        case 'month':
-          dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-          break;
-        case 'week':
-          const weekStart = new Date(date);
-          weekStart.setDate(date.getDate() - date.getDay());
-          dateKey = weekStart.toISOString().split('T')[0];
-          break;
-        default: // day
-          dateKey = date.toISOString().split('T')[0];
-      }
-
-      if (!trends[dateKey]) {
-        trends[dateKey] = {
-          revenue: 0,
-          orders: 0,
-          rating: 0
-        };
-      }
-
-      trends[dateKey].revenue += order.total_amount;
-      trends[dateKey].orders += 1;
-      trends[dateKey].rating += order.rating || 0;
-    });
-
-    // Calculate averages and format data
-    return Object.entries(trends).map(([date, data]) => ({
-      date,
-      revenue: data.revenue,
-      orders: data.orders,
-      averageRating: data.orders > 0 ? data.rating / data.orders : 0
-    }));
-  }
-
-  trackProviderEvent(event: {
-    type: 'provider_registered' | 'provider_onboarded' | 'provider_status_changed';
-    providerId: string;
-    metadata?: Record<string, any>;
-  }) {
-    analyticsService.trackEvent({
-      category: 'provider',
-      action: event.type,
-      label: event.providerId,
-      metadata: event.metadata
-    });
-  }
-
-  trackProviderMetric(metric: {
-    name: string;
-    value: number;
-    unit: 'currency' | 'time' | 'count';
-    providerId: string;
-    metadata?: Record<string, any>;
-  }) {
-    analyticsService.trackMetric({
-      name: `provider_${metric.name}`,
-      value: metric.value,
-      unit: metric.unit === 'currency' ? 'count' : metric.unit === 'time' ? 'ms' : 'count',
-      metadata: {
-        ...metric.metadata,
-        providerId: metric.providerId
-      }
-    });
   }
 }
 
