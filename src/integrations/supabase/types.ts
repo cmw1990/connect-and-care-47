@@ -9,7 +9,54 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      temp_services: {
+        Row: {
+          category: string
+          compatibility: Json | null
+          created_at: string
+          description: string
+          features: Json
+          id: string
+          is_premium: boolean
+          long_description: string | null
+          name: string
+          rating: number
+          review_summary: Json | null
+          updated_at: string
+          url: string
+        }
+        Insert: {
+          category: string
+          compatibility?: Json | null
+          created_at?: string
+          description: string
+          features?: Json
+          id?: string
+          is_premium?: boolean
+          long_description?: string | null
+          name: string
+          rating?: number
+          review_summary?: Json | null
+          updated_at?: string
+          url: string
+        }
+        Update: {
+          category?: string
+          compatibility?: Json | null
+          created_at?: string
+          description?: string
+          features?: Json
+          id?: string
+          is_premium?: boolean
+          long_description?: string | null
+          name?: string
+          rating?: number
+          review_summary?: Json | null
+          updated_at?: string
+          url?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
