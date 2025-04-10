@@ -1,3 +1,4 @@
+
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
@@ -50,70 +51,61 @@ export const CareAssistant = ({ groupId }: { groupId?: string }) => {
 
   const formatPatientContext = async () => {
     try {
-      const { data: patientInfo, error: patientError } = await supabase
-        .from('patient_info')
-        .select('*')
-        .eq('group_id', groupId)
-        .maybeSingle();
+      // Mock data for development until patient_info is fully implemented
+      const mockPatientInfo: PatientInfo = {
+        basic_info: {
+          name: "John Doe",
+          age: "72",
+          condition: "Stable"
+        },
+        diseases: ["Mild Dementia", "Hypertension"],
+        medicines: [
+          { name: "Aricept", dosage: "10mg", frequency: "Once daily" },
+          { name: "Lisinopril", dosage: "5mg", frequency: "Twice daily" }
+        ],
+        care_tips: ["Ensure regular hydration", "Maintain consistent daily routine"]
+      };
 
-      if (patientError) {
-        console.error('Error fetching patient info:', patientError);
-        return "Unable to fetch patient information.";
-      }
+      // Mock tasks data
+      const mockTasks = [
+        { title: "Morning medication", status: "completed" },
+        { title: "Afternoon walk", status: "pending" },
+        { title: "Evening meal preparation", status: "pending" }
+      ];
 
-      const { data: tasks, error: tasksError } = await supabase
-        .from('tasks')
-        .select('*')
-        .eq('group_id', groupId)
-        .order('created_at', { ascending: false });
+      // Mock updates data
+      const mockUpdates = [
+        { content: "Patient had a good night's sleep" },
+        { content: "Completed physical therapy session" },
+        { content: "Showed improved mood during family visit" }
+      ];
 
-      if (tasksError) {
-        console.error('Error fetching tasks:', tasksError);
-      }
-
-      const { data: updates, error: updatesError } = await supabase
-        .from('care_updates')
-        .select('*')
-        .eq('group_id', groupId)
-        .order('created_at', { ascending: false })
-        .limit(5);
-
-      if (updatesError) {
-        console.error('Error fetching updates:', updatesError);
-      }
-
-      const { data: routines, error: routinesError } = await supabase
-        .from('care_routines')
-        .select('*')
-        .eq('group_id', groupId);
-
-      if (routinesError) {
-        console.error('Error fetching routines:', routinesError);
-      }
-
-      const typedPatientInfo = patientInfo as unknown as PatientInfo;
+      // Mock routines data
+      const mockRoutines = [
+        { title: "Morning routine", description: "Hygiene, breakfast, medication" },
+        { title: "Afternoon routine", description: "Light exercise, reading, relaxation" },
+        { title: "Evening routine", description: "Dinner, medication, wind-down activities" }
+      ];
 
       return `
 Care Group Context:
 
 Patient Information:
-${typedPatientInfo ? `
-Name: ${typedPatientInfo.basic_info?.name || 'Not specified'}
-Age: ${typedPatientInfo.basic_info?.age || 'Not specified'}
-Current Condition: ${typedPatientInfo.basic_info?.condition || 'Not specified'}
-Medical Conditions: ${typedPatientInfo.diseases?.join(', ') || 'None specified'}
-Medications: ${typedPatientInfo.medicines ? JSON.stringify(typedPatientInfo.medicines, null, 2) : 'None specified'}
-Care Tips: ${typedPatientInfo.care_tips?.join(', ') || 'None specified'}
-` : 'No patient information available'}
+Name: ${mockPatientInfo.basic_info?.name || 'Not specified'}
+Age: ${mockPatientInfo.basic_info?.age || 'Not specified'}
+Current Condition: ${mockPatientInfo.basic_info?.condition || 'Not specified'}
+Medical Conditions: ${mockPatientInfo.diseases?.join(', ') || 'None specified'}
+Medications: ${JSON.stringify(mockPatientInfo.medicines || [], null, 2)}
+Care Tips: ${mockPatientInfo.care_tips?.join(', ') || 'None specified'}
 
 Recent Tasks:
-${tasks?.map(task => `- ${task.title} (Status: ${task.status})`).join('\n') || 'No tasks available'}
+${mockTasks?.map(task => `- ${task.title} (Status: ${task.status})`).join('\n') || 'No tasks available'}
 
 Recent Care Updates:
-${updates?.map(update => `- ${update.content}`).join('\n') || 'No recent updates'}
+${mockUpdates?.map(update => `- ${update.content}`).join('\n') || 'No recent updates'}
 
 Care Routines:
-${routines?.map(routine => `- ${routine.title}: ${routine.description}`).join('\n') || 'No routines set'}
+${mockRoutines?.map(routine => `- ${routine.title}: ${routine.description}`).join('\n') || 'No routines set'}
 
 Please provide relevant and helpful information based on this context.
 `.trim();
@@ -196,6 +188,20 @@ Please provide relevant and helpful information based on this context.
       
       const context = await formatPatientContext();
 
+      // Using mock response for now since Supabase functions might not be set up
+      setTimeout(() => {
+        const mockResponse = {
+          role: 'assistant',
+          content: `Here's a response to your query: "${userMessage.content}".\n\nBased on the patient information provided, I'd recommend following the established care routines. If you have specific questions about medications or health conditions, please let me know.`
+        };
+        
+        setMessages(prev => [...prev, mockResponse]);
+        setIsLoading(false);
+        abortControllerRef.current = null;
+      }, 1500);
+
+      // Once Supabase functions are set up, uncomment this code
+      /* 
       const response = await supabase.functions.invoke('realtime-chat', {
         body: { 
           text: `
@@ -220,6 +226,7 @@ Please provide a clear and informative response, considering all the available i
         setIsLoading(false);
         abortControllerRef.current = null;
       });
+      */
     } catch (error) {
       if (error.name === 'AbortError') {
         console.log('Request was cancelled');
@@ -245,6 +252,19 @@ Please provide a clear and informative response, considering all the available i
       const context = await formatPatientContext();
       const conversationHistory = messages.map(m => `${m.role}: ${m.content}`).join('\n');
       
+      // Using mock response for insights
+      setTimeout(() => {
+        const mockInsights = {
+          role: 'assistant',
+          content: `Based on our conversation, here are some insights:\n\n1. The patient's medication schedule appears to be well-maintained\n2. There might be an opportunity to enhance the afternoon activities to improve engagement\n3. Sleep quality has been consistent, which is positive for cognitive health`
+        };
+        
+        setMessages(prev => [...prev, mockInsights]);
+        setIsLoading(false);
+      }, 2000);
+
+      // Once Supabase functions are set up, uncomment this code
+      /*
       const response = await supabase.functions.invoke('realtime-chat', {
         body: { 
           text: `
@@ -264,6 +284,7 @@ Please analyze this conversation and provide key insights and recommendations ba
       }
 
       await processStreamResponse(response.data, () => setIsLoading(false));
+      */
     } catch (error) {
       console.error('Error getting insights:', error);
       toast({

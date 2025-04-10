@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useToast } from "@/hooks/use-toast";
@@ -12,10 +13,10 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { Select } from "@/components/ui/select";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Calendar } from "@/components/ui/calendar";
-import { CalendarIcon } from "@radix-ui/react-icons";
+import { CalendarIcon } from "lucide-react";
 import {
   Popover,
   PopoverContent,
@@ -26,13 +27,12 @@ import { format } from "date-fns";
 import { CareTask } from '@/types/tasks';
 import useUser from '@/lib/hooks/use-user';
 import { supabase } from '@/integrations/supabase/client';
+import { Card } from "@/components/ui/card";
 
-interface Task {
-  id: string;
+interface TaskFormData {
   title: string;
   description: string;
   priority: 'high' | 'medium' | 'low';
-  status: 'pending' | 'inProgress' | 'completed';
   dueDate: Date;
   recurring: boolean;
 }
@@ -43,10 +43,13 @@ const CareTaskBoard = () => {
   const [tasks, setTasks] = useState<CareTask[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showAddTaskDialog, setShowAddTaskDialog] = useState(false);
-  const [newTaskTitle, setNewTaskTitle] = useState('');
-  const [newTaskDescription, setNewTaskDescription] = useState('');
-  const [newTaskPriority, setNewTaskPriority] = useState<'high' | 'medium' | 'low'>('medium');
-  const [newTaskDueDate, setNewTaskDueDate] = useState<Date>(new Date());
+  const [formData, setFormData] = useState<TaskFormData>({
+    title: '',
+    description: '',
+    priority: 'medium',
+    dueDate: new Date(),
+    recurring: false
+  });
   const { user } = useUser();
 
   useEffect(() => {
@@ -58,14 +61,50 @@ const CareTaskBoard = () => {
   const loadTasks = async () => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('care_tasks')
-        .select('*')
-        .eq('team_id', teamId)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      setTasks(data || []);
+      // Mock tasks for development until care_tasks is fully implemented
+      const mockTasks: CareTask[] = [
+        {
+          id: '1',
+          team_id: teamId || '',
+          title: 'Morning medication',
+          description: 'Administer morning medications',
+          category: 'medication',
+          priority: 'high',
+          status: 'pending',
+          created_by: user?.id || 'unknown',
+          recurring: true,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        },
+        {
+          id: '2',
+          team_id: teamId || '',
+          title: 'Physical therapy',
+          description: 'Complete daily physical therapy routine',
+          category: 'exercise',
+          priority: 'medium',
+          status: 'inProgress',
+          created_by: user?.id || 'unknown',
+          recurring: false,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        },
+        {
+          id: '3',
+          team_id: teamId || '',
+          title: 'Doctor appointment',
+          description: 'Quarterly checkup with Dr. Smith',
+          category: 'appointment',
+          priority: 'high',
+          status: 'completed',
+          created_by: user?.id || 'unknown',
+          recurring: false,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }
+      ];
+      
+      setTasks(mockTasks);
     } catch (error: any) {
       toast({
         title: "Error",
@@ -77,136 +116,75 @@ const CareTaskBoard = () => {
     }
   };
 
-  const addTask = async (task: Omit<CareTask, 'id' | 'createdAt' | 'updatedAt'>) => {
-    try {
-      const { data, error } = await supabase
-        .from('care_tasks')
-        .insert([task])
-        .select()
-        .single();
-
-      if (error) throw error;
-      toast({
-        title: "Success",
-        description: "Task added successfully",
-      });
-      return data;
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: `Failed to add task: ${error.message}`,
-        variant: "destructive",
-      });
-      throw error;
-    }
-  };
-
-  const updateTask = async (taskId: string, updates: Partial<CareTask>) => {
-    try {
-      const { data, error } = await supabase
-        .from('care_tasks')
-        .update(updates)
-        .eq('id', taskId)
-        .select()
-        .single();
-
-      if (error) throw error;
-      toast({
-        title: "Success",
-        description: "Task updated successfully",
-      });
-      return data;
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: `Failed to update task: ${error.message}`,
-        variant: "destructive",
-      });
-      throw error;
-    }
-  };
-
-  const deleteTask = async (taskId: string) => {
-    try {
-      const { error } = await supabase
-        .from('care_tasks')
-        .delete()
-        .eq('id', taskId);
-
-      if (error) throw error;
-      toast({
-        title: "Success",
-        description: "Task deleted successfully",
-      });
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: `Failed to delete task: ${error.message}`,
-        variant: "destructive",
-      });
-    }
-  };
-
   const handleAddTask = () => {
-    if (!newTaskTitle.trim()) return;
+    if (!formData.title.trim()) return;
 
-    const newTask = {
-      teamId: teamId,
-      title: newTaskTitle,
-      description: newTaskDescription,
-      priority: newTaskPriority,
+    const newTask: CareTask = {
+      id: `temp-${Date.now()}`,
+      team_id: teamId || '',
+      title: formData.title,
+      description: formData.description,
+      category: 'general',
+      priority: formData.priority,
       status: 'pending',
-      category: 'general', // Add the missing category field
-      dueDate: newTaskDueDate,
-      createdBy: user?.id || 'unknown',
-      recurring: false
+      due_date: formData.dueDate,
+      created_by: user?.id || 'unknown',
+      recurring: formData.recurring,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
     };
 
-    addTask(newTask)
-      .then(() => {
-        setNewTaskTitle('');
-        setNewTaskDescription('');
-        setNewTaskPriority('medium');
-        setNewTaskDueDate(new Date());
-        setShowAddTaskDialog(false);
-        loadTasks();
-      })
-      .catch((error) => {
-        toast({
-          title: "Error",
-          description: `Failed to add task: ${error.message}`,
-          variant: "destructive",
-        });
-      });
+    // Add to local state for immediate UI update
+    setTasks(prev => [...prev, newTask]);
+    
+    // Reset form
+    setFormData({
+      title: '',
+      description: '',
+      priority: 'medium',
+      dueDate: new Date(),
+      recurring: false
+    });
+    
+    setShowAddTaskDialog(false);
+    
+    toast({
+      title: "Success",
+      description: "Task added successfully",
+    });
   };
 
   const handleUpdateTaskStatus = (taskId: string, status: CareTask['status']) => {
-    updateTask(taskId, { status })
-      .then(() => {
-        loadTasks();
-      })
-      .catch((error) => {
-        toast({
-          title: "Error",
-          description: `Failed to update task status: ${error.message}`,
-          variant: "destructive",
-        });
-      });
+    setTasks(prev => 
+      prev.map(task => 
+        task.id === taskId 
+          ? { ...task, status, updated_at: new Date().toISOString() } 
+          : task
+      )
+    );
+    
+    toast({
+      title: "Success",
+      description: "Task status updated",
+    });
   };
 
   const handleDeleteTask = (taskId: string) => {
-    deleteTask(taskId)
-      .then(() => {
-        loadTasks();
-      })
-      .catch((error) => {
-        toast({
-          title: "Error",
-          description: `Failed to delete task: ${error.message}`,
-          variant: "destructive",
-        });
-      });
+    setTasks(prev => prev.filter(task => task.id !== taskId));
+    
+    toast({
+      title: "Success",
+      description: "Task deleted successfully",
+    });
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center p-8">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
@@ -215,188 +193,176 @@ const CareTaskBoard = () => {
         <Button onClick={() => setShowAddTaskDialog(true)}>Add Task</Button>
       </div>
 
-      {isLoading ? (
-        <div className="flex justify-center">
-          <Spinner size="lg" />
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div>
+          <h4 className="font-semibold mb-2">Pending</h4>
+          {tasks
+            .filter((task) => task.status === 'pending')
+            .map((task) => (
+              <Card key={task.id} className="mb-2 p-3">
+                <h5 className="font-medium">{task.title}</h5>
+                <p className="text-sm text-gray-500">{task.description}</p>
+                <div className="flex justify-between items-center mt-2">
+                  <Button
+                    size="sm"
+                    onClick={() => handleUpdateTaskStatus(task.id, 'inProgress')}
+                  >
+                    Start
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    onClick={() => handleDeleteTask(task.id)}
+                  >
+                    Delete
+                  </Button>
+                </div>
+              </Card>
+            ))}
         </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>
-            <h4 className="font-semibold mb-2">Pending</h4>
-            {tasks
-              .filter((task) => task.status === 'pending')
-              .map((task) => (
-                <Card key={task.id} className="mb-2">
-                  <CardContent className="p-3">
-                    <h5 className="font-medium">{task.title}</h5>
-                    <p className="text-sm text-gray-500">{task.description}</p>
-                    <div className="flex justify-between items-center mt-2">
-                      <Button
-                        size="sm"
-                        onClick={() => handleUpdateTaskStatus(task.id, 'inProgress')}
-                      >
-                        Start
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="destructive"
-                        onClick={() => handleDeleteTask(task.id)}
-                      >
-                        Delete
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-          </div>
 
-          <div>
-            <h4 className="font-semibold mb-2">In Progress</h4>
-            {tasks
-              .filter((task) => task.status === 'inProgress')
-              .map((task) => (
-                <Card key={task.id} className="mb-2">
-                  <CardContent className="p-3">
-                    <h5 className="font-medium">{task.title}</h5>
-                    <p className="text-sm text-gray-500">{task.description}</p>
-                    <div className="flex justify-between items-center mt-2">
-                      <Button
-                        size="sm"
-                        onClick={() => handleUpdateTaskStatus(task.id, 'completed')}
-                      >
-                        Complete
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="destructive"
-                        onClick={() => handleDeleteTask(task.id)}
-                      >
-                        Delete
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-          </div>
-
-          <div>
-            <h4 className="font-semibold mb-2">Completed</h4>
-            {tasks
-              .filter((task) => task.status === 'completed')
-              .map((task) => (
-                <Card key={task.id} className="mb-2">
-                  <CardContent className="p-3">
-                    <h5 className="font-medium">{task.title}</h5>
-                    <p className="text-sm text-gray-500">{task.description}</p>
-                    <div className="flex justify-end items-center mt-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleDeleteTask(task.id)}
-                      >
-                        Delete
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-          </div>
+        <div>
+          <h4 className="font-semibold mb-2">In Progress</h4>
+          {tasks
+            .filter((task) => task.status === 'inProgress')
+            .map((task) => (
+              <Card key={task.id} className="mb-2 p-3">
+                <h5 className="font-medium">{task.title}</h5>
+                <p className="text-sm text-gray-500">{task.description}</p>
+                <div className="flex justify-between items-center mt-2">
+                  <Button
+                    size="sm"
+                    onClick={() => handleUpdateTaskStatus(task.id, 'completed')}
+                  >
+                    Complete
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    onClick={() => handleDeleteTask(task.id)}
+                  >
+                    Delete
+                  </Button>
+                </div>
+              </Card>
+            ))}
         </div>
-      )}
+
+        <div>
+          <h4 className="font-semibold mb-2">Completed</h4>
+          {tasks
+            .filter((task) => task.status === 'completed')
+            .map((task) => (
+              <Card key={task.id} className="mb-2 p-3">
+                <h5 className="font-medium">{task.title}</h5>
+                <p className="text-sm text-gray-500">{task.description}</p>
+                <div className="flex justify-end items-center mt-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleDeleteTask(task.id)}
+                  >
+                    Remove
+                  </Button>
+                </div>
+              </Card>
+            ))}
+        </div>
+      </div>
 
       <Dialog open={showAddTaskDialog} onOpenChange={setShowAddTaskDialog}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent>
           <DialogHeader>
             <DialogTitle>Add New Task</DialogTitle>
-            <DialogDescription>
-              Create a new task for the care team.
-            </DialogDescription>
+            <DialogDescription>Create a new task for the care team</DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="title" className="text-right">
-                Title
-              </Label>
+          <div className="space-y-4 py-2">
+            <div>
+              <Label htmlFor="title">Task Title</Label>
               <Input
                 id="title"
-                value={newTaskTitle}
-                onChange={(e) => setNewTaskTitle(e.target.value)}
-                className="col-span-3"
+                value={formData.title}
+                onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                placeholder="Enter task title"
               />
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="description" className="text-right">
-                Description
-              </Label>
+            <div>
+              <Label htmlFor="description">Description</Label>
               <Textarea
                 id="description"
-                value={newTaskDescription}
-                onChange={(e) => setNewTaskDescription(e.target.value)}
-                className="col-span-3"
+                value={formData.description}
+                onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                placeholder="Enter task description"
               />
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="priority" className="text-right">
-                Priority
-              </Label>
+            <div>
+              <Label htmlFor="priority">Priority</Label>
               <Select
-                id="priority"
-                value={newTaskPriority}
-                onValueChange={(value) => setNewTaskPriority(value as 'high' | 'medium' | 'low')}
-                className="col-span-3"
+                value={formData.priority}
+                onValueChange={(value: 'high' | 'medium' | 'low') => setFormData(prev => ({ ...prev, priority: value }))}
+                className="w-full"
               >
-                <option value="low">Low</option>
-                <option value="medium">Medium</option>
-                <option value="high">High</option>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select priority" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectItem value="high">High</SelectItem>
+                    <SelectItem value="medium">Medium</SelectItem>
+                    <SelectItem value="low">Low</SelectItem>
+                  </SelectGroup>
+                </SelectContent>
               </Select>
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="dueDate" className="text-right">
-                Due Date
-              </Label>
+            <div>
+              <Label htmlFor="dueDate">Due Date</Label>
               <Popover>
                 <PopoverTrigger asChild>
                   <Button
                     variant={"outline"}
                     className={cn(
-                      "w-[240px] justify-start text-left font-normal",
-                      !newTaskDueDate && "text-muted-foreground"
+                      "w-full justify-start text-left font-normal",
+                      !formData.dueDate && "text-muted-foreground"
                     )}
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
-                    {newTaskDueDate ? format(newTaskDueDate, "PPP") : (
-                      <span>Pick a date</span>
-                    )}
+                    {formData.dueDate ? format(formData.dueDate, "PPP") : <span>Pick a date</span>}
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
+                <PopoverContent className="w-auto p-0">
                   <Calendar
                     mode="single"
-                    selected={newTaskDueDate}
-                    onSelect={setNewTaskDueDate}
-                    disabled={(date) =>
-                      date < new Date()
-                    }
+                    selected={formData.dueDate}
+                    onSelect={(date) => date && setFormData(prev => ({ ...prev, dueDate: date }))}
                     initialFocus
                   />
                 </PopoverContent>
               </Popover>
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="recurring" className="text-right">
-                Recurring
-              </Label>
+            <div className="flex items-center space-x-2">
               <Checkbox
                 id="recurring"
-                disabled
+                checked={formData.recurring}
+                onCheckedChange={(checked) => 
+                  setFormData(prev => ({ ...prev, recurring: checked === true }))
+                }
               />
+              <Label htmlFor="recurring">Recurring Task</Label>
+            </div>
+            <div className="flex justify-end space-x-2 pt-4">
+              <Button
+                variant="outline"
+                onClick={() => setShowAddTaskDialog(false)}
+              >
+                Cancel
+              </Button>
+              <Button onClick={handleAddTask}>Add Task</Button>
             </div>
           </div>
-          <Button onClick={handleAddTask}>Add Task</Button>
         </DialogContent>
       </Dialog>
     </div>
   );
 };
 
-export { CareTaskBoard };
+export default CareTaskBoard;

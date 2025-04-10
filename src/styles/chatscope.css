@@ -1,31 +1,66 @@
-/* Base chatscope styles */
+
+/* Basic styles for chatscope UI components */
 .cs-message-list {
-  background-color: transparent !important;
+  background-color: transparent;
+}
+
+.cs-message {
+  max-width: 80%;
 }
 
 .cs-message__content {
-  background-color: hsl(var(--primary)) !important;
-  color: hsl(var(--primary-foreground)) !important;
+  background-color: hsl(var(--muted));
+  padding: 0.75rem;
+  border-radius: 0.5rem;
 }
 
 .cs-message--outgoing .cs-message__content {
-  background-color: hsl(var(--muted)) !important;
-  color: hsl(var(--muted-foreground)) !important;
+  background-color: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
 }
 
-.cs-chat-container .cs-message-input {
+.cs-typing-indicator {
+  background-color: hsl(var(--muted));
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  color: hsl(var(--muted-foreground));
+}
+
+.cs-message-input {
   border: 1px solid hsl(var(--border));
+  border-radius: 0.5rem;
+  padding: 0.25rem;
   background-color: transparent;
 }
 
 .cs-message-input__content-editor {
-  background-color: transparent !important;
+  background-color: transparent;
+  color: hsl(var(--foreground));
 }
 
 .cs-message-input__content-editor-wrapper {
-  background-color: transparent !important;
+  background-color: transparent;
+  padding: 0.5rem;
 }
 
-.cs-typing-indicator {
-  background-color: transparent !important;
+.cs-message-input__content-editor[data-placeholder]:empty:before {
+  color: hsl(var(--muted-foreground));
+}
+
+.cs-button--send {
+  color: hsl(var(--primary));
+}
+
+.cs-button--send:hover {
+  color: hsl(var(--primary-foreground));
+  background-color: hsl(var(--primary));
+}
+
+.cs-main-container {
+  border: none;
+}
+
+.cs-chat-container {
+  background-color: transparent;
 }
