@@ -11,7 +11,7 @@ import {
   MainContainer,
   ChatContainer,
   MessageList,
-  Message,
+  Message as ChatUIMessage,
   MessageInput,
   TypingIndicator
 } from "@chatscope/chat-ui-kit-react";
@@ -19,7 +19,7 @@ import "@/styles/chatscope.css";
 import "@/i18n/i18n";
 
 interface Message {
-  role: 'assistant' | 'user';
+  role: 'assistant' | 'user'; // Ensure role is strictly typed
   content: string;
 }
 
@@ -157,7 +157,7 @@ Please provide relevant and helpful information based on this context.
 
       if (accumulatedMessage.trim()) {
         setMessages(prev => [...prev, {
-          role: 'assistant',
+          role: 'assistant' as const,
           content: accumulatedMessage
         }]);
         setCurrentMessage('');
@@ -190,7 +190,7 @@ Please provide relevant and helpful information based on this context.
 
       // Using mock response for now since Supabase functions might not be set up
       setTimeout(() => {
-        const mockResponse = {
+        const mockResponse: Message = {
           role: 'assistant',
           content: `Here's a response to your query: "${userMessage.content}".\n\nBased on the patient information provided, I'd recommend following the established care routines. If you have specific questions about medications or health conditions, please let me know.`
         };
@@ -254,7 +254,7 @@ Please provide a clear and informative response, considering all the available i
       
       // Using mock response for insights
       setTimeout(() => {
-        const mockInsights = {
+        const mockInsights: Message = {
           role: 'assistant',
           content: `Based on our conversation, here are some insights:\n\n1. The patient's medication schedule appears to be well-maintained\n2. There might be an opportunity to enhance the afternoon activities to improve engagement\n3. Sleep quality has been consistent, which is positive for cognitive health`
         };
@@ -313,7 +313,7 @@ Please analyze this conversation and provide key insights and recommendations ba
                 typingIndicator={isLoading ? <TypingIndicator content="AI is thinking..." /> : null}
               >
                 {messages.map((message, i) => (
-                  <Message
+                  <ChatUIMessage
                     key={i}
                     model={{
                       message: message.content,
@@ -324,7 +324,7 @@ Please analyze this conversation and provide key insights and recommendations ba
                   />
                 ))}
                 {currentMessage && (
-                  <Message
+                  <ChatUIMessage
                     model={{
                       message: currentMessage,
                       sender: 'AI Assistant',

@@ -1,62 +1,104 @@
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { useTranslation } from 'react-i18next';
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useToast } from '@/hooks/use-toast';
+
+interface Member {
+  id: string;
+  role: string;
+  status: string;
+}
+
+interface QualityMetric {
+  id: string;
+  metric_value: number;
+  recorded_at: string;
+}
 
 interface CareMetricsProps {
   groupId: string;
 }
 
-export const CareMetrics = ({ groupId }: CareMetricsProps) => {
-  const { t } = useTranslation();
+export function CareMetrics({ groupId }: CareMetricsProps) {
+  const [memberCount, setMemberCount] = useState<number>(0);
+  const [overallQuality, setOverallQuality] = useState<number>(0);
+  const [isLoading, setIsLoading] = useState(true);
+  const { toast } = useToast();
 
-  const { data: metrics } = useQuery({
-    queryKey: ['careMetrics', groupId],
-    queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
+  useEffect(() => {
+    fetchMetrics();
+  }, [groupId]);
 
-      const { data: membership, error: membershipError } = await supabase
-        .from('care_group_members')
-        .select('id')
-        .match({ group_id: groupId, user_id: user.id })
-        .single();
-
-      if (membershipError || !membership) {
-        throw new Error('Not authorized to view metrics');
-      }
-
-      const { data, error } = await supabase
-        .from('care_quality_metrics')
-        .select('*')
-        .eq('group_id', groupId)
-        .order('recorded_at', { ascending: true });
-
-      if (error) throw error;
-      return data;
+  const fetchMetrics = async () => {
+    setIsLoading(true);
+    try {
+      // Mock data
+      const mockMembers: Member[] = [
+        { id: '1', role: 'caregiver', status: 'active' },
+        { id: '2', role: 'family', status: 'active' },
+        { id: '3', role: 'professional', status: 'active' },
+        { id: '4', role: 'doctor', status: 'pending' }
+      ];
+      
+      const mockQualityMetrics: QualityMetric[] = [
+        { id: '1', metric_value: 85, recorded_at: new Date().toISOString() },
+        { id: '2', metric_value: 92, recorded_at: new Date(Date.now() - 86400000).toISOString() },
+        { id: '3', metric_value: 78, recorded_at: new Date(Date.now() - 172800000).toISOString() }
+      ];
+      
+      setMemberCount(mockMembers.filter(m => m.status === 'active').length);
+      
+      const latestMetric = mockQualityMetrics.sort(
+        (a, b) => new Date(b.recorded_at).getTime() - new Date(a.recorded_at).getTime()
+      )[0];
+      
+      setOverallQuality(latestMetric?.metric_value || 0);
+    } catch (error) {
+      console.error('Error fetching metrics:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load care metrics",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
     }
-  });
+  };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{t('careQuality')}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="h-[300px]">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={metrics}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="recorded_at" />
-              <YAxis />
-              <Tooltip />
-              <Line type="monotone" dataKey="metric_value" stroke="#8884d8" />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-      </CardContent>
-    </Card>
+    <div className="grid gap-4 md:grid-cols-2">
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-medium">Active Team Members</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {isLoading ? (
+            <div className="animate-pulse h-10 bg-muted rounded-md" />
+          ) : (
+            <div className="flex items-center">
+              <div className="text-3xl font-bold">{memberCount}</div>
+              <div className="ml-2 text-xs font-semibold text-muted-foreground">members</div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-medium">Overall Care Quality</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {isLoading ? (
+            <div className="animate-pulse h-10 bg-muted rounded-md" />
+          ) : (
+            <div className="flex items-center">
+              <div className="text-3xl font-bold">{overallQuality}</div>
+              <div className="ml-2 text-xs font-semibold text-muted-foreground">
+                out of 100
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
   );
-};
+}

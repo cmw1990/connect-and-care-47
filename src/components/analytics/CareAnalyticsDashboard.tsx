@@ -1,96 +1,67 @@
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
 import { useToast } from "@/hooks/use-toast";
 
-interface MetricValue {
-  physical: number;
-  mental: number;
-  mood: number;
-  activity: number;
+interface CareMetric {
+  id: string;
+  recorded_at: string;
+  metric_value: {
+    care_quality: number;
+    task_completion: number;
+    medication_adherence: number;
+  };
 }
 
 interface CareAnalyticsDashboardProps {
   groupId: string;
 }
 
-export const CareAnalyticsDashboard = ({ groupId }: CareAnalyticsDashboardProps) => {
+export function CareAnalyticsDashboard({ groupId }: CareAnalyticsDashboardProps) {
+  const [metrics, setMetrics] = useState<CareMetric[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
 
-  const { data: latestMetrics } = useQuery({
-    queryKey: ['latestCareMetrics', groupId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('care_analytics')
-        .select('metric_value')
-        .eq('group_id', groupId)
-        .order('recorded_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
+  useEffect(() => {
+    fetchMetrics();
+  }, [groupId]);
 
-      if (error) throw error;
-      
-      // Explicitly type cast the metric_value after validating its structure
-      const metricValue = data?.metric_value as unknown as MetricValue;
-      
-      // Validate the structure matches our expected interface
-      if (metricValue && typeof metricValue === 'object' &&
-          'physical' in metricValue &&
-          'mental' in metricValue &&
-          'mood' in metricValue &&
-          'activity' in metricValue) {
-        return metricValue;
-      }
-      
-      // Return null if the data doesn't match our expected structure
-      return null;
-    }
-  });
-
-  const { data: historicalMetrics } = useQuery({
-    queryKey: ['historicalCareMetrics', groupId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('care_analytics')
-        .select('metric_value, recorded_at')
-        .eq('group_id', groupId)
-        .order('recorded_at', { ascending: true })
-        .limit(30);
-
-      if (error) throw error;
-
-      return data?.map(record => {
-        const metricValue = record.metric_value as unknown as MetricValue;
-        
-        // Validate and transform each record
-        if (metricValue && typeof metricValue === 'object' &&
-            'physical' in metricValue &&
-            'mental' in metricValue &&
-            'mood' in metricValue &&
-            'activity' in metricValue) {
-          return {
-            ...metricValue,
-            date: new Date(record.recorded_at).toLocaleDateString()
-          };
+  const fetchMetrics = async () => {
+    setIsLoading(true);
+    try {
+      // Mock data for development
+      const mockMetrics: CareMetric[] = Array.from({ length: 10 }, (_, i) => ({
+        id: `metric-${i}`,
+        recorded_at: new Date(Date.now() - i * 86400000).toISOString(), // Daily data points
+        metric_value: {
+          care_quality: 70 + Math.floor(Math.random() * 20),
+          task_completion: 65 + Math.floor(Math.random() * 30),
+          medication_adherence: 80 + Math.floor(Math.random() * 20),
         }
-        return null;
-      }).filter(Boolean) || [];
+      }));
+      
+      setMetrics(mockMetrics.reverse()); // Most recent first
+    } catch (error) {
+      console.error('Error fetching metrics:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load analytics data",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
     }
-  });
+  };
 
-  if (!latestMetrics) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Care Analytics</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-muted-foreground">No analytics data available</p>
-        </CardContent>
-      </Card>
-    );
-  }
+  // Format data for the chart
+  const chartData = metrics.map(metric => ({
+    date: new Date(metric.recorded_at).toLocaleDateString(),
+    'Care Quality': metric.metric_value.care_quality,
+    'Task Completion': metric.metric_value.task_completion,
+    'Medication Adherence': metric.metric_value.medication_adherence,
+  }));
 
   return (
     <Card>
@@ -98,21 +69,54 @@ export const CareAnalyticsDashboard = ({ groupId }: CareAnalyticsDashboardProps)
         <CardTitle>Care Analytics</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="h-[300px]">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={historicalMetrics}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="date" />
-              <YAxis />
-              <Tooltip />
-              <Line type="monotone" dataKey="physical" stroke="#8884d8" name="Physical Health" />
-              <Line type="monotone" dataKey="mental" stroke="#82ca9d" name="Mental Health" />
-              <Line type="monotone" dataKey="mood" stroke="#ffc658" name="Mood" />
-              <Line type="monotone" dataKey="activity" stroke="#ff7300" name="Activity Level" />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
+        <Tabs defaultValue="overview">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="trends">Trends</TabsTrigger>
+            <TabsTrigger value="reports">Reports</TabsTrigger>
+          </TabsList>
+          <TabsContent value="overview" className="pt-6">
+            <div className="h-80">
+              {isLoading ? (
+                <div className="h-full flex items-center justify-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                </div>
+              ) : (
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={chartData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="date" />
+                    <YAxis domain={[0, 100]} />
+                    <Tooltip />
+                    <Legend />
+                    <Line type="monotone" dataKey="Care Quality" stroke="#8884d8" />
+                    <Line type="monotone" dataKey="Task Completion" stroke="#82ca9d" />
+                    <Line type="monotone" dataKey="Medication Adherence" stroke="#ffc658" />
+                  </LineChart>
+                </ResponsiveContainer>
+              )}
+            </div>
+            <div className="grid grid-cols-3 gap-4 mt-6">
+              {Object.entries({
+                'Care Quality': metrics.length > 0 ? metrics[metrics.length - 1].metric_value.care_quality : 0,
+                'Task Completion': metrics.length > 0 ? metrics[metrics.length - 1].metric_value.task_completion : 0,
+                'Medication Adherence': metrics.length > 0 ? metrics[metrics.length - 1].metric_value.medication_adherence : 0,
+              }).map(([label, value]) => (
+                <div key={label} className="bg-muted p-4 rounded-lg">
+                  <h3 className="text-sm font-medium">{label}</h3>
+                  <p className="text-2xl font-bold">{value}%</p>
+                </div>
+              ))}
+            </div>
+          </TabsContent>
+          <TabsContent value="trends" className="pt-6">
+            <p className="text-muted-foreground">Detailed trend analysis will be available soon.</p>
+          </TabsContent>
+          <TabsContent value="reports" className="pt-6">
+            <p className="text-muted-foreground">Generate and download detailed reports coming soon.</p>
+          </TabsContent>
+        </Tabs>
       </CardContent>
     </Card>
   );
-};
+}

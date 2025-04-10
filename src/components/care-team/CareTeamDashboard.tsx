@@ -5,17 +5,30 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from '@/integrations/supabase/client';
 import CareTaskBoard from './CareTaskBoard';
 import { CareTeamChat } from '../care-team/CareTeamChat';
 
-interface RouteParams {
+interface TeamDetails {
   id: string;
+  name: string;
+  description: string;
+  created_by: string;
+  primary_caregiver: string;
+  status: string;
+  created_at: string;
+  updated_at: string;
+  members: {
+    id: string;
+    user_id: string;
+    role: string;
+    status: string;
+  }[];
 }
 
 const CareTeamDashboard = () => {
-  const { id } = useParams<RouteParams>();
-  const [teamDetails, setTeamDetails] = useState<any>(null);
+  const params = useParams();
+  const id = params.id;
+  const [teamDetails, setTeamDetails] = useState<TeamDetails | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
 
@@ -29,8 +42,8 @@ const CareTeamDashboard = () => {
     setIsLoading(true);
     try {
       // Mock data for development until care_teams is fully implemented
-      const mockTeamDetails = {
-        id,
+      const mockTeamDetails: TeamDetails = {
+        id: id || '',
         name: "Smith Family Care Team",
         description: "Primary care team for John Smith",
         created_by: "caregiver-123",
@@ -133,7 +146,7 @@ const CareTeamDashboard = () => {
         <TabsContent value="chat" className="py-4">
           <div className="h-[600px]">
             <CareTeamChat 
-              teamId={id} 
+              teamId={id || ''} 
               onError={handleError}
             />
           </div>

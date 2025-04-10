@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Send, FileUp, Image } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useUser } from '@/lib/hooks/use-user';
+import { useToast } from "@/hooks/use-toast";
 
 interface Message {
   id: string;
@@ -21,6 +22,7 @@ interface CareTeamChatProps {
 
 export function CareTeamChat({ teamId, onError }: CareTeamChatProps) {
   const { user } = useUser();
+  const { toast } = useToast();
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const scrollAreaRef = React.useRef<HTMLDivElement>(null);
@@ -55,6 +57,13 @@ export function CareTeamChat({ teamId, onError }: CareTeamChatProps) {
     ];
     
     setMessages(mockMessages);
+
+    // Simulating Supabase real-time subscription
+    const interval = setInterval(() => {
+      console.log("Checking for new messages...");
+    }, 10000);
+
+    return () => clearInterval(interval);
   }, [teamId]);
 
   useEffect(() => {
@@ -77,6 +86,11 @@ export function CareTeamChat({ teamId, onError }: CareTeamChatProps) {
       
       setMessages(prev => [...prev, newMsg]);
       setNewMessage('');
+
+      toast({
+        title: "Message sent",
+        description: "Your message has been delivered to the care team."
+      });
     } catch (error) {
       onError(error as Error);
     }
