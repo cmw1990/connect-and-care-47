@@ -1,11 +1,6 @@
-import React from 'react';
-import { Metadata } from 'next';
-import { CheckoutPage } from '@/components/marketplace/CheckoutPage';
 
-export const metadata: Metadata = {
-  title: 'Checkout - Care Companion',
-  description: 'Complete your purchase securely',
-};
+import React from 'react';
+import { CheckoutPage } from '@/components/marketplace/CheckoutPage';
 
 export default function Checkout() {
   return (

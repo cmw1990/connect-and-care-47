@@ -1,11 +1,6 @@
-import React from 'react';
-import { Metadata } from 'next';
-import { MarketplaceDashboard } from '@/components/marketplace/MarketplaceDashboard';
 
-export const metadata: Metadata = {
-  title: 'Marketplace - Care Companion',
-  description: 'Browse and purchase healthcare products and services',
-};
+import React from 'react';
+import { MarketplaceDashboard } from '@/components/marketplace/MarketplaceDashboard';
 
 export default function MarketplacePage() {
   return (

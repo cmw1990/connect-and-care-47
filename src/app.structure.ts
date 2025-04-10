@@ -1,8 +1,26 @@
-import { FiHome, FiUsers, FiHeart, FiBook, FiMessageSquare, FiCalendar, 
-  FiSettings, FiShield, FiDollarSign, FiMap, FiLifeBuoy, 
-  FiPackage, FiFileText, FiTrendingUp, FiAward, 
-  FiBriefcase, FiActivity, FiMonitor, FiSmile, FiHelpCircle, 
-  FiClipboard } from 'react-icons/fi';
+import { 
+  Home, 
+  Users, 
+  Heart, 
+  Book, 
+  MessageSquare, 
+  Calendar,
+  Settings, 
+  Shield, 
+  DollarSign, 
+  Map, 
+  LifeBuoy,
+  Package, 
+  FileText, 
+  TrendingUp, 
+  Award,
+  Briefcase, 
+  Activity, 
+  Monitor, 
+  Smile, 
+  HelpCircle,
+  Clipboard 
+} from 'lucide-react';
 
 export interface AppModule {
   id: string;
@@ -50,7 +68,7 @@ export const APP_MODULES: AppModule[] = [
     id: 'dashboard',
     title: 'Care Dashboard',
     description: 'Your personalized care command center',
-    icon: FiHome,
+    icon: Home,
     path: '/dashboard',
     features: [
       {
@@ -78,7 +96,7 @@ export const APP_MODULES: AppModule[] = [
     id: 'care-network',
     title: 'Care Network',
     description: 'Connect with care providers and support network',
-    icon: FiUsers,
+    icon: Users,
     path: '/care-network',
     features: [
       {
@@ -111,7 +129,7 @@ export const APP_MODULES: AppModule[] = [
     id: 'care-management',
     title: 'Care Management',
     description: 'Comprehensive care planning and tracking',
-    icon: FiHeart,
+    icon: Heart,
     path: '/care-management',
     features: [
       {
@@ -144,7 +162,7 @@ export const APP_MODULES: AppModule[] = [
     id: 'support',
     title: 'Support Services',
     description: 'Access care resources and support',
-    icon: FiLifeBuoy,
+    icon: LifeBuoy,
     path: '/support',
     features: [
       {
@@ -178,7 +196,7 @@ export const APP_MODULES: AppModule[] = [
     id: 'financial',
     title: 'Financial Management',
     description: 'Manage care expenses and insurance',
-    icon: FiDollarSign,
+    icon: DollarSign,
     path: '/financial',
     features: [
       {
@@ -231,7 +249,7 @@ export const APP_MODULES: AppModule[] = [
     id: 'marketplace',
     title: 'Care Marketplace',
     description: 'Shop for care products and services',
-    icon: FiPackage,
+    icon: Package,
     path: '/marketplace',
     features: [
       {
@@ -258,7 +276,7 @@ export const APP_MODULES: AppModule[] = [
     id: 'communication',
     title: 'Communication',
     description: 'Stay connected with your care team',
-    icon: FiMessageSquare,
+    icon: MessageSquare,
     path: '/communication',
     features: [
       {

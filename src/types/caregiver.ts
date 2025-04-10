@@ -1,19 +1,34 @@
+
+export interface CareReview {
+  id: string;
+  rating: number;
+  comment?: string;
+  reviewer_id: string;
+  caregiver_id: string;
+  created_at: string;
+}
+
+export interface Availability {
+  user_id: string;
+  available_days: string[];
+  available_hours: {
+    start: string;
+    end: string;
+  };
+}
+
 export interface CaregiverProfile {
   id: string;
-  name: string;
-  bio: string;
-  location: string;
+  first_name: string;
+  last_name: string;
+  bio?: string;
   specialties: string[];
+  certifications?: string[];
+  experience_years?: number;
+  hourly_rate: number;
   availability: string[];
-  hourlyRate: number;
+  location?: string;
+  verified: boolean;
   rating: number;
-  reviewCount: number;
-  imageUrl: string;
-  yearsOfExperience: number;
-  languages: string[];
-  certifications: string[];
-  backgroundCheck: boolean;
-  lastActive: string;
-  created_at: string;
-  updated_at: string;
+  reviews_count: number;
 }

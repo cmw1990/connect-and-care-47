@@ -1,11 +1,6 @@
-import React from 'react';
-import { Metadata } from 'next';
-import { CartPage } from '@/components/marketplace/CartPage';
 
-export const metadata: Metadata = {
-  title: 'Shopping Cart - Care Companion',
-  description: 'Review and checkout your selected items',
-};
+import React from 'react';
+import { CartPage } from '@/components/marketplace/CartPage';
 
 export default function Cart() {
   return (

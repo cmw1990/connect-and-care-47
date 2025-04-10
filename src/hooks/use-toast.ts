@@ -1,35 +1,36 @@
 
-import { useState, useEffect } from "react";
+import { useState } from 'react';
 
-export interface ToastProps {
-  title?: string;
+type ToastVariant = 'default' | 'success' | 'destructive';
+
+interface ToastOptions {
+  title: string;
   description?: string;
-  variant?: "default" | "destructive";
+  variant?: ToastVariant;
   duration?: number;
 }
 
 export function useToast() {
-  const [toasts, setToasts] = useState<Array<ToastProps & { id: string }>>([]);
+  const [toasts, setToasts] = useState<ToastOptions[]>([]);
 
-  const toast = ({ title, description, variant = "default", duration = 3000 }: ToastProps) => {
-    const id = Math.random().toString(36).substring(2, 9);
-    setToasts((prev) => [...prev, { id, title, description, variant, duration }]);
+  const toast = (options: ToastOptions) => {
+    const id = Date.now().toString();
+    const newToast = { id, ...options };
+    setToasts((prevToasts) => [...prevToasts, newToast]);
 
-    // Auto dismiss
-    setTimeout(() => {
-      setToasts((prev) => prev.filter((toast) => toast.id !== id));
-    }, duration);
-    
+    // Auto-dismiss toast after duration
+    if (options.duration !== Infinity) {
+      setTimeout(() => {
+        dismissToast(id);
+      }, options.duration || 5000);
+    }
+
     return id;
   };
 
-  const dismiss = (id: string) => {
-    setToasts((prev) => prev.filter((toast) => toast.id !== id));
+  const dismissToast = (id: string) => {
+    setToasts((prevToasts) => prevToasts.filter((toast) => toast.id !== id));
   };
 
-  return {
-    toast,
-    dismiss,
-    toasts,
-  };
+  return { toast, toasts, dismissToast };
 }

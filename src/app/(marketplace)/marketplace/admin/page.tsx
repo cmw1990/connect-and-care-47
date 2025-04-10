@@ -1,11 +1,6 @@
-import React from 'react';
-import { Metadata } from 'next';
-import { MarketplaceAdminDashboard } from '@/components/marketplace/admin/MarketplaceAdminDashboard';
 
-export const metadata: Metadata = {
-  title: 'Marketplace Admin - Care Companion',
-  description: 'Manage marketplace products and services',
-};
+import React from 'react';
+import { MarketplaceAdminDashboard } from '@/components/marketplace/admin/MarketplaceAdminDashboard';
 
 export default function MarketplaceAdmin() {
   return (
