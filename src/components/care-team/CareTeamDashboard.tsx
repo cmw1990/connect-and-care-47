@@ -1,113 +1,111 @@
-import React from 'react';
-import { useRouter } from 'next/router';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { CareTeamList } from './CareTeamList';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Spinner } from "@/components/ui/Spinner";
+import { CareTeamMembers } from './CareTeamMembers';
 import { CareTaskBoard } from './CareTaskBoard';
 import { CareTeamChat } from './CareTeamChat';
 import { CareScheduleCalendar } from './CareScheduleCalendar';
 import { CareNotesList } from './CareNotesList';
-import { useToast } from '@/components/ui/use-toast';
-import { careTeamService } from '@/lib/supabase/care-team-service';
-import { useUser } from '@/lib/hooks/use-user';
+import useUser from '@/lib/hooks/use-user';
+import { supabase } from '@/integrations/supabase/client';
 
-export function CareTeamDashboard() {
+interface RouteParams {
+  teamId: string;
+}
+
+export const CareTeamDashboard: React.FC = () => {
+  const { teamId } = useParams<RouteParams>();
+  const navigate = useNavigate();
+  const [team, setTeam] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const { user } = useUser();
-  const router = useRouter();
-  const { toast } = useToast();
-  const [activeTeam, setActiveTeam] = React.useState<string | null>(null);
 
-  const handleTeamSelect = (teamId: string) => {
-    setActiveTeam(teamId);
-  };
+  useEffect(() => {
+    if (!teamId) {
+      console.error("Team ID is missing");
+      return;
+    }
 
-  const handleError = (error: Error) => {
-    toast({
-      title: 'Error',
-      description: error.message,
-      variant: 'destructive',
-    });
-  };
+    const fetchTeam = async () => {
+      setIsLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from('care_teams')
+          .select('*')
+          .eq('id', teamId)
+          .single();
 
-  if (!user) {
+        if (error) {
+          console.error("Error fetching team:", error);
+        } else {
+          setTeam(data);
+        }
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchTeam();
+  }, [teamId]);
+
+  if (isLoading) {
     return (
-      <Card>
-        <CardContent className="p-6">
-          <p>Please sign in to access care team features.</p>
-        </CardContent>
-      </Card>
+      <div className="flex justify-center items-center min-h-screen">
+        <Spinner size="lg" />
+      </div>
+    );
+  }
+
+  if (!team) {
+    return (
+      <div className="text-center py-12">
+        <h2 className="text-2xl font-bold text-gray-900 mb-4">
+          Team Not Found
+        </h2>
+        <p className="text-gray-500 mb-8">
+          The care team you're looking for does not exist.
+        </p>
+        <Button onClick={() => navigate('/groups')}>
+          Back to Groups
+        </Button>
+      </div>
     );
   }
 
   return (
-    <div className="container mx-auto p-4 space-y-4">
-      <div className="grid grid-cols-12 gap-4">
-        {/* Care Team List - Left Sidebar */}
-        <div className="col-span-3">
-          <Card>
-            <CardHeader>
-              <CardTitle>Care Teams</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <CareTeamList onTeamSelect={handleTeamSelect} onError={handleError} />
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Main Content Area */}
-        <div className="col-span-9">
-          {activeTeam ? (
-            <Tabs defaultValue="tasks" className="w-full">
-              <TabsList className="w-full justify-start">
-                <TabsTrigger value="tasks">Tasks</TabsTrigger>
-                <TabsTrigger value="chat">Team Chat</TabsTrigger>
-                <TabsTrigger value="schedule">Schedule</TabsTrigger>
-                <TabsTrigger value="notes">Notes</TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="tasks">
-                <Card>
-                  <CardContent className="p-6">
-                    <CareTaskBoard teamId={activeTeam} onError={handleError} />
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              <TabsContent value="chat">
-                <Card>
-                  <CardContent className="p-6">
-                    <CareTeamChat teamId={activeTeam} onError={handleError} />
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              <TabsContent value="schedule">
-                <Card>
-                  <CardContent className="p-6">
-                    <CareScheduleCalendar teamId={activeTeam} onError={handleError} />
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              <TabsContent value="notes">
-                <Card>
-                  <CardContent className="p-6">
-                    <CareNotesList teamId={activeTeam} onError={handleError} />
-                  </CardContent>
-                </Card>
-              </TabsContent>
-            </Tabs>
-          ) : (
-            <Card>
-              <CardContent className="p-6">
-                <p className="text-muted-foreground">
-                  Select a care team to view details and collaborate
-                </p>
-              </CardContent>
-            </Card>
-          )}
-        </div>
-      </div>
-    </div>
+    <Card className="w-full">
+      <CardHeader>
+        <CardTitle>Care Team: {team.name}</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <Tabs defaultvalue="tasks" className="w-full">
+          <TabsList>
+            <TabsTrigger value="tasks">Tasks</TabsTrigger>
+            <TabsTrigger value="members">Members</TabsTrigger>
+            <TabsTrigger value="chat">Chat</TabsTrigger>
+            <TabsTrigger value="schedule">Schedule</TabsTrigger>
+            <TabsTrigger value="notes">Notes</TabsTrigger>
+          </TabsList>
+          <TabsContent value="tasks">
+            <CareTaskBoard teamId={teamId} />
+          </TabsContent>
+          <TabsContent value="members">
+            <CareTeamMembers teamId={teamId} />
+          </TabsContent>
+          <TabsContent value="chat">
+            <CareTeamChat teamId={teamId} />
+          </TabsContent>
+          <TabsContent value="schedule">
+            <CareScheduleCalendar teamId={teamId} />
+          </TabsContent>
+          <TabsContent value="notes">
+            <CareNotesList teamId={teamId} />
+          </TabsContent>
+        </Tabs>
+      </CardContent>
+    </Card>
   );
-}
+};

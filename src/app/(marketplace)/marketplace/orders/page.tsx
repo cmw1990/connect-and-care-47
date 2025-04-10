@@ -1,8 +1,8 @@
+
 import React from 'react';
-import { Metadata } from 'next';
 import { OrdersPage } from '@/components/marketplace/OrdersPage';
 
-export const metadata: Metadata = {
+export const metadata = {
   title: 'My Orders - Care Companion',
   description: 'View and manage your orders',
 };

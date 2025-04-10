@@ -1,11 +1,6 @@
-import React from 'react';
-import { Metadata } from 'next';
-import { OrderDetailsPage } from '@/components/marketplace/OrderDetailsPage';
 
-export const metadata: Metadata = {
-  title: 'Order Details - Care Companion',
-  description: 'View your order details and status',
-};
+import React from 'react';
+import { OrderDetailsPage } from '@/components/marketplace/OrderDetailsPage';
 
 interface OrderDetailsProps {
   params: {

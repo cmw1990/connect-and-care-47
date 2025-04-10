@@ -9,12 +9,17 @@ export interface CareReview {
 }
 
 export interface Availability {
+  id?: string;
   user_id: string;
   available_days: string[];
   available_hours: {
     start: string;
     end: string;
   };
+  day_of_week?: string;
+  start_time?: string;
+  end_time?: string;
+  recurring?: boolean;
 }
 
 export interface CaregiverProfile {
@@ -26,9 +31,12 @@ export interface CaregiverProfile {
   certifications?: string[];
   experience_years?: number;
   hourly_rate: number;
+  hourlyRate?: number;
   availability: string[];
   location?: string;
   verified: boolean;
   rating: number;
   reviews_count: number;
+  latitude?: number;
+  longitude?: number;
 }

@@ -1,49 +1,71 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { User } from '@supabase/supabase-js';
 
-interface UseUserReturn {
-  user: User | null;
-  loading: boolean;
-  error: Error | null;
+export interface UserData {
+  id: string;
+  email: string;
+  first_name?: string;
+  last_name?: string;
+  role?: string;
+  avatar_url?: string;
 }
 
-export function useUser(): UseUserReturn {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
+export const useUser = () => {
+  const [user, setUser] = useState<UserData | null>(null);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
-    async function getUser() {
+    const fetchUser = async () => {
       try {
         setLoading(true);
-        const { data, error } = await supabase.auth.getUser();
         
-        if (error) {
-          throw error;
+        const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
+        
+        if (authError) throw authError;
+        
+        if (authUser) {
+          const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', authUser.id)
+            .single();
+            
+          if (profileError && profileError.code !== 'PGRST116') {
+            throw profileError;
+          }
+          
+          setUser({
+            id: authUser.id,
+            email: authUser.email || '',
+            ...profile
+          });
         }
-        
-        setUser(data.user);
-      } catch (error) {
-        setError(error as Error);
+      } catch (err) {
+        setError(err as Error);
+        console.error('Error fetching user:', err);
       } finally {
         setLoading(false);
       }
-    }
+    };
 
-    getUser();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setUser(session?.user ?? null);
+    fetchUser();
+    
+    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        fetchUser();
+      } else {
+        setUser(null);
       }
-    );
+    });
 
     return () => {
-      subscription.unsubscribe();
+      authListener?.subscription.unsubscribe();
     };
   }, []);
 
   return { user, loading, error };
-}
+};
+
+export default useUser;
