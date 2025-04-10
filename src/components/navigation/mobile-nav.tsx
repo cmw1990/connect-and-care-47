@@ -1,4 +1,5 @@
 
+import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Home, Users, Heart, LifeBuoy, Settings } from 'lucide-react';

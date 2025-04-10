@@ -1,33 +1,14 @@
-import { IconType } from 'react-icons';
-import {
-  FiHome,
-  FiUsers,
-  FiHeart,
-  FiBook,
-  FiMessageSquare,
-  FiCalendar,
-  FiSettings,
-  FiShield,
-  FiDollarSign,
-  FiMap,
-  FiLifeBuoy,
-  FiPackage,
-  FiFileText,
-  FiTrendingUp,
-  FiAward,
-  FiBriefcase,
-  FiActivity,
-  FiMonitor,
-  FiSmile,
-  FiHelpCircle,
-  FiClipboard,
-} from 'react-icons/fi';
+import { FiHome, FiUsers, FiHeart, FiBook, FiMessageSquare, FiCalendar, 
+  FiSettings, FiShield, FiDollarSign, FiMap, FiLifeBuoy, 
+  FiPackage, FiFileText, FiTrendingUp, FiAward, 
+  FiBriefcase, FiActivity, FiMonitor, FiSmile, FiHelpCircle, 
+  FiClipboard } from 'react-icons/fi';
 
 export interface AppModule {
   id: string;
   title: string;
   description: string;
-  icon: IconType;
+  icon: any; // Changed from IconType to any to avoid type dependency issues
   path: string;
   features: AppFeature[];
   webTools?: WebTool[];
