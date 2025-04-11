@@ -1,17 +1,8 @@
 
 import { v4 as uuidv4 } from 'uuid';
-import { supabaseClient } from '@/integrations/supabaseClient';
+import { supabaseClient, safeQueryWithFallback } from '@/integrations/supabaseClient';
 import { Json } from '@/types/database.types';
-
-/**
- * Interface for Supabase response
- */
-export interface MockSupabaseResponse<T> {
-  data: T[];
-  error: null | {
-    message: string;
-  };
-}
+import type { CareRecipient, Connection, Document, Post, Task } from '@/types/database.types';
 
 /**
  * Type for SelectQueryError
@@ -60,7 +51,7 @@ export function mockCurrentUser() {
 export async function mockTableQuery<T>(
   table: string,
   mockData: T[]
-): Promise<MockSupabaseResponse<T>> {
+): Promise<{ data: T[]; error: null }> {
   // Simulate network delay
   await new Promise(resolve => setTimeout(resolve, 200));
   
@@ -68,6 +59,16 @@ export async function mockTableQuery<T>(
     data: mockData,
     error: null
   };
+}
+
+/**
+ * Mocks a Supabase query with fallback data
+ */
+export async function mockSupabaseQuery<T>(
+  tableName: string,
+  mockData: T[]
+): Promise<{ data: T[] | null; error: any }> {
+  return { data: mockData, error: null };
 }
 
 /**
@@ -85,7 +86,7 @@ export function mockConnection(options: {
   connection_type?: 'carer' | 'pal';
   first_name?: string;
   last_name?: string;
-}) {
+}): Connection {
   const id = uuidv4();
   return {
     id,
@@ -107,6 +108,45 @@ export function mockConnection(options: {
 }
 
 /**
+ * Creates a mock message for testing 
+ */
+export function createMockMessage(options: {
+  content: string;
+  sender_id: string;
+  sender: {
+    first_name: string;
+    last_name: string;
+  };
+}) {
+  return {
+    id: uuidv4(),
+    content: options.content,
+    sender_id: options.sender_id,
+    sender: options.sender,
+    created_at: new Date().toISOString()
+  };
+}
+
+/**
+ * Creates a mock user profile
+ */
+export function createMockUserProfile(options: {
+  id?: string;
+  first_name?: string;
+  last_name?: string;
+  role?: string;
+}) {
+  return {
+    id: options.id || uuidv4(),
+    first_name: options.first_name || 'Test',
+    last_name: options.last_name || 'User',
+    role: options.role || 'user',
+    email: `${options.first_name || 'test'}.${options.last_name || 'user'}@example.com`.toLowerCase(),
+    created_at: new Date().toISOString()
+  };
+}
+
+/**
  * Safely access Supabase tables
  * Will try real table first, then fallback to mock data if error
  */
@@ -114,9 +154,13 @@ export async function safeSupabaseQuery<T>(
   tableName: string,
   queryFn: () => Promise<any>,
   mockData: T[]
-): Promise<{ data: T[], error: any }> {
+): Promise<{ data: T[]; error: any }> {
   try {
     const result = await queryFn();
+    if (result.error) {
+      console.warn(`Error accessing ${tableName} table, using mock data:`, result.error);
+      return await mockTableQuery(tableName, mockData);
+    }
     return result;
   } catch (error) {
     console.warn(`Error accessing ${tableName} table, using mock data:`, error);
@@ -127,17 +171,25 @@ export async function safeSupabaseQuery<T>(
 /**
  * Transforms connection data to match Connection type
  */
-export function transformConnectionData(data: any[]): any[] {
+export function transformConnectionData(data: any[]): Connection[] {
   return data.map(item => ({
     ...item,
-    connection_type: item.connection_type as 'carer' | 'pal'
+    connection_type: item.connection_type as 'carer' | 'pal',
+    requester: {
+      first_name: item.requester?.first_name || 'Unknown',
+      last_name: item.requester?.last_name || 'User'
+    },
+    recipient: {
+      first_name: item.recipient?.first_name || 'Unknown',
+      last_name: item.recipient?.last_name || 'User'
+    }
   }));
 }
 
 /**
  * Transforms document data to match Document type
  */
-export function transformDocumentData(data: any[]): any[] {
+export function transformDocumentData(data: any[]): Document[] {
   return data.map(item => ({
     id: item.id,
     title: item.title || 'Untitled Document',
@@ -150,18 +202,53 @@ export function transformDocumentData(data: any[]): any[] {
 }
 
 /**
+ * Transforms task data to match Task type
+ */
+export function transformTaskData(data: any[]): Task[] {
+  return data.map(item => ({
+    id: item.id || uuidv4(),
+    title: item.title || 'Untitled Task',
+    due_date: item.due_date || new Date().toISOString(),
+    status: item.status || 'pending',
+    priority: item.priority || 'medium',
+    assigned_to: item.assigned_to || '',
+    assigned_user: item.assigned_user || {
+      first_name: 'Unassigned',
+      last_name: ''
+    }
+  }));
+}
+
+/**
+ * Transforms post data to match Post type
+ */
+export function transformPostData(data: any[]): Post[] {
+  return data.map(item => ({
+    id: item.id || uuidv4(),
+    content: item.content || '',
+    created_at: item.created_at || new Date().toISOString(),
+    created_by: item.created_by || '',
+    profiles: item.profiles || {
+      first_name: 'Unknown',
+      last_name: 'User'
+    }
+  }));
+}
+
+/**
  * Transforms care recipient data to match CareRecipient type
  */
-export function transformRecipientData(data: any[]): any[] {
+export function transformRecipientData(data: any[]): CareRecipient[] {
   return data.map(item => ({
     id: item.id,
     first_name: item.first_name,
-    last_name: item.last_name,
+    last_name: item.last_name || '',
     date_of_birth: item.date_of_birth || '',
     care_needs: Array.isArray(item.care_needs) ? item.care_needs : [],
     preferences: item.preferences || {},
     created_at: item.created_at,
     updated_at: item.updated_at,
+    group_id: item.group_id,
     medical_conditions: [],
     allergies: [],
     special_requirements: []

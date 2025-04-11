@@ -6,20 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { UserPlus, Trash2, Edit2, Save } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-
-interface CareRecipient {
-  id: string;
-  first_name: string;
-  last_name: string | null;
-  date_of_birth: string | null;
-  care_needs: string[];
-  special_requirements: string[];
-  medical_conditions: string[];
-  allergies: string[];
-  preferences: Record<string, any>;
-  group_id: string;
-}
+import { supabaseClient } from "@/integrations/supabaseClient";
+import { CareRecipient, Json } from "@/types/database.types";
+import { transformRecipientData } from "@/utils/supabaseHelpers";
 
 interface CareRecipientManagerProps {
   groupId: string;
@@ -38,7 +27,7 @@ export const CareRecipientManager = ({ groupId }: CareRecipientManagerProps) => 
 
   const fetchRecipients = async () => {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await supabaseClient
         .from('care_recipients')
         .select('*')
         .eq('group_id', groupId)
@@ -46,12 +35,12 @@ export const CareRecipientManager = ({ groupId }: CareRecipientManagerProps) => 
 
       if (error) throw error;
 
-      const formattedData = (data || []).map(recipient => ({
-        ...recipient,
-        preferences: recipient.preferences as Record<string, any>
-      }));
-
-      setRecipients(formattedData);
+      if (data) {
+        const transformedData = transformRecipientData(data);
+        setRecipients(transformedData);
+      } else {
+        setRecipients([]);
+      }
     } catch (error) {
       console.error('Error fetching recipients:', error);
       toast({
@@ -90,17 +79,22 @@ export const CareRecipientManager = ({ groupId }: CareRecipientManagerProps) => 
         return;
       }
 
+      // Prepare data for database
       const recipientData = {
-        ...editForm,
-        first_name: editForm.first_name.trim(), // Ensure first_name is provided and trimmed
+        first_name: editForm.first_name.trim(),
+        last_name: editForm.last_name || '',
         group_id: groupId,
-        preferences: editForm.preferences || {}
+        date_of_birth: editForm.date_of_birth || null,
+        gender: null,
+        care_needs: (editForm.care_needs || []) as unknown as Json,
+        medical_history: [] as unknown as Json,
+        preferences: (editForm.preferences || {}) as unknown as Json
       };
 
       if (isEditing === 'new') {
-        const { error } = await supabase
+        const { error } = await supabaseClient
           .from('care_recipients')
-          .insert([recipientData]); // Pass as array to match the overload type
+          .insert(recipientData);
 
         if (error) throw error;
 
@@ -109,7 +103,7 @@ export const CareRecipientManager = ({ groupId }: CareRecipientManagerProps) => 
           description: "Care recipient added successfully",
         });
       } else {
-        const { error } = await supabase
+        const { error } = await supabaseClient
           .from('care_recipients')
           .update(recipientData)
           .eq('id', isEditing);
@@ -137,7 +131,7 @@ export const CareRecipientManager = ({ groupId }: CareRecipientManagerProps) => 
 
   const handleDelete = async (id: string) => {
     try {
-      const { error } = await supabase
+      const { error } = await supabaseClient
         .from('care_recipients')
         .delete()
         .eq('id', id);
@@ -321,4 +315,3 @@ export const CareRecipientManager = ({ groupId }: CareRecipientManagerProps) => 
     </Card>
   );
 };
-

@@ -1,21 +1,12 @@
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Bell, MessageSquare } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { supabaseClient } from "@/integrations/supabaseClient";
 import { useState, useEffect } from "react";
-
-interface CareUpdate {
-  id: string;
-  content: string;
-  update_type: string;
-  created_at: string;
-  profiles: {
-    first_name: string | null;
-    last_name: string | null;
-  } | null;
-}
+import { CareUpdate } from "@/types/database.types";
 
 interface CareUpdatesProps {
   groupId: string;
@@ -34,7 +25,7 @@ export const CareUpdates = ({ groupId }: CareUpdatesProps) => {
 
   const fetchUpdates = async () => {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await supabaseClient
         .from("care_updates")
         .select(`
           id,
@@ -50,14 +41,32 @@ export const CareUpdates = ({ groupId }: CareUpdatesProps) => {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      setUpdates(data || []);
+      
+      // Transform the data to match the CareUpdate interface
+      if (data) {
+        const transformedUpdates = data.map(update => ({
+          id: update.id,
+          content: update.content,
+          update_type: update.update_type,
+          created_at: update.created_at,
+          // Handle missing profiles data by providing default values
+          profiles: update.profiles || { 
+            first_name: 'Unknown', 
+            last_name: 'User' 
+          }
+        }));
+        
+        setUpdates(transformedUpdates);
+      } else {
+        setUpdates([]);
+      }
     } catch (error) {
       console.error("Error fetching updates:", error);
     }
   };
 
   const subscribeToUpdates = () => {
-    const channel = supabase
+    const channel = supabaseClient
       .channel("care_updates")
       .on(
         "postgres_changes",
@@ -75,7 +84,7 @@ export const CareUpdates = ({ groupId }: CareUpdatesProps) => {
       .subscribe();
 
     return () => {
-      supabase.removeChannel(channel);
+      supabaseClient.removeChannel(channel);
     };
   };
 
@@ -84,7 +93,7 @@ export const CareUpdates = ({ groupId }: CareUpdatesProps) => {
 
     try {
       setIsLoading(true);
-      const { error } = await supabase.from("care_updates").insert({
+      const { error } = await supabaseClient.from("care_updates").insert({
         group_id: groupId,
         content: newUpdate.trim(),
         update_type: "general",

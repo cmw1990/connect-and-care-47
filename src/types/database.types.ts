@@ -1,825 +1,607 @@
 
-/**
- * This file extends the Supabase types with our custom tables
- * since we can't directly modify the generated types.ts file
- */
-import { Database as GeneratedDatabase } from "@/integrations/supabase/types";
+export interface Json {
+  [key: string]: any
+}
 
-export interface ExtendedDatabase extends GeneratedDatabase {
+export interface Database {
   public: {
-    Tables: GeneratedDatabase["public"]["Tables"] & {
-      care_outcome_metrics: {
-        Row: {
-          id: string;
-          metric_type: string;
-          value: number;
-          user_id: string;
-          recorded_at: string;
-          created_at: string;
-          updated_at: string;
-          companion_meeting_id?: string;
-        };
-        Insert: {
-          id?: string;
-          metric_type: string;
-          value: number;
-          user_id: string;
-          recorded_at?: string;
-          created_at?: string;
-          updated_at?: string;
-          companion_meeting_id?: string;
-        };
-        Update: {
-          id?: string;
-          metric_type?: string;
-          value?: number;
-          user_id?: string;
-          recorded_at?: string;
-          created_at?: string;
-          updated_at?: string;
-          companion_meeting_id?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "care_outcome_metrics_user_id_fkey";
-            columns: ["user_id"];
-            referencedRelation: "users";
-            referencedColumns: ["id"];
-          }
-        ];
-      };
-      verification_requests: {
-        Row: {
-          id: string;
-          user_id: string;
-          request_type: string;
-          documents: any[];
-          status: string;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          user_id: string;
-          request_type: string;
-          documents?: any[];
-          status?: string;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: {
-          id?: string;
-          user_id?: string;
-          request_type?: string;
-          documents?: any[];
-          status?: string;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "verification_requests_user_id_fkey";
-            columns: ["user_id"];
-            referencedRelation: "users";
-            referencedColumns: ["id"];
-          }
-        ];
-      };
-      background_checks: {
-        Row: {
-          id: string;
-          user_id: string;
-          check_type: string;
-          status: string;
-          results: any;
-          provider: string | null;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          user_id: string;
-          check_type: string;
-          status?: string;
-          results?: any;
-          provider?: string | null;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: {
-          id?: string;
-          user_id?: string;
-          check_type?: string;
-          status?: string;
-          results?: any;
-          provider?: string | null;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "background_checks_user_id_fkey";
-            columns: ["user_id"];
-            referencedRelation: "users";
-            referencedColumns: ["id"];
-          }
-        ];
-      };
+    Tables: {
       affiliate_interactions: {
         Row: {
-          id: string;
-          product_id: string;
-          user_id: string;
-          interaction_type: string;
-          affiliate_link: string | null;
-          created_at: string;
-        };
+          user_id: string
+          created_at: string | null
+          affiliate_link: string | null
+          interaction_type: string
+          product_id: string
+          id: string
+        }
         Insert: {
-          id?: string;
-          product_id: string;
-          user_id: string;
-          interaction_type: string;
-          affiliate_link?: string | null;
-          created_at?: string;
-        };
+          user_id: string
+          created_at?: string | null
+          affiliate_link?: string | null
+          interaction_type: string
+          product_id: string
+          id?: string
+        }
         Update: {
-          id?: string;
-          product_id?: string;
-          user_id?: string;
-          interaction_type?: string;
-          affiliate_link?: string | null;
-          created_at?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "affiliate_interactions_user_id_fkey";
-            columns: ["user_id"];
-            referencedRelation: "users";
-            referencedColumns: ["id"];
-          }
-        ];
-      };
-      medical_documents: {
+          user_id?: string
+          created_at?: string | null
+          affiliate_link?: string | null
+          interaction_type?: string
+          product_id?: string
+          id?: string
+        }
+        Relationships: []
+      }
+      availability_slots: any
+      background_checks: any
+      care_analytics: any
+      care_circle_invites: any
+      care_connections: any
+      care_facilities: any
+      care_groups: any
+      care_group_members: any
+      care_notes: any
+      care_outcome_metrics: {
         Row: {
-          id: string;
-          group_id: string;
-          title: string;
-          description: string | null;
-          document_type: string | null;
-          file_url: string | null;
-          created_by: string | null;
-          created_at: string;
-          updated_at: string;
-        };
+          id: string
+          metric_type: string
+          value: number
+          user_id: string
+          recorded_at: string
+          created_at: string
+          updated_at: string
+          companion_meeting_id?: string
+        }
         Insert: {
-          id?: string;
-          group_id: string;
-          title: string;
-          description?: string | null;
-          document_type?: string | null;
-          file_url?: string | null;
-          created_by?: string | null;
-          created_at?: string;
-          updated_at?: string;
-        };
+          id?: string
+          metric_type: string
+          value: number
+          user_id: string
+          recorded_at?: string
+          created_at?: string
+          updated_at?: string
+          companion_meeting_id?: string
+        }
         Update: {
-          id?: string;
-          group_id?: string;
-          title?: string;
-          description?: string | null;
-          document_type?: string | null;
-          file_url?: string | null;
-          created_by?: string | null;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "medical_documents_created_by_fkey";
-            columns: ["created_by"];
-            referencedRelation: "users";
-            referencedColumns: ["id"];
-          }
-        ];
-      };
-      care_circle_invites: {
-        Row: {
-          id: string;
-          group_id: string;
-          email: string;
-          role: string;
-          status: string;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          group_id: string;
-          email: string;
-          role: string;
-          status?: string;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: {
-          id?: string;
-          group_id?: string;
-          email?: string;
-          role?: string;
-          status?: string;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Relationships: [];
-      };
+          id?: string
+          metric_type?: string
+          value?: number
+          user_id?: string
+          recorded_at?: string
+          created_at?: string
+          updated_at?: string
+          companion_meeting_id?: string
+        }
+        Relationships: []
+      }
+      care_products: any
+      care_quality_metrics: any
       care_recipients: {
         Row: {
-          id: string;
-          group_id: string;
-          first_name: string;
-          last_name: string;
-          date_of_birth: string | null;
-          gender: string | null;
-          care_needs: any;
-          medical_history: any;
-          preferences: any;
-          created_at: string;
-          updated_at: string;
-        };
+          id: string
+          group_id: string
+          first_name: string
+          last_name: string
+          date_of_birth: string | null
+          gender: string | null
+          care_needs: Json
+          medical_history: Json
+          preferences: Json
+          created_at: string
+          updated_at: string
+        }
         Insert: {
-          id?: string;
-          group_id: string;
-          first_name: string;
-          last_name: string;
-          date_of_birth?: string | null;
-          gender?: string | null;
-          care_needs?: any;
-          medical_history?: any;
-          preferences?: any;
-          created_at?: string;
-          updated_at?: string;
-        };
+          id?: string
+          group_id: string
+          first_name: string
+          last_name: string
+          date_of_birth?: string | null
+          gender?: string | null
+          care_needs?: Json
+          medical_history?: Json
+          preferences?: Json
+          created_at?: string
+          updated_at?: string
+        }
         Update: {
-          id?: string;
-          group_id?: string;
-          first_name?: string;
-          last_name?: string;
-          date_of_birth?: string | null;
-          gender?: string | null;
-          care_needs?: any;
-          medical_history?: any;
-          preferences?: any;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Relationships: [];
-      };
-      medical_device_data: {
+          id?: string
+          group_id?: string
+          first_name?: string
+          last_name?: string
+          date_of_birth?: string | null
+          gender?: string | null
+          care_needs?: Json
+          medical_history?: Json
+          preferences?: Json
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      care_routines: any
+      care_tasks: any
+      care_team_availability: any
+      care_team_members: any
+      care_teams: any
+      care_updates: {
         Row: {
-          id: string;
-          user_id: string;
-          device_type: string;
-          readings: any;
-          recorded_at: string;
-          created_at: string;
-          updated_at: string;
-        };
+          id: string
+          group_id: string
+          content: string
+          update_type: string
+          author_id: string
+          created_at: string
+          updated_at: string
+        }
         Insert: {
-          id?: string;
-          user_id: string;
-          device_type: string;
-          readings: any;
-          recorded_at?: string;
-          created_at?: string;
-          updated_at?: string;
-        };
+          id?: string
+          group_id: string
+          content: string
+          update_type: string
+          author_id?: string
+          created_at?: string
+          updated_at?: string
+        }
         Update: {
-          id?: string;
-          user_id?: string;
-          device_type?: string;
-          readings?: any;
-          recorded_at?: string;
-          created_at?: string;
-          updated_at?: string;
-        };
+          id?: string
+          group_id?: string
+          content?: string
+          update_type?: string
+          author_id?: string
+          created_at?: string
+          updated_at?: string
+        }
         Relationships: [
           {
-            foreignKeyName: "medical_device_data_user_id_fkey";
-            columns: ["user_id"];
-            referencedRelation: "users";
-            referencedColumns: ["id"];
+            foreignKeyName: "care_updates_author_id_fkey"
+            columns: ["author_id"]
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
           }
-        ];
-      };
-      care_groups: {
-        Row: {
-          id: string;
-          name: string;
-          description: string | null;
-          privacy_settings: any;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          name: string;
-          description?: string | null;
-          privacy_settings?: any;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: {
-          id?: string;
-          name?: string;
-          description?: string | null;
-          privacy_settings?: any;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Relationships: [];
-      };
+        ]
+      }
+      caregiver_availability: any
+      caregiver_bookings: any
+      caregiver_profiles: any
+      companion_activity_templates: any
+      companion_profiles: any
+      danger_zone_types: any
+      dementia_profiles: any
+      facility_leads: any
       geofences: {
         Row: {
-          id: string;
-          group_id: string;
-          name: string;
-          center_lat: number;
-          center_lng: number;
-          radius: number;
-          type: string;
-          created_at: string;
-          updated_at: string;
-        };
+          id: string
+          name: string
+          type: string
+          center_lat: number
+          center_lng: number
+          radius: number
+          group_id: string
+          created_at: string
+          updated_at: string
+          boundary_type?: string
+          polygon_coordinates?: Json
+          danger_zones?: Json[]
+          notification_settings?: Json
+        }
         Insert: {
-          id?: string;
-          group_id: string;
-          name: string;
-          center_lat: number;
-          center_lng: number;
-          radius: number;
-          type: string;
-          created_at?: string;
-          updated_at?: string;
-        };
+          id?: string
+          name: string
+          type: string
+          center_lat: number
+          center_lng: number
+          radius: number
+          group_id: string
+          created_at?: string
+          updated_at?: string
+          boundary_type?: string
+          polygon_coordinates?: Json
+          danger_zones?: Json[]
+          notification_settings?: Json
+        }
         Update: {
-          id?: string;
-          group_id?: string;
-          name?: string;
-          center_lat?: number;
-          center_lng?: number;
-          radius?: number;
-          type?: string;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Relationships: [];
-      };
-      danger_zone_types: {
-        Row: {
-          id: string;
-          name: string;
-          description: string | null;
-          icon: string | null;
-          color: string | null;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          name: string;
-          description?: string | null;
-          icon?: string | null;
-          color?: string | null;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: {
-          id?: string;
-          name?: string;
-          description?: string | null;
-          icon?: string | null;
-          color?: string | null;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Relationships: [];
-      };
-      care_group_members: {
-        Row: {
-          id: string;
-          group_id: string;
-          user_id: string;
-          member_type: string;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          group_id: string;
-          user_id: string;
-          member_type: string;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: {
-          id?: string;
-          group_id?: string;
-          user_id?: string;
-          member_type?: string;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "care_group_members_user_id_fkey";
-            columns: ["user_id"];
-            referencedRelation: "users";
-            referencedColumns: ["id"];
-          }
-        ];
-      };
+          id?: string
+          name?: string
+          type?: string
+          center_lat?: number
+          center_lng?: number
+          radius?: number
+          group_id?: string
+          created_at?: string
+          updated_at?: string
+          boundary_type?: string
+          polygon_coordinates?: Json
+          danger_zones?: Json[]
+          notification_settings?: Json
+        }
+        Relationships: []
+      }
+      geofence_alerts: any
       group_posts: {
         Row: {
-          id: string;
-          group_id: string;
-          content: string;
-          created_by: string | null;
-          created_at: string;
-          updated_at: string;
-        };
+          id: string
+          content: string
+          created_at: string
+          updated_at: string
+          created_by: string
+          group_id: string
+        }
         Insert: {
-          id?: string;
-          group_id: string;
-          content: string;
-          created_by?: string | null;
-          created_at?: string;
-          updated_at?: string;
-        };
+          id?: string
+          content: string
+          created_at?: string
+          updated_at?: string
+          created_by?: string
+          group_id: string
+        }
         Update: {
-          id?: string;
-          group_id?: string;
-          content?: string;
-          created_by?: string | null;
-          created_at?: string;
-          updated_at?: string;
-        };
+          id?: string
+          content?: string
+          created_at?: string
+          updated_at?: string
+          created_by?: string
+          group_id?: string
+        }
         Relationships: [
           {
-            foreignKeyName: "group_posts_created_by_fkey";
-            columns: ["created_by"];
-            referencedRelation: "users";
-            referencedColumns: ["id"];
+            foreignKeyName: "group_posts_created_by_fkey"
+            columns: ["created_by"]
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
           }
-        ];
-      };
+        ]
+      }
+      insurance_analytics: any
+      insurance_claims: any
+      insurance_deductibles: any
+      insurance_documents: any
+      insurance_network_providers: any
+      insurance_notifications: any
+      insurance_plan_benefits: any
+      insurance_plans: any
+      insurance_preauthorizations: any
+      insurance_verification_history: any
+      medical_device_data: any
+      medical_documents: any
+      medication_adherence_trends: any
+      medication_inventory: any
+      medication_logs: any
+      medication_portal_settings: any
+      medication_schedules: {
+        Row: {
+          id: string
+          group_id: string
+          medication_name: string
+          dosage: string
+          frequency: string
+          time_of_day: string[]
+          created_at: string
+          updated_at: string
+          instructions?: string
+          start_date?: string
+          end_date?: string
+        }
+        Insert: {
+          id?: string
+          group_id: string
+          medication_name: string
+          dosage: string
+          frequency: string
+          time_of_day: string[]
+          created_at?: string
+          updated_at?: string
+          instructions?: string
+          start_date?: string
+          end_date?: string
+        }
+        Update: {
+          id?: string
+          group_id?: string
+          medication_name?: string
+          dosage?: string
+          frequency?: string
+          time_of_day?: string[]
+          created_at?: string
+          updated_at?: string
+          instructions?: string
+          start_date?: string
+          end_date?: string
+        }
+        Relationships: []
+      }
+      medication_supervision_summary: any
+      medication_verification_settings: any
+      medication_verifications: any
+      patient_check_ins: any
+      patient_info: any
+      patient_locations: {
+        Row: {
+          id: string
+          group_id: string
+          location_enabled: boolean
+          current_location: Json
+          created_at: string
+          updated_at: string
+          location_history?: Json[]
+        }
+        Insert: {
+          id?: string
+          group_id: string
+          location_enabled?: boolean
+          current_location?: Json
+          created_at?: string
+          updated_at?: string
+          location_history?: Json[]
+        }
+        Update: {
+          id?: string
+          group_id?: string
+          location_enabled?: boolean
+          current_location?: Json
+          created_at?: string
+          updated_at?: string
+          location_history?: Json[]
+        }
+        Relationships: []
+      }
+      private_messages: any
+      profiles: {
+        Row: {
+          id: string
+          first_name: string | null
+          last_name: string | null
+          email: string | null
+          role: string | null
+          avatar_url: string | null
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id: string
+          first_name?: string | null
+          last_name?: string | null
+          email?: string | null
+          role?: string | null
+          avatar_url?: string | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          first_name?: string | null
+          last_name?: string | null
+          email?: string | null
+          role?: string | null
+          avatar_url?: string | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      resource_library: any
+      subscription_plans: any
       tasks: {
         Row: {
-          id: string;
-          title: string;
-          description: string | null;
-          status: string;
-          priority: string;
-          due_date: string | null;
-          assigned_to: string | null;
-          group_id: string;
-          created_by: string | null;
-          created_at: string;
-          updated_at: string;
-        };
+          id: string
+          title: string
+          description: string | null
+          status: string
+          priority: string
+          assigned_to: string
+          due_date: string | null
+          group_id: string
+          created_by: string | null
+          created_at: string
+          updated_at: string
+        }
         Insert: {
-          id?: string;
-          title: string;
-          description?: string | null;
-          status?: string;
-          priority?: string;
-          due_date?: string | null;
-          assigned_to?: string | null;
-          group_id: string;
-          created_by?: string | null;
-          created_at?: string;
-          updated_at?: string;
-        };
+          id?: string
+          title: string
+          description?: string | null
+          status: string
+          priority: string
+          assigned_to: string
+          due_date?: string | null
+          group_id: string
+          created_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
         Update: {
-          id?: string;
-          title?: string;
-          description?: string | null;
-          status?: string;
-          priority?: string;
-          due_date?: string | null;
-          assigned_to?: string | null;
-          group_id?: string;
-          created_by?: string | null;
-          created_at?: string;
-          updated_at?: string;
-        };
+          id?: string
+          title?: string
+          description?: string | null
+          status?: string
+          priority?: string
+          assigned_to?: string
+          due_date?: string | null
+          group_id?: string
+          created_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
         Relationships: [
           {
-            foreignKeyName: "tasks_assigned_to_fkey";
-            columns: ["assigned_to"];
-            referencedRelation: "users";
-            referencedColumns: ["id"];
-          },
-          {
-            foreignKeyName: "tasks_created_by_fkey";
-            columns: ["created_by"];
-            referencedRelation: "users";
-            referencedColumns: ["id"];
+            foreignKeyName: "tasks_assigned_to_fkey"
+            columns: ["assigned_to"]
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
           }
-        ];
-      };
-      care_connections: {
+        ]
+      }
+      team_messages: any
+      temp_services: any
+      user_insurance: any
+      verification_requests: any
+      video_consultations: any
+    }
+    Views: {}
+    Functions: {}
+    Enums: {}
+    CompositeTypes: {}
+  }
+}
+
+// For use with the Supabase client
+export type ExtendedDatabase = Database & {
+  public: {
+    Tables: {
+      // Add any missing tables that are used in components
+      care_circle_invites: {
         Row: {
-          id: string;
-          requester_id: string;
-          recipient_id: string;
-          connection_type: string;
-          status: string;
-          created_at: string;
-          updated_at: string;
-        };
+          id: string
+          group_id: string
+          email: string
+          role: string
+          status: string
+          created_at: string
+          updated_at: string
+        }
         Insert: {
-          id?: string;
-          requester_id: string;
-          recipient_id: string;
-          connection_type: string;
-          status?: string;
-          created_at?: string;
-          updated_at?: string;
-        };
+          id?: string
+          group_id: string
+          email: string
+          role: string
+          status?: string
+          created_at?: string
+          updated_at?: string
+        }
         Update: {
-          id?: string;
-          requester_id?: string;
-          recipient_id?: string;
-          connection_type?: string;
-          status?: string;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "care_connections_requester_id_fkey";
-            columns: ["requester_id"];
-            referencedRelation: "users";
-            referencedColumns: ["id"];
-          },
-          {
-            foreignKeyName: "care_connections_recipient_id_fkey";
-            columns: ["recipient_id"];
-            referencedRelation: "users";
-            referencedColumns: ["id"];
-          }
-        ];
-      };
-      // Add insurance related tables
-      insurance_claims: {
-        Row: {
-          id: string;
-          user_id: string;
-          insurance_id: string;
-          service_type: string;
-          service_date: string;
-          claim_amount: number;
-          status: string;
-          processing_notes: string | null;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          user_id: string;
-          insurance_id: string;
-          service_type: string;
-          service_date: string;
-          claim_amount: number;
-          status?: string;
-          processing_notes?: string | null;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: {
-          id?: string;
-          user_id?: string;
-          insurance_id?: string;
-          service_type?: string;
-          service_date?: string;
-          claim_amount?: number;
-          status?: string;
-          processing_notes?: string | null;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "insurance_claims_user_id_fkey";
-            columns: ["user_id"];
-            referencedRelation: "users";
-            referencedColumns: ["id"];
-          }
-        ];
-      };
-      insurance_plans: {
-        Row: {
-          id: string;
-          name: string;
-          provider: string;
-          type: string;
-          coverage_details: any;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          name: string;
-          provider: string;
-          type: string;
-          coverage_details: any;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: {
-          id?: string;
-          name?: string;
-          provider?: string;
-          type?: string;
-          coverage_details?: any;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Relationships: [];
-      };
-      user_insurance: {
-        Row: {
-          id: string;
-          user_id: string;
-          insurance_plan_id: string;
-          policy_number: string;
-          group_number: string | null;
-          coverage_start_date: string;
-          coverage_end_date: string | null;
-          verification_status: string;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          user_id: string;
-          insurance_plan_id: string;
-          policy_number: string;
-          group_number?: string | null;
-          coverage_start_date: string;
-          coverage_end_date?: string | null;
-          verification_status?: string;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: {
-          id?: string;
-          user_id?: string;
-          insurance_plan_id?: string;
-          policy_number?: string;
-          group_number?: string | null;
-          coverage_start_date?: string;
-          coverage_end_date?: string | null;
-          verification_status?: string;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "user_insurance_user_id_fkey";
-            columns: ["user_id"];
-            referencedRelation: "users";
-            referencedColumns: ["id"];
-          }
-        ];
-      };
-      insurance_documents: {
-        Row: {
-          id: string;
-          user_id: string;
-          insurance_id: string;
-          document_type: string;
-          file_url: string;
-          metadata: any;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          user_id: string;
-          insurance_id: string;
-          document_type: string;
-          file_url: string;
-          metadata?: any;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: {
-          id?: string;
-          user_id?: string;
-          insurance_id?: string;
-          document_type?: string;
-          file_url?: string;
-          metadata?: any;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "insurance_documents_user_id_fkey";
-            columns: ["user_id"];
-            referencedRelation: "users";
-            referencedColumns: ["id"];
-          }
-        ];
-      };
-      insurance_deductibles: {
-        Row: {
-          id: string;
-          user_id: string;
-          insurance_id: string;
-          type: string;
-          amount: number;
-          remaining: number;
-          year: number;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          user_id: string;
-          insurance_id: string;
-          type: string;
-          amount: number;
-          remaining: number;
-          year: number;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: {
-          id?: string;
-          user_id?: string;
-          insurance_id?: string;
-          type?: string;
-          amount?: number;
-          remaining?: number;
-          year?: number;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "insurance_deductibles_user_id_fkey";
-            columns: ["user_id"];
-            referencedRelation: "users";
-            referencedColumns: ["id"];
-          }
-        ];
-      };
-      insurance_notifications: {
-        Row: {
-          id: string;
-          user_id: string;
-          type: string;
-          message: string;
-          read: boolean;
-          metadata: any;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          user_id: string;
-          type: string;
-          message: string;
-          read?: boolean;
-          metadata?: any;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: {
-          id?: string;
-          user_id?: string;
-          type?: string;
-          message?: string;
-          read?: boolean;
-          metadata?: any;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "insurance_notifications_user_id_fkey";
-            columns: ["user_id"];
-            referencedRelation: "users";
-            referencedColumns: ["id"];
-          }
-        ];
-      };
-    };
-    Views: GeneratedDatabase["public"]["Views"];
-    Functions: GeneratedDatabase["public"]["Functions"];
-    Enums: GeneratedDatabase["public"]["Enums"];
-    CompositeTypes: GeneratedDatabase["public"]["CompositeTypes"];
+          id?: string
+          group_id?: string
+          email?: string
+          role?: string
+          status?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+    }
+  }
+}
+
+// Define common interfaces used in components
+export interface CareRecipient {
+  id: string;
+  first_name: string;
+  last_name: string | null;
+  date_of_birth: string | null;
+  care_needs: string[];
+  special_requirements: string[];
+  medical_conditions: string[];
+  allergies: string[];
+  preferences: Record<string, any>;
+  group_id: string;
+}
+
+export interface CareUpdate {
+  id: string;
+  content: string;
+  update_type: string;
+  created_at: string;
+  profiles: {
+    first_name: string;
+    last_name: string;
   };
 }
+
+export interface Task {
+  id: string;
+  title: string;
+  due_date: string;
+  status: string;
+  priority: string;
+  assigned_to: string;
+  assigned_user?: {
+    first_name: string;
+    last_name: string;
+  };
+}
+
+export interface Post {
+  id: string;
+  content: string;
+  created_at: string;
+  created_by: string;
+  profiles?: {
+    first_name: string;
+    last_name: string;
+  };
+}
+
+export interface Document {
+  id: string;
+  title: string;
+  description: string | null;
+  file_url: string | null;
+  document_type: string | null;
+  created_by: string | null;
+  created_at: string;
+}
+
+export interface InsuranceNotification {
+  id: string;
+  title: string;
+  message: string;
+  type: string;
+  read: boolean;
+  metadata: Record<string, any>;
+  created_at: string;
+  user_id: string;
+}
+
+export interface MedicationSchedule {
+  id: string;
+  medication_name: string;
+  dosage: string;
+  frequency: string;
+  time_of_day: string[];
+  instructions: string;
+  start_date: string;
+  end_date: string;
+  group_id: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Connection {
+  id: string;
+  requester_id: string;
+  recipient_id: string;
+  connection_type: 'carer' | 'pal';
+  status: string;
+  created_at: string;
+  updated_at: string;
+  requester: {
+    first_name: string;
+    last_name: string;
+  };
+  recipient: {
+    first_name: string;
+    last_name: string;
+  };
+}
+
+export interface Resource {
+  id: string;
+  title: string;
+  description: string;
+  category: string;
+  content_type: string;
+  file_url: string;
+  created_at: string;
+}
+
+export interface SubscriptionPlan {
+  id: string;
+  name: string;
+  description: string;
+  tier: string;
+  price: number;
+  features: string[];
+  is_popular: boolean;
+}
+
+export type SelectQueryError<T> = { error: true } & String;

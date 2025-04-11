@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Users, Mail, UserPlus } from "lucide-react";
-import { supabaseClient } from "@/integrations/supabaseClient";
+import { supabaseClient, checkTableExists } from "@/integrations/supabaseClient";
 
 interface CareCircleManagerProps {
   groupId: string;
@@ -32,14 +32,11 @@ export const CareCircleManager = ({ groupId }: CareCircleManagerProps) => {
       setIsLoading(true);
       
       // Check if table exists first
-      const { error: tableCheckError } = await supabaseClient
-        .from('care_circle_invites')
-        .select('id')
-        .limit(1);
+      const tableExists = await checkTableExists('care_circle_invites');
       
-      if (tableCheckError) {
-        console.error("Error checking table:", tableCheckError);
-        throw new Error("Care circle invites table may not exist");
+      if (!tableExists) {
+        console.error("Care circle invites table does not exist");
+        throw new Error("Care circle invites table does not exist");
       }
       
       const { error } = await supabaseClient

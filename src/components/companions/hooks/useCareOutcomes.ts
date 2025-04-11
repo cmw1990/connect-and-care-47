@@ -36,7 +36,7 @@ export const useCareOutcomes = (meetingId: string) => {
           return [] as CareOutcomeMetric[];
         }
         
-        return data as CareOutcomeMetric[];
+        return (data || []) as CareOutcomeMetric[];
       } catch (error) {
         console.error("Exception fetching care outcomes:", error);
         return [] as CareOutcomeMetric[];

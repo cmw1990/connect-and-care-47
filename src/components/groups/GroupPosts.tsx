@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,18 +11,9 @@ import {
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
-
-interface Post {
-  id: string;
-  content: string;
-  created_at: string;
-  created_by: string;
-  profiles?: {
-    first_name: string | null;
-    last_name: string | null;
-  } | null;
-}
+import { supabaseClient } from "@/integrations/supabaseClient";
+import { Post } from "@/types/database.types";
+import { transformPostData } from "@/utils/supabaseHelpers";
 
 interface GroupPostsProps {
   groupId: string;
@@ -37,7 +29,7 @@ export const GroupPosts = ({ groupId }: GroupPostsProps) => {
 
   const fetchPosts = async () => {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await supabaseClient
         .from("group_posts")
         .select(`
           id,
@@ -53,7 +45,14 @@ export const GroupPosts = ({ groupId }: GroupPostsProps) => {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      setPosts(data || []);
+      
+      // Transform the data to match the Post interface
+      if (data) {
+        const transformedPosts = transformPostData(data);
+        setPosts(transformedPosts);
+      } else {
+        setPosts([]);
+      }
     } catch (error) {
       console.error("Error fetching posts:", error);
       toast({
@@ -69,7 +68,7 @@ export const GroupPosts = ({ groupId }: GroupPostsProps) => {
 
     try {
       setIsLoading(true);
-      const { error } = await supabase.from("group_posts").insert({
+      const { error } = await supabaseClient.from("group_posts").insert({
         content: newPost.trim(),
         group_id: groupId,
       });
@@ -100,7 +99,7 @@ export const GroupPosts = ({ groupId }: GroupPostsProps) => {
 
     try {
       setIsLoading(true);
-      const { error } = await supabase
+      const { error } = await supabaseClient
         .from("group_posts")
         .update({ content: editingPost.content.trim() })
         .eq("id", editingPost.id);
@@ -128,7 +127,7 @@ export const GroupPosts = ({ groupId }: GroupPostsProps) => {
 
   const handleDeletePost = async (postId: string) => {
     try {
-      const { error } = await supabase
+      const { error } = await supabaseClient
         .from("group_posts")
         .delete()
         .eq("id", postId);
