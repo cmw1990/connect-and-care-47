@@ -6,6 +6,7 @@ interface Toast {
   title: string;
   description?: string;
   type: 'success' | 'error' | 'info';
+  variant?: 'default' | 'destructive';
 }
 
 export function useToast() {
@@ -40,3 +41,8 @@ export function useToast() {
     }
   };
 }
+
+// Create a singleton instance of the toast for direct imports
+const { toasts, toast } = useToast();
+export { toast };
+

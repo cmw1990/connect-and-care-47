@@ -141,7 +141,7 @@ export interface CompanionMatch {
     creative_exercises?: string[];
   };
   interests: string[];
-  // Additional properties that were missing
+  // Added these missing properties
   background_check_date?: string;
   bio?: string;
 }
@@ -168,3 +168,4 @@ export interface CareGuideProgressProps {
   value: number;
   className?: string;
 }
+

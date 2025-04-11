@@ -1,5 +1,5 @@
 
-import { UserProfile, Message, Connection, CareRecipient, Post, Task, CareUpdate, Document } from '@/types';
+import { UserProfile, Message, Connection, CareRecipient, Post, Task, CareUpdate, Document, Disclaimer, CareTask } from '@/types';
 
 export function createMockUserProfile(overrides: Partial<UserProfile> = {}): UserProfile {
   return {
@@ -22,6 +22,16 @@ export function createMockMessage(overrides: Partial<Message> = {}): Message {
     sender: createMockUserProfile({ id: 'user-123' }),
     ...overrides
   };
+}
+
+export function createMockMessages(count: number, overrides: Partial<Message> = {}): Message[] {
+  return Array(count).fill(null).map((_, index) => 
+    createMockMessage({ 
+      id: `msg-${index}`, 
+      content: `This is sample message ${index + 1}`,
+      ...overrides 
+    })
+  );
 }
 
 export function createMockConnection(overrides: Partial<Connection> = {}): Connection {
@@ -62,6 +72,38 @@ export function createMockTask(overrides: Partial<Task> = {}): Task {
   };
 }
 
+export function createMockCareTask(overrides: Partial<CareTask> = {}): CareTask {
+  return {
+    id: `task-${Math.floor(Math.random() * 1000)}`,
+    title: 'Sample Care Task',
+    description: 'Description of the care task',
+    due_date: new Date().toISOString(),
+    status: 'pending',
+    priority: 'medium',
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    completed_at: null,
+    completed_by: null,
+    team_id: 'team-123',
+    created_by: 'user-123',
+    assigned_to: 'user-456',
+    category: 'medication',
+    recurrence_pattern: null,
+    recurring: false,
+    ...overrides
+  };
+}
+
+export function createMockCareTasks(count: number, overrides: Partial<CareTask> = {}): CareTask[] {
+  return Array(count).fill(null).map((_, index) => 
+    createMockCareTask({ 
+      id: `task-${index}`, 
+      title: `Sample Task ${index + 1}`,
+      ...overrides 
+    })
+  );
+}
+
 export function createMockCareUpdate(overrides: Partial<CareUpdate> = {}): CareUpdate {
   return {
     id: `update-${Math.floor(Math.random() * 1000)}`,
@@ -97,3 +139,22 @@ export function createMockCareRecipient(overrides: Partial<CareRecipient> = {}):
     ...overrides
   };
 }
+
+export function createMockDisclaimers(count: number): Disclaimer[] {
+  const types = ['medical', 'privacy', 'terms', 'legal'];
+  
+  return Array(count).fill(null).map((_, index) => ({
+    id: `disclaimer-${index}`,
+    type: types[index % types.length],
+    title: `Sample ${types[index % types.length]} Disclaimer`,
+    content: 'This is a sample disclaimer content. Please read carefully before proceeding.',
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  }));
+}
+
+// Utility function to help with type conversion from API data
+export function typeCastObject<T>(obj: any): T {
+  return obj as T;
+}
+

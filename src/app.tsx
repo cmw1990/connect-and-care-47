@@ -3,7 +3,7 @@ import React from 'react';
 import { CareMetrics } from './components/analytics/CareMetrics';
 import { DirectMessageChat } from './components/chat/DirectMessageChat';
 import { createMockUserProfile } from './utils/mockDataHelper';
-import { toast } from './hooks/use-toast';
+import { useToast } from './hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle } from './components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from './components/ui/avatar';
 import { WellnessDashboard } from './components/health-wellness/WellnessDashboard';
@@ -19,8 +19,11 @@ import {
   Settings 
 } from 'lucide-react';
 import { LegalDisclaimer } from './components/disclaimers/LegalDisclaimer';
+import { Toaster } from './components/ui/toaster';
 
 function App() {
+  const { toast } = useToast();
+
   const handleError = (error: Error) => {
     console.error('Error:', error);
     toast.error('An error occurred', error.message);
@@ -158,6 +161,8 @@ function App() {
           </Button>
         </div>
       </footer>
+      
+      <Toaster />
     </div>
   );
 }
