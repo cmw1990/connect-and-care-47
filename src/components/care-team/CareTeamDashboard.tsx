@@ -1,171 +1,169 @@
 
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useToast } from "@/hooks/use-toast";
-import CareTaskBoard from './CareTaskBoard';
-import { CareTeamChat } from '../chat/CareTeamChat';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
+import { CareMetrics } from '@/components/analytics/CareMetrics';
+import { CareTaskBoard } from '@/components/care-team/CareTaskBoard';
+import { CareTeamChat } from '@/components/care-team/CareTeamChat';
+import { DirectMessageChat } from '@/components/chat/DirectMessageChat';
+import { createMockUserProfile } from '@/utils/mockDataHelper';
 
-interface TeamDetails {
+interface TeamMember {
   id: string;
-  name: string;
-  description: string;
-  created_by: string;
-  primary_caregiver: string;
-  status: string;
-  created_at: string;
-  updated_at: string;
-  members: {
+  role: string;
+  user: {
     id: string;
-    user_id: string;
-    role: string;
-    status: string;
-  }[];
+    first_name: string;
+    last_name: string;
+    avatar_url?: string;
+  };
 }
 
-const CareTeamDashboard = () => {
-  const params = useParams<{ id: string }>();
-  const id = params.id;
-  const [teamDetails, setTeamDetails] = useState<TeamDetails | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const { toast } = useToast();
-
+export const CareTeamDashboard = ({ teamId }: { teamId: string }) => {
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+  const [selectedMember, setSelectedMember] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [teamName, setTeamName] = useState('Care Team');
+  
   useEffect(() => {
-    if (id) {
-      fetchTeamDetails();
-    }
-  }, [id]);
-
-  const fetchTeamDetails = async () => {
-    setIsLoading(true);
+    fetchTeamData();
+  }, [teamId]);
+  
+  const fetchTeamData = async () => {
     try {
-      // Mock data for development until care_teams is fully implemented
-      const mockTeamDetails: TeamDetails = {
-        id: id || '',
-        name: "Smith Family Care Team",
-        description: "Primary care team for John Smith",
-        created_by: "caregiver-123",
-        primary_caregiver: "caregiver-123",
-        status: "active",
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        members: [
-          { id: "member-1", user_id: "caregiver-123", role: "primary", status: "active" },
-          { id: "member-2", user_id: "family-456", role: "family", status: "active" },
-          { id: "member-3", user_id: "professional-789", role: "professional", status: "active" }
-        ]
-      };
-      
-      setTeamDetails(mockTeamDetails);
-    } catch (error: any) {
-      console.error('Error fetching team:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load team details",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
+      // Mock data loading
+      setTimeout(() => {
+        const mockMembers = [
+          {
+            id: 'member1',
+            role: 'caregiver',
+            user: createMockUserProfile({ first_name: 'John', last_name: 'Smith' })
+          },
+          {
+            id: 'member2',
+            role: 'nurse',
+            user: createMockUserProfile({ first_name: 'Mary', last_name: 'Johnson' })
+          },
+          {
+            id: 'member3',
+            role: 'doctor',
+            user: createMockUserProfile({ first_name: 'Robert', last_name: 'Williams' })
+          },
+          {
+            id: 'member4',
+            role: 'family',
+            user: createMockUserProfile({ first_name: 'Sarah', last_name: 'Brown' })
+          },
+        ];
+        
+        setTeamMembers(mockMembers);
+        setTeamName('Johnson Family Care Team');
+        setLoading(false);
+      }, 500);
+    } catch (error) {
+      console.error('Error fetching team data:', error);
+      setLoading(false);
     }
   };
-
-  const handleError = (error: Error) => {
-    console.error('Component error:', error);
-    toast({
-      title: "Error",
-      description: error.message,
-      variant: "destructive",
-    });
+  
+  const getRoleColor = (role: string) => {
+    switch (role.toLowerCase()) {
+      case 'caregiver':
+        return 'bg-blue-100 text-blue-800';
+      case 'nurse':
+        return 'bg-green-100 text-green-800';
+      case 'doctor':
+        return 'bg-purple-100 text-purple-800';
+      case 'family':
+        return 'bg-yellow-100 text-yellow-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
   };
-
-  if (isLoading) {
+  
+  if (loading) {
     return (
-      <div className="flex justify-center p-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      <div className="flex justify-center items-center min-h-[200px]">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
       </div>
     );
   }
-
-  if (!teamDetails) {
-    return (
-      <div className="text-center p-8">
-        <h3 className="text-xl font-semibold">Team not found</h3>
-        <p className="text-muted-foreground">The requested care team does not exist or you don't have access.</p>
-      </div>
-    );
-  }
-
+  
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold">{teamDetails.name}</h1>
-          <p className="text-muted-foreground">{teamDetails.description}</p>
-        </div>
-        <Button>Team Settings</Button>
-      </div>
-
       <Card>
         <CardHeader>
-          <CardTitle>Team Overview</CardTitle>
+          <CardTitle>{teamName}</CardTitle>
+          <CardDescription>Team members, tasks, and communication</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="p-4 bg-muted rounded-lg">
-              <h3 className="font-medium">Members</h3>
-              <p className="text-3xl font-bold">{teamDetails.members?.length || 0}</p>
-            </div>
-            <div className="p-4 bg-muted rounded-lg">
-              <h3 className="font-medium">Status</h3>
-              <p className="text-3xl font-bold capitalize">{teamDetails.status}</p>
-            </div>
-            <div className="p-4 bg-muted rounded-lg">
-              <h3 className="font-medium">Created</h3>
-              <p className="text-3xl font-bold">
-                {new Date(teamDetails.created_at).toLocaleDateString()}
-              </p>
-            </div>
+          <div className="flex flex-wrap gap-2 mb-6">
+            {teamMembers.map((member) => (
+              <div 
+                key={member.id} 
+                className="flex items-center space-x-2 border rounded-lg p-2 hover:bg-muted cursor-pointer"
+                onClick={() => setSelectedMember(member.id)}
+              >
+                <div className="h-8 w-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-medium">
+                  {member.user.first_name[0]}{member.user.last_name[0]}
+                </div>
+                <div>
+                  <div className="font-medium">{member.user.first_name} {member.user.last_name}</div>
+                  <div className={`text-xs px-2 py-1 rounded-full inline-block ${getRoleColor(member.role)}`}>
+                    {member.role}
+                  </div>
+                </div>
+              </div>
+            ))}
+            <Button variant="outline" className="flex items-center space-x-2">
+              <span>Add Member</span>
+              <span className="text-lg">+</span>
+            </Button>
           </div>
+          
+          <Tabs defaultValue="tasks">
+            <TabsList className="mb-4">
+              <TabsTrigger value="tasks">Tasks</TabsTrigger>
+              <TabsTrigger value="chat">Team Chat</TabsTrigger>
+              <TabsTrigger value="direct">Direct Messages</TabsTrigger>
+              <TabsTrigger value="metrics">Metrics</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="tasks">
+              <CareTaskBoard teamId={teamId} />
+            </TabsContent>
+            
+            <TabsContent value="chat">
+              <div className="h-[500px]">
+                <CareTeamChat teamId={teamId} onError={(error) => console.error(error)} />
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="direct">
+              {selectedMember ? (
+                <div className="h-[500px]">
+                  <DirectMessageChat 
+                    recipientId={selectedMember} 
+                    onSendMessage={(message) => console.log('Message sent:', message)}
+                  />
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center h-[300px] text-center">
+                  <div className="text-muted-foreground mb-2">Select a team member to start a conversation</div>
+                  <div className="text-sm text-muted-foreground max-w-md">
+                    Click on any of the team members above to start a direct message conversation with them.
+                  </div>
+                </div>
+              )}
+            </TabsContent>
+            
+            <TabsContent value="metrics">
+              <CareMetrics groupId={teamId} />
+            </TabsContent>
+          </Tabs>
         </CardContent>
       </Card>
-
-      <Tabs defaultValue="tasks" className="w-full">
-        <TabsList className="grid grid-cols-4 w-full">
-          <TabsTrigger value="tasks">Tasks</TabsTrigger>
-          <TabsTrigger value="chat">Team Chat</TabsTrigger>
-          <TabsTrigger value="schedule">Schedule</TabsTrigger>
-          <TabsTrigger value="notes">Notes</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="tasks" className="py-4">
-          <CareTaskBoard />
-        </TabsContent>
-
-        <TabsContent value="chat" className="py-4">
-          <div className="h-[600px]">
-            <DirectMessageChat 
-              recipientId="team-member-1" 
-              onSendMessage={(message) => console.log("Team message sent:", message)}
-            />
-          </div>
-        </TabsContent>
-
-        <TabsContent value="schedule" className="py-4">
-          <div className="h-[600px] flex items-center justify-center bg-muted rounded-lg">
-            <p className="text-xl text-muted-foreground">Schedule functionality coming soon</p>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="notes" className="py-4">
-          <div className="h-[600px] flex items-center justify-center bg-muted rounded-lg">
-            <p className="text-xl text-muted-foreground">Notes functionality coming soon</p>
-          </div>
-        </TabsContent>
-      </Tabs>
     </div>
   );
 };
-
-export default CareTeamDashboard;

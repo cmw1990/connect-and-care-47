@@ -1,469 +1,415 @@
 
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogDescription,
-  DialogFooter 
-} from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { toast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
-import { 
-  PlusCircle, 
-  CheckCircle2, 
-  XCircle, 
-  Edit, 
-  Calendar,
-  Clock,
-  Tag,
-  AlertCircle
-} from 'lucide-react';
-import { CareTask } from '@/types';
-import { createMockTasks } from '@/utils/mockDataHelper';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogClose,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { 
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
 } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+import { useToast } from '@/hooks/use-toast';
+import { Plus, Calendar, Clock, AlertCircle, CheckCircle, XCircle, PauseCircle } from 'lucide-react';
+import { CareTask } from '@/types';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { createMockCareTasks, typeCastObject } from '@/utils/mockDataHelper';
 
-const CareTaskBoard = () => {
+export const CareTaskBoard = ({ teamId }: { teamId: string }) => {
   const [tasks, setTasks] = useState<CareTask[]>([]);
   const [loading, setLoading] = useState(true);
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [editingTask, setEditingTask] = useState<CareTask | null>(null);
-  const [formData, setFormData] = useState({
+  const [newTask, setNewTask] = useState<Partial<CareTask>>({
     title: '',
     description: '',
     due_date: '',
-    priority: 'medium' as const,
+    status: 'pending',
+    priority: 'medium',
     category: 'general',
+    team_id: teamId,
   });
+  const { toast } = useToast();
 
-  // Fetch tasks
   useEffect(() => {
-    const fetchTasks = async () => {
-      try {
-        // In a real app, we would fetch tasks from Supabase
-        // For now, use mock data
-        const mockTasks = createMockTasks(8);
-        setTasks(mockTasks);
-      } catch (error) {
-        console.error('Error fetching tasks:', error);
-      } finally {
+    fetchTasks();
+  }, [teamId]);
+
+  const fetchTasks = async () => {
+    try {
+      // Mock data instead of real API call
+      setTimeout(() => {
+        setTasks(createMockCareTasks(10));
         setLoading(false);
-      }
+      }, 500);
+    } catch (error) {
+      console.error('Error fetching tasks:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load tasks",
+        variant: "destructive",
+      });
+      setLoading(false);
+    }
+  };
+
+  const handleAddTask = async () => {
+    if (!newTask.title || !newTask.due_date) {
+      toast({
+        title: "Missing details",
+        description: "Please provide a title and due date for the task",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      // In a real app, this would be a Supabase insert
+      // Mock implementation
+      const mockTask: CareTask = {
+        id: `task-${Date.now()}`,
+        title: newTask.title!,
+        description: newTask.description || '',
+        due_date: newTask.due_date!,
+        status: newTask.status as CareTask['status'],
+        priority: newTask.priority as CareTask['priority'],
+        category: newTask.category || 'general',
+        team_id: teamId,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+      
+      setTasks([...tasks, mockTask]);
+
+      setNewTask({
+        title: '',
+        description: '',
+        due_date: '',
+        status: 'pending',
+        priority: 'medium',
+        category: 'general',
+        team_id: teamId,
+      });
+
+      toast({
+        title: "Task added",
+        description: "The task has been added successfully",
+      });
+    } catch (error) {
+      console.error('Error adding task:', error);
+      toast({
+        title: "Error",
+        description: "Failed to add task",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleUpdateTaskStatus = async (taskId: string, status: CareTask['status']) => {
+    try {
+      // In a real app, this would update the DB record
+      const updatedTasks = tasks.map(task => {
+        if (task.id === taskId) {
+          return { ...task, status, updated_at: new Date().toISOString() };
+        }
+        return task;
+      });
+      
+      setTasks(updatedTasks);
+      
+      toast({
+        title: "Task updated",
+        description: `Task status changed to ${status}`,
+      });
+    } catch (error) {
+      console.error('Error updating task:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update task status",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Group tasks by status
+  const groupTasksByStatus = () => {
+    const grouped: { [key: string]: CareTask[] } = {
+      pending: [],
+      in_progress: [],
+      completed: [],
+      cancelled: [],
     };
 
-    fetchTasks();
-  }, []);
-
-  const handleAddTask = () => {
-    setEditingTask(null);
-    setFormData({
-      title: '',
-      description: '',
-      due_date: new Date().toISOString().split('T')[0],
-      priority: 'medium',
-      category: 'general'
-    });
-    setDialogOpen(true);
-  };
-
-  const handleEditTask = (task: CareTask) => {
-    setEditingTask(task);
-    setFormData({
-      title: task.title,
-      description: task.description || '',
-      due_date: new Date(task.due_date).toISOString().split('T')[0],
-      priority: task.priority,
-      category: task.category
-    });
-    setDialogOpen(true);
-  };
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleSelectChange = (name: string, value: string) => {
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleSubmit = async () => {
-    try {
-      if (!formData.title || !formData.due_date) {
-        toast.error("Please fill in all required fields");
-        return;
+    tasks.forEach(task => {
+      if (grouped[task.status]) {
+        grouped[task.status].push(task);
       }
+    });
 
-      const newTask: Partial<CareTask> = {
-        title: formData.title,
-        description: formData.description,
-        due_date: new Date(formData.due_date).toISOString(),
-        priority: formData.priority,
-        category: formData.category,
-        status: 'pending',
-        team_id: 'team-1',
-        created_by: 'user-1',
-      };
+    return grouped;
+  };
 
-      if (editingTask) {
-        // Update task
-        const updatedTask = {
-          ...editingTask,
-          ...newTask
-        };
-
-        // In a real app, we would update the task in Supabase
-        // For now, update in local state
-        setTasks(prevTasks => 
-          prevTasks.map(task => 
-            task.id === editingTask.id ? updatedTask as CareTask : task
-          )
-        );
-        toast.success("Task updated successfully");
-      } else {
-        // Create task
-        const createdTask: CareTask = {
-          ...newTask,
-          id: `task-${Date.now()}`,
-          status: 'pending',
-          created_at: new Date().toISOString(),
-          team_id: 'team-1',
-        } as CareTask;
-
-        // In a real app, we would create the task in Supabase
-        // For now, add to local state
-        setTasks(prevTasks => [...prevTasks, createdTask]);
-        toast.success("Task created successfully");
-      }
-
-      setDialogOpen(false);
-    } catch (error) {
-      console.error('Error saving task:', error);
-      toast.error("Failed to save task");
+  const getStatusIcon = (status: CareTask['status']) => {
+    switch (status) {
+      case 'pending':
+        return <AlertCircle className="h-4 w-4 text-yellow-500" />;
+      case 'in_progress':
+        return <PauseCircle className="h-4 w-4 text-blue-500" />;
+      case 'completed':
+        return <CheckCircle className="h-4 w-4 text-green-500" />;
+      case 'cancelled':
+        return <XCircle className="h-4 w-4 text-red-500" />;
+      default:
+        return <AlertCircle className="h-4 w-4 text-gray-500" />;
     }
   };
 
-  const handleUpdateStatus = async (taskId: string, newStatus: CareTask['status']) => {
-    try {
-      // In a real app, we would update the task in Supabase
-      // For now, update in local state
-      setTasks(prevTasks => 
-        prevTasks.map(task => {
-          if (task.id === taskId) {
-            const updatedTask = { 
-              ...task, 
-              status: newStatus,
-              completed_at: newStatus === 'completed' ? new Date().toISOString() : null,
-              completed_by: newStatus === 'completed' ? 'user-1' : null
-            };
-            return updatedTask;
-          }
-          return task;
-        })
-      );
-
-      toast.success(`Task ${newStatus === 'completed' ? 'completed' : 'updated'} successfully`);
-    } catch (error) {
-      console.error('Error updating task status:', error);
-      toast.error("Failed to update task status");
-    }
-  };
-
-  const handleDeleteTask = async (taskId: string) => {
-    try {
-      // In a real app, we would delete the task from Supabase
-      // For now, remove from local state
-      setTasks(prevTasks => prevTasks.filter(task => task.id !== taskId));
-      toast.success("Task deleted successfully");
-    } catch (error) {
-      console.error('Error deleting task:', error);
-      toast.error("Failed to delete task");
-    }
-  };
-
-  const getPriorityColor = (priority: string) => {
+  const getPriorityColor = (priority: CareTask['priority']) => {
     switch (priority) {
       case 'high':
         return 'text-red-500';
       case 'medium':
-        return 'text-amber-500';
+        return 'text-yellow-500';
       case 'low':
         return 'text-green-500';
       case 'urgent':
         return 'text-purple-500';
       default:
-        return 'text-blue-500';
+        return 'text-gray-500';
     }
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'completed':
-        return 'bg-green-100 text-green-800';
-      case 'in_progress':
-        return 'bg-blue-100 text-blue-800';
-      case 'cancelled':
-        return 'bg-gray-100 text-gray-800';
-      default:
-        return 'bg-amber-100 text-amber-800';
-    }
-  };
+  const TaskCard = ({ task }: { task: CareTask }) => (
+    <Card className="mb-3">
+      <CardContent className="p-3">
+        <div className="flex justify-between items-start">
+          <div>
+            <div className="font-medium">{task.title}</div>
+            {task.description && (
+              <div className="text-sm text-muted-foreground mt-1">{task.description}</div>
+            )}
+            <div className="flex items-center gap-2 mt-2">
+              <div className="text-xs bg-muted px-2 py-1 rounded-full">{task.category}</div>
+              <div className={`text-xs font-medium ${getPriorityColor(task.priority)}`}>
+                {task.priority.charAt(0).toUpperCase() + task.priority.slice(1)}
+              </div>
+            </div>
+            <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
+              <Calendar className="h-3 w-3" />
+              {new Date(task.due_date).toLocaleDateString()}
+              <Clock className="h-3 w-3 ml-2" />
+              {new Date(task.due_date).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})}
+            </div>
+          </div>
+          
+          <div className="flex space-x-1">
+            {task.status !== 'completed' && (
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={() => handleUpdateTaskStatus(task.id, 'completed')}
+              >
+                <CheckCircle className="h-4 w-4 text-green-500" />
+              </Button>
+            )}
+            {task.status !== 'cancelled' && task.status !== 'completed' && (
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={() => handleUpdateTaskStatus(task.id, 'cancelled')}
+              >
+                <XCircle className="h-4 w-4 text-red-500" />
+              </Button>
+            )}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
 
-  // Group tasks by status
-  const tasksByStatus: Record<string, CareTask[]> = {
-    pending: [],
-    in_progress: [],
-    completed: [],
-    cancelled: []
-  };
-
-  tasks.forEach(task => {
-    const status = task.status;
-    if (tasksByStatus[status]) {
-      tasksByStatus[status].push(task);
-    }
-  });
+  const groupedTasks = groupTasksByStatus();
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-blue-500"></div>
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Tasks</CardTitle>
+        </CardHeader>
+        <CardContent className="flex justify-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
+        </CardContent>
+      </Card>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-xl font-bold">Care Tasks</h2>
-        <Button onClick={handleAddTask} className="flex items-center gap-1">
-          <PlusCircle className="h-4 w-4" /> Add Task
-        </Button>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        {Object.entries(tasksByStatus).map(([status, statusTasks]) => (
-          <Card key={status} className="h-full">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium capitalize flex justify-between items-center">
-                <span>{status.replace('_', ' ')}</span>
-                <span className="bg-gray-100 dark:bg-gray-700 text-xs px-2 py-1 rounded-full">
-                  {statusTasks.length}
-                </span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {statusTasks.length === 0 ? (
-                <div className="text-center text-muted-foreground text-sm py-8">
-                  No tasks in this status
-                </div>
-              ) : (
-                statusTasks.map(task => (
-                  <div 
-                    key={task.id} 
-                    className="border p-3 rounded-lg bg-white dark:bg-gray-800 shadow-sm"
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardTitle>Tasks</CardTitle>
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button size="sm">
+              <Plus className="h-4 w-4 mr-2" />
+              Add Task
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Create New Task</DialogTitle>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <Label htmlFor="title">Title</Label>
+                <Input
+                  id="title"
+                  value={newTask.title || ''}
+                  onChange={(e) => setNewTask({...newTask, title: e.target.value})}
+                  placeholder="Task title"
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="description">Description</Label>
+                <Textarea
+                  id="description"
+                  value={newTask.description || ''}
+                  onChange={(e) => setNewTask({...newTask, description: e.target.value})}
+                  placeholder="Task description"
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="due-date">Due Date</Label>
+                <Input
+                  id="due-date"
+                  type="datetime-local"
+                  value={newTask.due_date || ''}
+                  onChange={(e) => setNewTask({...newTask, due_date: e.target.value})}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="category">Category</Label>
+                  <Select 
+                    value={newTask.category || 'general'} 
+                    onValueChange={(value) => setNewTask({...newTask, category: value})}
                   >
-                    <div className="flex justify-between items-start mb-2">
-                      <h3 className="font-medium">{task.title}</h3>
-                      <span className={`text-xs ${getPriorityColor(task.priority)}`}>
-                        {task.priority.toUpperCase()}
-                      </span>
-                    </div>
-                    
-                    {task.description && (
-                      <p className="text-sm text-gray-500 mb-2 line-clamp-2">{task.description}</p>
-                    )}
-                    
-                    <div className="flex items-center text-xs text-gray-500 mb-2">
-                      <Calendar className="h-3 w-3 mr-1" />
-                      <span>{new Date(task.due_date).toLocaleDateString()}</span>
-                      {task.recurring && (
-                        <span className="ml-2 bg-blue-100 text-blue-800 rounded-full px-2 py-0.5 text-xs">
-                          Recurring
-                        </span>
-                      )}
-                    </div>
-                    
-                    <div className="flex items-center text-xs text-gray-500 mb-3">
-                      <Tag className="h-3 w-3 mr-1" />
-                      <span className="capitalize">{task.category}</span>
-                    </div>
-                    
-                    <div className="flex justify-between">
-                      <div className="flex space-x-1">
-                        {status !== 'completed' && (
-                          <Button 
-                            size="sm" 
-                            variant="ghost"
-                            onClick={() => handleUpdateStatus(task.id, 'completed')}
-                            className="h-8 w-8 p-0"
-                          >
-                            <CheckCircle2 className="h-4 w-4 text-green-500" />
-                          </Button>
-                        )}
-                        
-                        {status !== 'in_progress' && status !== 'completed' && (
-                          <Button 
-                            size="sm" 
-                            variant="ghost"
-                            onClick={() => handleUpdateStatus(task.id, 'in_progress')}
-                            className="h-8 w-8 p-0"
-                          >
-                            <Clock className="h-4 w-4 text-blue-500" />
-                          </Button>
-                        )}
-                        
-                        {status !== 'cancelled' && (
-                          <Button 
-                            size="sm" 
-                            variant="ghost"
-                            onClick={() => handleUpdateStatus(task.id, 'cancelled')}
-                            className="h-8 w-8 p-0"
-                          >
-                            <XCircle className="h-4 w-4 text-gray-500" />
-                          </Button>
-                        )}
-                      </div>
-                      
-                      <div className="flex space-x-1">
-                        <Button 
-                          size="sm" 
-                          variant="ghost"
-                          onClick={() => handleEditTask(task)}
-                          className="h-8 w-8 p-0"
-                        >
-                          <Edit className="h-4 w-4 text-amber-500" />
-                        </Button>
-                        
-                        <Button 
-                          size="sm" 
-                          variant="ghost"
-                          onClick={() => handleDeleteTask(task.id)}
-                          className="h-8 w-8 p-0"
-                        >
-                          <XCircle className="h-4 w-4 text-red-500" />
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                ))
-              )}
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{editingTask ? 'Edit Task' : 'Add New Task'}</DialogTitle>
-            <DialogDescription>
-              {editingTask 
-                ? 'Update the task details below'
-                : 'Fill in the task details below to create a new task'}
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label htmlFor="title">Title</Label>
-              <Input
-                id="title"
-                name="title"
-                value={formData.title}
-                onChange={handleInputChange}
-                placeholder="Task title"
-              />
-            </div>
-            
-            <div className="grid gap-2">
-              <Label htmlFor="description">Description (optional)</Label>
-              <Textarea
-                id="description"
-                name="description"
-                value={formData.description}
-                onChange={handleInputChange}
-                placeholder="Provide additional details"
-                rows={3}
-              />
-            </div>
-            
-            <div className="grid gap-2">
-              <Label htmlFor="due_date">Due Date</Label>
-              <Input
-                id="due_date"
-                name="due_date"
-                type="date"
-                value={formData.due_date}
-                onChange={handleInputChange}
-              />
-            </div>
-            
-            <div className="grid grid-cols-2 gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="priority">Priority</Label>
-                <Select 
-                  value={formData.priority} 
-                  onValueChange={(value) => handleSelectChange('priority', value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select priority" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="low">Low</SelectItem>
-                    <SelectItem value="medium">Medium</SelectItem>
-                    <SelectItem value="high">High</SelectItem>
-                    <SelectItem value="urgent">Urgent</SelectItem>
-                  </SelectContent>
-                </Select>
+                    <SelectTrigger id="category">
+                      <SelectValue placeholder="Category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="general">General</SelectItem>
+                      <SelectItem value="medication">Medication</SelectItem>
+                      <SelectItem value="appointment">Appointment</SelectItem>
+                      <SelectItem value="exercise">Exercise</SelectItem>
+                      <SelectItem value="social">Social</SelectItem>
+                      <SelectItem value="meal">Meal</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="priority">Priority</Label>
+                  <Select 
+                    value={newTask.priority || 'medium'} 
+                    onValueChange={(value: CareTask['priority']) => setNewTask({...newTask, priority: value})}
+                  >
+                    <SelectTrigger id="priority">
+                      <SelectValue placeholder="Priority" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="low">Low</SelectItem>
+                      <SelectItem value="medium">Medium</SelectItem>
+                      <SelectItem value="high">High</SelectItem>
+                      <SelectItem value="urgent">Urgent</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
-              
-              <div className="grid gap-2">
-                <Label htmlFor="category">Category</Label>
-                <Select 
-                  value={formData.category} 
-                  onValueChange={(value) => handleSelectChange('category', value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="general">General</SelectItem>
-                    <SelectItem value="medication">Medication</SelectItem>
-                    <SelectItem value="appointment">Appointment</SelectItem>
-                    <SelectItem value="exercise">Exercise</SelectItem>
-                    <SelectItem value="social">Social</SelectItem>
-                    <SelectItem value="household">Household</SelectItem>
-                  </SelectContent>
-                </Select>
+              <div className="flex justify-end space-x-2">
+                <DialogClose asChild>
+                  <Button variant="outline">Cancel</Button>
+                </DialogClose>
+                <Button type="button" onClick={handleAddTask}>
+                  Create Task
+                </Button>
               </div>
             </div>
-          </div>
+          </DialogContent>
+        </Dialog>
+      </CardHeader>
+      <CardContent>
+        <Tabs defaultValue="pending">
+          <TabsList className="grid grid-cols-4 mb-4">
+            <TabsTrigger value="pending" className="flex items-center gap-2">
+              <AlertCircle className="h-4 w-4 text-yellow-500" />
+              <span>Pending</span>
+              <span className="ml-1 text-xs bg-muted px-2 py-0.5 rounded-full">
+                {groupedTasks.pending?.length || 0}
+              </span>
+            </TabsTrigger>
+            <TabsTrigger value="in_progress" className="flex items-center gap-2">
+              <PauseCircle className="h-4 w-4 text-blue-500" />
+              <span>In Progress</span>
+              <span className="ml-1 text-xs bg-muted px-2 py-0.5 rounded-full">
+                {groupedTasks.in_progress?.length || 0}
+              </span>
+            </TabsTrigger>
+            <TabsTrigger value="completed" className="flex items-center gap-2">
+              <CheckCircle className="h-4 w-4 text-green-500" />
+              <span>Completed</span>
+              <span className="ml-1 text-xs bg-muted px-2 py-0.5 rounded-full">
+                {groupedTasks.completed?.length || 0}
+              </span>
+            </TabsTrigger>
+            <TabsTrigger value="cancelled" className="flex items-center gap-2">
+              <XCircle className="h-4 w-4 text-red-500" />
+              <span>Cancelled</span>
+              <span className="ml-1 text-xs bg-muted px-2 py-0.5 rounded-full">
+                {groupedTasks.cancelled?.length || 0}
+              </span>
+            </TabsTrigger>
+          </TabsList>
           
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleSubmit}>
-              {editingTask ? 'Update Task' : 'Create Task'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </div>
+          <TabsContent value="pending" className="space-y-4">
+            {groupedTasks.pending?.length > 0 ? (
+              groupedTasks.pending.map(task => <TaskCard key={task.id} task={task} />)
+            ) : (
+              <div className="text-center py-4 text-muted-foreground">No pending tasks</div>
+            )}
+          </TabsContent>
+          
+          <TabsContent value="in_progress" className="space-y-4">
+            {groupedTasks.in_progress?.length > 0 ? (
+              groupedTasks.in_progress.map(task => <TaskCard key={task.id} task={task} />)
+            ) : (
+              <div className="text-center py-4 text-muted-foreground">No in-progress tasks</div>
+            )}
+          </TabsContent>
+          
+          <TabsContent value="completed" className="space-y-4">
+            {groupedTasks.completed?.length > 0 ? (
+              groupedTasks.completed.map(task => <TaskCard key={task.id} task={task} />)
+            ) : (
+              <div className="text-center py-4 text-muted-foreground">No completed tasks</div>
+            )}
+          </TabsContent>
+          
+          <TabsContent value="cancelled" className="space-y-4">
+            {groupedTasks.cancelled?.length > 0 ? (
+              groupedTasks.cancelled.map(task => <TaskCard key={task.id} task={task} />)
+            ) : (
+              <div className="text-center py-4 text-muted-foreground">No cancelled tasks</div>
+            )}
+          </TabsContent>
+        </Tabs>
+      </CardContent>
+    </Card>
   );
 };
-
-export default CareTaskBoard;

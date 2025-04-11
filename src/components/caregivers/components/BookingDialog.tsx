@@ -10,13 +10,13 @@ import { CalendarIcon, Clock } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { toast } from '@/hooks/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import { useUser } from '@/lib/hooks/use-user';
 import { CaregiverProfile } from '@/types/caregiver';
 
 interface TimeSlot {
   id: string;
-  day_of_week: string;  // Change from number to string to fix the TypeScript error
+  day_of_week: string;
   start_time: string;
   end_time: string;
   recurring: boolean;
@@ -36,6 +36,7 @@ export const BookingDialog = ({ caregiver, onBookingComplete, children }: Bookin
   const [notes, setNotes] = useState('');
   const { user } = useUser();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { toast } = useToast();
 
   // Availability data would normally be fetched from the server
   // For now, we'll mock it

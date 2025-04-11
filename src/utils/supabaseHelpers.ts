@@ -1,40 +1,43 @@
 
-import { PostgrestResponse, PostgrestSingleResponse } from '@supabase/supabase-js';
+import { UserProfile } from '@/types';
 
 /**
- * Helper function to safely cast Supabase query results to the expected type
- * This helps avoid TypeScript errors when the database schema doesn't match the expected types
+ * Takes a query result and casts it to the proper type
+ * This is useful for Supabase queries that return data that doesn't match the expected type
  */
-export function castQueryResult<T>(result: any): T[] {
-  if (!result || !Array.isArray(result)) {
-    return [] as T[];
-  }
-  return result as unknown as T[];
+export function castQueryResult<T>(result: any): T {
+  return result as T;
 }
 
 /**
- * Helper function for typecasting a query to avoid deep instantiation errors
- */
-export function typeCastQuery<T>(query: any): Promise<PostgrestSingleResponse<T[]>> {
-  return query as Promise<PostgrestSingleResponse<T[]>>;
-}
-
-/**
- * Create a mock profile for use when a relation lookup fails
- */
-export const createMockProfile = (): { first_name: string; last_name: string } => {
-  return {
-    first_name: "Unknown",
-    last_name: "User"
-  };
-};
-
-/**
- * Create a mock user object for development and testing
+ * Creates a mock profile for current user
  */
 export const mockCurrentUser = {
-  id: "user-1",
-  email: "user@example.com",
-  first_name: "Test",
-  last_name: "User"
+  id: 'current-user',
+  first_name: 'John',
+  last_name: 'Doe',
+  email: 'john.doe@example.com',
+  role: 'caregiver',
 };
+
+/**
+ * Utility for creating a mock profile
+ */
+export function createMockProfile(overrides: Partial<UserProfile> = {}): UserProfile {
+  return {
+    id: `user-${Math.floor(Math.random() * 1000)}`,
+    first_name: 'Jane',
+    last_name: 'Smith',
+    email: 'jane.smith@example.com',
+    avatar_url: 'https://avatar.vercel.sh/jane-smith',
+    role: 'patient',
+    ...overrides
+  };
+}
+
+/**
+ * Utility function to simulate async operations
+ */
+export async function sleep(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}

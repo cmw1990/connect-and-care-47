@@ -1,238 +1,201 @@
 
-import React, { useEffect, useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { motion, AnimatePresence } from "framer-motion";
-import { Play, CheckCircle2, AlertCircle } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
-import { CareGuideProgress } from "./CareGuideProgress";
-import { Button } from "@/components/ui/button";
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { CheckCircle, ChevronRight, BookOpen, Award, Target } from 'lucide-react';
+import { DetailedCareGuideProgress } from './CareGuideProgress';
+import { useToast } from '@/hooks/use-toast';
 
-interface AnimatedGuideProps {
-  disease: string;
+interface Step {
+  id: number;
+  title: string;
   description: string;
-  guidelines: string[];
+  completed: boolean;
 }
 
-export const AnimatedCareGuide = ({ disease, description, guidelines }: AnimatedGuideProps) => {
-  const [imageUrl, setImageUrl] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+export const AnimatedCareGuide = () => {
+  const [steps, setSteps] = useState<Step[]>([
+    { 
+      id: 1, 
+      title: 'Set up your care profile', 
+      description: 'Add your personal information, preferences, and medical details to help us customize your care plan.',
+      completed: true 
+    },
+    { 
+      id: 2, 
+      title: 'Connect with your care team', 
+      description: 'Invite family members, caregivers, and healthcare professionals to join your care circle.',
+      completed: true 
+    },
+    { 
+      id: 3, 
+      title: 'Set up medication reminders', 
+      description: 'Add your medications and set up automated reminders for you and your care team.',
+      completed: false 
+    },
+    { 
+      id: 4, 
+      title: 'Create your first care routine', 
+      description: 'Establish daily routines and activities to maintain health and wellbeing.',
+      completed: false 
+    },
+    { 
+      id: 5, 
+      title: 'Schedule your first check-in', 
+      description: 'Set up regular check-ins to monitor your health and receive assistance when needed.',
+      completed: false 
+    }
+  ]);
+  
   const [currentStep, setCurrentStep] = useState(0);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [completedSteps, setCompletedSteps] = useState<number[]>([]);
-  const [streakDays, setStreakDays] = useState(0);
+  const [isAnimating, setIsAnimating] = useState(false);
+  const [streakDays, setStreakDays] = useState(3);
   const { toast } = useToast();
-
+  
   useEffect(() => {
-    const generateImage = async () => {
-      try {
-        // Set a default fallback image first
-        const fallbackImage = `https://placehold.co/600x400/e2e8f0/64748b?text=${encodeURIComponent(disease)}+Care+Guide`;
-        
-        const { data, error } = await supabase.functions.invoke('generate-care-image', {
-          body: { disease, description }
-        });
-
-        if (error) {
-          console.error('Supabase function error:', error);
-          // Parse the error response
-          try {
-            const errorBody = JSON.parse(error.body || '{}');
-            if (errorBody.fallbackImage) {
-              setImageUrl(errorBody.fallbackImage);
-              if (errorBody.details) {
-                toast({
-                  title: "Using placeholder image",
-                  description: errorBody.details,
-                  variant: "default",
-                });
-              }
-              return;
-            }
-          } catch (parseError) {
-            console.error('Error parsing error body:', parseError);
-          }
-          
-          // If we couldn't get a fallback from the error, use our default
-          setImageUrl(fallbackImage);
-          toast({
-            title: "Using placeholder image",
-            description: "Image generation is temporarily unavailable",
-            variant: "default",
-          });
-          return;
-        }
-
-        // Handle successful response
-        if (data?.imageUrl) {
-          setImageUrl(data.imageUrl);
-        } else if (data?.fallbackImage) {
-          setImageUrl(data.fallbackImage);
-          toast({
-            title: "Using placeholder image",
-            description: data.details || "Image generation is temporarily unavailable",
-            variant: "default",
-          });
-        } else {
-          setImageUrl(fallbackImage);
-        }
-      } catch (err) {
-        console.error('Error generating image:', err);
-        setError('Failed to generate care guide image');
-        setImageUrl(`https://placehold.co/600x400/e2e8f0/64748b?text=${encodeURIComponent(disease)}+Care+Guide`);
-      }
-    };
-
-    generateImage();
-  }, [disease, description, toast]);
-
-  useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (isPlaying) {
-      interval = setInterval(() => {
-        setCurrentStep((prev) => {
-          if (prev === guidelines.length - 1) {
-            setIsPlaying(false);
-            return prev;
-          }
-          return prev + 1;
-        });
-      }, 3000);
+    // Automatically proceed to the first incomplete step
+    const firstIncompleteIndex = steps.findIndex(step => !step.completed);
+    if (firstIncompleteIndex !== -1) {
+      setCurrentStep(firstIncompleteIndex);
     }
-    return () => clearInterval(interval);
-  }, [isPlaying, guidelines.length]);
-
-  const handlePlayPause = () => {
-    setIsPlaying(!isPlaying);
-    if (!isPlaying && currentStep === guidelines.length - 1) {
-      setCurrentStep(0);
+  }, []);
+  
+  const handleCompleteStep = async (index: number) => {
+    if (steps[index].completed) return;
+    
+    setIsAnimating(true);
+    
+    try {
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      const newSteps = [...steps];
+      newSteps[index].completed = true;
+      setSteps(newSteps);
+      
+      // Automatically advance to the next incomplete step
+      const nextIncompleteIndex = newSteps.findIndex((step, i) => i > index && !step.completed);
+      if (nextIncompleteIndex !== -1) {
+        setCurrentStep(nextIncompleteIndex);
+      }
+      
+      setStreakDays(streakDays + 1);
+      
+      toast({
+        title: "Step Completed!",
+        description: `You've completed "${steps[index].title}". Keep up the good work!`,
+      });
+    } catch (error) {
+      console.error('Error completing step:', error);
+      toast({
+        title: "Error",
+        description: "Failed to complete step. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsAnimating(false);
     }
   };
-
-  const handleStepComplete = async () => {
-    if (!completedSteps.includes(currentStep)) {
-      const newCompletedSteps = [...completedSteps, currentStep];
-      setCompletedSteps(newCompletedSteps);
-      
-      // Update streak
-      const lastUpdateDate = localStorage.getItem('lastGuideUpdate');
-      const today = new Date().toISOString().split('T')[0];
-      
-      if (lastUpdateDate !== today) {
-        const currentStreak = Number(localStorage.getItem('streakDays') || '0');
-        const newStreak = currentStreak + 1;
-        setStreakDays(newStreak);
-        localStorage.setItem('streakDays', newStreak.toString());
-        localStorage.setItem('lastGuideUpdate', today);
-      }
-
-      // Show encouraging toast
-      if (newCompletedSteps.length === guidelines.length) {
-        toast({
-          title: "Congratulations! 🎉",
-          description: "You've completed all the care guide steps!",
-          variant: "default",
-        });
-      } else {
-        toast({
-          title: "Great progress! 👏",
-          description: "Keep going with the care guide steps!",
-          variant: "default",
-        });
-      }
-    }
-  };
-
+  
+  const completedCount = steps.filter(step => step.completed).length;
+  const completionPercentage = (completedCount / steps.length) * 100;
+  
   return (
-    <Card className="w-full">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Play className="h-5 w-5" />
-          {disease} Care Guide
-        </CardTitle>
-        <CardDescription>{description}</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        <div className="relative aspect-square rounded-lg overflow-hidden bg-muted">
-          {imageUrl ? (
-            <motion.img
-              src={imageUrl}
-              alt={`Care guide for ${disease}`}
-              className="w-full h-full object-cover"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.5 }}
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center">
+            <BookOpen className="mr-2 h-5 w-5" />
+            Care Guide
+          </CardTitle>
+          <CardDescription>Complete these steps to set up your care plan</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="mb-6">
+            <DetailedCareGuideProgress
+              completedSteps={completedCount}
+              totalSteps={steps.length}
+              streakDays={streakDays}
             />
-          ) : error ? (
-            <div className="flex items-center justify-center h-full">
-              <AlertCircle className="h-12 w-12 text-destructive" />
-              <p className="text-sm text-muted-foreground mt-2">{error}</p>
-            </div>
-          ) : (
-            <div className="flex items-center justify-center h-full">
-              <Play className="h-12 w-12 text-muted-foreground animate-pulse" />
-            </div>
-          )}
-        </div>
-
-        <CareGuideProgress
-          completedSteps={completedSteps.length}
-          totalSteps={guidelines.length}
-          streakDays={streakDays}
-        />
-
-        <div className="space-y-4">
-          <div className="flex justify-between items-center">
-            <motion.button
-              onClick={handlePlayPause}
-              className={`px-4 py-2 rounded-full ${
-                isPlaying ? 'bg-secondary' : 'bg-primary'
-              } text-white flex items-center gap-2`}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <Play className="h-4 w-4" />
-              {isPlaying ? 'Pause' : 'Play'}
-            </motion.button>
-            <span className="text-sm text-muted-foreground">
-              Step {currentStep + 1} of {guidelines.length}
-            </span>
           </div>
-
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={currentStep}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              className="bg-muted p-4 rounded-lg"
-            >
-              <div className="flex items-start gap-3">
-                <CheckCircle2 
-                  className={`h-5 w-5 ${
-                    completedSteps.includes(currentStep) 
-                      ? 'text-green-500' 
-                      : 'text-primary'
-                  }`} 
-                />
-                <div className="flex-1 space-y-2">
-                  <p className="text-sm">{guidelines[currentStep]}</p>
-                  {!completedSteps.includes(currentStep) && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handleStepComplete}
-                      className="w-full sm:w-auto mt-2"
-                    >
-                      Mark as Complete
-                    </Button>
-                  )}
-                </div>
+          
+          <div className="space-y-4">
+            {steps.map((step, index) => (
+              <Card 
+                key={step.id} 
+                className={`transition-all duration-300 ${
+                  currentStep === index 
+                    ? 'border-primary shadow-md' 
+                    : step.completed 
+                      ? 'border-green-200 bg-green-50/50 dark:bg-green-950/10 dark:border-green-900/50' 
+                      : ''
+                }`}
+              >
+                <CardContent className="p-4">
+                  <div className="flex justify-between items-center">
+                    <div className="flex items-center">
+                      <div className={`flex items-center justify-center h-8 w-8 rounded-full mr-3 ${
+                        step.completed 
+                          ? 'bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-400' 
+                          : 'bg-muted'
+                      }`}>
+                        {step.completed ? (
+                          <CheckCircle className="h-5 w-5" />
+                        ) : (
+                          <span className="text-sm font-medium">{index + 1}</span>
+                        )}
+                      </div>
+                      <div>
+                        <div className="font-medium">{step.title}</div>
+                        <div className="text-sm text-muted-foreground mt-1">{step.description}</div>
+                      </div>
+                    </div>
+                    {!step.completed && currentStep === index && (
+                      <Button 
+                        onClick={() => handleCompleteStep(index)}
+                        disabled={isAnimating}
+                        size="sm"
+                      >
+                        {isAnimating ? (
+                          <div className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full"></div>
+                        ) : (
+                          <>
+                            Complete
+                            <ChevronRight className="ml-2 h-4 w-4" />
+                          </>
+                        )}
+                      </Button>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+      
+      {completionPercentage >= 60 && (
+        <Card className="bg-gradient-to-r from-violet-50 to-purple-50 dark:from-violet-950/20 dark:to-purple-950/20 border-violet-200 dark:border-violet-900/50">
+          <CardContent className="p-6">
+            <div className="flex items-start space-x-4">
+              <div className="bg-violet-100 dark:bg-violet-900/50 p-3 rounded-full">
+                <Award className="h-6 w-6 text-violet-600 dark:text-violet-400" />
               </div>
-            </motion.div>
-          </AnimatePresence>
-        </div>
-      </CardContent>
-    </Card>
+              <div>
+                <h3 className="font-semibold text-lg mb-1">Almost there!</h3>
+                <p className="text-muted-foreground mb-4">
+                  You've completed {completedCount} out of {steps.length} steps. 
+                  Keep going to unlock additional care features.
+                </p>
+                <Button variant="outline" className="bg-white dark:bg-black">
+                  <Target className="mr-2 h-4 w-4" />
+                  View achievements
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+    </div>
   );
 };

@@ -80,7 +80,10 @@ export interface Availability {
   id: string;
   user_id: string;
   available_days: string[];
-  available_hours: Record<string, string[]>;
+  available_hours: Record<string, string[]> | {
+    start: string;
+    end: string;
+  };
 }
 
 export interface CareRecipient {
@@ -138,6 +141,9 @@ export interface CompanionMatch {
     creative_exercises?: string[];
   };
   interests: string[];
+  // Additional properties that were missing
+  background_check_date?: string;
+  bio?: string;
 }
 
 export interface Disclaimer {
@@ -147,4 +153,18 @@ export interface Disclaimer {
   content: string;
   created_at?: string;
   updated_at?: string;
+}
+
+export interface InsuranceDeductible {
+  id: string;
+  insurance_id: string;
+  total_amount: number;
+  met_amount: number;
+  deductible_type: string;
+  year: string;
+}
+
+export interface CareGuideProgressProps {
+  value: number;
+  className?: string;
 }

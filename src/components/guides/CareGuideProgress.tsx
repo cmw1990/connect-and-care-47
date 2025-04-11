@@ -1,103 +1,111 @@
 
 import React from 'react';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { CheckCircle, ChevronRight, BookOpen } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { CheckCircle, Award, TrendingUp, Calendar } from 'lucide-react';
 
-interface GuideSection {
-  id: string;
-  title: string;
-  description: string;
-  completed: boolean;
+export interface CareGuideProgressProps {
+  value: number;
+  className?: string;
 }
 
-interface CareGuideProgressProps {
-  title: string;
-  description?: string;
-  progress: number;
-  sections: GuideSection[];
-  onContinue: () => void;
-  onViewSection: (sectionId: string) => void;
-}
-
-export const CareGuideProgress: React.FC<CareGuideProgressProps> = ({
-  title,
-  description,
-  progress,
-  sections,
-  onContinue,
-  onViewSection,
+export const CareGuideProgress: React.FC<CareGuideProgressProps> = ({ 
+  value,
+  className = "" 
 }) => {
-  const completedSections = sections.filter(section => section.completed).length;
-  const totalSections = sections.length;
-  const percentComplete = Math.round((completedSections / totalSections) * 100);
-
   return (
-    <Card className="overflow-hidden">
-      <CardHeader className="pb-2">
-        <CardTitle className="flex items-center gap-2">
-          <BookOpen className="h-5 w-5 text-primary" />
-          {title}
-        </CardTitle>
-        {description && <CardDescription>{description}</CardDescription>}
+    <div className={className}>
+      <Progress value={value} className="h-2" />
+      <div className="text-xs text-muted-foreground mt-1 text-right">{Math.round(value)}% Complete</div>
+    </div>
+  );
+};
+
+interface DetailedProgressProps {
+  completedSteps: number;
+  totalSteps: number;
+  streakDays: number;
+}
+
+export const DetailedCareGuideProgress: React.FC<DetailedProgressProps> = ({
+  completedSteps,
+  totalSteps,
+  streakDays
+}) => {
+  const percentComplete = Math.round((completedSteps / totalSteps) * 100);
+  
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-lg">Care Guide Progress</CardTitle>
       </CardHeader>
-      
-      <CardContent className="pb-2">
-        <div className="space-y-4">
-          <div className="space-y-1">
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Progress</span>
-              <span className="font-medium">{percentComplete}% Complete</span>
+      <CardContent>
+        <div className="space-y-6">
+          <div className="space-y-2">
+            <div className="flex justify-between items-center">
+              <div className="text-sm font-medium">Overall Progress</div>
+              <div className="text-sm font-medium">{percentComplete}%</div>
             </div>
-            <Progress
-              value={percentComplete}
-              // Use className to style the progress bar wrapper
-              className="h-2"
-              // Instead of indicatorClassName, apply styling directly to the progress bar's indicator
-              style={{ "--radius": "0.5rem" } as React.CSSProperties}
-            />
+            <Progress value={percentComplete} className="h-2" />
           </div>
           
-          <div className="space-y-2">
-            {sections.map((section) => (
-              <div
-                key={section.id}
-                className={`p-3 rounded-lg flex items-center justify-between cursor-pointer
-                  ${section.completed 
-                    ? 'bg-primary-50 dark:bg-primary-950/20 border border-primary-100 dark:border-primary-900' 
-                    : 'bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800'}`}
-                onClick={() => onViewSection(section.id)}
-              >
-                <div className="flex items-start gap-3">
-                  <div className={`flex-shrink-0 mt-0.5 ${section.completed ? 'text-primary' : 'text-muted-foreground'}`}>
-                    {section.completed ? (
-                      <CheckCircle className="h-5 w-5" />
-                    ) : (
-                      <div className="h-5 w-5 border-2 rounded-full border-current" />
-                    )}
-                  </div>
-                  <div>
-                    <h3 className={`font-medium text-sm ${section.completed ? 'text-primary-700 dark:text-primary-300' : ''}`}>
-                      {section.title}
-                    </h3>
-                    <p className="text-xs text-muted-foreground line-clamp-1">
-                      {section.description}
-                    </p>
-                  </div>
-                </div>
-                <ChevronRight className="h-4 w-4 text-muted-foreground" />
-              </div>
-            ))}
+          <div className="grid grid-cols-3 gap-4">
+            <div className="flex flex-col items-center p-3 bg-primary/10 rounded-lg">
+              <CheckCircle className="h-6 w-6 mb-2 text-primary" />
+              <div className="text-lg font-bold">{completedSteps}</div>
+              <div className="text-xs text-center text-muted-foreground">Completed Steps</div>
+            </div>
+            
+            <div className="flex flex-col items-center p-3 bg-primary/10 rounded-lg">
+              <Award className="h-6 w-6 mb-2 text-primary" />
+              <div className="text-lg font-bold">{streakDays}</div>
+              <div className="text-xs text-center text-muted-foreground">Day Streak</div>
+            </div>
+            
+            <div className="flex flex-col items-center p-3 bg-primary/10 rounded-lg">
+              <Calendar className="h-6 w-6 mb-2 text-primary" />
+              <div className="text-lg font-bold">{totalSteps}</div>
+              <div className="text-xs text-center text-muted-foreground">Total Steps</div>
+            </div>
           </div>
+          
+          <Tabs defaultValue="daily">
+            <TabsList className="grid grid-cols-3">
+              <TabsTrigger value="daily">Daily</TabsTrigger>
+              <TabsTrigger value="weekly">Weekly</TabsTrigger>
+              <TabsTrigger value="monthly">Monthly</TabsTrigger>
+            </TabsList>
+            <TabsContent value="daily" className="mt-4">
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <div className="text-sm font-medium">Day 1</div>
+                  <div className="text-xs text-muted-foreground">2/3 Tasks</div>
+                </div>
+                <Progress value={66} className="h-2" />
+              </div>
+            </TabsContent>
+            <TabsContent value="weekly" className="mt-4">
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <div className="text-sm font-medium">Week 1</div>
+                  <div className="text-xs text-muted-foreground">12/15 Tasks</div>
+                </div>
+                <Progress value={80} className="h-2" />
+              </div>
+            </TabsContent>
+            <TabsContent value="monthly" className="mt-4">
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <div className="text-sm font-medium">Month 1</div>
+                  <div className="text-xs text-muted-foreground">45/60 Tasks</div>
+                </div>
+                <Progress value={75} className="h-2" />
+              </div>
+            </TabsContent>
+          </Tabs>
         </div>
       </CardContent>
-      
-      <CardFooter className="pt-2">
-        <Button onClick={onContinue} className="w-full">
-          {completedSections === totalSections ? 'View Complete Guide' : 'Continue Learning'}
-        </Button>
-      </CardFooter>
     </Card>
   );
 };

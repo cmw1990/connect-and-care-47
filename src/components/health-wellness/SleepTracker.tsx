@@ -2,316 +2,272 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogDescription 
-} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { BedDouble, Moon, Plus, Calendar, Clock } from 'lucide-react';
-import { format } from 'date-fns';
-import { toast } from '@/hooks/use-toast';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { useToast } from '@/hooks/use-toast';
+import { Bed, Moon, Clock, Activity, Plus, CalendarIcon } from 'lucide-react';
+import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { sleep } from '@/utils/supabaseHelpers';
 
-// Sleep data interface
-interface SleepData {
+// Interface for a sleep record
+interface SleepRecord {
   id: string;
   date: string;
-  hoursSlept: number;
-  quality: number;
-  bedTime: string;
+  sleepTime: string;
   wakeTime: string;
+  duration: number;
+  quality: number;
   notes?: string;
+  interruptions?: number;
+  deepSleepMinutes?: number;
+  remSleepMinutes?: number;
 }
 
-export const SleepTracker: React.FC = () => {
-  const [sleepData, setSleepData] = useState<SleepData[]>([]);
-  const [isAddingEntry, setIsAddingEntry] = useState(false);
-  const [newEntry, setNewEntry] = useState<Partial<SleepData>>({
-    hoursSlept: 7,
-    quality: 3,
-    bedTime: '22:00',
-    wakeTime: '07:00',
-    date: new Date().toISOString().split('T')[0]
-  });
+export const SleepTracker = () => {
+  const [sleepRecords, setSleepRecords] = useState<SleepRecord[]>([]);
   const [loading, setLoading] = useState(true);
-
+  const [newRecord, setNewRecord] = useState<Omit<SleepRecord, 'id'>>({
+    date: new Date().toISOString().split('T')[0],
+    sleepTime: '22:00',
+    wakeTime: '06:00',
+    duration: 8,
+    quality: 7,
+  });
+  const { toast } = useToast();
+  
   useEffect(() => {
-    // Simulate fetching data
-    setTimeout(() => {
-      const mockData: SleepData[] = [
+    fetchSleepData();
+  }, []);
+  
+  const fetchSleepData = async () => {
+    try {
+      // Mock data for development
+      const mockData: SleepRecord[] = [
         {
           id: '1',
-          date: format(new Date(Date.now() - 6 * 24 * 60 * 60 * 1000), 'yyyy-MM-dd'),
-          hoursSlept: 7.5,
-          quality: 4,
-          bedTime: '22:30',
-          wakeTime: '06:00'
+          date: '2023-07-10',
+          sleepTime: '22:30',
+          wakeTime: '06:30',
+          duration: 8,
+          quality: 7,
+          interruptions: 2,
+          deepSleepMinutes: 120,
+          remSleepMinutes: 90
         },
         {
           id: '2',
-          date: format(new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), 'yyyy-MM-dd'),
-          hoursSlept: 6.2,
-          quality: 2,
-          bedTime: '23:45',
-          wakeTime: '06:00'
+          date: '2023-07-11',
+          sleepTime: '23:00',
+          wakeTime: '07:00',
+          duration: 8,
+          quality: 8,
+          interruptions: 1,
+          deepSleepMinutes: 150,
+          remSleepMinutes: 100
         },
         {
           id: '3',
-          date: format(new Date(Date.now() - 4 * 24 * 60 * 60 * 1000), 'yyyy-MM-dd'),
-          hoursSlept: 8.0,
-          quality: 5,
-          bedTime: '22:00',
-          wakeTime: '06:00'
+          date: '2023-07-12',
+          sleepTime: '22:00',
+          wakeTime: '05:30',
+          duration: 7.5,
+          quality: 6,
+          interruptions: 3,
+          deepSleepMinutes: 110,
+          remSleepMinutes: 85
         },
         {
           id: '4',
-          date: format(new Date(Date.now() - 3 * 24 * 60 * 60 * 1000), 'yyyy-MM-dd'),
-          hoursSlept: 7.8,
-          quality: 4,
-          bedTime: '22:15',
-          wakeTime: '06:00'
+          date: '2023-07-13',
+          sleepTime: '23:30',
+          wakeTime: '07:30',
+          duration: 8,
+          quality: 9,
+          interruptions: 0,
+          deepSleepMinutes: 180,
+          remSleepMinutes: 120
         },
         {
           id: '5',
-          date: format(new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), 'yyyy-MM-dd'),
-          hoursSlept: 5.5,
-          quality: 2,
-          bedTime: '00:30',
-          wakeTime: '06:00'
-        },
-        {
-          id: '6',
-          date: format(new Date(Date.now() - 1 * 24 * 60 * 60 * 1000), 'yyyy-MM-dd'),
-          hoursSlept: 6.7,
-          quality: 3,
-          bedTime: '23:00',
-          wakeTime: '06:00'
-        },
+          date: '2023-07-14',
+          sleepTime: '22:30',
+          wakeTime: '06:00',
+          duration: 7.5,
+          quality: 7,
+          interruptions: 2,
+          deepSleepMinutes: 130,
+          remSleepMinutes: 95
+        }
       ];
       
-      setSleepData(mockData);
+      // Simulate API delay
+      await sleep(500);
+      
+      setSleepRecords(mockData);
       setLoading(false);
-    }, 1000);
-  }, []);
-
-  const handleAddEntry = () => {
-    if (!newEntry.date || !newEntry.hoursSlept || !newEntry.quality) {
-      toast.error("Please fill all required fields");
-      return;
+    } catch (error) {
+      console.error('Error fetching sleep data:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load sleep data",
+        variant: "destructive",
+      });
+      setLoading(false);
     }
-
-    const entry: SleepData = {
-      id: Date.now().toString(),
-      date: newEntry.date,
-      hoursSlept: newEntry.hoursSlept,
-      quality: newEntry.quality,
-      bedTime: newEntry.bedTime || '22:00',
-      wakeTime: newEntry.wakeTime || '07:00',
-      notes: newEntry.notes
+  };
+  
+  const handleAddRecord = async () => {
+    try {
+      // Calculate duration if not filled
+      const startTime = new Date(`2000-01-01T${newRecord.sleepTime}`);
+      const endTime = new Date(`2000-01-01T${newRecord.wakeTime}`);
+      
+      // Adjust for next day if wake time is earlier than sleep time
+      if (endTime < startTime) {
+        endTime.setDate(endTime.getDate() + 1);
+      }
+      
+      const durationHours = (endTime.getTime() - startTime.getTime()) / (1000 * 60 * 60);
+      
+      const recordToAdd: SleepRecord = {
+        ...newRecord,
+        id: `sleep-${Date.now()}`,
+        duration: Math.round(durationHours * 10) / 10, // Round to 1 decimal place
+      };
+      
+      // In a real application, you would add to the database
+      setSleepRecords([...sleepRecords, recordToAdd]);
+      
+      toast({
+        title: "Success",
+        description: "Sleep record added successfully",
+      });
+      
+      // Reset form
+      setNewRecord({
+        date: new Date().toISOString().split('T')[0],
+        sleepTime: '22:00',
+        wakeTime: '06:00',
+        duration: 8,
+        quality: 7,
+      });
+    } catch (error) {
+      console.error('Error adding sleep record:', error);
+      toast({
+        title: "Error",
+        description: "Failed to add sleep record",
+        variant: "destructive",
+      });
+    }
+  };
+  
+  // Calculate averages for the dashboard
+  const calculateAverages = () => {
+    if (sleepRecords.length === 0) return { avgDuration: 0, avgQuality: 0 };
+    
+    const totalDuration = sleepRecords.reduce((sum, record) => sum + record.duration, 0);
+    const totalQuality = sleepRecords.reduce((sum, record) => sum + record.quality, 0);
+    
+    return {
+      avgDuration: Math.round((totalDuration / sleepRecords.length) * 10) / 10,
+      avgQuality: Math.round((totalQuality / sleepRecords.length) * 10) / 10,
     };
-
-    setSleepData(prev => [...prev, entry]);
-    setIsAddingEntry(false);
-    toast.success("Sleep entry added successfully");
-
-    // Reset form
-    setNewEntry({
-      hoursSlept: 7,
-      quality: 3,
-      bedTime: '22:00',
-      wakeTime: '07:00',
-      date: new Date().toISOString().split('T')[0]
-    });
   };
-
-  const handleCancel = () => {
-    setIsAddingEntry(false);
-    toast.info("Entry cancelled");
-  };
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setNewEntry(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleQualityChange = (value: number[]) => {
-    setNewEntry(prev => ({ ...prev, quality: value[0] }));
-  };
-
-  // Format data for chart display
-  const chartData = sleepData
-    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-    .map(entry => ({
-      date: format(new Date(entry.date), 'MMM dd'),
-      hoursSlept: entry.hoursSlept,
-      quality: entry.quality
-    }));
-
-  // Function to determine sleep quality text
-  const getSleepQualityText = (quality: number) => {
-    switch(quality) {
-      case 1: return 'Poor';
-      case 2: return 'Fair';
-      case 3: return 'Good';
-      case 4: return 'Very Good';
-      case 5: return 'Excellent';
-      default: return 'Not Rated';
-    }
-  };
-
+  
+  const { avgDuration, avgQuality } = calculateAverages();
+  
   if (loading) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <Moon className="h-5 w-5" />
-            <span>Sleep Tracker</span>
-          </CardTitle>
+          <CardTitle>Sleep Tracker</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center justify-center h-48">
-            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
+          <div className="flex justify-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
           </div>
         </CardContent>
       </Card>
     );
   }
-
+  
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="flex items-center space-x-2">
-          <Moon className="h-5 w-5 text-blue-500" />
-          <span>Sleep Tracker</span>
+      <CardHeader className="flex flex-row items-center justify-between">
+        <CardTitle className="flex items-center">
+          <Moon className="mr-2 h-5 w-5" />
+          Sleep Tracker
         </CardTitle>
-        <Button 
-          size="sm" 
-          variant="outline" 
-          className="flex items-center gap-1"
-          onClick={() => setIsAddingEntry(true)}
-        >
-          <Plus className="h-4 w-4" /> Add Entry
-        </Button>
-      </CardHeader>
-      <CardContent>
-        <div className="h-[300px]">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="date" />
-              <YAxis yAxisId="left" orientation="left" domain={[0, 10]} />
-              <YAxis yAxisId="right" orientation="right" domain={[0, 5]} />
-              <Tooltip />
-              <Legend />
-              <Bar yAxisId="left" dataKey="hoursSlept" name="Hours Slept" fill="#3b82f6" />
-              <Bar yAxisId="right" dataKey="quality" name="Sleep Quality (1-5)" fill="#10b981" />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-
-        <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
-          {sleepData.slice(-3).reverse().map(entry => (
-            <div key={entry.id} className="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg">
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-1">
-                  <Calendar className="h-4 w-4 text-gray-500" />
-                  <span className="text-sm font-medium">{format(new Date(entry.date), 'MMM dd, yyyy')}</span>
-                </div>
-                <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs rounded-full">
-                  {getSleepQualityText(entry.quality)}
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-1">
-                  <BedDouble className="h-4 w-4 text-gray-500" />
-                  <span className="text-sm">{entry.bedTime} - {entry.wakeTime}</span>
-                </div>
-                <span className="font-bold">{entry.hoursSlept}h</span>
-              </div>
-              {entry.notes && (
-                <p className="text-xs text-gray-500 mt-2 italic">{entry.notes}</p>
-              )}
-            </div>
-          ))}
-        </div>
-
-        <Dialog open={isAddingEntry} onOpenChange={setIsAddingEntry}>
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button size="sm">
+              <Plus className="mr-2 h-4 w-4" />
+              Add Sleep Record
+            </Button>
+          </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Add Sleep Entry</DialogTitle>
+              <DialogTitle>Add Sleep Record</DialogTitle>
               <DialogDescription>
-                Record your sleep details for better tracking
+                Enter details about your sleep session
               </DialogDescription>
             </DialogHeader>
-            <div className="grid gap-4 py-4">
+            <div className="space-y-4 pt-4">
               <div className="grid gap-2">
                 <Label htmlFor="date">Date</Label>
-                <Input
-                  id="date"
-                  name="date"
-                  type="date"
-                  value={newEntry.date}
-                  onChange={handleInputChange}
-                />
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="bedTime">Bed Time</Label>
+                <div className="flex items-center">
+                  <CalendarIcon className="mr-2 h-4 w-4 opacity-50" />
                   <Input
-                    id="bedTime"
-                    name="bedTime"
-                    type="time"
-                    value={newEntry.bedTime}
-                    onChange={handleInputChange}
+                    type="date"
+                    id="date"
+                    value={newRecord.date}
+                    onChange={(e) => setNewRecord({ ...newRecord, date: e.target.value })}
                   />
                 </div>
-                
-                <div className="grid gap-2">
-                  <Label htmlFor="wakeTime">Wake Time</Label>
+              </div>
+              
+              <div className="grid gap-2">
+                <Label htmlFor="sleepTime">Sleep Time</Label>
+                <div className="flex items-center">
+                  <Moon className="mr-2 h-4 w-4 opacity-50" />
                   <Input
+                    type="time"
+                    id="sleepTime"
+                    value={newRecord.sleepTime}
+                    onChange={(e) => setNewRecord({ ...newRecord, sleepTime: e.target.value })}
+                  />
+                </div>
+              </div>
+              
+              <div className="grid gap-2">
+                <Label htmlFor="wakeTime">Wake Time</Label>
+                <div className="flex items-center">
+                  <Clock className="mr-2 h-4 w-4 opacity-50" />
+                  <Input
+                    type="time"
                     id="wakeTime"
-                    name="wakeTime"
-                    type="time"
-                    value={newEntry.wakeTime}
-                    onChange={handleInputChange}
+                    value={newRecord.wakeTime}
+                    onChange={(e) => setNewRecord({ ...newRecord, wakeTime: e.target.value })}
                   />
                 </div>
               </div>
               
               <div className="grid gap-2">
-                <Label htmlFor="hoursSlept">Hours Slept</Label>
-                <Input
-                  id="hoursSlept"
-                  name="hoursSlept"
-                  type="number"
-                  step="0.1"
-                  min="0"
-                  max="24"
-                  value={newEntry.hoursSlept}
-                  onChange={handleInputChange}
-                />
-              </div>
-              
-              <div className="grid gap-2">
-                <Label>Sleep Quality (1-5)</Label>
+                <Label htmlFor="quality">Sleep Quality (1-10)</Label>
                 <Slider
-                  defaultValue={[newEntry.quality || 3]}
-                  max={5}
+                  id="quality"
                   min={1}
+                  max={10}
                   step={1}
-                  onValueChange={handleQualityChange}
+                  value={[newRecord.quality]}
+                  onValueChange={(values) => setNewRecord({ ...newRecord, quality: values[0] })}
                 />
                 <div className="flex justify-between text-xs text-muted-foreground">
                   <span>Poor</span>
-                  <span>Fair</span>
-                  <span>Good</span>
-                  <span>Very Good</span>
+                  <span>{newRecord.quality}</span>
                   <span>Excellent</span>
                 </div>
               </div>
@@ -320,23 +276,178 @@ export const SleepTracker: React.FC = () => {
                 <Label htmlFor="notes">Notes (Optional)</Label>
                 <Input
                   id="notes"
-                  name="notes"
-                  value={newEntry.notes || ''}
-                  onChange={handleInputChange}
-                  placeholder="Any additional notes about your sleep"
+                  placeholder="Any notes about your sleep..."
+                  value={newRecord.notes || ''}
+                  onChange={(e) => setNewRecord({ ...newRecord, notes: e.target.value })}
                 />
               </div>
-            </div>
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={handleCancel}>
-                Cancel
-              </Button>
-              <Button onClick={handleAddEntry}>
-                Save Entry
+              
+              <div className="grid gap-2">
+                <Label htmlFor="interruptions">Number of Interruptions (Optional)</Label>
+                <Input
+                  id="interruptions"
+                  type="number"
+                  min="0"
+                  value={newRecord.interruptions || 0}
+                  onChange={(e) => setNewRecord({ ...newRecord, interruptions: parseInt(e.target.value) })}
+                />
+              </div>
+              
+              <Button onClick={handleAddRecord} className="w-full">
+                Save Sleep Record
               </Button>
             </div>
           </DialogContent>
         </Dialog>
+      </CardHeader>
+      <CardContent>
+        <Tabs defaultValue="dashboard">
+          <TabsList className="mb-4">
+            <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+            <TabsTrigger value="history">History</TabsTrigger>
+            <TabsTrigger value="analytics">Analytics</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="dashboard">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="flex justify-between items-center">
+                    <div className="flex items-center">
+                      <Bed className="h-8 w-8 mr-2 text-blue-500" />
+                      <div>
+                        <div className="text-xl font-bold">{avgDuration}h</div>
+                        <div className="text-sm text-muted-foreground">Avg. Sleep Duration</div>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="flex justify-between items-center">
+                    <div className="flex items-center">
+                      <Activity className="h-8 w-8 mr-2 text-green-500" />
+                      <div>
+                        <div className="text-xl font-bold">{avgQuality}/10</div>
+                        <div className="text-sm text-muted-foreground">Avg. Sleep Quality</div>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+            
+            <Card>
+              <CardHeader>
+                <CardTitle>Recent Sleep Duration</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="h-[300px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={sleepRecords.slice(-7).reverse()}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="date" />
+                      <YAxis domain={[0, 12]} />
+                      <Tooltip />
+                      <Legend />
+                      <Bar dataKey="duration" fill="#6366f1" name="Sleep Duration (hours)" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          <TabsContent value="history">
+            <div className="space-y-4">
+              {sleepRecords.map((record) => (
+                <Card key={record.id}>
+                  <CardContent className="p-4">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <div className="font-medium">{new Date(record.date).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</div>
+                        <div className="text-sm text-muted-foreground mt-1">
+                          <span className="inline-flex items-center mr-4">
+                            <Clock className="mr-1 h-4 w-4" />
+                            {record.sleepTime} - {record.wakeTime}
+                          </span>
+                          <span className="inline-flex items-center mr-4">
+                            <Bed className="mr-1 h-4 w-4" />
+                            {record.duration} hours
+                          </span>
+                          <span className="inline-flex items-center">
+                            <Activity className="mr-1 h-4 w-4" />
+                            Quality: {record.quality}/10
+                          </span>
+                        </div>
+                        {record.notes && (
+                          <div className="mt-2 text-sm">{record.notes}</div>
+                        )}
+                        {record.interruptions !== undefined && (
+                          <div className="mt-1 text-xs text-muted-foreground">
+                            Interruptions: {record.interruptions}
+                          </div>
+                        )}
+                      </div>
+                      <Button variant="ghost" size="sm">
+                        Edit
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="analytics">
+            <div className="space-y-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Sleep Quality Trend</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-[300px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={sleepRecords.slice(-7).reverse()}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="date" />
+                        <YAxis domain={[0, 10]} />
+                        <Tooltip />
+                        <Legend />
+                        <Line type="monotone" dataKey="quality" stroke="#8884d8" name="Sleep Quality (1-10)" />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                </CardContent>
+              </Card>
+              
+              {sleepRecords.some(r => r.deepSleepMinutes && r.remSleepMinutes) && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Sleep Stages</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="h-[300px]">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={sleepRecords.slice(-5).reverse()}>
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis dataKey="date" />
+                          <YAxis />
+                          <Tooltip />
+                          <Legend />
+                          <Bar dataKey="deepSleepMinutes" fill="#6366f1" name="Deep Sleep (minutes)" />
+                          <Bar dataKey="remSleepMinutes" fill="#ec4899" name="REM Sleep (minutes)" />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          </TabsContent>
+        </Tabs>
       </CardContent>
     </Card>
   );
