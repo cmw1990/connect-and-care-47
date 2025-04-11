@@ -273,4 +273,5 @@ export interface DayContentProps {
   monthStartDate?: Date;
   selected?: boolean;
   displayMonth?: boolean;
+  day?: number;
 }

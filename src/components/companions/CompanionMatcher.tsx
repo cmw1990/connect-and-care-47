@@ -47,6 +47,18 @@ const CompanionMatcher = () => {
       
       // Try to query the real table, but handle the case where the table or relationships don't exist
       try {
+        // First check if the table exists
+        const tableExists = await supabase
+          .from('companion_profiles')
+          .select('id')
+          .limit(1)
+          .maybeSingle();
+          
+        if (tableExists.error) {
+          throw new Error("Table doesn't exist yet");
+        }
+        
+        // If the table exists, continue with the query
         let query = supabase
           .from('companion_profiles')
           .select(`
@@ -85,7 +97,7 @@ const CompanionMatcher = () => {
 
         query = query.lte('hourly_rate', filters.maxRate);
 
-        const { data, error } = await query.get();
+        const { data, error } = await query;
         if (error) throw error;
 
         // Process and map the data to ensure it matches the CompanionMatch interface
@@ -188,7 +200,7 @@ const CompanionMatcher = () => {
         setMatches(mockCompanions);
       }
     } catch (error) {
-      console.error('Error fetchingData:', error);
+      console.error('Error fetching data:', error);
       toast({
         title: "Error",
         description: "Failed to load companion matches",

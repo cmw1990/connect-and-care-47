@@ -161,8 +161,8 @@ export const CareCalendar = ({ groupId }: { groupId: string }) => {
     }
   };
 
-  const getDayContent = (date: Date) => {
-    const dateKey = formatDateKey(date);
+  const getDayContent = (props: DayContentProps) => {
+    const dateKey = formatDateKey(props.date);
     const dayEvents = events[dateKey] || [];
     
     if (dayEvents.length === 0) return null;
@@ -199,7 +199,7 @@ export const CareCalendar = ({ groupId }: { groupId: string }) => {
               onSelect={setSelectedDate}
               className="rounded-md border"
               components={{
-                DayContent: ({ date }: DayContentProps) => getDayContent(date),
+                DayContent: getDayContent,
               }}
             />
           </CardContent>

@@ -1,5 +1,5 @@
 
-import { initMockTables } from "./mockDatabaseTables";
+import { mockMissingTables } from "./mockDatabaseTables";
 
 /**
  * Initialize the application
@@ -8,7 +8,7 @@ import { initMockTables } from "./mockDatabaseTables";
 export const initializeApp = () => {
   // Initialize mocks for tables that don't exist yet
   if (process.env.NODE_ENV === 'development') {
-    initMockTables();
+    mockMissingTables();
   }
   
   // Add any other initialization code here
