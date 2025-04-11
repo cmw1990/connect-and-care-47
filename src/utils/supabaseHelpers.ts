@@ -1,7 +1,6 @@
 
 import { typeCast, transformData } from './typeHelpers';
 import { Json } from '@/integrations/supabase/types';
-import { safeSupabaseQuery } from './supabase';
 
 /**
  * Mock supabase responses for development and type checking 
@@ -198,13 +197,13 @@ export function safeQueryBuilder<T>(query: any): Promise<T[]> {
 }
 
 /**
- * Mock implementation for queries with missing tables
- * This function returns properly typed mock data for components
+ * Improved mock implementation for queries with missing tables
+ * This function returns properly typed mock data for components that will work with TypeScript
  * @param mockData The mock data to return
- * @returns A Promise that resolves to the mock data
+ * @returns A Promise that resolves to the mock data with the correct type
  */
 export function mockTableQuery<T>(mockData: T[]): Promise<T[]> {
-  return Promise.resolve(mockData);
+  return Promise.resolve(mockData as T[]);
 }
 
 /**
@@ -235,7 +234,8 @@ export function mockMissingTables() {
     'tasks',
     'danger_zone_types',
     'care_groups',
-    'geofences'
+    'geofences',
+    'care_outcome_metrics'
   ];
   
   // For debugging and informational purposes
@@ -283,17 +283,13 @@ export function mockConnection(overrides: Partial<any> = {}): any {
 }
 
 /**
- * Similar to safeSupabaseQuery but specialized for handling typescript errors
- * when accessing non-existent tables
+ * Enhanced mock Supabase query that handles non-existent tables
+ * This version ensures proper typing for the mock data
  */
-export function mockSupabaseQuery<T>(
+export async function mockSupabaseQuery<T>(
   tableName: string, 
-  mockResult: T[] = [],
-  isSingle: boolean = false
-): Promise<{data: T | T[] | null, error: null | Error}> {
-  console.log(`Mock query for table: ${tableName}`);
-  return Promise.resolve({
-    data: isSingle ? (mockResult[0] || null) : mockResult,
-    error: null
-  });
+  mockResult: T[] = []
+): Promise<T[]> {
+  console.log(`Mocking query for table: ${tableName}`);
+  return mockResult;
 }

@@ -5,13 +5,9 @@ import App from './App';
 import './index.css';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { initializeApp } from './utils/initialize';
-import { mockMissingTables } from './utils/supabaseHelpers';
 
 // Initialize app (including mock database tables for development)
 initializeApp();
-
-// Initialize mock tables for tables that don't exist yet
-mockMissingTables();
 
 const queryClient = new QueryClient({
   defaultOptions: {

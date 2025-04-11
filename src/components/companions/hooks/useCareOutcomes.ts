@@ -47,21 +47,21 @@ export const useCareOutcomes = (meetingId: string) => {
               companion_meeting_id: meetingId
             }
           ];
-          return mockTableQuery<CareOutcomeMetric>(mockData);
+          return mockData;
         }
         
         // If table exists, fetch the actual data
         const { data, error } = await supabase
           .from('care_outcome_metrics')
           .select('*')
-          .eq('companion_meeting_id', meetingId)
-          .maybeSingle();
+          .eq('companion_meeting_id', meetingId);
           
         if (error) throw error;
-        return data as CareOutcomeMetric | null;
+        return data as CareOutcomeMetric[];
       } catch (error) {
         console.error("Error fetching care outcomes:", error);
-        return null;
+        // Return empty array as fallback
+        return [] as CareOutcomeMetric[];
       }
     },
     enabled: !!meetingId

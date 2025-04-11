@@ -82,8 +82,8 @@ export const CareCalendar = ({ groupId }: { groupId: string }) => {
 
       const [careTasks, appointments, medications] = await Promise.all([
         careTasksPromise,
-        mockTableQuery<Appointment>(mockAppointments),
-        mockTableQuery<Medication>(mockMedications)
+        mockAppointments,
+        mockMedications
       ]);
 
       // Process the results
