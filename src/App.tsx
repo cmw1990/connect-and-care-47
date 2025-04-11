@@ -5,6 +5,7 @@ import { ThemeProvider } from 'next-themes';
 import { MobileNav } from '@/components/navigation/mobile-nav';
 import Index from '@/pages/Index';
 import { Toaster } from '@/components/ui/toaster';
+import { SleepTracker } from '@/components/health-wellness/SleepTracker';
 
 function App() {
   return (
@@ -19,6 +20,7 @@ function App() {
               <Route path="/care-management" element={<div>Care Management</div>} />
               <Route path="/support" element={<div>Support</div>} />
               <Route path="/settings" element={<div>Settings</div>} />
+              <Route path="/sleep" element={<SleepTracker />} />
             </Routes>
           </main>
           <MobileNav />
