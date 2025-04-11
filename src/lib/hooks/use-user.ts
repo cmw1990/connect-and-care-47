@@ -1,71 +1,49 @@
 
-import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { useState } from 'react';
 
-export interface UserData {
+export interface User {
   id: string;
+  first_name: string;
+  last_name: string;
   email: string;
-  first_name?: string;
-  last_name?: string;
-  role?: string;
-  avatar_url?: string;
+  role: string;
 }
 
-export const useUser = () => {
-  const [user, setUser] = useState<UserData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
-
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        setLoading(true);
-        
-        const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
-        
-        if (authError) throw authError;
-        
-        if (authUser) {
-          const { data: profile, error: profileError } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', authUser.id)
-            .single();
-            
-          if (profileError && profileError.code !== 'PGRST116') {
-            throw profileError;
-          }
-          
-          setUser({
-            id: authUser.id,
-            email: authUser.email || '',
-            ...profile
-          });
-        }
-      } catch (err) {
-        setError(err as Error);
-        console.error('Error fetching user:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchUser();
-    
-    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session?.user) {
-        fetchUser();
-      } else {
-        setUser(null);
-      }
-    });
-
-    return () => {
-      authListener?.subscription.unsubscribe();
-    };
-  }, []);
-
-  return { user, loading, error };
+// Mock user data for development
+const mockUser: User = {
+  id: 'user-1',
+  first_name: 'John',
+  last_name: 'Doe',
+  email: 'john.doe@example.com',
+  role: 'caregiver'
 };
 
-export default useUser;
+export const useUser = () => {
+  const [user, setUser] = useState<User | null>(mockUser);
+  const [loading, setLoading] = useState(false);
+
+  const login = async (email: string, password: string) => {
+    setLoading(true);
+    try {
+      // This would normally authenticate with Supabase
+      setUser(mockUser);
+      return { user: mockUser, error: null };
+    } catch (error) {
+      return { user: null, error };
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const logout = async () => {
+    // This would normally sign out of Supabase
+    setUser(null);
+    return { error: null };
+  };
+
+  const getUser = () => {
+    return user;
+  };
+
+  return { user, loading, login, logout, getUser };
+};

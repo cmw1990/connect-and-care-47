@@ -1,363 +1,279 @@
 
-import { useState, useRef, useEffect } from "react";
+import React, { useState, useEffect } from 'react';
+import { Send, Bot, Trash } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Separator } from "@/components/ui/separator";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
-import { Bot, Send, Sparkles } from "lucide-react";
-import { useTranslation } from "react-i18next";
-import { LanguageSelector } from "@/components/ui/language-selector";
-import {
-  MainContainer,
-  ChatContainer,
-  MessageList,
-  Message as ChatUIMessage,
-  MessageInput,
-  TypingIndicator
-} from "@chatscope/chat-ui-kit-react";
-import "@/styles/chatscope.css";
-import "@/i18n/i18n";
+import { ChatMessage } from '@/types/chat';
+import { mockCurrentUser } from '@/utils/supabaseHelpers';
 
-interface Message {
-  role: 'assistant' | 'user'; // Ensure role is strictly typed
-  content: string;
-}
-
-interface BasicInfo {
-  name?: string;
-  age?: string;
-  condition?: string;
-}
-
-interface PatientInfo {
-  basic_info?: BasicInfo;
-  diseases?: string[];
-  medicines?: {
-    name: string;
-    dosage: string;
-    frequency: string;
-  }[];
-  care_tips?: string[];
-}
-
-export const CareAssistant = ({ groupId }: { groupId?: string }) => {
-  const [messages, setMessages] = useState<Message[]>([]);
+export function CareAssistant() {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [currentMessage, setCurrentMessage] = useState('');
+  const [patientInfo, setPatientInfo] = useState<any>(null);
+  const [tasks, setTasks] = useState<any[]>([]);
+  const [updates, setUpdates] = useState<any[]>([]);
+  const [routines, setRoutines] = useState<any[]>([]);
+  const [messages, setMessages] = useState<ChatMessage[]>([
+    {
+      role: "assistant",
+      content: "Hello! I'm your AI Care Assistant. I can help you with information about patient care, tasks, routines, and updates. How can I assist you today?"
+    }
+  ]);
   const { toast } = useToast();
-  const { t } = useTranslation();
-  const abortControllerRef = useRef<AbortController | null>(null);
+  const messagesEndRef = React.useRef<HTMLDivElement>(null);
 
-  const formatPatientContext = async () => {
+  useEffect(() => {
+    // Fetch mock data for development
+    fetchData();
+  }, []);
+
+  useEffect(() => {
+    // Scroll to bottom when messages change
+    scrollToBottom();
+  }, [messages]);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  const fetchData = async () => {
     try {
-      // Mock data for development until patient_info is fully implemented
-      const mockPatientInfo: PatientInfo = {
-        basic_info: {
-          name: "John Doe",
-          age: "72",
-          condition: "Stable"
-        },
-        diseases: ["Mild Dementia", "Hypertension"],
-        medicines: [
-          { name: "Aricept", dosage: "10mg", frequency: "Once daily" },
-          { name: "Lisinopril", dosage: "5mg", frequency: "Twice daily" }
-        ],
-        care_tips: ["Ensure regular hydration", "Maintain consistent daily routine"]
+      // Mock data instead of real API calls
+      // This simulates fetching data from database
+      
+      // Mock patient info
+      const mockPatientInfo = {
+        name: "John Smith",
+        age: 72,
+        conditions: ["Parkinson's", "Hypertension"],
+        medications: ["Levodopa", "Lisinopril"]
       };
-
-      // Mock tasks data
+      
+      // Mock tasks
       const mockTasks = [
-        { title: "Morning medication", status: "completed" },
-        { title: "Afternoon walk", status: "pending" },
-        { title: "Evening meal preparation", status: "pending" }
+        { id: "1", title: "Morning medication", status: "completed" },
+        { id: "2", title: "Physical therapy exercises", status: "pending" },
+        { id: "3", title: "Doctor appointment", status: "scheduled" }
       ];
-
-      // Mock updates data
+      
+      // Mock updates
       const mockUpdates = [
-        { content: "Patient had a good night's sleep" },
-        { content: "Completed physical therapy session" },
-        { content: "Showed improved mood during family visit" }
+        { id: "1", content: "Patient reports feeling better today" },
+        { id: "2", content: "Blood pressure reading: 128/82" },
+        { id: "3", content: "Completed all morning activities without assistance" }
       ];
-
-      // Mock routines data
+      
+      // Mock routines
       const mockRoutines = [
-        { title: "Morning routine", description: "Hygiene, breakfast, medication" },
-        { title: "Afternoon routine", description: "Light exercise, reading, relaxation" },
-        { title: "Evening routine", description: "Dinner, medication, wind-down activities" }
+        { id: "1", title: "Morning routine", tasks: ["Wake up", "Medication", "Breakfast"] },
+        { id: "2", title: "Evening routine", tasks: ["Dinner", "Medication", "Reading"] },
       ];
-
-      return `
-Care Group Context:
-
-Patient Information:
-Name: ${mockPatientInfo.basic_info?.name || 'Not specified'}
-Age: ${mockPatientInfo.basic_info?.age || 'Not specified'}
-Current Condition: ${mockPatientInfo.basic_info?.condition || 'Not specified'}
-Medical Conditions: ${mockPatientInfo.diseases?.join(', ') || 'None specified'}
-Medications: ${JSON.stringify(mockPatientInfo.medicines || [], null, 2)}
-Care Tips: ${mockPatientInfo.care_tips?.join(', ') || 'None specified'}
-
-Recent Tasks:
-${mockTasks?.map(task => `- ${task.title} (Status: ${task.status})`).join('\n') || 'No tasks available'}
-
-Recent Care Updates:
-${mockUpdates?.map(update => `- ${update.content}`).join('\n') || 'No recent updates'}
-
-Care Routines:
-${mockRoutines?.map(routine => `- ${routine.title}: ${routine.description}`).join('\n') || 'No routines set'}
-
-Please provide relevant and helpful information based on this context.
-`.trim();
-    } catch (error) {
-      console.error('Error fetching context:', error);
-      return "Unable to fetch complete care context. I'll do my best to help with the information available.";
-    }
-  };
-
-  const processStreamResponse = async (response: Response, onDone: () => void) => {
-    if (!response.body) {
-      throw new Error('No response body');
-    }
-
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder();
-    let accumulatedMessage = '';
-    let buffer = '';
-
-    try {
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split('\n');
-        buffer = lines.pop() || '';
-
-        for (const line of lines) {
-          const trimmedLine = line.trim();
-          if (!trimmedLine) continue;
-
-          if (trimmedLine.startsWith('data: ')) {
-            const data = trimmedLine.slice(6);
-            if (data === '[DONE]') continue;
-
-            try {
-              const parsed = JSON.parse(data);
-              if (parsed.content) {
-                accumulatedMessage += parsed.content;
-                setCurrentMessage(accumulatedMessage);
-              }
-            } catch (e) {
-              console.error('Error parsing chunk:', e, 'Raw data:', data);
-            }
-          }
-        }
-      }
-
-      if (accumulatedMessage.trim()) {
-        setMessages(prev => [...prev, {
-          role: 'assistant' as const,
-          content: accumulatedMessage
-        }]);
-        setCurrentMessage('');
-      }
-      onDone();
-    } catch (error) {
-      console.error('Error processing stream:', error);
-      throw error;
-    } finally {
-      reader.releaseLock();
-    }
-  };
-
-  const sendMessage = async () => {
-    if (!input.trim()) return;
-    
-    const userMessage: Message = { role: 'user', content: input };
-    setMessages(prev => [...prev, userMessage]);
-    setInput('');
-    
-    try {
-      setIsLoading(true);
-
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-      }
-      abortControllerRef.current = new AbortController();
       
-      const context = await formatPatientContext();
-
-      // Using mock response for now since Supabase functions might not be set up
-      setTimeout(() => {
-        const mockResponse: Message = {
-          role: 'assistant',
-          content: `Here's a response to your query: "${userMessage.content}".\n\nBased on the patient information provided, I'd recommend following the established care routines. If you have specific questions about medications or health conditions, please let me know.`
-        };
-        
-        setMessages(prev => [...prev, mockResponse]);
-        setIsLoading(false);
-        abortControllerRef.current = null;
-      }, 1500);
-
-      // Once Supabase functions are set up, uncomment this code
-      /* 
-      const response = await supabase.functions.invoke('realtime-chat', {
-        body: { 
-          text: `
-Context:
-${context}
-
-User Question: ${userMessage.content}
-
-Please provide a clear and informative response, considering all the available information about the patient and care group.
-          `.trim()
-        },
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (response.error) {
-        throw new Error(response.error.message || 'Failed to get response from function');
-      }
-
-      await processStreamResponse(response.data, () => {
-        setIsLoading(false);
-        abortControllerRef.current = null;
-      });
-      */
-    } catch (error) {
-      if (error.name === 'AbortError') {
-        console.log('Request was cancelled');
-      } else {
-        console.error('Error sending message:', error);
-        toast({
-          title: "Error",
-          description: error instanceof Error ? error.message : "Failed to get response",
-          variant: "destructive",
-        });
-      }
-      setIsLoading(false);
-      abortControllerRef.current = null;
-    }
-  };
-
-  const getAIInsights = async () => {
-    if (messages.length === 0) return;
-    
-    try {
-      setIsLoading(true);
+      setPatientInfo(mockPatientInfo);
+      setTasks(mockTasks);
+      setUpdates(mockUpdates);
+      setRoutines(mockRoutines);
       
-      const context = await formatPatientContext();
-      const conversationHistory = messages.map(m => `${m.role}: ${m.content}`).join('\n');
-      
-      // Using mock response for insights
-      setTimeout(() => {
-        const mockInsights: Message = {
-          role: 'assistant',
-          content: `Based on our conversation, here are some insights:\n\n1. The patient's medication schedule appears to be well-maintained\n2. There might be an opportunity to enhance the afternoon activities to improve engagement\n3. Sleep quality has been consistent, which is positive for cognitive health`
-        };
-        
-        setMessages(prev => [...prev, mockInsights]);
-        setIsLoading(false);
-      }, 2000);
-
-      // Once Supabase functions are set up, uncomment this code
-      /*
-      const response = await supabase.functions.invoke('realtime-chat', {
-        body: { 
-          text: `
-Context:
-${context}
-
-Conversation History:
-${conversationHistory}
-
-Please analyze this conversation and provide key insights and recommendations based on the discussion.
-          `.trim()
-        },
-      });
-
-      if (response.error) {
-        throw new Error(response.error.message || 'Failed to get insights');
-      }
-
-      await processStreamResponse(response.data, () => setIsLoading(false));
-      */
     } catch (error) {
-      console.error('Error getting insights:', error);
+      console.error("Error fetching data:", error);
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to get insights",
+        description: "Failed to load care information",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleSendMessage = async () => {
+    if (!input.trim()) return;
+    
+    // Add user message
+    setMessages(prev => [
+      ...prev,
+      { role: "user", content: input.trim() }
+    ]);
+    
+    const userQuery = input.trim();
+    setInput('');
+    setIsLoading(true);
+    
+    try {
+      // Process the query
+      setTimeout(() => {
+        let responseContent = "";
+        
+        // Simple pattern matching for the demo
+        const lowerQuery = userQuery.toLowerCase();
+        
+        if (lowerQuery.includes("medication") || lowerQuery.includes("medicine")) {
+          responseContent = `Based on the records, John is currently taking Levodopa for Parkinson's and Lisinopril for hypertension. The morning medication has been marked as completed today.`;
+        } 
+        else if (lowerQuery.includes("task") || lowerQuery.includes("todo")) {
+          responseContent = `There are 3 tasks today: 
+1. Morning medication (Completed)
+2. Physical therapy exercises (Pending)
+3. Doctor appointment at 2:00 PM (Scheduled)
+
+Would you like me to provide more details on any of these?`;
+        }
+        else if (lowerQuery.includes("routine") || lowerQuery.includes("schedule")) {
+          responseContent = `John has two main routines:
+          
+Morning Routine:
+- Wake up (6:30 AM)
+- Take medication (7:00 AM)
+- Breakfast (7:30 AM)
+
+Evening Routine:
+- Dinner (6:00 PM)
+- Take medication (7:00 PM)
+- Reading (8:00 PM before bed)`;
+        }
+        else if (lowerQuery.includes("update") || lowerQuery.includes("status")) {
+          responseContent = `Recent updates:
+- Patient reports feeling better today
+- Blood pressure reading was 128/82, which is within target range
+- Patient completed all morning activities without assistance, showing improvement`;
+        }
+        else {
+          responseContent = `I'm here to help with John's care plan. You can ask me about:
+- Medications and treatments
+- Tasks and appointments
+- Daily routines
+- Recent health updates
+- Care recommendations
+
+What would you like to know more about?`;
+        }
+        
+        // Add assistant response
+        setMessages(prev => [
+          ...prev,
+          { role: "assistant", content: responseContent }
+        ]);
+        
+        setIsLoading(false);
+      }, 1000);
+      
+    } catch (error) {
+      console.error("Error processing message:", error);
+      toast({
+        title: "Error",
+        description: "Failed to process your message. Please try again.",
         variant: "destructive",
       });
       setIsLoading(false);
     }
   };
 
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage();
+    }
+  };
+
+  const clearChat = () => {
+    setMessages([
+      {
+        role: "assistant",
+        content: "Hello! I'm your AI Care Assistant. I can help you with information about patient care, tasks, routines, and updates. How can I assist you today?"
+      }
+    ]);
+  };
+
   return (
-    <Card className="w-full max-w-2xl mx-auto">
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="flex items-center gap-2">
-          <Bot className="h-5 w-5" />
-          {t('careAssistant')}
-        </CardTitle>
-        <LanguageSelector />
+    <Card className="h-[500px] flex flex-col">
+      <CardHeader className="pb-2">
+        <div className="flex justify-between items-center">
+          <CardTitle className="text-lg flex items-center">
+            <Bot className="h-5 w-5 mr-2" />
+            Care Assistant
+          </CardTitle>
+          <Button variant="ghost" size="sm" onClick={clearChat}>
+            <Trash className="h-4 w-4" />
+          </Button>
+        </div>
       </CardHeader>
-      <CardContent>
-        <div className="h-[400px] relative">
-          <MainContainer>
-            <ChatContainer>
-              <MessageList
-                typingIndicator={isLoading ? <TypingIndicator content="AI is thinking..." /> : null}
+      <Separator />
+      <CardContent className="flex-1 overflow-hidden p-0">
+        <ScrollArea className="h-[370px] px-4 py-2">
+          <div className="space-y-4 pt-2">
+            {messages.map((message, index) => (
+              <div 
+                key={index} 
+                className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
               >
-                {messages.map((message, i) => (
-                  <ChatUIMessage
-                    key={i}
-                    model={{
-                      message: message.content,
-                      sender: message.role === 'assistant' ? 'AI Assistant' : 'You',
-                      direction: message.role === 'assistant' ? 'incoming' : 'outgoing',
-                      position: "single"
-                    }}
-                  />
-                ))}
-                {currentMessage && (
-                  <ChatUIMessage
-                    model={{
-                      message: currentMessage,
-                      sender: 'AI Assistant',
-                      direction: 'incoming',
-                      position: "single"
-                    }}
-                  />
-                )}
-              </MessageList>
-              <div className="flex gap-2 p-2">
-                <MessageInput
-                  value={input}
-                  onChange={val => setInput(val)}
-                  onSend={sendMessage}
-                  placeholder={t('askAboutCare')}
-                  disabled={isLoading}
-                  attachButton={false}
-                />
-                <Button 
-                  onClick={getAIInsights} 
-                  disabled={isLoading || messages.length === 0}
-                  variant="secondary"
-                  className="gap-2 whitespace-nowrap"
-                  title={t('getAIInsights')}
-                >
-                  <Sparkles className="h-4 w-4" />
-                  {t('getInsights')}
-                </Button>
+                <div className={`flex max-w-[80%] ${message.role === 'user' ? 'flex-row-reverse' : ''}`}>
+                  <Avatar className={`h-8 w-8 ${message.role === 'user' ? 'ml-2' : 'mr-2'}`}>
+                    {message.role === 'user' ? (
+                      <>
+                        <AvatarImage src={`https://avatar.vercel.sh/${mockCurrentUser.id}`} />
+                        <AvatarFallback>
+                          {`${mockCurrentUser.first_name.charAt(0)}${mockCurrentUser.last_name.charAt(0)}`}
+                        </AvatarFallback>
+                      </>
+                    ) : (
+                      <>
+                        <AvatarImage src="/ai-assistant.png" />
+                        <AvatarFallback>AI</AvatarFallback>
+                      </>
+                    )}
+                  </Avatar>
+                  <div
+                    className={`rounded-lg px-4 py-2 ${
+                      message.role === 'user'
+                        ? 'bg-primary text-primary-foreground'
+                        : 'bg-muted'
+                    }`}
+                  >
+                    <div className="whitespace-pre-wrap text-sm">
+                      {message.content}
+                    </div>
+                  </div>
+                </div>
               </div>
-            </ChatContainer>
-          </MainContainer>
+            ))}
+            {isLoading && (
+              <div className="flex justify-start">
+                <div className="flex max-w-[80%]">
+                  <Avatar className="h-8 w-8 mr-2">
+                    <AvatarImage src="/ai-assistant.png" />
+                    <AvatarFallback>AI</AvatarFallback>
+                  </Avatar>
+                  <div className="rounded-lg px-4 py-2 bg-muted">
+                    <div className="flex items-center space-x-2">
+                      <div className="h-2 w-2 bg-primary rounded-full animate-bounce"></div>
+                      <div className="h-2 w-2 bg-primary rounded-full animate-bounce delay-100"></div>
+                      <div className="h-2 w-2 bg-primary rounded-full animate-bounce delay-200"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+            <div ref={messagesEndRef} />
+          </div>
+        </ScrollArea>
+        <div className="p-4 border-t">
+          <div className="flex space-x-2">
+            <Input
+              placeholder="Ask something about patient care..."
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleKeyPress}
+              disabled={isLoading}
+            />
+            <Button onClick={handleSendMessage} disabled={isLoading || !input.trim()}>
+              <Send className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       </CardContent>
     </Card>
   );
-};
+}

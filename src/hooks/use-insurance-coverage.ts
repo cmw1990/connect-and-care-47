@@ -1,53 +1,57 @@
 
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { useState, useEffect } from 'react';
+import { useUser } from '@/lib/hooks/use-user';
+
+interface CoverageResult {
+  isInsured: boolean;
+  isCovered: boolean;
+  coveragePercentage: number;
+  deductibleRemaining: number;
+  outOfPocketMax: number;
+  canAutoProcess: boolean;
+  userId?: string;
+  insuranceId?: string;
+  notes?: string;
+}
 
 export const useInsuranceCoverage = (serviceType: string) => {
-  const { data: coverageInfo, isLoading } = useQuery({
-    queryKey: ['insuranceCoverage', serviceType],
-    queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
+  const [coverageInfo, setCoverageInfo] = useState<CoverageResult | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const { user } = useUser();
 
-      const { data: userInsurance, error: insuranceError } = await supabase
-        .from('user_insurance')
-        .select(`
-          id,
-          insurance_plan:insurance_plan_id (
-            id,
-            name,
-            type,
-            covered_services,
-            auto_verification
-          )
-        `)
-        .eq('user_id', user.id)
-        .eq('verification_status', 'verified')
-        .single();
+  useEffect(() => {
+    fetchCoverageInfo();
+  }, [serviceType, user]);
 
-      if (insuranceError) throw insuranceError;
-
-      // Type guard to check if covered_services is an array
-      const coveredServices = Array.isArray(userInsurance?.insurance_plan?.covered_services) 
-        ? userInsurance?.insurance_plan?.covered_services
-        : [];
-
-      const isCovered = coveredServices.includes(serviceType);
-      const canAutoProcess = userInsurance?.insurance_plan?.auto_verification;
-
-      return {
-        isInsured: !!userInsurance,
-        isCovered,
-        canAutoProcess,
-        insuranceId: userInsurance?.id,
-        planDetails: userInsurance?.insurance_plan,
-        userId: user.id // Include user ID for claims
+  const fetchCoverageInfo = async () => {
+    setIsLoading(true);
+    
+    try {
+      // This would normally fetch from a database
+      // For now, we'll use mock data
+      const mockCoverageInfo: CoverageResult = {
+        isInsured: true,
+        isCovered: ['companion_care', 'home_care', 'physical_therapy'].includes(serviceType),
+        coveragePercentage: 80,
+        deductibleRemaining: 250,
+        outOfPocketMax: 5000,
+        canAutoProcess: true,
+        userId: user?.id,
+        insuranceId: 'insurance-123',
+        notes: 'Pre-authorization may be required for some services.'
       };
+      
+      // Simulate API call delay
+      setTimeout(() => {
+        setCoverageInfo(mockCoverageInfo);
+        setIsLoading(false);
+      }, 500);
+      
+    } catch (error) {
+      console.error('Error fetching insurance coverage:', error);
+      setIsLoading(false);
     }
-  });
-
-  return {
-    coverageInfo,
-    isLoading
   };
+
+  return { coverageInfo, isLoading };
 };

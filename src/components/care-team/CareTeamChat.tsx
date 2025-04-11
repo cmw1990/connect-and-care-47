@@ -1,19 +1,13 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Send, FileUp, Image } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { useUser } from '@/lib/hooks/use-user';
 import { useToast } from "@/hooks/use-toast";
-
-interface Message {
-  id: string;
-  content: string;
-  sender_id: string;
-  created_at: string;
-}
+import { Message, UserProfile } from '@/types/chat';
+import { createMockProfile, mockCurrentUser } from '@/utils/supabaseHelpers';
 
 interface CareTeamChatProps {
   teamId: string;
@@ -21,44 +15,15 @@ interface CareTeamChatProps {
 }
 
 export function CareTeamChat({ teamId, onError }: CareTeamChatProps) {
-  const { user } = useUser();
-  const { toast } = useToast();
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
-  const scrollAreaRef = React.useRef<HTMLDivElement>(null);
+  const { toast } = useToast();
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Mock data for development
-    const mockMessages: Message[] = [
-      {
-        id: '1',
-        content: 'Good morning team! John had a restful night.',
-        sender_id: 'caregiver-123',
-        created_at: new Date(Date.now() - 3600000).toISOString()
-      },
-      {
-        id: '2',
-        content: 'That\'s great to hear. Has he taken his morning medication?',
-        sender_id: 'professional-789',
-        created_at: new Date(Date.now() - 3000000).toISOString()
-      },
-      {
-        id: '3',
-        content: 'Yes, all medications administered on schedule. He\'s having breakfast now.',
-        sender_id: 'caregiver-123',
-        created_at: new Date(Date.now() - 2400000).toISOString()
-      },
-      {
-        id: '4',
-        content: 'I\'ll be visiting this afternoon around 3 PM.',
-        sender_id: 'family-456',
-        created_at: new Date(Date.now() - 1800000).toISOString()
-      }
-    ];
-    
-    setMessages(mockMessages);
+    fetchMessages();
 
-    // Simulating Supabase real-time subscription
+    // Simulate a real-time subscription for messages
     const interval = setInterval(() => {
       console.log("Checking for new messages...");
     }, 10000);
@@ -67,21 +32,82 @@ export function CareTeamChat({ teamId, onError }: CareTeamChatProps) {
   }, [teamId]);
 
   useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  const scrollToBottom = () => {
     if (scrollAreaRef.current) {
       scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
     }
-  }, [messages]);
+  };
 
-  const handleSendMessage = () => {
-    if (!user || !newMessage.trim()) return;
+  const fetchMessages = async () => {
+    try {
+      // Mock data for development
+      const mockMessages: Message[] = [
+        {
+          id: '1',
+          content: 'Good morning team! John had a restful night.',
+          sender_id: 'caregiver-123',
+          created_at: new Date(Date.now() - 3600000).toISOString(),
+          sender: {
+            first_name: 'Amy',
+            last_name: 'Caregiver'
+          }
+        },
+        {
+          id: '2',
+          content: 'That\'s great to hear. Has he taken his morning medication?',
+          sender_id: 'professional-789',
+          created_at: new Date(Date.now() - 3000000).toISOString(),
+          sender: {
+            first_name: 'Dr.',
+            last_name: 'Smith'
+          }
+        },
+        {
+          id: '3',
+          content: 'Yes, all medications administered on schedule. He\'s having breakfast now.',
+          sender_id: 'caregiver-123',
+          created_at: new Date(Date.now() - 2400000).toISOString(),
+          sender: {
+            first_name: 'Amy',
+            last_name: 'Caregiver'
+          }
+        },
+        {
+          id: '4',
+          content: 'I\'ll be visiting this afternoon around 3 PM.',
+          sender_id: 'family-456',
+          created_at: new Date(Date.now() - 1800000).toISOString(),
+          sender: {
+            first_name: 'Jane',
+            last_name: 'Family'
+          }
+        }
+      ];
+      
+      setMessages(mockMessages);
+    } catch (error) {
+      console.error('Error fetching messages:', error);
+      onError(error as Error);
+    }
+  };
+
+  const handleSendMessage = async () => {
+    if (!newMessage.trim()) return;
 
     try {
-      // Create new message locally for now
+      // Create new message locally
       const newMsg: Message = {
         id: `temp-${Date.now()}`,
         content: newMessage.trim(),
-        sender_id: user.id,
-        created_at: new Date().toISOString()
+        sender_id: mockCurrentUser.id,
+        created_at: new Date().toISOString(),
+        sender: {
+          first_name: mockCurrentUser.first_name,
+          last_name: mockCurrentUser.last_name
+        }
       };
       
       setMessages(prev => [...prev, newMsg]);
@@ -92,6 +118,7 @@ export function CareTeamChat({ teamId, onError }: CareTeamChatProps) {
         description: "Your message has been delivered to the care team."
       });
     } catch (error) {
+      console.error('Error sending message:', error);
       onError(error as Error);
     }
   };
@@ -103,11 +130,9 @@ export function CareTeamChat({ teamId, onError }: CareTeamChatProps) {
     }
   };
 
-  const getSenderInitials = (senderId: string) => {
-    if (senderId === 'caregiver-123') return 'CG';
-    if (senderId === 'professional-789') return 'PR';
-    if (senderId === 'family-456') return 'FM';
-    return senderId.substring(0, 2).toUpperCase();
+  const getSenderInitials = (sender: UserProfile | undefined) => {
+    if (!sender) return 'UN';
+    return `${sender.first_name.charAt(0)}${sender.last_name.charAt(0)}`;
   };
 
   return (
@@ -118,18 +143,18 @@ export function CareTeamChat({ teamId, onError }: CareTeamChatProps) {
             <div
               key={message.id}
               className={`flex items-start gap-3 ${
-                message.sender_id === user?.id ? 'flex-row-reverse' : ''
+                message.sender_id === mockCurrentUser.id ? 'flex-row-reverse' : ''
               }`}
             >
               <Avatar className="w-8 h-8">
                 <AvatarImage src={`https://avatar.vercel.sh/${message.sender_id}`} />
                 <AvatarFallback>
-                  {getSenderInitials(message.sender_id)}
+                  {getSenderInitials(message.sender)}
                 </AvatarFallback>
               </Avatar>
               <div
                 className={`max-w-[70%] rounded-lg p-3 ${
-                  message.sender_id === user?.id
+                  message.sender_id === mockCurrentUser.id
                     ? 'bg-primary text-primary-foreground'
                     : 'bg-muted'
                 }`}

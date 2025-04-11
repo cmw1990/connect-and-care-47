@@ -1,354 +1,280 @@
 
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent } from "@/components/ui/card";
+import { CheckCircle, Clock, Edit, Plus, Trash2 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
-import { 
-  Dialog, DialogTrigger, DialogContent, DialogTitle, 
-  DialogHeader, DialogFooter, DialogClose 
-} from "@/components/ui/dialog";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { 
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue
-} from "@/components/ui/select";
-import { toast } from "@/hooks/use-toast";
-import { PlusCircle, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
-import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/hooks/use-toast";
+import { castQueryResult } from "@/utils/supabaseHelpers";
 
-interface CareTask {
+// Define types
+export interface CareTask {
   id: string;
   team_id: string;
   title: string;
   description?: string;
   category: string;
   priority: 'high' | 'medium' | 'low' | 'urgent';
-  status: 'pending' | 'inProgress' | 'completed';
+  status: 'pending' | 'in_progress' | 'completed' | 'cancelled';
   assigned_to?: string;
-  due_date?: Date;
+  due_date?: Date | null;
   completion_notes?: string;
-  completed_at?: Date;
+  completed_at?: Date | null;
   completed_by?: string;
-  recurring: boolean;
-  recurrence_pattern?: {
-    frequency: 'daily' | 'weekly' | 'monthly';
-    interval: number;
-    end_after?: number;
-    end_date?: Date;
-  };
   created_by: string;
   created_at?: string;
   updated_at?: string;
 }
 
-interface TaskColumn {
-  id: string;
-  title: string;
-  taskIds: string[];
-}
+// Mock data for development
+const mockTasks: CareTask[] = [
+  {
+    id: "1",
+    team_id: "team-1",
+    title: "Medication Check",
+    description: "Verify morning medications have been taken",
+    category: "medication",
+    priority: "high",
+    status: "pending",
+    assigned_to: "user-1",
+    due_date: new Date(),
+    created_by: "user-2",
+    created_at: new Date().toISOString(),
+  },
+  {
+    id: "2",
+    team_id: "team-1",
+    title: "Physical Therapy",
+    description: "Complete daily exercises",
+    category: "therapy",
+    priority: "medium",
+    status: "in_progress",
+    assigned_to: "user-3",
+    due_date: new Date(),
+    created_by: "user-2",
+    created_at: new Date().toISOString(),
+  },
+  {
+    id: "3",
+    team_id: "team-1",
+    title: "Doctor Appointment",
+    description: "Schedule follow-up visit with Dr. Smith",
+    category: "appointment",
+    priority: "low",
+    status: "completed",
+    completed_at: new Date(),
+    completed_by: "user-1",
+    due_date: new Date(),
+    created_by: "user-3",
+    created_at: new Date().toISOString(),
+  }
+];
 
-interface BoardData {
-  tasks: { [key: string]: CareTask };
-  columns: { [key: string]: TaskColumn };
-  columnOrder: string[];
-}
-
-const CareTaskBoard: React.FC = () => {
-  const [boardData, setBoardData] = useState<BoardData>({
-    tasks: {},
-    columns: {
-      pending: { id: 'pending', title: 'To Do', taskIds: [] },
-      inProgress: { id: 'inProgress', title: 'In Progress', taskIds: [] },
-      completed: { id: 'completed', title: 'Completed', taskIds: [] },
-    },
-    columnOrder: ['pending', 'inProgress', 'completed'],
+const CareTaskBoard = () => {
+  const { toast } = useToast();
+  const [tasks, setTasks] = useState<CareTask[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [newTask, setNewTask] = useState<Partial<CareTask>>({
+    title: '',
+    description: '',
+    category: 'general',
+    priority: 'medium',
+    status: 'pending',
   });
-  
-  const [isLoading, setIsLoading] = useState(true);
-  const [newTaskTitle, setNewTaskTitle] = useState('');
-  const [newTaskDescription, setNewTaskDescription] = useState('');
-  const [newTaskCategory, setNewTaskCategory] = useState('general');
-  const [newTaskPriority, setNewTaskPriority] = useState<'high' | 'medium' | 'low'>('medium');
-  
-  // Mock fetch tasks
+  const [editTask, setEditTask] = useState<CareTask | null>(null);
+  const [editMode, setEditMode] = useState(false);
+
+  // Load tasks
   useEffect(() => {
-    const fetchTasks = async () => {
-      try {
-        setIsLoading(true);
-        
-        // Mock data
-        const mockTasks: CareTask[] = [
-          {
-            id: '1',
-            team_id: 'team-1',
-            title: 'Morning Medication',
-            description: 'Administer morning medications as prescribed',
-            category: 'medication',
-            priority: 'high',
-            status: 'pending',
-            recurring: true,
-            created_by: 'user-1',
-            created_at: new Date().toISOString()
-          },
-          {
-            id: '2',
-            team_id: 'team-1',
-            title: 'Physical Therapy',
-            description: 'Complete daily mobility exercises',
-            category: 'therapy',
-            priority: 'medium',
-            status: 'inProgress',
-            recurring: false,
-            created_by: 'user-2',
-            created_at: new Date().toISOString()
-          },
-          {
-            id: '3',
-            team_id: 'team-1',
-            title: 'Doctor Appointment',
-            description: 'Schedule follow-up appointment with Dr. Smith',
-            category: 'appointment',
-            priority: 'medium',
-            status: 'completed',
-            completed_at: new Date().toISOString(),
-            completed_by: 'user-3',
-            recurring: false,
-            created_by: 'user-1',
-            created_at: new Date().toISOString()
-          },
-        ];
-        
-        // Process the tasks
-        const tasksById: { [key: string]: CareTask } = {};
-        const taskIdsByColumn: { [key: string]: string[] } = {
-          pending: [],
-          inProgress: [],
-          completed: [],
-        };
-        
-        mockTasks.forEach(task => {
-          tasksById[task.id] = task;
-          taskIdsByColumn[task.status].push(task.id);
-        });
-        
-        setBoardData(prev => ({
-          ...prev,
-          tasks: tasksById,
-          columns: {
-            pending: { ...prev.columns.pending, taskIds: taskIdsByColumn.pending },
-            inProgress: { ...prev.columns.inProgress, taskIds: taskIdsByColumn.inProgress },
-            completed: { ...prev.columns.completed, taskIds: taskIdsByColumn.completed },
-          },
-        }));
-      } catch (error) {
-        console.error('Error fetching tasks:', error);
-        toast({
-          title: "Error",
-          description: "Failed to load tasks",
-          variant: "destructive"
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    
     fetchTasks();
   }, []);
-  
-  const createTask = async () => {
-    if (!newTaskTitle.trim()) return;
-    
+
+  const fetchTasks = async () => {
     try {
-      // Create a new task locally
-      const newTask: CareTask = {
-        id: `temp-${Date.now()}`,
-        team_id: 'team-1', // Mock team ID
-        title: newTaskTitle,
-        description: newTaskDescription,
-        category: newTaskCategory,
-        priority: newTaskPriority,
-        status: 'pending',
-        recurring: false,
-        created_by: 'user-1', // Mock user ID
-        created_at: new Date().toISOString(),
-      };
-      
-      // Update state
-      setBoardData(prev => {
-        const updatedTasks = { ...prev.tasks, [newTask.id]: newTask };
-        const updatedPendingColumn = {
-          ...prev.columns.pending,
-          taskIds: [...prev.columns.pending.taskIds, newTask.id],
-        };
-        
-        return {
-          ...prev,
-          tasks: updatedTasks,
-          columns: {
-            ...prev.columns,
-            pending: updatedPendingColumn,
-          },
-        };
-      });
-      
-      // Reset form
-      setNewTaskTitle('');
-      setNewTaskDescription('');
-      setNewTaskCategory('general');
-      setNewTaskPriority('medium');
-      
-      toast({
-        title: "Task created",
-        description: "New task has been added to the board"
-      });
+      // In a real implementation, this would be a database call
+      // Simulating API delay
+      setTimeout(() => {
+        setTasks(mockTasks);
+        setLoading(false);
+      }, 800);
     } catch (error) {
-      console.error('Error creating task:', error);
+      console.error('Error fetching tasks:', error);
       toast({
         title: "Error",
-        description: "Failed to create task",
-        variant: "destructive"
+        description: "Failed to load tasks",
+        variant: "destructive",
       });
+      setLoading(false);
     }
   };
-  
-  const handleDragEnd = (result: DropResult) => {
-    const { destination, source, draggableId } = result;
-    
-    // If no destination or dropped in the same place
-    if (!destination || 
-        (destination.droppableId === source.droppableId && 
-         destination.index === source.index)) {
-      return;
-    }
-    
-    // Get source and destination columns
-    const sourceColumn = boardData.columns[source.droppableId];
-    const destinationColumn = boardData.columns[destination.droppableId];
-    
-    // Update task status if column changed
-    let updatedTasks = { ...boardData.tasks };
-    if (sourceColumn.id !== destinationColumn.id) {
-      updatedTasks = {
-        ...updatedTasks,
-        [draggableId]: {
-          ...updatedTasks[draggableId],
-          status: destinationColumn.id as CareTask['status'],
-          ...(destinationColumn.id === 'completed' 
-            ? { 
-                completed_at: new Date().toISOString(),
-                completed_by: 'user-1', // Mock user ID
-              } 
-            : {}
-          ),
-        }
-      };
-    }
-    
-    // If same column
-    if (sourceColumn === destinationColumn) {
-      const newTaskIds = Array.from(sourceColumn.taskIds);
-      newTaskIds.splice(source.index, 1);
-      newTaskIds.splice(destination.index, 0, draggableId);
-      
-      const newColumn = {
-        ...sourceColumn,
-        taskIds: newTaskIds,
-      };
-      
-      setBoardData({
-        ...boardData,
-        tasks: updatedTasks,
-        columns: {
-          ...boardData.columns,
-          [newColumn.id]: newColumn,
-        },
+
+  const handleCreateTask = () => {
+    if (!newTask.title) {
+      toast({
+        title: "Error",
+        description: "Title is required",
+        variant: "destructive",
       });
-      
       return;
     }
-    
-    // If different columns
-    const sourceTaskIds = Array.from(sourceColumn.taskIds);
-    sourceTaskIds.splice(source.index, 1);
-    const newSourceColumn = {
-      ...sourceColumn,
-      taskIds: sourceTaskIds,
+
+    const task: CareTask = {
+      id: `task-${Date.now()}`,
+      team_id: "team-1", // Hardcoded for this example
+      title: newTask.title,
+      description: newTask.description,
+      category: newTask.category || 'general',
+      priority: newTask.priority as CareTask['priority'] || 'medium',
+      status: 'pending',
+      created_by: "user-1", // Hardcoded for this example
+      created_at: new Date().toISOString(),
+      due_date: newTask.due_date ? new Date(newTask.due_date) : null,
     };
-    
-    const destinationTaskIds = Array.from(destinationColumn.taskIds);
-    destinationTaskIds.splice(destination.index, 0, draggableId);
-    const newDestinationColumn = {
-      ...destinationColumn,
-      taskIds: destinationTaskIds,
-    };
-    
-    setBoardData({
-      ...boardData,
-      tasks: updatedTasks,
-      columns: {
-        ...boardData.columns,
-        [newSourceColumn.id]: newSourceColumn,
-        [newDestinationColumn.id]: newDestinationColumn,
-      },
+
+    setTasks([...tasks, task]);
+    setNewTask({
+      title: '',
+      description: '',
+      category: 'general',
+      priority: 'medium',
+      status: 'pending',
     });
-    
-    // Mock update task status in database
+
     toast({
-      title: "Task updated",
-      description: `Task status changed to ${destinationColumn.title}`
+      title: "Success",
+      description: "Task created successfully",
     });
   };
-  
-  if (isLoading) {
+
+  const handleUpdateTask = () => {
+    if (!editTask) return;
+
+    const updatedTasks = tasks.map(task => 
+      task.id === editTask.id ? editTask : task
+    );
+
+    setTasks(updatedTasks);
+    setEditTask(null);
+    setEditMode(false);
+
+    toast({
+      title: "Success",
+      description: "Task updated successfully",
+    });
+  };
+
+  const handleDeleteTask = (id: string) => {
+    const updatedTasks = tasks.filter(task => task.id !== id);
+    setTasks(updatedTasks);
+
+    toast({
+      title: "Success",
+      description: "Task deleted successfully",
+    });
+  };
+
+  const handleStatusChange = (id: string, status: CareTask['status']) => {
+    const updatedTasks = tasks.map(task => {
+      if (task.id === id) {
+        const updatedTask = { ...task, status };
+        if (status === 'completed') {
+          updatedTask.completed_at = new Date();
+          updatedTask.completed_by = 'user-1';
+        } else {
+          updatedTask.completed_at = undefined;
+          updatedTask.completed_by = undefined;
+        }
+        return updatedTask;
+      }
+      return task;
+    });
+
+    setTasks(updatedTasks);
+    
+    toast({
+      title: "Success",
+      description: `Task marked as ${status}`,
+    });
+  };
+
+  // Group tasks by status
+  const tasksByStatus: { [key: string]: CareTask[] } = {
+    pending: tasks.filter(t => t.status === 'pending'),
+    in_progress: tasks.filter(t => t.status === 'in_progress'),
+    completed: tasks.filter(t => t.status === 'completed'),
+    cancelled: tasks.filter(t => t.status === 'cancelled'),
+  };
+
+  // Get priority badge color
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case 'urgent': return 'bg-red-500 hover:bg-red-600';
+      case 'high': return 'bg-orange-500 hover:bg-orange-600';
+      case 'medium': return 'bg-blue-500 hover:bg-blue-600';
+      case 'low': return 'bg-green-500 hover:bg-green-600';
+      default: return 'bg-gray-500 hover:bg-gray-600';
+    }
+  };
+
+  // Render loading state
+  if (loading) {
     return (
-      <div className="flex justify-center p-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
       </div>
     );
   }
-  
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-xl font-semibold">Care Tasks</h2>
+        <h2 className="text-2xl font-semibold">Care Tasks</h2>
+        
         <Dialog>
           <DialogTrigger asChild>
-            <Button variant="outline">
-              <PlusCircle className="h-4 w-4 mr-2" />
-              Add Task
+            <Button size="sm" className="flex items-center gap-1">
+              <Plus className="h-4 w-4" />
+              <span>Add Task</span>
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Create New Task</DialogTitle>
+              <DialogTitle>Add New Task</DialogTitle>
+              <DialogDescription>
+                Create a new task for the care team
+              </DialogDescription>
             </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid gap-2">
-                <Label htmlFor="title">Title</Label>
-                <Input
-                  id="title"
-                  value={newTaskTitle}
-                  onChange={(e) => setNewTaskTitle(e.target.value)}
-                  placeholder="Task title"
+            <div className="space-y-4 pt-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">Title</label>
+                <Input 
+                  value={newTask.title} 
+                  onChange={(e) => setNewTask({...newTask, title: e.target.value})}
+                  placeholder="Task title" 
                 />
               </div>
-              <div className="grid gap-2">
-                <Label htmlFor="description">Description</Label>
-                <Textarea
-                  id="description"
-                  value={newTaskDescription}
-                  onChange={(e) => setNewTaskDescription(e.target.value)}
-                  placeholder="Task description"
+              <div>
+                <label className="block text-sm font-medium mb-1">Description</label>
+                <Textarea 
+                  value={newTask.description} 
+                  onChange={(e) => setNewTask({...newTask, description: e.target.value})}
+                  placeholder="Task description" 
+                  rows={3}
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="category">Category</Label>
-                  <Select 
-                    value={newTaskCategory}
-                    onValueChange={(value) => setNewTaskCategory(value)}
+                <div>
+                  <label className="block text-sm font-medium mb-1">Category</label>
+                  <Select
+                    value={newTask.category}
+                    onValueChange={(value) => setNewTask({...newTask, category: value})}
                   >
-                    <SelectTrigger id="category">
+                    <SelectTrigger>
                       <SelectValue placeholder="Select category" />
                     </SelectTrigger>
                     <SelectContent>
@@ -356,113 +282,222 @@ const CareTaskBoard: React.FC = () => {
                       <SelectItem value="medication">Medication</SelectItem>
                       <SelectItem value="appointment">Appointment</SelectItem>
                       <SelectItem value="therapy">Therapy</SelectItem>
+                      <SelectItem value="shopping">Shopping</SelectItem>
+                      <SelectItem value="housekeeping">Housekeeping</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="priority">Priority</Label>
-                  <Select 
-                    value={newTaskPriority}
-                    onValueChange={(value: 'high' | 'medium' | 'low') => setNewTaskPriority(value)}
+                <div>
+                  <label className="block text-sm font-medium mb-1">Priority</label>
+                  <Select
+                    value={newTask.priority}
+                    onValueChange={(value) => setNewTask({...newTask, priority: value as CareTask["priority"]})}
                   >
-                    <SelectTrigger id="priority">
+                    <SelectTrigger>
                       <SelectValue placeholder="Select priority" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="high">High</SelectItem>
-                      <SelectItem value="medium">Medium</SelectItem>
                       <SelectItem value="low">Low</SelectItem>
+                      <SelectItem value="medium">Medium</SelectItem>
+                      <SelectItem value="high">High</SelectItem>
+                      <SelectItem value="urgent">Urgent</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
               </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Due Date</label>
+                <Input 
+                  type="datetime-local" 
+                  value={newTask.due_date ? new Date(newTask.due_date).toISOString().slice(0, 16) : ''} 
+                  onChange={(e) => setNewTask({...newTask, due_date: e.target.value ? new Date(e.target.value) : undefined})}
+                />
+              </div>
+              <div className="flex justify-end">
+                <Button onClick={handleCreateTask}>
+                  Create Task
+                </Button>
+              </div>
             </div>
-            <DialogFooter>
-              <DialogClose asChild>
-                <Button variant="outline">Cancel</Button>
-              </DialogClose>
-              <Button onClick={createTask} disabled={!newTaskTitle.trim()}>
-                Create Task
-              </Button>
-            </DialogFooter>
           </DialogContent>
         </Dialog>
       </div>
-      
-      <DragDropContext onDragEnd={handleDragEnd}>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {boardData.columnOrder.map((columnId) => {
-            const column = boardData.columns[columnId];
-            const tasks = column.taskIds.map(taskId => boardData.tasks[taskId]);
-            
-            return (
-              <div key={column.id} className="flex flex-col">
-                <h3 className="text-sm font-semibold mb-3 flex items-center">
-                  {column.id === 'pending' && <AlertCircle className="h-4 w-4 mr-1 text-yellow-500" />}
-                  {column.id === 'inProgress' && <CheckCircle className="h-4 w-4 mr-1 text-blue-500" />}
-                  {column.id === 'completed' && <CheckCircle className="h-4 w-4 mr-1 text-green-500" />}
-                  {column.title}
-                  <span className="ml-2 text-muted-foreground">({column.taskIds.length})</span>
-                </h3>
-                
-                <Droppable droppableId={column.id}>
-                  {(provided) => (
-                    <div
-                      ref={provided.innerRef}
-                      {...provided.droppableProps}
-                      className="flex-1 space-y-3 min-h-[300px]"
-                    >
-                      {tasks.map((task, index) => (
-                        <Draggable key={task.id} draggableId={task.id} index={index}>
-                          {(provided) => (
-                            <Card
-                              ref={provided.innerRef}
-                              {...provided.draggableProps}
-                              {...provided.dragHandleProps}
-                              className="border-l-4 border-l-primary"
+
+      {/* Task Board */}
+      <Tabs defaultValue="pending" className="w-full">
+        <TabsList className="grid grid-cols-4">
+          <TabsTrigger value="pending">Pending ({tasksByStatus.pending.length})</TabsTrigger>
+          <TabsTrigger value="in_progress">In Progress ({tasksByStatus.in_progress.length})</TabsTrigger>
+          <TabsTrigger value="completed">Completed ({tasksByStatus.completed.length})</TabsTrigger>
+          <TabsTrigger value="cancelled">Cancelled ({tasksByStatus.cancelled.length})</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="pending" className="mt-4">
+          {tasksByStatus.pending.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              No pending tasks
+            </div>
+          ) : (
+            <div className="grid gap-4">
+              {tasksByStatus.pending.map((task) => (
+                <Card key={task.id} className="overflow-hidden">
+                  <CardContent className="p-4">
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        <h3 className="font-medium">{task.title}</h3>
+                        <p className="text-sm text-muted-foreground mt-1">{task.description}</p>
+                        <div className="flex gap-2 mt-2">
+                          <Badge variant="outline">{task.category}</Badge>
+                          <Badge className={getPriorityColor(task.priority)}>{task.priority}</Badge>
+                        </div>
+                        {task.due_date && (
+                          <div className="text-xs flex items-center gap-1 mt-2 text-muted-foreground">
+                            <Clock className="h-3 w-3" />
+                            <span>Due: {new Date(task.due_date).toLocaleString()}</span>
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex gap-2">
+                        <Button 
+                          onClick={() => handleStatusChange(task.id, 'in_progress')}
+                          size="sm" 
+                          variant="outline"
+                        >
+                          Start
+                        </Button>
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button 
+                              size="sm" 
+                              variant="ghost"
                             >
-                              <CardContent className="p-3">
-                                <h4 className="font-semibold text-sm">{task.title}</h4>
-                                {task.description && (
-                                  <p className="text-xs text-muted-foreground mt-1">
-                                    {task.description}
-                                  </p>
-                                )}
-                                <div className="flex items-center justify-between mt-3">
-                                  <div className="flex items-center gap-2">
-                                    <span className={`text-xs px-2 py-0.5 rounded-full ${
-                                      task.priority === 'high' 
-                                        ? 'bg-red-100 text-red-800' 
-                                        : task.priority === 'medium'
-                                        ? 'bg-yellow-100 text-yellow-800'
-                                        : 'bg-green-100 text-green-800'
-                                    }`}>
-                                      {task.priority}
-                                    </span>
-                                    <span className="text-xs bg-muted px-2 py-0.5 rounded-full">
-                                      {task.category}
-                                    </span>
-                                  </div>
-                                  {task.completed_at && (
-                                    <span className="text-xs text-muted-foreground">
-                                      {new Date(task.completed_at).toLocaleDateString()}
-                                    </span>
-                                  )}
-                                </div>
-                              </CardContent>
-                            </Card>
-                          )}
-                        </Draggable>
-                      ))}
-                      {provided.placeholder}
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent>
+                            {/* Edit Task Dialog Content */}
+                          </DialogContent>
+                        </Dialog>
+                        <Button 
+                          onClick={() => handleDeleteTask(task.id)}
+                          size="sm" 
+                          variant="ghost"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
-                  )}
-                </Droppable>
-              </div>
-            );
-          })}
-        </div>
-      </DragDropContext>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </TabsContent>
+
+        <TabsContent value="in_progress" className="mt-4">
+          {tasksByStatus.in_progress.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              No tasks in progress
+            </div>
+          ) : (
+            <div className="grid gap-4">
+              {tasksByStatus.in_progress.map((task) => (
+                <Card key={task.id} className="overflow-hidden">
+                  <CardContent className="p-4">
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        <h3 className="font-medium">{task.title}</h3>
+                        <p className="text-sm text-muted-foreground mt-1">{task.description}</p>
+                        <div className="flex gap-2 mt-2">
+                          <Badge variant="outline">{task.category}</Badge>
+                          <Badge className={getPriorityColor(task.priority)}>{task.priority}</Badge>
+                        </div>
+                        {task.due_date && (
+                          <div className="text-xs flex items-center gap-1 mt-2 text-muted-foreground">
+                            <Clock className="h-3 w-3" />
+                            <span>Due: {new Date(task.due_date).toLocaleString()}</span>
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex gap-2">
+                        <Button 
+                          onClick={() => handleStatusChange(task.id, 'completed')}
+                          size="sm" 
+                          variant="outline"
+                          className="text-green-600"
+                        >
+                          <CheckCircle className="h-4 w-4 mr-1" />
+                          Complete
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </TabsContent>
+
+        <TabsContent value="completed" className="mt-4">
+          {tasksByStatus.completed.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              No completed tasks
+            </div>
+          ) : (
+            <div className="grid gap-4">
+              {tasksByStatus.completed.map((task) => (
+                <Card key={task.id} className="overflow-hidden bg-muted/40">
+                  <CardContent className="p-4">
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        <h3 className="font-medium line-through text-muted-foreground">{task.title}</h3>
+                        <p className="text-sm text-muted-foreground mt-1">{task.description}</p>
+                        <div className="flex gap-2 mt-2">
+                          <Badge variant="outline">{task.category}</Badge>
+                          <Badge className={getPriorityColor(task.priority)}>{task.priority}</Badge>
+                        </div>
+                        {task.completed_at && (
+                          <div className="text-xs flex items-center gap-1 mt-2 text-muted-foreground">
+                            <CheckCircle className="h-3 w-3 text-green-600" />
+                            <span>Completed: {new Date(task.completed_at).toLocaleString()}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </TabsContent>
+
+        <TabsContent value="cancelled" className="mt-4">
+          {tasksByStatus.cancelled.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              No cancelled tasks
+            </div>
+          ) : (
+            <div className="grid gap-4">
+              {tasksByStatus.cancelled.map((task) => (
+                <Card key={task.id} className="overflow-hidden bg-muted/40">
+                  <CardContent className="p-4">
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        <h3 className="font-medium line-through text-muted-foreground">{task.title}</h3>
+                        <p className="text-sm text-muted-foreground mt-1">{task.description}</p>
+                        <div className="flex gap-2 mt-2">
+                          <Badge variant="outline">{task.category}</Badge>
+                          <Badge className={getPriorityColor(task.priority)}>{task.priority}</Badge>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

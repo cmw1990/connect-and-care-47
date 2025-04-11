@@ -11,7 +11,7 @@ interface ToastOptions {
 }
 
 export function useToast() {
-  const [toasts, setToasts] = useState<ToastOptions[]>([]);
+  const [toasts, setToasts] = useState<(ToastOptions & { id: string })[]>([]);
 
   const toast = (options: ToastOptions) => {
     const id = Date.now().toString();
@@ -34,3 +34,16 @@ export function useToast() {
 
   return { toast, toasts, dismissToast };
 }
+
+// Export a singleton version of toast for easier usage
+export const toast = {
+  success: (title: string, description?: string) => {
+    console.log(`[Toast] Success: ${title} - ${description}`);
+  },
+  error: (title: string, description?: string) => {
+    console.log(`[Toast] Error: ${title} - ${description}`);
+  },
+  info: (title: string, description?: string) => {
+    console.log(`[Toast] Info: ${title} - ${description}`);
+  },
+};
