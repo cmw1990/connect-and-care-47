@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -15,9 +16,9 @@ import {
 import { LocationMap } from "./LocationMap";
 import { SafetyZoneSelector } from "./SafetyZoneSelector";
 import { LocationService } from "../location/LocationService";
-import { supabase } from "@/integrations/supabase/client";
+import { supabaseClient } from "@/integrations/supabaseClient";
 import { useToast } from "@/hooks/use-toast";
-import { Json } from "@/integrations/supabase/types";
+import { Json } from "@/types/database.types";
 
 interface LocationTrackerProps {
   groupId: string;
@@ -83,7 +84,7 @@ export const LocationTracker: React.FC<LocationTrackerProps> = ({ groupId }) => 
   }, []);
 
   useEffect(() => {
-    const channel = supabase
+    const channel = supabaseClient
       .channel(`patient_locations_${groupId}`)
       .on(
         'postgres_changes',
@@ -106,13 +107,13 @@ export const LocationTracker: React.FC<LocationTrackerProps> = ({ groupId }) => 
     fetchLocationData();
 
     return () => {
-      supabase.removeChannel(channel);
+      supabaseClient.removeChannel(channel);
     };
   }, [groupId]);
 
   const fetchLocationData = async () => {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await supabaseClient
         .from('patient_locations')
         .select('*')
         .eq('group_id', groupId)
@@ -141,20 +142,24 @@ export const LocationTracker: React.FC<LocationTrackerProps> = ({ groupId }) => 
     dangerZones?: DangerZone[];
   }) => {
     try {
-      const { error } = await supabase
+      // Create the geofence with all properties
+      const newGeofence = {
+        group_id: groupId,
+        name: zone.name,
+        type: 'safety',
+        center_lat: zone.center.lat,
+        center_lng: zone.center.lng,
+        radius: zone.radius,
+        boundary_type: zone.boundaryType,
+        polygon_coordinates: zone.polygonCoordinates || null,
+        notification_settings: zone.notifications as unknown as Json,
+        danger_zones: (zone.dangerZones || []) as unknown as Json[],
+        active: true
+      };
+
+      const { error } = await supabaseClient
         .from('geofences')
-        .insert({
-          group_id: groupId,
-          name: zone.name,
-          center_lat: zone.center.lat,
-          center_lng: zone.center.lng,
-          radius: zone.radius,
-          boundary_type: zone.boundaryType,
-          polygon_coordinates: zone.polygonCoordinates,
-          active: true,
-          notification_settings: zone.notifications as unknown as Json,
-          danger_zones: (zone.dangerZones || []) as unknown as Json[]
-        });
+        .insert(newGeofence);
 
       if (error) throw error;
 

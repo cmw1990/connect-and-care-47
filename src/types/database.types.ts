@@ -477,6 +477,58 @@ export type ExtendedDatabase = Database & {
           updated_at?: string
         }
         Relationships: []
+      },
+      // Add extended geofence types with additional fields
+      geofences: {
+        Row: {
+          id: string
+          name: string
+          type: string
+          center_lat: number
+          center_lng: number
+          radius: number
+          group_id: string
+          created_at: string
+          updated_at: string
+          boundary_type: string
+          polygon_coordinates: Json
+          danger_zones: Json[]
+          notification_settings: Json
+          active: boolean
+        }
+        Insert: {
+          id?: string
+          name: string
+          type: string
+          center_lat: number
+          center_lng: number
+          radius: number
+          group_id: string
+          created_at?: string
+          updated_at?: string
+          boundary_type?: string
+          polygon_coordinates?: Json
+          danger_zones?: Json[]
+          notification_settings?: Json
+          active?: boolean
+        }
+        Update: {
+          id?: string
+          name?: string
+          type?: string
+          center_lat?: number
+          center_lng?: number
+          radius?: number
+          group_id?: string
+          created_at?: string
+          updated_at?: string
+          boundary_type?: string
+          polygon_coordinates?: Json
+          danger_zones?: Json[]
+          notification_settings?: Json
+          active?: boolean
+        }
+        Relationships: []
       }
     }
   }
@@ -604,4 +656,47 @@ export interface SubscriptionPlan {
   is_popular: boolean;
 }
 
-export type SelectQueryError<T> = { error: true } & String;
+export interface MedicationLog {
+  id: string;
+  schedule_id: string;
+  taken_at: string;
+  administered_at?: string;
+  status: 'taken' | 'missed' | 'pending_verification' | 'verified';
+  notes?: string;
+  photo_verification_url?: string;
+  medication_schedule?: MedicationSchedule;
+  group_id: string;
+}
+
+export interface VitalData {
+  id: string;
+  device_type: string;
+  readings: {
+    blood_pressure?: {
+      systolic: number;
+      diastolic: number;
+    };
+    heart_rate?: number;
+    temperature?: number;
+  };
+  recorded_at: string;
+  user_id: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface VerificationSettings {
+  id: string;
+  group_id: string;
+  require_photo: boolean;
+  supervision_level: 'low' | 'medium' | 'high';
+  auto_approve_after_minutes?: number;
+  notify_missed_medications: boolean;
+  supervisors: string[];
+  created_at: string;
+  updated_at: string;
+}
+
+export type SelectQueryError<T> = {
+  error: true;
+} & String;

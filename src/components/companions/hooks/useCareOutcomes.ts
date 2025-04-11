@@ -23,7 +23,7 @@ export const useCareOutcomes = (meetingId: string) => {
   return useQuery({
     queryKey: ['care-outcomes', meetingId],
     queryFn: async () => {
-      if (!meetingId) return [];
+      if (!meetingId) return [] as CareOutcomeMetric[];
       
       try {
         const { data, error } = await supabaseClient

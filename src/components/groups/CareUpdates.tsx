@@ -32,6 +32,7 @@ export const CareUpdates = ({ groupId }: CareUpdatesProps) => {
           content,
           update_type,
           created_at,
+          author_id,
           profiles:author_id (
             first_name,
             last_name
@@ -42,9 +43,9 @@ export const CareUpdates = ({ groupId }: CareUpdatesProps) => {
 
       if (error) throw error;
       
-      // Transform the data to match the CareUpdate interface
       if (data) {
-        const transformedUpdates = data.map(update => ({
+        // Transform data to match CareUpdate type
+        const transformedUpdates = data.map((update) => ({
           id: update.id,
           content: update.content,
           update_type: update.update_type,
@@ -93,10 +94,16 @@ export const CareUpdates = ({ groupId }: CareUpdatesProps) => {
 
     try {
       setIsLoading(true);
+      
+      // Get current user
+      const { data: { user } } = await supabaseClient.auth.getUser();
+      if (!user) throw new Error("User not authenticated");
+
       const { error } = await supabaseClient.from("care_updates").insert({
         group_id: groupId,
         content: newUpdate.trim(),
         update_type: "general",
+        author_id: user.id
       });
 
       if (error) throw error;
@@ -106,6 +113,7 @@ export const CareUpdates = ({ groupId }: CareUpdatesProps) => {
         description: "Update posted successfully",
       });
       setNewUpdate("");
+      await fetchUpdates();
     } catch (error) {
       console.error("Error posting update:", error);
       toast({

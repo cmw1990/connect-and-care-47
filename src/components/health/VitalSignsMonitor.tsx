@@ -1,322 +1,255 @@
 
-import { useState, useEffect } from "react";
-import { supabaseClient } from "@/integrations/supabaseClient";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ActivityIcon, Heart, Thermometer, TrendingUp } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
+import { Heart, Thermometer, Activity, BarChart } from "lucide-react";
+import { supabaseClient } from "@/integrations/supabaseClient";
+import { VitalData } from "@/types/database.types";
 
-interface VitalData {
-  id: string;
-  device_type: string;
-  readings: Record<string, any>;
-  recorded_at: string;
-  user_id: string;
-  created_at: string;
-  updated_at: string;
-}
-
-interface VitalReadingsProps {
+interface VitalSignsMonitorProps {
   userId: string;
 }
 
-export const VitalSignsMonitor = ({ userId }: VitalReadingsProps) => {
-  const [vitalData, setVitalData] = useState<VitalData[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [selectedTimeframe, setSelectedTimeframe] = useState('week');
+export const VitalSignsMonitor = ({ userId }: VitalSignsMonitorProps) => {
+  const [vitalSigns, setVitalSigns] = useState<VitalData[]>([]);
+  const [displayPeriod, setDisplayPeriod] = useState("day");
+  const { toast } = useToast();
 
-  const fetchVitalData = async () => {
+  useEffect(() => {
+    fetchVitalSigns();
+  }, [userId, displayPeriod]);
+
+  const fetchVitalSigns = async () => {
     try {
+      // Get time period based on selection
+      const now = new Date();
+      let startDate = new Date();
+      
+      if (displayPeriod === "day") {
+        startDate.setDate(now.getDate() - 1);
+      } else if (displayPeriod === "week") {
+        startDate.setDate(now.getDate() - 7);
+      } else if (displayPeriod === "month") {
+        startDate.setMonth(now.getMonth() - 1);
+      }
+
       const { data, error } = await supabaseClient
         .from('medical_device_data')
         .select('*')
         .eq('user_id', userId)
+        .gte('recorded_at', startDate.toISOString())
         .order('recorded_at', { ascending: false });
 
       if (error) {
-        console.error('Error fetching vital data:', error);
+        console.error("Error fetching vital signs:", error);
         return;
       }
 
-      // Create mock data if none found for demo purposes
-      if (!data || data.length === 0) {
-        setVitalData(generateMockVitalData());
-      } else {
-        setVitalData(data as VitalData[]);
-      }
+      // Create a new array of properly shaped VitalData objects 
+      const transformedData: VitalData[] = data ? data.map(item => ({
+        id: item.id,
+        device_type: item.device_type || 'unknown',
+        readings: item.readings || {},
+        recorded_at: item.recorded_at || new Date().toISOString(),
+        user_id: item.user_id,
+        created_at: item.created_at || new Date().toISOString(),
+        updated_at: item.updated_at || new Date().toISOString(),
+      })) : [];
+
+      setVitalSigns(transformedData);
     } catch (error) {
-      console.error('Error in fetchVitalData:', error);
-      setVitalData(generateMockVitalData());
-    } finally {
-      setIsLoading(false);
+      console.error("Error fetching vital signs data:", error);
     }
   };
 
-  useEffect(() => {
-    fetchVitalData();
-  }, [userId]);
-
-  // Generate some mock vital sign data
-  const generateMockVitalData = (): VitalData[] => {
-    const now = new Date();
-    const mockData: VitalData[] = [];
-    
-    for (let i = 30; i >= 0; i--) {
-      const date = new Date(now);
-      date.setDate(date.getDate() - i);
-      
-      mockData.push({
-        id: `mock-${i}`,
-        device_type: 'health_monitor',
-        readings: {
-          heart_rate: Math.floor(Math.random() * 20) + 65, // 65-85
-          blood_pressure: {
-            systolic: Math.floor(Math.random() * 30) + 110, // 110-140
-            diastolic: Math.floor(Math.random() * 20) + 70, // 70-90
-          },
-          blood_oxygen: Math.floor(Math.random() * 5) + 95, // 95-100
-          temperature: (Math.random() * 1 + 36.1).toFixed(1), // 36.1-37.1
-          respiratory_rate: Math.floor(Math.random() * 6) + 12, // 12-18
-        },
-        recorded_at: date.toISOString(),
-        user_id: userId,
-        created_at: date.toISOString(),
-        updated_at: date.toISOString(),
-      });
-    }
-    
-    return mockData;
+  const getHeartRateStatus = (heartRate: number) => {
+    if (heartRate < 60) return "low";
+    if (heartRate > 100) return "high";
+    return "normal";
   };
 
-  // Prepare data for charts
-  const prepareChartData = (dataKey: string) => {
-    const filteredData = filterDataByTimeframe(vitalData, selectedTimeframe);
-    
-    if (dataKey === 'blood_pressure') {
-      return filteredData.map((item) => ({
-        date: new Date(item.recorded_at).toLocaleDateString(),
-        systolic: item.readings?.blood_pressure?.systolic || 0,
-        diastolic: item.readings?.blood_pressure?.diastolic || 0,
-      }));
-    }
-    
-    return filteredData.map((item) => ({
-      date: new Date(item.recorded_at).toLocaleDateString(),
-      value: item.readings?.[dataKey] || 0,
-    }));
+  const getBloodPressureStatus = (systolic: number, diastolic: number) => {
+    if (systolic > 140 || diastolic > 90) return "high";
+    if (systolic < 90 || diastolic < 60) return "low";
+    return "normal";
   };
 
-  const filterDataByTimeframe = (data: VitalData[], timeframe: string): VitalData[] => {
-    const now = new Date();
-    const filtered = [...data]; // Clone to avoid mutating state
-    
-    switch(timeframe) {
-      case 'day':
-        return filtered.filter(item => {
-          const date = new Date(item.recorded_at);
-          return date.toDateString() === now.toDateString();
-        });
-      case 'week':
-        const weekAgo = new Date(now);
-        weekAgo.setDate(weekAgo.getDate() - 7);
-        return filtered.filter(item => new Date(item.recorded_at) >= weekAgo);
-      case 'month':
-        const monthAgo = new Date(now);
-        monthAgo.setMonth(monthAgo.getMonth() - 1);
-        return filtered.filter(item => new Date(item.recorded_at) >= monthAgo);
-      case 'year':
-        const yearAgo = new Date(now);
-        yearAgo.setFullYear(yearAgo.getFullYear() - 1);
-        return filtered.filter(item => new Date(item.recorded_at) >= yearAgo);
-      default:
-        return filtered;
+  const getTemperatureStatus = (temperature: number) => {
+    if (temperature > 38) return "high";
+    if (temperature < 36) return "low";
+    return "normal";
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "high": return "text-red-500";
+      case "low": return "text-blue-500";
+      case "normal": return "text-green-500";
+      default: return "text-gray-500";
     }
   };
 
-  // Get the most recent reading
-  const getLatestReading = (dataKey: string) => {
-    if (vitalData.length === 0) return 'N/A';
+  const getLatestVitals = () => {
+    if (vitalSigns.length === 0) return null;
     
-    const latestData = vitalData[0];
-    
-    if (dataKey === 'blood_pressure') {
-      const systolic = latestData.readings?.blood_pressure?.systolic || 'N/A';
-      const diastolic = latestData.readings?.blood_pressure?.diastolic || 'N/A';
-      return `${systolic}/${diastolic}`;
-    }
-    
-    return latestData.readings?.[dataKey] || 'N/A';
-  };
-
-  if (isLoading) {
-    return (
-      <div className="flex justify-center items-center h-40">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
+    // Get the most recent readings for each vital sign type
+    const bloodPressureReading = vitalSigns.find(v => 
+      v.readings && v.readings.blood_pressure
     );
-  }
+    
+    const heartRateReading = vitalSigns.find(v => 
+      v.readings && v.readings.heart_rate !== undefined
+    );
+    
+    const temperatureReading = vitalSigns.find(v => 
+      v.readings && v.readings.temperature !== undefined
+    );
+    
+    return {
+      bloodPressure: bloodPressureReading?.readings?.blood_pressure,
+      heartRate: heartRateReading?.readings?.heart_rate,
+      temperature: temperatureReading?.readings?.temperature,
+      lastUpdated: vitalSigns[0]?.recorded_at
+    };
+  };
+
+  const latestVitals = getLatestVitals();
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">Vital Signs</h2>
-        <div className="flex gap-2">
-          <Select value={selectedTimeframe} onValueChange={setSelectedTimeframe}>
-            <SelectTrigger className="w-[150px]">
-              <SelectValue placeholder="Select timeframe" />
+        <h2 className="text-xl font-bold">Vital Signs</h2>
+        <div className="flex items-center gap-2">
+          <Select value={displayPeriod} onValueChange={setDisplayPeriod}>
+            <SelectTrigger className="w-[120px]">
+              <SelectValue placeholder="Select period" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="day">Today</SelectItem>
+              <SelectItem value="day">Last 24h</SelectItem>
               <SelectItem value="week">Last Week</SelectItem>
               <SelectItem value="month">Last Month</SelectItem>
-              <SelectItem value="year">Last Year</SelectItem>
             </SelectContent>
           </Select>
-          <Button onClick={fetchVitalData}>Refresh</Button>
+          <Button variant="outline" size="sm" onClick={fetchVitalSigns}>
+            Refresh
+          </Button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Heart Rate</CardTitle>
-            <Heart className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{getLatestReading('heart_rate')} BPM</div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Blood Pressure</CardTitle>
-            <ActivityIcon className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{getLatestReading('blood_pressure')} mmHg</div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Temperature</CardTitle>
-            <Thermometer className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{getLatestReading('temperature')} °C</div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Blood Oxygen</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{getLatestReading('blood_oxygen')}%</div>
-          </CardContent>
-        </Card>
-      </div>
+      {!latestVitals && (
+        <div className="text-center p-8 border rounded-lg bg-gray-50">
+          <p className="text-gray-500">No vital sign data available</p>
+        </div>
+      )}
 
-      <Tabs defaultValue="heart_rate">
-        <TabsList className="grid grid-cols-4 mb-4">
-          <TabsTrigger value="heart_rate">Heart Rate</TabsTrigger>
-          <TabsTrigger value="blood_pressure">Blood Pressure</TabsTrigger>
-          <TabsTrigger value="temperature">Temperature</TabsTrigger>
-          <TabsTrigger value="blood_oxygen">Blood Oxygen</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="heart_rate">
-          <Card>
-            <CardHeader>
-              <CardTitle>Heart Rate History</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="h-[300px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={prepareChartData('heart_rate')}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="date" />
-                    <YAxis domain={['dataMin - 10', 'dataMax + 10']} />
-                    <Tooltip />
-                    <Legend />
-                    <Line type="monotone" dataKey="value" stroke="#8884d8" name="BPM" />
-                  </LineChart>
-                </ResponsiveContainer>
+      {latestVitals && (
+        <div className="grid gap-4 md:grid-cols-3">
+          {latestVitals.heartRate !== undefined && (
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium flex items-center">
+                  <Heart className="h-4 w-4 mr-2 text-red-500" />
+                  Heart Rate
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold flex items-baseline">
+                  {latestVitals.heartRate}
+                  <span className="ml-1 text-sm text-muted-foreground">bpm</span>
+                  <span className={`ml-2 text-sm ${getStatusColor(getHeartRateStatus(latestVitals.heartRate))}`}>
+                    {getHeartRateStatus(latestVitals.heartRate)}
+                  </span>
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Updated: {new Date(latestVitals.lastUpdated).toLocaleString()}
+                </p>
+              </CardContent>
+            </Card>
+          )}
+
+          {latestVitals.bloodPressure && (
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium flex items-center">
+                  <Activity className="h-4 w-4 mr-2 text-blue-500" />
+                  Blood Pressure
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold flex items-baseline">
+                  {latestVitals.bloodPressure.systolic}/{latestVitals.bloodPressure.diastolic}
+                  <span className="ml-1 text-sm text-muted-foreground">mmHg</span>
+                  <span className={`ml-2 text-sm ${getStatusColor(getBloodPressureStatus(latestVitals.bloodPressure.systolic, latestVitals.bloodPressure.diastolic))}`}>
+                    {getBloodPressureStatus(latestVitals.bloodPressure.systolic, latestVitals.bloodPressure.diastolic)}
+                  </span>
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Updated: {new Date(latestVitals.lastUpdated).toLocaleString()}
+                </p>
+              </CardContent>
+            </Card>
+          )}
+
+          {latestVitals.temperature !== undefined && (
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium flex items-center">
+                  <Thermometer className="h-4 w-4 mr-2 text-orange-500" />
+                  Temperature
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold flex items-baseline">
+                  {latestVitals.temperature}
+                  <span className="ml-1 text-sm text-muted-foreground">°C</span>
+                  <span className={`ml-2 text-sm ${getStatusColor(getTemperatureStatus(latestVitals.temperature))}`}>
+                    {getTemperatureStatus(latestVitals.temperature)}
+                  </span>
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Updated: {new Date(latestVitals.lastUpdated).toLocaleString()}
+                </p>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      )}
+
+      <div className="border rounded-lg p-4">
+        <h3 className="font-medium mb-2 flex items-center">
+          <BarChart className="h-4 w-4 mr-2 text-gray-500" />
+          Vital Signs History
+        </h3>
+        <div className="space-y-4">
+          {vitalSigns.length === 0 ? (
+            <p className="text-center text-gray-500 py-4">No history available</p>
+          ) : (
+            vitalSigns.slice(0, 5).map((vital) => (
+              <div key={vital.id} className="border-b pb-2">
+                <div className="flex justify-between mb-1">
+                  <span className="text-sm font-medium">{vital.device_type}</span>
+                  <span className="text-xs text-muted-foreground">
+                    {new Date(vital.recorded_at).toLocaleString()}
+                  </span>
+                </div>
+                <div className="grid grid-cols-3 gap-2 text-sm">
+                  {vital.readings.heart_rate !== undefined && (
+                    <div>HR: {vital.readings.heart_rate} bpm</div>
+                  )}
+                  {vital.readings.blood_pressure && (
+                    <div>BP: {vital.readings.blood_pressure.systolic}/{vital.readings.blood_pressure.diastolic}</div>
+                  )}
+                  {vital.readings.temperature !== undefined && (
+                    <div>Temp: {vital.readings.temperature}°C</div>
+                  )}
+                </div>
               </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="blood_pressure">
-          <Card>
-            <CardHeader>
-              <CardTitle>Blood Pressure History</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="h-[300px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={prepareChartData('blood_pressure')}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="date" />
-                    <YAxis domain={['dataMin - 10', 'dataMax + 10']} />
-                    <Tooltip />
-                    <Legend />
-                    <Line type="monotone" dataKey="systolic" stroke="#8884d8" name="Systolic" />
-                    <Line type="monotone" dataKey="diastolic" stroke="#82ca9d" name="Diastolic" />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="temperature">
-          <Card>
-            <CardHeader>
-              <CardTitle>Temperature History</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="h-[300px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={prepareChartData('temperature')}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="date" />
-                    <YAxis domain={['dataMin - 0.5', 'dataMax + 0.5']} />
-                    <Tooltip />
-                    <Legend />
-                    <Line type="monotone" dataKey="value" stroke="#ff7300" name="°C" />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="blood_oxygen">
-          <Card>
-            <CardHeader>
-              <CardTitle>Blood Oxygen History</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="h-[300px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={prepareChartData('blood_oxygen')}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="date" />
-                    <YAxis domain={[90, 100]} />
-                    <Tooltip />
-                    <Legend />
-                    <Line type="monotone" dataKey="value" stroke="#82ca9d" name="%" />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+            ))
+          )}
+        </div>
+      </div>
     </div>
   );
 };

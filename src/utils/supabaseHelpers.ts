@@ -1,6 +1,6 @@
 
 import { v4 as uuidv4 } from 'uuid';
-import { supabaseClient, safeQueryWithFallback } from '@/integrations/supabaseClient';
+import { supabaseClient, safeQueryWithFallback, transformConnectionType } from '@/integrations/supabaseClient';
 import { Json } from '@/types/database.types';
 import type { CareRecipient, Connection, Document, Post, Task } from '@/types/database.types';
 
@@ -41,6 +41,8 @@ export function mockCurrentUser() {
     role: 'admin',
     firstName: 'Current',
     lastName: 'User',
+    first_name: 'Current',
+    last_name: 'User',
     created_at: new Date().toISOString()
   };
 }
@@ -55,8 +57,16 @@ export async function mockTableQuery<T>(
   // Simulate network delay
   await new Promise(resolve => setTimeout(resolve, 200));
   
+  // Add forEach method to be compatible with real Supabase data return type
+  const dataWithForEach = mockData as T[] & { forEach: (callback: (item: T, index: number) => void) => void };
+  if (!dataWithForEach.forEach) {
+    dataWithForEach.forEach = function(callback) {
+      return Array.isArray(this) ? this.forEach(callback) : [];
+    };
+  }
+  
   return {
-    data: mockData,
+    data: dataWithForEach,
     error: null
   };
 }
@@ -68,7 +78,7 @@ export async function mockSupabaseQuery<T>(
   tableName: string,
   mockData: T[]
 ): Promise<{ data: T[] | null; error: any }> {
-  return { data: mockData, error: null };
+  return await mockTableQuery(tableName, mockData);
 }
 
 /**
@@ -83,7 +93,7 @@ export function castQueryResult<T>(data: any): T[] {
  */
 export function mockConnection(options: {
   status?: string;
-  connection_type?: 'carer' | 'pal';
+  connection_type?: string;
   first_name?: string;
   last_name?: string;
 }): Connection {
@@ -92,7 +102,7 @@ export function mockConnection(options: {
     id,
     requester_id: uuidv4(),
     recipient_id: uuidv4(),
-    connection_type: options.connection_type || 'carer',
+    connection_type: transformConnectionType(options.connection_type || 'carer'),
     status: options.status || 'pending',
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
@@ -174,7 +184,7 @@ export async function safeSupabaseQuery<T>(
 export function transformConnectionData(data: any[]): Connection[] {
   return data.map(item => ({
     ...item,
-    connection_type: item.connection_type as 'carer' | 'pal',
+    connection_type: transformConnectionType(item.connection_type),
     requester: {
       first_name: item.requester?.first_name || 'Unknown',
       last_name: item.requester?.last_name || 'User'

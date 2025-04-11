@@ -55,10 +55,20 @@ export const GroupTasks = ({ groupId }: GroupTasksProps) => {
         
         if (error) throw error;
         
-        const users = data?.map(member => ({
-          id: member.user_id,
-          name: `${member.profiles?.first_name || ''} ${member.profiles?.last_name || ''}`.trim() || 'Unknown User'
-        })) || [];
+        const users = data?.map(member => {
+          let firstName = '';
+          let lastName = '';
+          
+          if (member.profiles && typeof member.profiles === 'object') {
+            firstName = (member.profiles as any).first_name || '';
+            lastName = (member.profiles as any).last_name || '';
+          }
+          
+          return {
+            id: member.user_id,
+            name: `${firstName} ${lastName}`.trim() || 'Unknown User'
+          };
+        }) || [];
         
         setAvailableUsers(users);
       } catch (error) {
@@ -83,7 +93,7 @@ export const GroupTasks = ({ groupId }: GroupTasksProps) => {
           assigned_to,
           due_date,
           created_at,
-          assigned_user:assigned_to (
+          assigned_user:profiles!fk_assigned_to (
             first_name,
             last_name
           )
@@ -95,7 +105,14 @@ export const GroupTasks = ({ groupId }: GroupTasksProps) => {
       
       // Transform the data to match the Task interface
       if (data) {
-        const transformedTasks = transformTaskData(data);
+        const processedData = data.map(task => ({
+          ...task,
+          assigned_user: task.assigned_user || {
+            first_name: 'Unassigned',
+            last_name: ''
+          }
+        }));
+        const transformedTasks = transformTaskData(processedData);
         setTasks(transformedTasks);
       } else {
         setTasks([]);

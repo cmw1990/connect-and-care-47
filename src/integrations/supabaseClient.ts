@@ -35,6 +35,15 @@ export const checkTableExists = async (tableName: string) => {
   }
 };
 
+// Transform function to convert connection_type from string to the required type
+export const transformConnectionType = (connectionType: string): 'carer' | 'pal' => {
+  if (connectionType === 'carer' || connectionType === 'pal') {
+    return connectionType;
+  }
+  // Default to 'carer' if the value doesn't match expected values
+  return 'carer';
+};
+
 // Function to safely query Supabase with fallback
 export const safeQueryWithFallback = async <T>(
   tableName: string,
@@ -48,7 +57,17 @@ export const safeQueryWithFallback = async <T>(
       return { data: fallbackData, error: null };
     }
     
-    return await query();
+    const result = await query();
+    // Add forEach method to the data property for backward compatibility
+    if (result.data) {
+      const dataWithForEach = result.data as T[] & { forEach: (callback: (item: T, index: number) => void) => void };
+      if (!dataWithForEach.forEach) {
+        dataWithForEach.forEach = function(callback) {
+          return Array.isArray(this) ? this.forEach(callback) : [];
+        };
+      }
+    }
+    return result;
   } catch (error) {
     console.error(`Error executing query on ${tableName}:`, error);
     return { data: fallbackData, error: error as any };
@@ -67,11 +86,14 @@ export const getCurrentUser = async () => {
       .single();
     
     if (data) {
+      // Return an object that has consistent property names
       return {
         id: user.id,
         email: user.email || '',
-        first_name: data.first_name,
-        last_name: data.last_name,
+        firstName: data.first_name || '',
+        lastName: data.last_name || '',
+        first_name: data.first_name || '',  // Include both formats for compatibility
+        last_name: data.last_name || '',    // Include both formats for compatibility
         role: data.role || 'user',
         created_at: data.created_at || new Date().toISOString()
       };
@@ -79,4 +101,15 @@ export const getCurrentUser = async () => {
   }
   
   return null;
+};
+
+// Utility to handle relation missing errors with default values
+export const handleRelationData = <T extends Record<string, any>>(
+  data: any,
+  defaultValues: T
+): T => {
+  if (!data || typeof data === 'string' || (data as any).error) {
+    return defaultValues;
+  }
+  return data as T;
 };
