@@ -220,6 +220,10 @@ export interface InsuranceDeductible {
   user_id: string;
   created_at: string;
   updated_at: string;
+  // Additional properties for UI
+  total_amount?: number;
+  met_amount?: number;
+  deductible_type?: string;
 }
 
 export interface InsuranceDocument {
@@ -262,3 +266,11 @@ export interface MedicalDevice {
 export type SelectQueryError<T> = {
   error: true;
 } & String;
+
+// DayContentProps interface for Calendar components
+export interface DayContentProps {
+  date: Date;
+  monthStartDate?: Date;
+  selected?: boolean;
+  displayMonth?: boolean;
+}

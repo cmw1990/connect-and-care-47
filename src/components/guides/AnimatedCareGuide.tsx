@@ -10,7 +10,7 @@ interface AnimatedCareGuideProps {
   guidelines: string[];
 }
 
-export const AnimatedCareGuide = ({ disease, description, guidelines }: AnimatedCareGuideProps) => {
+export const AnimatedCareGuide: React.FC<AnimatedCareGuideProps> = ({ disease, description, guidelines }) => {
   return (
     <Card className="h-full flex flex-col">
       <CardHeader>

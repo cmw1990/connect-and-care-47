@@ -1,5 +1,6 @@
 
 import { typeCast, transformData } from './typeHelpers';
+import { Json } from '@/integrations/supabase/types';
 
 /**
  * Mock supabase responses for development and type checking 
@@ -121,4 +122,83 @@ export async function safeSupabaseQuery<T>(queryFn: () => Promise<any>, defaultV
 export function createDatabaseStub<T>(tableName: string): () => T {
   console.warn(`Stubbing database access for table: ${tableName}`);
   return (() => {}) as unknown as () => T;
+}
+
+/**
+ * Creates a mock profile for testing
+ */
+export function createMockProfile(id: string, firstName: string = 'Test', lastName: string = 'User') {
+  return {
+    id,
+    first_name: firstName,
+    last_name: lastName,
+    email: `${firstName.toLowerCase()}.${lastName.toLowerCase()}@example.com`,
+    avatar_url: null,
+    role: 'user',
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  };
+}
+
+/**
+ * Provides a mock current user for development
+ */
+export const mockCurrentUser = {
+  id: '12345',
+  email: 'current.user@example.com',
+  first_name: 'Current',
+  last_name: 'User',
+  avatar_url: null,
+  role: 'user'
+};
+
+/**
+ * Helper to cast query results to a specific type
+ */
+export function castQueryResult<T>(data: any): T {
+  if (!data || data.error) {
+    console.warn('Failed to cast query result:', data?.error);
+    return {} as T;
+  }
+  return data as T;
+}
+
+/**
+ * Mock sleep data for development
+ */
+export const sleep = {
+  getSleepData: () => {
+    return [
+      { date: '2023-01-01', hours: 7.5, quality: 'good' },
+      { date: '2023-01-02', hours: 6.2, quality: 'fair' },
+      { date: '2023-01-03', hours: 8.1, quality: 'excellent' },
+      { date: '2023-01-04', hours: 5.8, quality: 'poor' },
+      { date: '2023-01-05', hours: 7.2, quality: 'good' },
+    ];
+  }
+};
+
+/**
+ * Helper function to safely handle queries with potential deep type recursion
+ */
+export function safeQueryBuilder<T>(query: any): Promise<T[]> {
+  try {
+    return query.then((result: any) => {
+      if (result.error) {
+        console.warn('Query error:', result.error);
+        return [];
+      }
+      return (result.data || []) as T[];
+    });
+  } catch (error) {
+    console.error('Error executing query:', error);
+    return Promise.resolve([]);
+  }
+}
+
+/**
+ * Mock implementation for queries with missing tables
+ */
+export function mockTableQuery<T>(mockData: T[] = []): Promise<T[]> {
+  return Promise.resolve(mockData);
 }
