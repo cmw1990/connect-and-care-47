@@ -1,3 +1,4 @@
+
 import React from 'react';
 import {
   Card,
@@ -17,9 +18,8 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import { Utensils, Clock, Calendar, Users } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
 
 interface Meal {
   id: string;
@@ -32,12 +32,21 @@ interface Meal {
   status: 'scheduled' | 'delivered' | 'cancelled';
 }
 
+interface NewMealState {
+  date: Date;
+  time?: string;
+  dish?: string;
+  preparedBy?: string;
+  servings?: number;
+  dietaryNotes?: string;
+  status: 'scheduled' | 'delivered' | 'cancelled';
+}
+
 export const MealTrain = () => {
-  const { t } = useTranslation();
   const { toast } = useToast();
   const [meals, setMeals] = React.useState<Meal[]>([]);
   const [isAddingMeal, setIsAddingMeal] = React.useState(false);
-  const [newMeal, setNewMeal] = React.useState<Partial<Meal>>({
+  const [newMeal, setNewMeal] = React.useState<NewMealState>({
     date: new Date(),
     status: 'scheduled',
   });
@@ -45,8 +54,8 @@ export const MealTrain = () => {
   const handleAddMeal = () => {
     if (!newMeal.dish || !newMeal.time) {
       toast({
-        title: t('error.invalidMeal'),
-        description: t('error.pleaseCompleteAllFields'),
+        title: "Invalid Meal",
+        description: "Please complete all required fields",
         variant: 'destructive',
       });
       return;
@@ -71,8 +80,8 @@ export const MealTrain = () => {
     });
 
     toast({
-      title: t('success.mealAdded'),
-      description: t('success.mealAddedDescription'),
+      title: "Meal Added",
+      description: "The meal has been added to the schedule",
     });
   };
 
@@ -80,38 +89,38 @@ export const MealTrain = () => {
     <div className="space-y-4">
       <Card>
         <CardHeader>
-          <CardTitle>{t('mealTrain.title')}</CardTitle>
-          <CardDescription>{t('mealTrain.description')}</CardDescription>
+          <CardTitle>Meal Train</CardTitle>
+          <CardDescription>Coordinate meals for your care recipient</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex justify-between items-center mb-6">
             <div className="flex space-x-4">
               <div className="flex items-center space-x-2">
                 <Utensils className="h-5 w-5 text-primary" />
-                <span>{meals.length} {t('mealTrain.totalMeals')}</span>
+                <span>{meals.length} Total Meals</span>
               </div>
               <div className="flex items-center space-x-2">
                 <Calendar className="h-5 w-5 text-primary" />
-                <span>{meals.filter(m => m.status === 'scheduled').length} {t('mealTrain.scheduled')}</span>
+                <span>{meals.filter(m => m.status === 'scheduled').length} Scheduled</span>
               </div>
             </div>
             <Dialog open={isAddingMeal} onOpenChange={setIsAddingMeal}>
               <DialogTrigger asChild>
                 <Button>
                   <Utensils className="mr-2 h-4 w-4" />
-                  {t('mealTrain.addMeal')}
+                  Add Meal
                 </Button>
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>{t('mealTrain.newMeal')}</DialogTitle>
+                  <DialogTitle>New Meal</DialogTitle>
                   <DialogDescription>
-                    {t('mealTrain.newMealDescription')}
+                    Add a meal to the schedule
                   </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4">
                   <div>
-                    <Label htmlFor="dish">{t('mealTrain.dish')}</Label>
+                    <Label htmlFor="dish">Dish</Label>
                     <Input
                       id="dish"
                       value={newMeal.dish || ''}
@@ -121,7 +130,7 @@ export const MealTrain = () => {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="time">{t('mealTrain.time')}</Label>
+                    <Label htmlFor="time">Time</Label>
                     <Input
                       id="time"
                       type="time"
@@ -132,7 +141,7 @@ export const MealTrain = () => {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="servings">{t('mealTrain.servings')}</Label>
+                    <Label htmlFor="servings">Servings</Label>
                     <Input
                       id="servings"
                       type="number"
@@ -145,7 +154,7 @@ export const MealTrain = () => {
                   </div>
                   <div>
                     <Label htmlFor="dietaryNotes">
-                      {t('mealTrain.dietaryNotes')}
+                      Dietary Notes
                     </Label>
                     <Input
                       id="dietaryNotes"
@@ -156,7 +165,7 @@ export const MealTrain = () => {
                     />
                   </div>
                   <Button onClick={handleAddMeal}>
-                    {t('mealTrain.addMeal')}
+                    Add Meal
                   </Button>
                 </div>
               </DialogContent>
@@ -179,7 +188,7 @@ export const MealTrain = () => {
                         </div>
                         <div className="flex items-center space-x-1">
                           <Users className="h-4 w-4" />
-                          <span>{meal.servings} {t('mealTrain.servings')}</span>
+                          <span>{meal.servings} Servings</span>
                         </div>
                       </div>
                       {meal.dietaryNotes && (
@@ -199,8 +208,8 @@ export const MealTrain = () => {
                       disabled={meal.status === 'delivered'}
                     >
                       {meal.status === 'delivered'
-                        ? t('mealTrain.delivered')
-                        : t('mealTrain.markDelivered')}
+                        ? "Delivered"
+                        : "Mark Delivered"}
                     </Button>
                   </div>
                 </CardContent>

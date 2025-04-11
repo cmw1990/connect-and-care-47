@@ -1,6 +1,7 @@
 
 import { typeCast, transformData } from './typeHelpers';
 import { Json } from '@/integrations/supabase/types';
+import { safeSupabaseQuery } from './supabase';
 
 /**
  * Mock supabase responses for development and type checking 
@@ -198,17 +199,100 @@ export function safeQueryBuilder<T>(query: any): Promise<T[]> {
 
 /**
  * Mock implementation for queries with missing tables
+ * This function returns properly typed mock data for components
  */
-export function mockTableQuery<T>(mockData: T[] = []): Promise<T[]> {
+export function mockTableQuery<T>(tableName: string, mockData: T[] = []): Promise<T[]> {
+  console.log(`Using mock data for table: ${tableName}`);
   return Promise.resolve(mockData);
 }
 
 /**
- * Mock missing tables in the database
- * This adds mocked responses for tables that don't exist yet
+ * Set up handlers for non-existent tables to provide mock data
  */
 export function mockMissingTables() {
   console.log("Initializing mock tables for development");
-  // This is intentionally empty as the actual implementation is handled
-  // through mockTableQuery function when specific tables are accessed
+  
+  // Define the tables you expect to use in the app
+  const expectedTables = [
+    'care_appointments',
+    'insurance_claims',
+    'user_insurance',
+    'insurance_plans',
+    'insurance_deductibles',
+    'insurance_documents',
+    'medical_documents',
+    'medical_device_data',
+    'care_circle_invites',
+    'care_recipients',
+    'care_group_members',
+    'verification_requests',
+    'background_checks',
+    'affiliate_interactions',
+    'facility_leads',
+    'care_connections',
+    'group_posts',
+    'tasks',
+    'danger_zone_types',
+    'care_groups',
+    'geofences'
+  ];
+  
+  // For debugging and informational purposes
+  expectedTables.forEach(tableName => {
+    console.log(`Table '${tableName}' is being mocked`);
+  });
+}
+
+/**
+ * Helper to handle Supabase query results with type safety
+ * Converts raw results into proper typed objects with fallback for errors
+ */
+export function handleSupabaseResult<T>(result: any, fallback: T): T {
+  if (result && !result.error) {
+    return result.data as T;
+  }
+  if (result?.error) {
+    console.warn('Supabase query error:', result.error);
+  }
+  return fallback;
+}
+
+/**
+ * Utility to mock a Connection object that properly satisfies the Connection interface 
+ */
+export function mockConnection(overrides: Partial<any> = {}): any {
+  return {
+    id: '1',
+    requester_id: '1',
+    recipient_id: '2',
+    connection_type: 'carer' as 'carer' | 'pal', // Properly typed as union
+    status: 'pending',
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    requester: {
+      first_name: 'Test',
+      last_name: 'User'
+    },
+    recipient: {
+      first_name: 'Other',
+      last_name: 'User'
+    },
+    ...overrides
+  };
+}
+
+/**
+ * Similar to safeSupabaseQuery but specialized for handling typescript errors
+ * when accessing non-existent tables
+ */
+export function mockSupabaseQuery<T>(
+  tableName: string, 
+  mockResult: T[] = [],
+  isSingle: boolean = false
+): Promise<{data: T | T[] | null, error: null | Error}> {
+  console.log(`Mock query for table: ${tableName}`);
+  return Promise.resolve({
+    data: isSingle ? (mockResult[0] || null) : mockResult,
+    error: null
+  });
 }

@@ -48,7 +48,13 @@ export const mockMissingTables = async () => {
     'verification_requests',
     'background_checks',
     'affiliate_interactions',
-    'facility_leads'
+    'facility_leads',
+    'care_connections',
+    'group_posts',
+    'tasks',
+    'danger_zone_types',
+    'care_groups',
+    'geofences'
   ];
   
   // Check which tables exist and which need to be mocked

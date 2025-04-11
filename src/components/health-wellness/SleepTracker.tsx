@@ -25,7 +25,7 @@ export const SleepTracker = () => {
   }, []);
 
   const fetchSleepData = () => {
-    // Use mock data from the utility - fixed the method call syntax
+    // Use mock data from the utility - correctly calling the function
     const data = sleep.getSleepData();
     setSleepData(data);
   };

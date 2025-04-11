@@ -12,4 +12,5 @@ export const initializeApp = () => {
   }
   
   // Add any other initialization code here
+  console.log("Application initialized");
 };

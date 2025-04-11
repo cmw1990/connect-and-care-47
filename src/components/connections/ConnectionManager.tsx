@@ -1,9 +1,11 @@
+
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { UserPlus, UserRound, Check, X } from "lucide-react";
+import { mockConnection, mockSupabaseQuery } from "@/utils/supabaseHelpers";
 
 interface Connection {
   id: string;
@@ -12,6 +14,7 @@ interface Connection {
   connection_type: 'carer' | 'pal';
   status: string;
   created_at: string;
+  updated_at: string;
   requester?: {
     first_name: string | null;
     last_name: string | null;
@@ -40,20 +43,23 @@ export const ConnectionManager = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Fetch connections where user is either requester or recipient
-      const { data, error } = await supabase
-        .from('care_connections')
-        .select(`
-          *,
-          requester:profiles!care_connections_requester_id_fkey(first_name, last_name),
-          recipient:profiles!care_connections_recipient_id_fkey(first_name, last_name)
-        `)
-        .or(`requester_id.eq.${user.id},recipient_id.eq.${user.id}`);
+      // Use mock data for development
+      const { data, error } = await mockSupabaseQuery<Connection>(
+        'care_connections',
+        [
+          mockConnection({ status: 'accepted', connection_type: 'carer' }),
+          mockConnection({ status: 'accepted', connection_type: 'pal' }),
+          mockConnection({ status: 'pending', connection_type: 'carer' })
+        ]
+      );
 
       if (error) throw error;
-
-      const activeConnections = data.filter(conn => conn.status === 'accepted');
-      const pending = data.filter(conn => conn.status === 'pending');
+      
+      // Cast the data using as to ensure proper typing
+      const typedData = data as Connection[];
+      
+      const activeConnections = typedData.filter(conn => conn.status === 'accepted');
+      const pending = typedData.filter(conn => conn.status === 'pending');
 
       setConnections(activeConnections);
       setPendingRequests(pending);

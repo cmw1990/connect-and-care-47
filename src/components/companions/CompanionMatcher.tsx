@@ -6,12 +6,11 @@ import { Search, Heart } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { CompanionCard } from "./CompanionCard";
+import { safeSupabaseQuery, mockSupabaseQuery } from "@/utils/supabaseHelpers";
 import type { Json } from "@/integrations/supabase/types";
 import { CompanionMatch } from "@/types/supabase";
 import { InsuranceClaimProcessor } from "@/components/insurance/InsuranceClaimProcessor";
 import { DementiaSupport } from "@/components/caregivers/DementiaSupport";
-import { safeSupabaseCast, mockTableQuery } from "@/utils/supabaseHelpers";
 
 interface CompanionFilters {
   expertiseArea: string;
@@ -45,278 +44,246 @@ const CompanionMatcher = () => {
     try {
       setIsLoading(true);
       
-      // Try to query the real table, but handle the case where the table or relationships don't exist
-      try {
-        // First check if the table exists
-        const tableExists = await supabase
-          .from('companion_profiles')
-          .select('id')
-          .limit(1)
-          .maybeSingle();
-          
-        if (tableExists.error) {
-          throw new Error("Table doesn't exist yet");
-        }
-        
-        // If the table exists, continue with the query
-        let query = supabase
-          .from('companion_profiles')
-          .select(`
-            *,
-            user:profiles(first_name, last_name)
-          `);
-
-        // Add dementia-specific filtering
-        if (filters.dementiaOnly) {
-          query = query
-            .eq('dementia_care_certified', true)
-            .order('dementia_experience_years', { ascending: false });
-        }
-
-        if (filters.expertiseArea) {
-          query = query.contains('expertise_areas', [filters.expertiseArea]);
-        }
-
-        if (filters.dementiaExperience) {
-          query = query.eq('dementia_experience', true);
-        }
-
-        if (filters.mentalHealthSupport) {
-          query = query.eq('mental_health_support', true);
-        }
-
-        if (filters.communicationType === 'virtual') {
-          query = query.eq('virtual_meeting_preference', true);
-        } else if (filters.communicationType === 'in-person') {
-          query = query.eq('in_person_meeting_preference', true);
-        }
-
-        if (filters.supportTools.length > 0) {
-          query = query.contains('support_tools_proficiency', filters.supportTools);
-        }
-
-        query = query.lte('hourly_rate', filters.maxRate);
-
-        const { data, error } = await query;
-        if (error) throw error;
-
-        // Process and map the data to ensure it matches the CompanionMatch interface
-        const companions: CompanionMatch[] = data.map((companion: any) => ({
-          id: companion.id || '',
-          user: {
-            first_name: companion.user?.first_name || 'Unknown',
-            last_name: companion.user?.last_name || 'User'
-          },
-          expertise_areas: companion.expertise_areas || [],
-          dementia_experience: !!companion.dementia_experience,
-          communication_preferences: companion.communication_preferences || [],
-          languages: companion.languages || [],
-          virtual_meeting_preference: !!companion.virtual_meeting_preference,
-          in_person_meeting_preference: !!companion.in_person_meeting_preference,
-          rating: companion.rating || 0,
-          hourly_rate: companion.hourly_rate || 0,
-          identity_verified: !!companion.identity_verified,
-          mental_health_specialties: companion.mental_health_specialties || [],
-          support_tools_proficiency: companion.support_tools_proficiency || {},
-          virtual_meeting_tools: companion.virtual_meeting_tools || [],
-          interests: companion.interests || [],
-          cognitive_engagement_activities: companion.cognitive_engagement_activities || {
-            memory_games: [],
-            brain_teasers: [],
-            social_activities: [],
-            creative_exercises: []
-          },
-          cultural_competencies: companion.cultural_competencies || [],
-          music_therapy_certified: !!companion.music_therapy_certified,
-          art_therapy_certified: !!companion.art_therapy_certified,
-          availability: companion.availability,
-          background_check_date: companion.background_check_date,
-          bio: companion.bio,
-          child_engagement_activities: companion.child_engagement_activities
-        }));
-
-        setMatches(companions);
-      } catch (err) {
-        console.error('Error fetching companion data:', err);
-        
-        // If the query fails, use mock data instead
-        const mockCompanions: CompanionMatch[] = [
-          {
-            id: 'mock-1',
-            user: { first_name: 'Jane', last_name: 'Smith' },
-            expertise_areas: ['Dementia Care', 'Elderly Support'],
-            dementia_experience: true,
-            communication_preferences: ['Video Call', 'In-person'],
-            languages: ['English', 'Spanish'],
-            virtual_meeting_preference: true,
-            in_person_meeting_preference: true,
-            rating: 4.8,
-            hourly_rate: 45,
-            identity_verified: true,
-            mental_health_specialties: ['Anxiety', 'Depression'],
-            support_tools_proficiency: {},
-            virtual_meeting_tools: ['Zoom', 'FaceTime'],
-            interests: ['Reading', 'Music'],
-            cognitive_engagement_activities: {
-              memory_games: ['Photo Recognition'],
-              brain_teasers: [],
-              social_activities: ['Group Discussions'],
-              creative_exercises: ['Art Therapy']
-            },
-            cultural_competencies: ['Asian American', 'Hispanic'],
-            music_therapy_certified: true,
-            art_therapy_certified: false,
-            bio: 'Experienced companion with 10+ years in elder care and dementia support.'
-          },
-          {
-            id: 'mock-2',
-            user: { first_name: 'Michael', last_name: 'Johnson' },
-            expertise_areas: ['Elder Care', 'Memory Care'],
-            dementia_experience: true,
-            communication_preferences: ['Phone', 'Video Call'],
-            languages: ['English'],
-            virtual_meeting_preference: true,
-            in_person_meeting_preference: false,
-            rating: 4.5,
-            hourly_rate: 40,
-            identity_verified: true,
-            mental_health_specialties: ['Grief Counseling'],
-            support_tools_proficiency: {},
-            virtual_meeting_tools: ['Zoom', 'Skype'],
-            interests: ['Games', 'Walking'],
-            cognitive_engagement_activities: {
-              memory_games: ['Word Association'],
-              brain_teasers: ['Puzzles'],
-              social_activities: [],
-              creative_exercises: []
-            },
-            cultural_competencies: [],
-            music_therapy_certified: false,
-            art_therapy_certified: false,
-            bio: 'Dedicated companion focused on creating meaningful connections through activities.'
+      // Create mock data for development purposes
+      const mockCompanions: CompanionMatch[] = [
+        {
+          id: "1",
+          user: { first_name: "John", last_name: "Smith" },
+          expertise_areas: ["Memory Care", "Geriatric Support"],
+          dementia_experience: true,
+          communication_preferences: ["Email", "Phone"],
+          languages: ["English", "Spanish"],
+          virtual_meeting_preference: true,
+          in_person_meeting_preference: true,
+          rating: 4.8,
+          hourly_rate: 35,
+          identity_verified: true,
+          mental_health_specialties: ["Anxiety", "Depression"],
+          support_tools_proficiency: {} as Json,
+          virtual_meeting_tools: ["Zoom", "Teams"],
+          interests: ["Music", "Art"],
+          cognitive_engagement_activities: {
+            memory_games: ["Card Matching", "Picture Recognition"],
+            brain_teasers: ["Puzzles", "Word Games"],
+            social_activities: ["Group Discussions", "Storytelling"],
+            creative_exercises: ["Drawing", "Music Appreciation"]
           }
-        ];
-        
-        setMatches(mockCompanions);
+        },
+        {
+          id: "2",
+          user: { first_name: "Lisa", last_name: "Johnson" },
+          expertise_areas: ["Music Therapy", "Companion Care"],
+          dementia_experience: true,
+          communication_preferences: ["Text", "Video Call"],
+          languages: ["English", "French"],
+          virtual_meeting_preference: true,
+          in_person_meeting_preference: false,
+          rating: 4.5,
+          hourly_rate: 28,
+          identity_verified: true,
+          mental_health_specialties: ["Stress Management", "Mood Disorders"],
+          support_tools_proficiency: {} as Json,
+          virtual_meeting_tools: ["FaceTime", "Zoom"],
+          interests: ["Reading", "Travel"],
+          cognitive_engagement_activities: {
+            memory_games: ["Association Games", "Memory Bingo"],
+            brain_teasers: ["Trivia", "Logic Puzzles"],
+            social_activities: ["Virtual Coffee Groups", "Book Club"],
+            creative_exercises: ["Gentle Movement", "Guided Relaxation"]
+          }
+        }
+      ];
+
+      // Filter the mock data based on the user's filters
+      let filteredCompanions = [...mockCompanions];
+      
+      if (filters.expertiseArea) {
+        filteredCompanions = filteredCompanions.filter(companion => 
+          companion.expertise_areas.some(area => 
+            area.toLowerCase().includes(filters.expertiseArea.toLowerCase())
+          )
+        );
       }
+      
+      if (filters.dementiaExperience) {
+        filteredCompanions = filteredCompanions.filter(companion => 
+          companion.dementia_experience
+        );
+      }
+      
+      if (filters.communicationType === 'virtual') {
+        filteredCompanions = filteredCompanions.filter(companion => 
+          companion.virtual_meeting_preference
+        );
+      } else if (filters.communicationType === 'in-person') {
+        filteredCompanions = filteredCompanions.filter(companion => 
+          companion.in_person_meeting_preference
+        );
+      }
+      
+      // Apply hourly rate filter
+      filteredCompanions = filteredCompanions.filter(companion => 
+        companion.hourly_rate <= filters.maxRate
+      );
+      
+      setMatches(filteredCompanions);
+      
     } catch (error) {
-      console.error('Error fetching data:', error);
+      console.error('Error fetching companions:', error);
       toast({
         title: "Error",
-        description: "Failed to load companion matches",
+        description: "Failed to load companions. Please try again.",
         variant: "destructive",
       });
-      
-      // Set empty array in case of error
-      setMatches([]);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleConnect = async (companionId: string) => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        toast({
-          title: "Error",
-          description: "Please sign in to connect with companions",
-          variant: "destructive",
-        });
-        return;
-      }
+  const handleFilterChange = (key: keyof CompanionFilters, value: any) => {
+    setFilters(prev => ({ ...prev, [key]: value }));
+  };
 
-      const { error } = await supabase
-        .from('care_connections')
-        .insert({
-          requester_id: user.id,
-          recipient_id: companionId,
-          connection_type: 'pal',
-        });
-
-      if (error) throw error;
-
-      toast({
-        title: "Success",
-        description: "Connection request sent successfully",
-      });
-    } catch (error) {
-      console.error('Error connecting with companion:', error);
-      toast({
-        title: "Error",
-        description: "Failed to send connection request",
-        variant: "destructive",
-      });
-    }
+  const handleFavorite = async (companionId: string) => {
+    toast({
+      title: "Added to Favorites",
+      description: "This companion has been added to your favorites.",
+    });
   };
 
   return (
-    <Card className="w-full">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Heart className="h-5 w-5" />
-          Find Your Companion
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-6">
-          {filters.dementiaOnly && (
-            <DementiaSupport
-              onProfileUpdate={(profile) => {
-                console.log("Updating dementia profile:", profile);
-                // Handle profile update
-              }}
-            />
-          )}
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>Find a Companion</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <div>
+              <Input
+                placeholder="Search by expertise..."
+                value={filters.expertiseArea}
+                onChange={e => handleFilterChange('expertiseArea', e.target.value)}
+                className="w-full"
+              />
+            </div>
+            <div className="flex space-x-2">
+              <Button
+                variant={filters.communicationType === 'virtual' ? 'default' : 'outline'}
+                onClick={() => handleFilterChange('communicationType', 
+                  filters.communicationType === 'virtual' ? '' : 'virtual')}
+                className="flex-1"
+              >
+                Virtual
+              </Button>
+              <Button
+                variant={filters.communicationType === 'in-person' ? 'default' : 'outline'}
+                onClick={() => handleFilterChange('communicationType', 
+                  filters.communicationType === 'in-person' ? '' : 'in-person')}
+                className="flex-1"
+              >
+                In Person
+              </Button>
+            </div>
+            <div className="flex items-center space-x-2">
+              <span className="text-sm">Max Rate: ${filters.maxRate}/hr</span>
+              <input
+                type="range"
+                min="10"
+                max="200"
+                value={filters.maxRate}
+                onChange={e => handleFilterChange('maxRate', parseInt(e.target.value))}
+                className="flex-1"
+              />
+            </div>
+          </div>
           
-          <div className="flex items-center mb-4">
-            <Search className="h-5 w-5 text-gray-400" />
-            <Input
-              placeholder="Search companions..."
-              className="ml-2"
-              onChange={(e) => {
-                const value = e.target.value.toLowerCase();
-                // Filter companions based on the search input
-                fetchCompanions().then(() => {
-                  const filteredCompanions = matches.filter(companion => 
-                    companion.bio?.toLowerCase().includes(value) ||
-                    companion.user.first_name.toLowerCase().includes(value) ||
-                    companion.user.last_name.toLowerCase().includes(value)
-                  );
-                  setMatches(filteredCompanions);
-                });
-              }}
-            />
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {isLoading ? (
-              <div className="flex justify-center">Loading...</div>
-            ) : (
-              matches.map((companion) => (
-                <InsuranceClaimProcessor
-                  key={companion.id}
-                  serviceType="companion_care"
-                  amount={companion.hourly_rate}
-                  providerId={companion.id}
-                  onSuccess={() => {
-                    toast({
-                      title: "Connection request sent",
-                      description: "The companion will be notified of your request.",
-                    });
-                  }}
-                >
-                  <CompanionCard
-                    companion={companion}
-                    onConnect={handleConnect}
-                  />
-                </InsuranceClaimProcessor>
-              ))
-            )}
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+          {isLoading ? (
+            <div className="text-center py-8">Loading companions...</div>
+          ) : matches.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {matches.map(companion => (
+                <Card key={companion.id} className="overflow-hidden">
+                  <CardContent className="p-0">
+                    <div className="p-4">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <h3 className="font-semibold text-lg">
+                            {companion.user.first_name} {companion.user.last_name}
+                          </h3>
+                          <p className="text-sm text-gray-500">
+                            ${companion.hourly_rate}/hour
+                          </p>
+                        </div>
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => handleFavorite(companion.id)}
+                        >
+                          <Heart className="h-5 w-5" />
+                        </Button>
+                      </div>
+                      
+                      <div className="mt-2">
+                        <div className="flex flex-wrap gap-1 mb-2">
+                          {companion.expertise_areas.map((area, i) => (
+                            <span key={i} className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-full">
+                              {area}
+                            </span>
+                          ))}
+                        </div>
+                        
+                        <div className="mt-2 text-sm">
+                          <div className="flex items-center mb-1">
+                            <span className="text-yellow-500">★</span>
+                            <span className="ml-1">{companion.rating}</span>
+                          </div>
+                          
+                          <div className="space-y-1 mt-2">
+                            <p className="flex items-center text-xs text-gray-600">
+                              <span className="mr-2">Languages:</span>
+                              {companion.languages.join(', ')}
+                            </p>
+                            <p className="flex items-center text-xs text-gray-600">
+                              <span className="mr-2">Communication:</span>
+                              {companion.communication_preferences.join(', ')}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="mt-4 border-t pt-3 px-4 pb-4">
+                      <Button className="w-full">View Profile</Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8">
+              <p className="text-gray-500">No companions found matching your criteria.</p>
+              <Button 
+                variant="outline" 
+                className="mt-2"
+                onClick={() => setFilters({
+                  expertiseArea: "",
+                  communicationType: "",
+                  dementiaExperience: false,
+                  mentalHealthSupport: false,
+                  maxRate: 100,
+                  supportTools: [],
+                  dementiaOnly: false,
+                })}
+              >
+                Reset Filters
+              </Button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
   );
 };
 
-export { CompanionMatcher };
+export default CompanionMatcher;

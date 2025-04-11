@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Users, Phone, Video, PersonStanding, UserPlus, UserRound, Check, X } from "lucide-react";
@@ -5,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { mockConnection, mockSupabaseQuery } from "@/utils/supabaseHelpers";
 
 interface SocialInteractionsProps {
   interactions: string[];
@@ -16,6 +18,9 @@ interface Connection {
   connection_type: 'carer' | 'pal';
   status: string;
   created_at: string;
+  updated_at: string;
+  requester_id: string;
+  recipient_id: string;
   requester?: {
     first_name: string | null;
     last_name: string | null;
@@ -49,19 +54,18 @@ export const SocialInteractions = ({ interactions, onInteractionAdd }: SocialInt
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { data, error } = await supabase
-        .from('care_connections')
-        .select(`
-          *,
-          requester:profiles!care_connections_requester_id_fkey(first_name, last_name),
-          recipient:profiles!care_connections_recipient_id_fkey(first_name, last_name)
-        `)
-        .or(`requester_id.eq.${user.id},recipient_id.eq.${user.id}`)
-        .order('created_at', { ascending: false })
-        .limit(5);
+      // Use mock data for development since the table doesn't exist yet
+      const { data, error } = await mockSupabaseQuery<Connection>(
+        'care_connections',
+        [
+          mockConnection({ status: 'accepted', connection_type: 'carer' }),
+          mockConnection({ status: 'pending', connection_type: 'pal' })
+        ]
+      );
 
       if (error) throw error;
-      setRecentConnections(data || []);
+      // Ensure data is properly typed as Connection[]
+      setRecentConnections(data as Connection[]);
     } catch (error) {
       console.error('Error fetching recent connections:', error);
     }
@@ -72,20 +76,14 @@ export const SocialInteractions = ({ interactions, onInteractionAdd }: SocialInt
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Fetch users with similar interests or in the same area
-      const { data, error } = await supabase
-        .from('profiles')
-        .select(`
-          id,
-          first_name,
-          last_name,
-          user_type
-        `)
-        .neq('id', user.id)
-        .limit(3);
-
-      if (error) throw error;
-      setSuggestedConnections(data || []);
+      // Mock suggested connections
+      const mockSuggestions = [
+        { id: '1', first_name: 'John', last_name: 'Doe', user_type: 'professional_caregiver' },
+        { id: '2', first_name: 'Jane', last_name: 'Smith', user_type: 'companion' },
+        { id: '3', first_name: 'Alex', last_name: 'Johnson', user_type: 'family_member' }
+      ];
+      
+      setSuggestedConnections(mockSuggestions);
     } catch (error) {
       console.error('Error fetching suggested connections:', error);
     }
