@@ -5,7 +5,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { Calendar } from '@/components/ui/calendar';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
-import { sleep } from '@/utils/supabaseHelpers';
+import { sleep } from '@/utils/mockDatabaseTables';
 
 interface SleepData {
   date: string;
@@ -20,15 +20,10 @@ export const SleepTracker = () => {
   const [newSleepHours, setNewSleepHours] = useState(7);
 
   useEffect(() => {
-    // Fetch sleep data
-    fetchSleepData();
-  }, []);
-
-  const fetchSleepData = () => {
-    // Use mock data from the utility - correctly calling the function
+    // Fetch sleep data from mock data
     const data = sleep.getSleepData();
     setSleepData(data);
-  };
+  }, []);
 
   const getQualityColor = (quality: string) => {
     switch (quality.toLowerCase()) {

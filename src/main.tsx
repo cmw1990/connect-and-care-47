@@ -4,12 +4,10 @@ import ReactDOM from 'react-dom/client';
 import App from './App';
 import './index.css';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { mockMissingTables } from './utils/supabaseHelpers';
+import { initializeApp } from './utils/initialize';
 
-// Initialize mock database tables for development
-// This is crucial for components using non-existent tables
-console.log("Initializing mock data for development");
-mockMissingTables();
+// Initialize app (including mock database tables for development)
+initializeApp();
 
 const queryClient = new QueryClient({
   defaultOptions: {

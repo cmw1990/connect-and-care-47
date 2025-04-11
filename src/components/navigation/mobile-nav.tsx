@@ -1,14 +1,14 @@
 
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Users, Heart, LifeBuoy, Settings } from 'lucide-react';
+import { Home, Users, Heart, Activity, LifeBuoy, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export const MobileNav = () => {
   const location = useLocation();
 
   // Hide the mobile navigation on the landing page
-  if (location.pathname === '/') {
+  if (location.pathname === '/' && window.innerWidth > 768) {
     return null;
   }
 
@@ -17,7 +17,7 @@ export const MobileNav = () => {
   };
 
   return (
-    <div className="fixed inset-x-0 bottom-0 z-40 border-t bg-background/95 backdrop-blur">
+    <div className="md:hidden fixed inset-x-0 bottom-0 z-40 border-t bg-background/95 backdrop-blur">
       <div className="container flex h-16 items-center justify-between px-4">
         <Link
           to="/"

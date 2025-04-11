@@ -63,7 +63,21 @@ export const mockMissingTables = async () => {
     if (!exists) {
       console.log(`Table '${tableName}' does not exist, using mocked responses`);
       // Implementation of mocking is actually done in the safeSupabaseQuery and mockTableQuery functions
-      // This is just for logging purposes
     }
+  }
+};
+
+// Example mock data for sleep
+export const sleep = {
+  getSleepData: () => {
+    return [
+      { date: '2025-04-05', hours: 7.2, quality: 'Good' },
+      { date: '2025-04-06', hours: 6.8, quality: 'Fair' },
+      { date: '2025-04-07', hours: 8.1, quality: 'Excellent' },
+      { date: '2025-04-08', hours: 7.5, quality: 'Good' },
+      { date: '2025-04-09', hours: 6.5, quality: 'Fair' },
+      { date: '2025-04-10', hours: 7.8, quality: 'Good' },
+      { date: '2025-04-11', hours: 8.0, quality: 'Excellent' },
+    ];
   }
 };
