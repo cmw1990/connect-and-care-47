@@ -1,62 +1,42 @@
 
 import { useState } from 'react';
 
-type ToastType = 'success' | 'error' | 'info' | 'warning';
-
-interface ToastProps {
+interface Toast {
+  id: string;
   title: string;
   description?: string;
-  variant?: 'default' | 'destructive';
-  duration?: number;
+  type: 'success' | 'error' | 'info';
 }
 
-export const useToast = () => {
-  const [toasts, setToasts] = useState<ToastProps[]>([]);
+export function useToast() {
+  const [toasts, setToasts] = useState<Toast[]>([]);
 
-  const toast = (props: ToastProps) => {
-    const newToast = {
-      ...props,
-      id: Date.now().toString()
-    };
-    setToasts((prev) => [...prev, newToast]);
+  const addToast = (toast: Omit<Toast, 'id'>) => {
+    const id = Math.random().toString(36).substring(2, 9);
+    setToasts((prev) => [...prev, { ...toast, id }]);
     
-    // Auto-hide toast after duration
-    if (props.duration !== Infinity) {
-      setTimeout(() => {
-        setToasts((prev) => prev.filter((t) => t.id !== newToast.id));
-      }, props.duration || 3000);
+    // Auto dismiss after 5 seconds
+    setTimeout(() => {
+      dismissToast(id);
+    }, 5000);
+    
+    return id;
+  };
+
+  const dismissToast = (id: string) => {
+    setToasts((prev) => prev.filter((toast) => toast.id !== id));
+  };
+
+  return {
+    toasts,
+    toast: {
+      success: (title: string, description?: string) => 
+        addToast({ title, description, type: 'success' }),
+      error: (title: string, description?: string) => 
+        addToast({ title, description, type: 'error' }),
+      info: (title: string, description?: string) => 
+        addToast({ title, description, type: 'info' }),
+      dismiss: dismissToast
     }
   };
-
-  const dismiss = (id: string) => {
-    setToasts((prev) => prev.filter((t) => t.id !== id));
-  };
-
-  // Convenience methods
-  toast.success = (title: string, description?: string) => {
-    toast({ title, description, variant: 'default' });
-  };
-
-  toast.error = (title: string, description?: string) => {
-    toast({ title, description, variant: 'destructive' });
-  };
-
-  toast.info = (title: string, description?: string) => {
-    toast({ title, description, variant: 'default' });
-  };
-
-  return { toast, toasts, dismiss };
-};
-
-// For components that need to use toast without hooks
-export const toast = {
-  success: (title: string, description?: string) => {
-    console.log('Success Toast:', title, description);
-  },
-  error: (title: string, description?: string) => {
-    console.log('Error Toast:', title, description);
-  },
-  info: (title: string, description?: string) => {
-    console.log('Info Toast:', title, description);
-  }
-};
+}
