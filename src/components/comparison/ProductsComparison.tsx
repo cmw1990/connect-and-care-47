@@ -8,7 +8,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { formatCurrency } from "@/utils/formatUtils";
 import { VerificationBadge } from "@/components/verification/VerificationBadge";
-import { mockTableQuery } from "@/utils/supabaseHelpers";
 
 interface ProductsComparisonProps {
   products: CareProduct[];
@@ -18,7 +17,7 @@ interface ProductsComparisonProps {
 }
 
 interface AffiliateInteraction {
-  id: string;
+  id?: string;
   product_id: string;
   interaction_type: string;
   affiliate_link: string;
@@ -45,17 +44,19 @@ export const ProductsComparison = ({
         return;
       }
 
-      // Create mock affiliate interaction since the table doesn't exist
-      const mockInteraction: AffiliateInteraction = {
-        id: `mock-interaction-${Date.now()}`,
-        product_id: product.id,
-        interaction_type: 'click',
-        affiliate_link: product.affiliate_link,
-        user_id: user.id,
-        created_at: new Date().toISOString()
-      };
+      // Record the affiliate interaction in the database
+      const { error } = await supabase
+        .from('affiliate_interactions')
+        .insert({
+          product_id: product.id,
+          interaction_type: 'click',
+          affiliate_link: product.affiliate_link,
+          user_id: user.id
+        });
 
-      await mockTableQuery<AffiliateInteraction>([mockInteraction]);
+      if (error) {
+        console.error('Error tracking affiliate click:', error);
+      }
 
       // Open affiliate link
       onAffiliateClick(product.affiliate_link);

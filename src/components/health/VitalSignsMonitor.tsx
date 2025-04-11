@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Heart, Activity, Thermometer, Wind } from "lucide-react";
@@ -20,7 +21,7 @@ export const VitalSignsMonitor = ({ groupId }: { groupId: string }) => {
       try {
         const { data, error } = await supabase
           .from('medical_device_data')
-          .select('readings')
+          .select('*')
           .eq('group_id', groupId)
           .eq('device_type', 'vital_signs')
           .order('recorded_at', { ascending: false })

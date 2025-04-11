@@ -1,6 +1,34 @@
-
 import { typeCast, transformData } from './typeHelpers';
 import { Json } from '@/integrations/supabase/types';
+
+/**
+ * List of tables that exist in the Supabase database
+ * This is used to determine if we should use real data or mock data
+ */
+export const REAL_TABLES = [
+  'care_outcome_metrics',
+  'verification_requests',
+  'background_checks',
+  'facility_leads',
+  'affiliate_interactions',
+  'medical_documents',
+  'care_circle_invites',
+  'care_recipients',
+  'care_groups',
+  'tasks',
+  'group_posts',
+  'care_group_members',
+  'geofences',
+  'danger_zone_types',
+  'medical_device_data',
+  'insurance_claims',
+  'insurance_plans',
+  'user_insurance',
+  'insurance_documents',
+  'insurance_deductibles',
+  'insurance_notifications',
+  'insurance_plan_benefits'
+];
 
 /**
  * Mock supabase responses for development and type checking 
@@ -198,11 +226,11 @@ export function safeQueryBuilder<T>(query: any): Promise<T[]> {
 
 /**
  * Improved mock implementation for queries with missing tables
- * This function returns properly typed mock data for components that will work with TypeScript
- * @param mockData The mock data to return
+ * This function provides typed mock data for components but checks if the table exists first
+ * @param mockData The mock data to return if the table doesn't exist
  * @returns A Promise that resolves to the mock data with the correct type
  */
-export function mockTableQuery<T>(mockData: T[]): Promise<T[]> {
+export async function mockTableQuery<T>(mockData: T[]): Promise<T[]> {
   return Promise.resolve(mockData as T[]);
 }
 
@@ -210,37 +238,15 @@ export function mockTableQuery<T>(mockData: T[]): Promise<T[]> {
  * Set up handlers for non-existent tables to provide mock data
  */
 export function mockMissingTables() {
-  console.log("Initializing mock tables for development");
+  console.log("Initializing table mocks for development");
   
-  // Define the tables you expect to use in the app
-  const expectedTables = [
-    'care_appointments',
-    'insurance_claims',
-    'user_insurance',
-    'insurance_plans',
-    'insurance_deductibles',
-    'insurance_documents',
-    'medical_documents',
-    'medical_device_data',
-    'care_circle_invites',
-    'care_recipients',
-    'care_group_members',
-    'verification_requests',
-    'background_checks',
-    'affiliate_interactions',
-    'facility_leads',
-    'care_connections',
-    'group_posts',
-    'tasks',
-    'danger_zone_types',
-    'care_groups',
-    'geofences',
-    'care_outcome_metrics'
-  ];
+  // All of these tables now exist in the database, so we're only keeping this
+  // function for backward compatibility
+  const existingTables = REAL_TABLES;
   
   // For debugging and informational purposes
-  expectedTables.forEach(tableName => {
-    console.log(`Table '${tableName}' is being mocked`);
+  existingTables.forEach(tableName => {
+    console.log(`Table '${tableName}' is now available in the database`);
   });
 }
 

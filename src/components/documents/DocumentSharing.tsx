@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -22,6 +23,7 @@ interface Document {
   document_type: string | null;
   created_by: string | null;
   created_at: string;
+  group_id: string;
 }
 
 export const DocumentSharing = ({ groupId }: { groupId: string }) => {

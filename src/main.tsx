@@ -6,7 +6,7 @@ import './index.css';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { initializeApp } from './utils/initialize';
 
-// Initialize app (including mock database tables for development)
+// Initialize app
 initializeApp();
 
 const queryClient = new QueryClient({

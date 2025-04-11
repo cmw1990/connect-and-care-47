@@ -1,206 +1,192 @@
-
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { BarChart2, Brain, Shield } from "lucide-react";
-import { ComparisonResult } from "./types";
-import { ComparisonChart } from "./ComparisonChart";
-import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { CheckCircle, Shield, AlertTriangle, Fingerprint } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { VerificationBadge } from "@/components/verification/VerificationBadge";
-import { Button } from "../ui/button";
-import { mockTableQuery } from "@/utils/supabaseHelpers";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ComparisonResultsProps {
-  results: Record<string, ComparisonResult>;
+  selectedProducts: any[];
 }
 
-interface VerificationRequest {
-  id: string;
-  user_id: string;
-  product_id: string;
-  status: string;
-  request_type: string;
-  created_at: string;
-}
-
-interface BackgroundCheck {
-  id: string;
-  user_id: string;
-  check_type: string;
-  status: string;
-  created_at: string;
-}
-
-export const ComparisonResults = ({ results }: ComparisonResultsProps) => {
-  const [aiAnalysis, setAiAnalysis] = useState<string>("");
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [isVerifying, setIsVerifying] = useState<Record<string, boolean>>({});
+export const ComparisonResults = ({ selectedProducts }: ComparisonResultsProps) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
-
-  useEffect(() => {
-    const getAIAnalysis = async () => {
-      try {
-        setIsAnalyzing(true);
-        const items = Object.entries(results).map(([id, data]) => ({
-          id,
-          name: data.name,
-          description: data.description || data.features?.join('. '),
-        }));
-
-        const { data: analysisData, error } = await supabase.functions.invoke('compare-analysis', {
-          body: {
-            items,
-            type: 'facilities',
-            userType: 'family_caregiver',
-          },
-        });
-
-        if (error) throw error;
-
-        setAiAnalysis(analysisData.analysis);
-      } catch (error) {
-        console.error('Error getting AI analysis:', error);
-        toast({
-          title: "Error",
-          description: "Failed to get AI analysis. Please try again.",
-          variant: "destructive",
-        });
-      } finally {
-        setIsAnalyzing(false);
-      }
-    };
-
-    if (Object.keys(results).length > 0) {
-      getAIAnalysis();
-    }
-  }, [results, toast]);
-
-  const handleVerificationCheck = async (id: string) => {
+  
+  const handleRequestVerification = async (type: string) => {
     try {
-      setIsVerifying(prev => ({ ...prev, [id]: true }));
-      
+      setIsSubmitting(true);
       const { data: { user } } = await supabase.auth.getUser();
+      
       if (!user) {
         toast({
-          title: "Error",
-          description: "You must be logged in to request verification.",
-          variant: "destructive",
+          title: "Authentication required",
+          description: "Please sign in to request verification",
+          variant: "destructive"
         });
         return;
       }
-
-      // Mock verification request since the table doesn't exist
-      const mockVerificationRequest: VerificationRequest = {
-        id: 'mock-verification-1',
-        user_id: user.id,
-        product_id: id,
-        status: 'pending',
-        request_type: 'background_check',
-        created_at: new Date().toISOString()
-      };
-
-      // Mock background check entry
-      const mockBackgroundCheck: BackgroundCheck = {
-        id: 'mock-background-1',
-        user_id: user.id,
-        check_type: 'standard',
-        status: 'pending',
-        created_at: new Date().toISOString()
-      };
-
-      // Use mock data since tables don't exist
-      await Promise.all([
-        mockTableQuery<VerificationRequest>([mockVerificationRequest]),
-        mockTableQuery<BackgroundCheck>([mockBackgroundCheck])
-      ]);
-
+      
+      // Create verification request in the database
+      const { error } = await supabase
+        .from('verification_requests')
+        .insert({
+          user_id: user.id,
+          request_type: type,
+          documents: []
+        });
+      
+      if (error) throw error;
+      
       toast({
-        title: "Success",
-        description: "Background check request submitted. View status in your profile.",
+        title: "Verification Requested",
+        description: `Your ${type} verification request has been submitted.`,
       });
-
+      
     } catch (error) {
-      console.error('Error initiating verification:', error);
+      console.error("Error requesting verification:", error);
       toast({
-        title: "Error",
-        description: "Failed to initiate verification process.",
-        variant: "destructive",
+        title: "Request Failed",
+        description: "Unable to submit verification request. Please try again.",
+        variant: "destructive"
       });
     } finally {
-      setIsVerifying(prev => ({ ...prev, [id]: false }));
+      setIsSubmitting(false);
     }
   };
-
+  
+  const initiateBackgroundCheck = async () => {
+    try {
+      setIsSubmitting(true);
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        toast({
+          title: "Authentication required",
+          description: "Please sign in to request a background check",
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      // Create background check in the database
+      const { error } = await supabase
+        .from('background_checks')
+        .insert({
+          user_id: user.id,
+          check_type: 'provider',
+          status: 'pending'
+        });
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Background Check Initiated",
+        description: "Your background check has been initiated. We'll notify you once it's complete.",
+      });
+      
+    } catch (error) {
+      console.error("Error initiating background check:", error);
+      toast({
+        title: "Request Failed",
+        description: "Unable to initiate background check. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+  
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <BarChart2 className="h-5 w-5" />
-          Comparison Results
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <ComparisonChart data={results} />
-        
-        {isAnalyzing ? (
-          <div className="flex items-center justify-center p-8">
-            <Brain className="h-6 w-6 animate-pulse text-primary" />
-            <span className="ml-2">Analyzing comparison data...</span>
-          </div>
-        ) : aiAnalysis && (
-          <div className="mt-6 p-4 bg-primary/5 rounded-lg">
-            <h3 className="font-semibold mb-2">AI Analysis</h3>
-            <p className="text-sm text-gray-600 whitespace-pre-line">{aiAnalysis}</p>
-          </div>
-        )}
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
-          {Object.entries(results).map(([id, data]) => (
-            <div key={id} className="p-4 border rounded hover:shadow-md transition-all">
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="font-semibold">{data.name}</h3>
-                {data.specifications?.verification_status ? (
-                  <VerificationBadge 
-                    status={data.specifications.verification_status as any} 
-                    size="sm"
-                    showLabel={false}
-                  />
-                ) : (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleVerificationCheck(id)}
-                    disabled={isVerifying[id]}
-                    className="flex items-center gap-1 hover:bg-primary/5"
-                  >
-                    <Shield className="h-4 w-4" />
-                    {isVerifying[id] ? 'Verifying...' : 'Verify'}
-                  </Button>
-                )}
-              </div>
-              <p className="text-sm text-gray-600 mt-2">
-                Rating: {data.averageRating.toFixed(1)}
-              </p>
-              {data.features && data.features.length > 0 && (
-                <div className="mt-2">
-                  <h4 className="text-sm font-medium">Key Features:</h4>
-                  <ul className="list-disc list-inside text-sm text-gray-600">
-                    {data.features.slice(0, 3).map((feature, index) => (
-                      <li key={index}>{feature}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-              {data.aiInsights && (
-                <div className="mt-2">
-                  <h4 className="text-sm font-medium">AI Insights:</h4>
-                  <p className="text-sm text-gray-600">{data.aiInsights}</p>
-                </div>
+    <div className="space-y-6">
+      {selectedProducts.map((product) => (
+        <Card key={product.id}>
+          <CardHeader>
+            <CardTitle>{product.name}</CardTitle>
+            <CardDescription>
+              {product.description}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between">
+              <span>Identity Verified</span>
+              {product.isIdentityVerified ? (
+                <Badge variant="success">
+                  <CheckCircle className="h-4 w-4 mr-2" />
+                  Verified
+                </Badge>
+              ) : (
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => handleRequestVerification('identity')}
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? (
+                    <>
+                      Requesting...
+                    </>
+                  ) : (
+                    <>
+                      <Fingerprint className="h-4 w-4 mr-2" />
+                      Request Verification
+                    </>
+                  )}
+                </Button>
               )}
             </div>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
+            
+            <div className="flex items-center justify-between">
+              <span>Background Checked</span>
+              {product.isBackgroundChecked ? (
+                <Badge variant="success">
+                  <CheckCircle className="h-4 w-4 mr-2" />
+                  Checked
+                </Badge>
+              ) : (
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={initiateBackgroundCheck}
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? (
+                    <>
+                      Requesting...
+                    </>
+                  ) : (
+                    <>
+                      <Shield className="h-4 w-4 mr-2" />
+                      Initiate Check
+                    </>
+                  )}
+                </Button>
+              )}
+            </div>
+            
+            {product.isIdentityVerified && product.isBackgroundChecked && (
+              <div className="rounded-md bg-green-500/10 p-4 text-sm text-green-600">
+                <CheckCircle className="h-4 w-4 mr-2 inline-block" />
+                This provider is fully verified.
+              </div>
+            )}
+            
+            {!product.isIdentityVerified && product.isBackgroundChecked && (
+              <div className="rounded-md bg-yellow-500/10 p-4 text-sm text-yellow-600">
+                <AlertTriangle className="h-4 w-4 mr-2 inline-block" />
+                This provider has not completed all verification steps.
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      ))}
+    </div>
   );
 };

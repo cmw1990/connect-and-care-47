@@ -9,6 +9,33 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      affiliate_interactions: {
+        Row: {
+          affiliate_link: string | null
+          created_at: string | null
+          id: string
+          interaction_type: string
+          product_id: string
+          user_id: string
+        }
+        Insert: {
+          affiliate_link?: string | null
+          created_at?: string | null
+          id?: string
+          interaction_type: string
+          product_id: string
+          user_id: string
+        }
+        Update: {
+          affiliate_link?: string | null
+          created_at?: string | null
+          id?: string
+          interaction_type?: string
+          product_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       availability_slots: {
         Row: {
           created_at: string | null
@@ -45,6 +72,39 @@ export type Database = {
         }
         Relationships: []
       }
+      background_checks: {
+        Row: {
+          check_type: string
+          created_at: string | null
+          id: string
+          provider: string | null
+          results: Json | null
+          status: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          check_type: string
+          created_at?: string | null
+          id?: string
+          provider?: string | null
+          results?: Json | null
+          status?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          check_type?: string
+          created_at?: string | null
+          id?: string
+          provider?: string | null
+          results?: Json | null
+          status?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       care_analytics: {
         Row: {
           created_at: string | null
@@ -68,6 +128,36 @@ export type Database = {
           id?: string
           metric_value?: Json
           recorded_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      care_circle_invites: {
+        Row: {
+          created_at: string | null
+          email: string
+          group_id: string
+          id: string
+          role: string
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email: string
+          group_id: string
+          id?: string
+          role: string
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          group_id?: string
+          id?: string
+          role?: string
+          status?: string | null
           updated_at?: string | null
         }
         Relationships: []
@@ -165,6 +255,60 @@ export type Database = {
           services?: string[] | null
           updated_at?: string | null
           website?: string | null
+        }
+        Relationships: []
+      }
+      care_group_members: {
+        Row: {
+          created_at: string | null
+          group_id: string
+          id: string
+          member_type: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          group_id: string
+          id?: string
+          member_type: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          group_id?: string
+          id?: string
+          member_type?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      care_groups: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          name: string
+          privacy_settings: Json | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          privacy_settings?: Json | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          privacy_settings?: Json | null
+          updated_at?: string | null
         }
         Relationships: []
       }
@@ -313,6 +457,48 @@ export type Database = {
           id?: string
           metric_value?: number
           recorded_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      care_recipients: {
+        Row: {
+          care_needs: Json | null
+          created_at: string | null
+          date_of_birth: string | null
+          first_name: string
+          gender: string | null
+          group_id: string
+          id: string
+          last_name: string
+          medical_history: Json | null
+          preferences: Json | null
+          updated_at: string | null
+        }
+        Insert: {
+          care_needs?: Json | null
+          created_at?: string | null
+          date_of_birth?: string | null
+          first_name: string
+          gender?: string | null
+          group_id: string
+          id?: string
+          last_name: string
+          medical_history?: Json | null
+          preferences?: Json | null
+          updated_at?: string | null
+        }
+        Update: {
+          care_needs?: Json | null
+          created_at?: string | null
+          date_of_birth?: string | null
+          first_name?: string
+          gender?: string | null
+          group_id?: string
+          id?: string
+          last_name?: string
+          medical_history?: Json | null
+          preferences?: Json | null
           updated_at?: string | null
         }
         Relationships: []
@@ -834,6 +1020,36 @@ export type Database = {
         }
         Relationships: []
       }
+      danger_zone_types: {
+        Row: {
+          color: string | null
+          created_at: string | null
+          description: string | null
+          icon: string | null
+          id: string
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string | null
+          description?: string | null
+          icon?: string | null
+          id?: string
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          color?: string | null
+          created_at?: string | null
+          description?: string | null
+          icon?: string | null
+          id?: string
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       dementia_profiles: {
         Row: {
           care_needs: string[] | null
@@ -864,6 +1080,99 @@ export type Database = {
         }
         Relationships: []
       }
+      facility_leads: {
+        Row: {
+          created_at: string | null
+          facility_id: string
+          id: string
+          notes: string | null
+          status: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          facility_id: string
+          id?: string
+          notes?: string | null
+          status?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          facility_id?: string
+          id?: string
+          notes?: string | null
+          status?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      geofences: {
+        Row: {
+          center_lat: number
+          center_lng: number
+          created_at: string | null
+          group_id: string
+          id: string
+          name: string
+          radius: number
+          type: string
+          updated_at: string | null
+        }
+        Insert: {
+          center_lat: number
+          center_lng: number
+          created_at?: string | null
+          group_id: string
+          id?: string
+          name: string
+          radius: number
+          type: string
+          updated_at?: string | null
+        }
+        Update: {
+          center_lat?: number
+          center_lng?: number
+          created_at?: string | null
+          group_id?: string
+          id?: string
+          name?: string
+          radius?: number
+          type?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      group_posts: {
+        Row: {
+          content: string
+          created_at: string | null
+          created_by: string | null
+          group_id: string
+          id: string
+          updated_at: string | null
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          created_by?: string | null
+          group_id: string
+          id?: string
+          updated_at?: string | null
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          created_by?: string | null
+          group_id?: string
+          id?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       insurance_analytics: {
         Row: {
           created_at: string | null
@@ -888,6 +1197,279 @@ export type Database = {
           updated_at?: string | null
           user_id?: string
           value?: number
+        }
+        Relationships: []
+      }
+      insurance_claims: {
+        Row: {
+          claim_amount: number
+          created_at: string | null
+          id: string
+          insurance_id: string
+          processing_notes: string | null
+          service_date: string
+          service_type: string
+          status: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          claim_amount: number
+          created_at?: string | null
+          id?: string
+          insurance_id: string
+          processing_notes?: string | null
+          service_date: string
+          service_type: string
+          status?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          claim_amount?: number
+          created_at?: string | null
+          id?: string
+          insurance_id?: string
+          processing_notes?: string | null
+          service_date?: string
+          service_type?: string
+          status?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      insurance_deductibles: {
+        Row: {
+          amount: number
+          created_at: string | null
+          id: string
+          insurance_id: string
+          remaining: number
+          type: string
+          updated_at: string | null
+          user_id: string
+          year: number
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          id?: string
+          insurance_id: string
+          remaining: number
+          type: string
+          updated_at?: string | null
+          user_id: string
+          year: number
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          id?: string
+          insurance_id?: string
+          remaining?: number
+          type?: string
+          updated_at?: string | null
+          user_id?: string
+          year?: number
+        }
+        Relationships: []
+      }
+      insurance_documents: {
+        Row: {
+          created_at: string | null
+          document_type: string
+          file_url: string
+          id: string
+          insurance_id: string
+          metadata: Json | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          document_type: string
+          file_url: string
+          id?: string
+          insurance_id: string
+          metadata?: Json | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          document_type?: string
+          file_url?: string
+          id?: string
+          insurance_id?: string
+          metadata?: Json | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      insurance_notifications: {
+        Row: {
+          created_at: string | null
+          id: string
+          message: string
+          metadata: Json | null
+          read: boolean | null
+          type: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          message: string
+          metadata?: Json | null
+          read?: boolean | null
+          type: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          message?: string
+          metadata?: Json | null
+          read?: boolean | null
+          type?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      insurance_plan_benefits: {
+        Row: {
+          coverage_percentage: number
+          created_at: string | null
+          deductible_applies: boolean | null
+          id: string
+          max_benefit: number | null
+          notes: string | null
+          plan_id: string
+          service_category: string
+          updated_at: string | null
+        }
+        Insert: {
+          coverage_percentage: number
+          created_at?: string | null
+          deductible_applies?: boolean | null
+          id?: string
+          max_benefit?: number | null
+          notes?: string | null
+          plan_id: string
+          service_category: string
+          updated_at?: string | null
+        }
+        Update: {
+          coverage_percentage?: number
+          created_at?: string | null
+          deductible_applies?: boolean | null
+          id?: string
+          max_benefit?: number | null
+          notes?: string | null
+          plan_id?: string
+          service_category?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      insurance_plans: {
+        Row: {
+          coverage_details: Json
+          created_at: string | null
+          id: string
+          name: string
+          provider: string
+          type: string
+          updated_at: string | null
+        }
+        Insert: {
+          coverage_details?: Json
+          created_at?: string | null
+          id?: string
+          name: string
+          provider: string
+          type: string
+          updated_at?: string | null
+        }
+        Update: {
+          coverage_details?: Json
+          created_at?: string | null
+          id?: string
+          name?: string
+          provider?: string
+          type?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      medical_device_data: {
+        Row: {
+          created_at: string | null
+          device_type: string
+          id: string
+          readings: Json
+          recorded_at: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          device_type: string
+          id?: string
+          readings: Json
+          recorded_at?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          device_type?: string
+          id?: string
+          readings?: Json
+          recorded_at?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      medical_documents: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          document_type: string | null
+          file_url: string | null
+          group_id: string
+          id: string
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          document_type?: string | null
+          file_url?: string | null
+          group_id: string
+          id?: string
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          document_type?: string | null
+          file_url?: string | null
+          group_id?: string
+          id?: string
+          title?: string
+          updated_at?: string | null
         }
         Relationships: []
       }
@@ -1239,6 +1821,48 @@ export type Database = {
         }
         Relationships: []
       }
+      tasks: {
+        Row: {
+          assigned_to: string | null
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          due_date: string | null
+          group_id: string
+          id: string
+          priority: string
+          status: string
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          assigned_to?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          due_date?: string | null
+          group_id: string
+          id?: string
+          priority?: string
+          status?: string
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          assigned_to?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          due_date?: string | null
+          group_id?: string
+          id?: string
+          priority?: string
+          status?: string
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       team_messages: {
         Row: {
           content: string
@@ -1311,6 +1935,75 @@ export type Database = {
           review_summary?: Json | null
           updated_at?: string
           url?: string
+        }
+        Relationships: []
+      }
+      user_insurance: {
+        Row: {
+          coverage_end_date: string | null
+          coverage_start_date: string
+          created_at: string | null
+          group_number: string | null
+          id: string
+          insurance_plan_id: string
+          policy_number: string
+          updated_at: string | null
+          user_id: string
+          verification_status: string | null
+        }
+        Insert: {
+          coverage_end_date?: string | null
+          coverage_start_date: string
+          created_at?: string | null
+          group_number?: string | null
+          id?: string
+          insurance_plan_id: string
+          policy_number: string
+          updated_at?: string | null
+          user_id: string
+          verification_status?: string | null
+        }
+        Update: {
+          coverage_end_date?: string | null
+          coverage_start_date?: string
+          created_at?: string | null
+          group_number?: string | null
+          id?: string
+          insurance_plan_id?: string
+          policy_number?: string
+          updated_at?: string | null
+          user_id?: string
+          verification_status?: string | null
+        }
+        Relationships: []
+      }
+      verification_requests: {
+        Row: {
+          created_at: string | null
+          documents: Json
+          id: string
+          request_type: string
+          status: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          documents?: Json
+          id?: string
+          request_type: string
+          status?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          documents?: Json
+          id?: string
+          request_type?: string
+          status?: string
+          updated_at?: string | null
+          user_id?: string
         }
         Relationships: []
       }
