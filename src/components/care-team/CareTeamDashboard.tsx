@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import CareTaskBoard from './CareTaskBoard';
-import { CareTeamChat } from '../care-team/CareTeamChat';
+import { CareTeamChat } from '../chat/CareTeamChat';
 
 interface TeamDetails {
   id: string;
@@ -26,7 +26,7 @@ interface TeamDetails {
 }
 
 const CareTeamDashboard = () => {
-  const params = useParams();
+  const params = useParams<{ id: string }>();
   const id = params.id;
   const [teamDetails, setTeamDetails] = useState<TeamDetails | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -145,9 +145,9 @@ const CareTeamDashboard = () => {
 
         <TabsContent value="chat" className="py-4">
           <div className="h-[600px]">
-            <CareTeamChat 
-              teamId={id || ''} 
-              onError={handleError}
+            <DirectMessageChat 
+              recipientId="team-member-1" 
+              onSendMessage={(message) => console.log("Team message sent:", message)}
             />
           </div>
         </TabsContent>

@@ -1,23 +1,29 @@
 
 import React from 'react';
 import { CareMetrics } from './components/analytics/CareMetrics';
-import { CareTeamChat } from './components/chat/CareTeamChat';
-import { createMockProfile } from './utils/supabaseHelpers';
+import { DirectMessageChat } from './components/chat/DirectMessageChat';
+import { createMockUserProfile } from './utils/mockDataHelper';
 import { toast } from './hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle } from './components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from './components/ui/avatar';
 import { WellnessDashboard } from './components/health-wellness/WellnessDashboard';
 import { Button } from './components/ui/button';
-import { Bell, Calendar, MessageSquare, User, Activity } from 'lucide-react';
+import { 
+  Bell, 
+  Calendar, 
+  MessageSquare, 
+  User, 
+  Activity, 
+  Home, 
+  Users, 
+  Settings 
+} from 'lucide-react';
+import { LegalDisclaimer } from './components/disclaimers/LegalDisclaimer';
 
 function App() {
   const handleError = (error: Error) => {
     console.error('Error:', error);
-    toast({
-      title: 'An error occurred',
-      description: error.message,
-      variant: 'destructive'
-    });
+    toast.error('An error occurred', error.message);
   };
 
   return (
@@ -78,6 +84,8 @@ function App() {
             <CareMetrics 
               groupId="group-1" 
             />
+
+            <LegalDisclaimer type="all" />
           </div>
           
           <div className="space-y-6">
@@ -89,9 +97,9 @@ function App() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="h-[calc(100%-64px)]">
-                <CareTeamChat 
-                  teamId="team-1" 
-                  onError={handleError} 
+                <DirectMessageChat 
+                  recipientId="user-2" 
+                  onSendMessage={(message) => console.log("Message sent:", message)}
                 />
               </CardContent>
             </Card>
@@ -125,6 +133,31 @@ function App() {
           </div>
         </div>
       </main>
+
+      <footer className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-950 border-t py-2 md:hidden">
+        <div className="container flex justify-around items-center">
+          <Button variant="ghost" size="icon" className="flex flex-col items-center gap-1">
+            <Home className="h-5 w-5" />
+            <span className="text-xs">Home</span>
+          </Button>
+          <Button variant="ghost" size="icon" className="flex flex-col items-center gap-1">
+            <Calendar className="h-5 w-5" />
+            <span className="text-xs">Schedule</span>
+          </Button>
+          <Button variant="ghost" size="icon" className="flex flex-col items-center gap-1">
+            <MessageSquare className="h-5 w-5" />
+            <span className="text-xs">Chat</span>
+          </Button>
+          <Button variant="ghost" size="icon" className="flex flex-col items-center gap-1">
+            <Users className="h-5 w-5" />
+            <span className="text-xs">Team</span>
+          </Button>
+          <Button variant="ghost" size="icon" className="flex flex-col items-center gap-1">
+            <Settings className="h-5 w-5" />
+            <span className="text-xs">Settings</span>
+          </Button>
+        </div>
+      </footer>
     </div>
   );
 }

@@ -1,8 +1,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { useUser } from '@/lib/hooks/use-user';
-import { createMockMessages } from '@/utils/mockDataHelper';
-import { Message } from '@/types/chat';
+import { createMockUserProfile, createMockMessages } from '@/utils/mockDataHelper';
+import { Message } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -20,9 +19,15 @@ export const DirectMessageChat: React.FC<DirectMessageChatProps> = ({
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const { user } = useUser();
   const [isLoading, setIsLoading] = useState(true);
   const [recipientName, setRecipientName] = useState<string>("Care Recipient");
+  
+  // Simulate a current user
+  const user = {
+    id: "user-1",
+    first_name: "John",
+    last_name: "Doe"
+  };
 
   useEffect(() => {
     const fetchMessages = async () => {
@@ -72,6 +77,7 @@ export const DirectMessageChat: React.FC<DirectMessageChatProps> = ({
       sender_id: user.id,
       created_at: new Date().toISOString(),
       sender: {
+        id: user.id,
         first_name: user.first_name,
         last_name: user.last_name
       },
