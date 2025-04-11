@@ -12,6 +12,17 @@ interface VitalSigns {
   oxygen_level?: number;
 }
 
+interface MedicalDeviceData {
+  id: string;
+  user_id: string;
+  device_type: string;
+  readings: VitalSigns;
+  recorded_at: string;
+  created_at: string;
+  updated_at: string;
+  group_id?: string;
+}
+
 export const VitalSignsMonitor = ({ groupId }: { groupId: string }) => {
   const [vitalSigns, setVitalSigns] = useState<VitalSigns>({});
   const { toast } = useToast();
@@ -26,14 +37,14 @@ export const VitalSignsMonitor = ({ groupId }: { groupId: string }) => {
           .eq('device_type', 'vital_signs')
           .order('recorded_at', { ascending: false })
           .limit(1)
-          .maybeSingle();
+          .single();
 
         if (error) {
           console.error('Error fetching vital signs:', error);
           return;
         }
 
-        if (data?.readings) {
+        if (data && data.readings) {
           setVitalSigns(data.readings as VitalSigns);
           checkVitalSigns(data.readings as VitalSigns);
         }
@@ -56,7 +67,7 @@ export const VitalSignsMonitor = ({ groupId }: { groupId: string }) => {
           filter: `group_id=eq.${groupId}`
         },
         (payload) => {
-          if (payload.new.device_type === 'vital_signs') {
+          if (payload.new.device_type === 'vital_signs' && payload.new.readings) {
             setVitalSigns(payload.new.readings as VitalSigns);
             checkVitalSigns(payload.new.readings as VitalSigns);
           }
@@ -67,7 +78,7 @@ export const VitalSignsMonitor = ({ groupId }: { groupId: string }) => {
     return () => {
       supabaseClient.removeChannel(channel);
     };
-  }, [groupId]);
+  }, [groupId, toast]);
 
   const checkVitalSigns = (vitals: VitalSigns) => {
     if (vitals.heart_rate && (vitals.heart_rate < 60 || vitals.heart_rate > 100)) {

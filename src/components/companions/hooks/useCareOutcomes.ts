@@ -25,17 +25,22 @@ export const useCareOutcomes = (meetingId: string) => {
     queryFn: async () => {
       if (!meetingId) return [];
       
-      const { data, error } = await supabaseClient
-        .from('care_outcome_metrics')
-        .select('*')
-        .eq('companion_meeting_id', meetingId);
-          
-      if (error) {
-        console.error("Error fetching care outcomes:", error);
+      try {
+        const { data, error } = await supabaseClient
+          .from('care_outcome_metrics')
+          .select('*')
+          .eq('companion_meeting_id', meetingId);
+            
+        if (error) {
+          console.error("Error fetching care outcomes:", error);
+          return [] as CareOutcomeMetric[];
+        }
+        
+        return data as CareOutcomeMetric[];
+      } catch (error) {
+        console.error("Exception fetching care outcomes:", error);
         return [] as CareOutcomeMetric[];
       }
-      
-      return data as CareOutcomeMetric[];
     },
     enabled: !!meetingId
   });

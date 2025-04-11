@@ -1,239 +1,271 @@
 
-import { useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Users, UserPlus, Search, UserX, Shield, UserCheck } from "lucide-react";
 import { supabaseClient } from "@/integrations/supabaseClient";
-import { UserPlus, UserRound, Check, X } from "lucide-react";
-import { mockConnection, mockSupabaseQuery } from "@/utils/supabaseHelpers";
+import { Connection } from "../checkins/social/SocialInteractions";
+import { transformConnectionData } from "@/utils/supabaseHelpers";
 
-interface Connection {
-  id: string;
-  requester_id: string;
-  recipient_id: string;
-  connection_type: 'carer' | 'pal';
-  status: string;
-  created_at: string;
-  updated_at: string;
-  requester?: {
-    first_name: string | null;
-    last_name: string | null;
-  };
-  recipient?: {
-    first_name: string | null;
-    last_name: string | null;
-  };
+interface ConnectionManagerProps {
+  userId: string;
 }
 
-export const ConnectionManager = () => {
+export const ConnectionManager = ({ userId }: ConnectionManagerProps) => {
   const [connections, setConnections] = useState<Connection[]>([]);
-  const [pendingRequests, setPendingRequests] = useState<Connection[]>([]);
-  const { toast } = useToast();
+  const [pendingConnections, setPendingConnections] = useState<Connection[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchConnections();
-    const channel = subscribeToConnections();
-    return () => {
-      supabaseClient.removeChannel(channel);
-    };
-  }, []);
-
-  const fetchConnections = async () => {
-    try {
-      const { data: { user } } = await supabaseClient.auth.getUser();
-      if (!user) return;
-
-      // Use real data if available, otherwise use mock data
+    const fetchConnections = async () => {
       try {
+        setLoading(true);
+        
         const { data, error } = await supabaseClient
           .from('care_connections')
-          .select('*')
-          .or(`recipient_id.eq.${user.id},requester_id.eq.${user.id}`);
+          .select(`
+            id,
+            requester_id,
+            recipient_id,
+            connection_type,
+            status,
+            created_at,
+            updated_at
+          `)
+          .or(`requester_id.eq.${userId},recipient_id.eq.${userId}`)
+          .order('created_at', { ascending: false });
 
-        if (error) throw error;
-
-        const activeConnections = data.filter(conn => conn.status === 'accepted');
-        const pending = data.filter(conn => conn.status === 'pending');
-
-        setConnections(activeConnections);
-        setPendingRequests(pending);
-        return;
-      } catch (error) {
-        console.warn('Falling back to mock data for connections');
-        
-        // Fall back to mock data if real DB fails
-        const { data, error } = await mockSupabaseQuery<Connection>(
-          'care_connections',
-          [
-            mockConnection({ status: 'accepted', connection_type: 'carer' }),
-            mockConnection({ status: 'accepted', connection_type: 'pal' }),
-            mockConnection({ status: 'pending', connection_type: 'carer' })
-          ]
-        );
-
-        if (error) throw error;
-        
-        const activeConnections = data.filter(conn => conn.status === 'accepted');
-        const pending = data.filter(conn => conn.status === 'pending');
-
-        setConnections(activeConnections);
-        setPendingRequests(pending);
-      }
-    } catch (error) {
-      console.error('Error fetching connections:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load connections",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const subscribeToConnections = () => {
-    return supabaseClient
-      .channel('care_connections')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'care_connections'
-        },
-        (payload) => {
-          console.log('Connection update:', payload);
-          fetchConnections();
+        if (error) {
+          console.error("Error fetching connections:", error);
+          return;
         }
-      )
-      .subscribe();
-  };
 
-  const handleConnectionRequest = async (recipientId: string, type: 'carer' | 'pal') => {
-    try {
-      const { data: { user } } = await supabaseClient.auth.getUser();
-      if (!user) return;
+        if (data) {
+          const transformedData = transformConnectionData(data);
+          const active = transformedData.filter(c => c.status === 'active');
+          const pending = transformedData.filter(c => c.status === 'pending');
+          
+          setConnections(active);
+          setPendingConnections(pending);
+        }
+      } catch (e) {
+        const error = e as Error;
+        console.error("Error in connections fetch:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-      const { error } = await supabaseClient
-        .from('care_connections')
-        .insert({
-          requester_id: user.id,
-          recipient_id: recipientId,
-          connection_type: type,
-        });
-
-      if (error) throw error;
-
-      toast({
-        title: "Success",
-        description: "Connection request sent",
-      });
-    } catch (error) {
-      console.error('Error sending connection request:', error);
-      toast({
-        title: "Error",
-        description: "Failed to send connection request",
-        variant: "destructive",
-      });
+    if (userId) {
+      fetchConnections();
     }
-  };
+  }, [userId]);
 
-  const handleRequestResponse = async (connectionId: string, accept: boolean) => {
+  const filteredConnections = connections.filter(connection => {
+    const requesterName = `${connection.requester?.first_name} ${connection.requester?.last_name}`.toLowerCase();
+    const recipientName = `${connection.recipient?.first_name} ${connection.recipient?.last_name}`.toLowerCase();
+    const connectionType = connection.connection_type.toLowerCase();
+    const query = searchQuery.toLowerCase();
+    
+    return requesterName.includes(query) || 
+           recipientName.includes(query) || 
+           connectionType.includes(query);
+  });
+
+  const acceptConnection = async (connectionId: string) => {
     try {
       const { error } = await supabaseClient
         .from('care_connections')
-        .update({ status: accept ? 'accepted' : 'rejected' })
+        .update({ status: 'active' })
         .eq('id', connectionId);
 
       if (error) throw error;
 
-      toast({
-        title: "Success",
-        description: `Connection request ${accept ? 'accepted' : 'rejected'}`,
-      });
+      // Update local state
+      setPendingConnections(prev => prev.filter(c => c.id !== connectionId));
+      const updatedConnection = pendingConnections.find(c => c.id === connectionId);
+      if (updatedConnection) {
+        const updated = { ...updatedConnection, status: 'active' };
+        setConnections(prev => [...prev, updated]);
+      }
     } catch (error) {
-      console.error('Error responding to connection request:', error);
-      toast({
-        title: "Error",
-        description: "Failed to respond to connection request",
-        variant: "destructive",
-      });
+      console.error("Error accepting connection:", error);
+    }
+  };
+
+  const rejectConnection = async (connectionId: string) => {
+    try {
+      const { error } = await supabaseClient
+        .from('care_connections')
+        .update({ status: 'declined' })
+        .eq('id', connectionId);
+
+      if (error) throw error;
+
+      // Update local state
+      setPendingConnections(prev => prev.filter(c => c.id !== connectionId));
+    } catch (error) {
+      console.error("Error rejecting connection:", error);
     }
   };
 
   return (
-    <div className="space-y-6">
-      {pendingRequests.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg font-semibold">Pending Requests</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {pendingRequests.map((request) => (
-                <div key={request.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                  <div>
-                    <p className="font-medium">
-                      {request.requester?.first_name} {request.requester?.last_name}
-                    </p>
-                    <p className="text-sm text-gray-500">
-                      Wants to connect as a {request.connection_type}
-                    </p>
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Users className="h-5 w-5" />
+            <span>Connections</span>
+          </div>
+          <Button size="sm">
+            <UserPlus className="h-4 w-4 mr-2" />
+            Add New
+          </Button>
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-6">
+          {pendingConnections.length > 0 && (
+            <div>
+              <h3 className="text-sm font-medium mb-3">Pending Requests</h3>
+              <div className="space-y-3">
+                {pendingConnections.map(connection => (
+                  <div 
+                    key={connection.id} 
+                    className="flex items-center justify-between p-3 bg-muted/50 rounded-lg"
+                  >
+                    <div className="flex items-center gap-3">
+                      <Avatar>
+                        <AvatarImage src={`/avatars/user-${Math.floor(Math.random() * 5) + 1}.png`} />
+                        <AvatarFallback>
+                          {connection.requester_id === userId 
+                            ? (connection.recipient?.first_name?.[0] || 'U') 
+                            : (connection.requester?.first_name?.[0] || 'U')}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <p className="font-medium">
+                          {connection.requester_id === userId 
+                            ? `${connection.recipient?.first_name || 'User'} ${connection.recipient?.last_name || ''}` 
+                            : `${connection.requester?.first_name || 'User'} ${connection.requester?.last_name || ''}`}
+                        </p>
+                        <p className="text-sm text-muted-foreground capitalize">
+                          {connection.connection_type}
+                        </p>
+                      </div>
+                    </div>
+                    
+                    {connection.recipient_id === userId && (
+                      <div className="flex gap-2">
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={() => rejectConnection(connection.id)}
+                        >
+                          <UserX className="h-4 w-4 mr-1" />
+                          Decline
+                        </Button>
+                        <Button 
+                          size="sm"
+                          onClick={() => acceptConnection(connection.id)}
+                        >
+                          <UserCheck className="h-4 w-4 mr-1" />
+                          Accept
+                        </Button>
+                      </div>
+                    )}
+                    
+                    {connection.requester_id === userId && (
+                      <Badge>Awaiting Response</Badge>
+                    )}
                   </div>
-                  <div className="flex gap-2">
-                    <Button
-                      onClick={() => handleRequestResponse(request.id, true)}
-                      variant="outline"
-                      size="sm"
-                      className="text-green-600"
-                    >
-                      <Check className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      onClick={() => handleRequestResponse(request.id, false)}
-                      variant="outline"
-                      size="sm"
-                      className="text-red-600"
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
+                ))}
+              </div>
+            </div>
+          )}
+          
+          <div className="relative mb-4">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Input
+              placeholder="Search connections..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+          
+          {loading ? (
+            <div className="space-y-4">
+              {[1, 2, 3].map(i => (
+                <div key={i} className="flex items-center gap-4 animate-pulse">
+                  <div className="rounded-full bg-gray-200 h-10 w-10"></div>
+                  <div className="flex-1 space-y-2">
+                    <div className="h-4 bg-gray-200 rounded w-1/4"></div>
+                    <div className="h-3 bg-gray-200 rounded w-1/3"></div>
                   </div>
                 </div>
               ))}
             </div>
-          </CardContent>
-        </Card>
-      )}
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg font-semibold">Active Connections</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {connections.map((connection) => (
-              <div key={connection.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                <div>
-                  <p className="font-medium">
-                    {connection.recipient?.first_name} {connection.recipient?.last_name}
-                  </p>
-                  <p className="text-sm text-gray-500">
-                    {connection.connection_type === 'carer' ? 'Caregiver' : 'Companion'}
-                  </p>
+          ) : filteredConnections.length === 0 ? (
+            <div className="text-center py-8">
+              <Users className="h-12 w-12 mx-auto text-gray-400 mb-3" />
+              <h3 className="text-lg font-medium mb-1">No connections found</h3>
+              <p className="text-gray-500 mb-4">
+                {searchQuery ? "Try a different search term" : "Start by adding new connections"}
+              </p>
+              <Button>
+                <UserPlus className="h-4 w-4 mr-2" />
+                Add New Connection
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {filteredConnections.map(connection => (
+                <div 
+                  key={connection.id} 
+                  className="flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg"
+                >
+                  <div className="flex items-center gap-3">
+                    <Avatar>
+                      <AvatarImage src={`/avatars/user-${Math.floor(Math.random() * 5) + 1}.png`} />
+                      <AvatarFallback>
+                        {connection.requester_id === userId 
+                          ? (connection.recipient?.first_name?.[0] || 'U') 
+                          : (connection.requester?.first_name?.[0] || 'U')}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <p className="font-medium">
+                        {connection.requester_id === userId 
+                          ? `${connection.recipient?.first_name || 'User'} ${connection.recipient?.last_name || ''}` 
+                          : `${connection.requester?.first_name || 'User'} ${connection.requester?.last_name || ''}`}
+                      </p>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline" className="capitalize">
+                          {connection.connection_type}
+                        </Badge>
+                        {connection.connection_type === 'carer' && (
+                          <Badge variant="outline" className="bg-blue-50">
+                            <Shield className="h-3 w-3 mr-1" />
+                            Verified
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  <Button variant="ghost" size="sm">
+                    Message
+                  </Button>
                 </div>
-                <div className="flex items-center gap-2">
-                  {connection.connection_type === 'carer' ? (
-                    <UserPlus className="h-5 w-5 text-primary-600" />
-                  ) : (
-                    <UserRound className="h-5 w-5 text-primary-600" />
-                  )}
-                </div>
-              </div>
-            ))}
-            {connections.length === 0 && (
-              <p className="text-center text-gray-500 py-4">No active connections</p>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-    </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </CardContent>
+    </Card>
   );
 };

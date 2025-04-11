@@ -30,12 +30,25 @@ export const CareCircleManager = ({ groupId }: CareCircleManagerProps) => {
 
     try {
       setIsLoading(true);
+      
+      // Check if table exists first
+      const { error: tableCheckError } = await supabaseClient
+        .from('care_circle_invites')
+        .select('id')
+        .limit(1);
+      
+      if (tableCheckError) {
+        console.error("Error checking table:", tableCheckError);
+        throw new Error("Care circle invites table may not exist");
+      }
+      
       const { error } = await supabaseClient
         .from("care_circle_invites")
         .insert({
           group_id: groupId,
           email: email.trim(),
           role: role,
+          status: 'pending'
         });
 
       if (error) throw error;
@@ -49,7 +62,7 @@ export const CareCircleManager = ({ groupId }: CareCircleManagerProps) => {
       console.error("Error sending invite:", error);
       toast({
         title: "Error",
-        description: "Failed to send invitation",
+        description: "Failed to send invitation. Please try again later.",
         variant: "destructive",
       });
     } finally {

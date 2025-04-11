@@ -1,262 +1,165 @@
 
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Users, Phone, Video, PersonStanding, UserPlus, UserRound, Check, X } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { useToast } from "@/hooks/use-toast";
-import { useEffect, useState } from "react";
+import { Calendar, UserPlus, Users } from "lucide-react";
 import { supabaseClient } from "@/integrations/supabaseClient";
-import { mockConnection, mockSupabaseQuery } from "@/utils/supabaseHelpers";
+import { transformConnectionData } from "@/utils/supabaseHelpers";
 
-interface SocialInteractionsProps {
-  interactions: string[];
-  onInteractionAdd: (type: string) => void;
-}
-
-interface Connection {
+export interface Connection {
   id: string;
+  requester_id: string;
+  recipient_id: string;
   connection_type: 'carer' | 'pal';
   status: string;
   created_at: string;
   updated_at: string;
-  requester_id: string;
-  recipient_id: string;
   requester?: {
-    first_name: string | null;
-    last_name: string | null;
+    first_name: string;
+    last_name: string;
   };
   recipient?: {
-    first_name: string | null;
-    last_name: string | null;
+    first_name: string;
+    last_name: string;
   };
 }
 
-export const SocialInteractions = ({ interactions, onInteractionAdd }: SocialInteractionsProps) => {
-  const [recentConnections, setRecentConnections] = useState<Connection[]>([]);
-  const [suggestedConnections, setSuggestedConnections] = useState<any[]>([]);
-  const { toast } = useToast();
+interface SocialInteractionsProps {
+  userId: string;
+}
 
-  const interactionTypes = [
-    { type: 'in-person', icon: PersonStanding, label: 'In-Person Visit' },
-    { type: 'phone', icon: Phone, label: 'Phone Call' },
-    { type: 'video', icon: Video, label: 'Video Call' },
-    { type: 'group', icon: Users, label: 'Group Activity' },
-  ];
+export const SocialInteractions = ({ userId }: SocialInteractionsProps) => {
+  const [connections, setConnections] = useState<Connection[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchRecentConnections();
-    fetchSuggestedConnections();
-    subscribeToConnectionUpdates();
-  }, []);
-
-  const fetchRecentConnections = async () => {
-    try {
-      const { data: { user } } = await supabaseClient.auth.getUser();
-      if (!user) return;
-
-      // Try to use real data first
+    const fetchConnections = async () => {
       try {
+        setLoading(true);
+        
         const { data, error } = await supabaseClient
           .from('care_connections')
-          .select('*')
-          .or(`recipient_id.eq.${user.id},requester_id.eq.${user.id}`)
-          .limit(3);
-          
-        if (error) throw error;
-        setRecentConnections(data);
-        return;
-      } catch (err) {
-        console.warn('Falling back to mock data for connections');
-        
-        // Use mock data for development since the real table might not be available yet
-        const { data } = await mockSupabaseQuery<Connection>(
-          'care_connections',
-          [
-            mockConnection({ status: 'accepted', connection_type: 'carer' }),
-            mockConnection({ status: 'pending', connection_type: 'pal' })
-          ]
-        );
-        setRecentConnections(data);
-      }
-    } catch (error) {
-      console.error('Error fetching recent connections:', error);
-    }
-  };
+          .select(`
+            id,
+            requester_id,
+            recipient_id,
+            connection_type,
+            status,
+            created_at,
+            updated_at
+          `)
+          .or(`requester_id.eq.${userId},recipient_id.eq.${userId}`)
+          .order('created_at', { ascending: false })
+          .limit(5);
 
-  const fetchSuggestedConnections = async () => {
-    try {
-      const { data: { user } } = await supabaseClient.auth.getUser();
-      if (!user) return;
-
-      // Mock suggested connections
-      const mockSuggestions = [
-        { id: '1', first_name: 'John', last_name: 'Doe', user_type: 'professional_caregiver' },
-        { id: '2', first_name: 'Jane', last_name: 'Smith', user_type: 'companion' },
-        { id: '3', first_name: 'Alex', last_name: 'Johnson', user_type: 'family_member' }
-      ];
-      
-      setSuggestedConnections(mockSuggestions);
-    } catch (error) {
-      console.error('Error fetching suggested connections:', error);
-    }
-  };
-
-  const subscribeToConnectionUpdates = () => {
-    const channel = supabaseClient
-      .channel('care_connections_changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'care_connections'
-        },
-        (payload) => {
-          console.log('Connection update:', payload);
-          fetchRecentConnections();
+        if (error) {
+          console.error("Error fetching connections:", error);
+          return;
         }
-      )
-      .subscribe();
 
-    return () => {
-      supabaseClient.removeChannel(channel);
+        if (data) {
+          const transformedData = transformConnectionData(data);
+          setConnections(transformedData);
+        }
+      } catch (error) {
+        console.error("Error in connections fetch:", error);
+      } finally {
+        setLoading(false);
+      }
     };
+
+    if (userId) {
+      fetchConnections();
+    }
+  }, [userId]);
+
+  const getInitials = (name: string = "") => {
+    return name.charAt(0).toUpperCase();
   };
 
-  const sendConnectionRequest = async (recipientId: string, type: 'carer' | 'pal') => {
-    try {
-      const { data: { user } } = await supabaseClient.auth.getUser();
-      if (!user) return;
-
-      const { error } = await supabaseClient
-        .from('care_connections')
-        .insert({
-          requester_id: user.id,
-          recipient_id: recipientId,
-          connection_type: type,
-        });
-
-      if (error) throw error;
-
-      toast({
-        title: "Success",
-        description: `${type === 'carer' ? 'Caregiver' : 'Companion'} connection request sent`,
-      });
-    } catch (error) {
-      console.error('Error sending connection request:', error);
-      toast({
-        title: "Error",
-        description: "Failed to send connection request",
-        variant: "destructive",
-      });
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "active":
+        return "bg-green-500";
+      case "pending":
+        return "bg-yellow-500";
+      case "declined":
+        return "bg-red-500";
+      default:
+        return "bg-gray-500";
     }
   };
 
   return (
-    <Card>
+    <Card className="w-full">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Users className="h-5 w-5" />
-          Social Interactions
+          Social Connections
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-6">
-        <div className="grid grid-cols-2 gap-2">
-          {interactionTypes.map((interaction) => (
-            <Button
-              key={interaction.type}
-              variant="outline"
-              className="flex items-center gap-2"
-              onClick={() => onInteractionAdd(interaction.type)}
-            >
-              <interaction.icon className="h-4 w-4" />
-              {interaction.label}
-            </Button>
-          ))}
-        </div>
-
-        {recentConnections.length > 0 && (
-          <div className="space-y-2">
-            <h4 className="text-sm font-medium">Recent Connections</h4>
-            <div className="space-y-2">
-              {recentConnections.map((connection) => (
-                <div
-                  key={connection.id}
-                  className="flex items-center justify-between p-2 bg-gray-50 rounded-lg"
-                >
-                  <div className="flex items-center gap-2">
-                    {connection.connection_type === 'carer' ? (
-                      <UserPlus className="h-4 w-4 text-primary-600" />
-                    ) : (
-                      <UserRound className="h-4 w-4 text-primary-600" />
-                    )}
-                    <span className="text-sm">
-                      {connection.recipient?.first_name} {connection.recipient?.last_name}
+      <CardContent>
+        {loading ? (
+          <div className="flex justify-center p-4">
+            <div className="animate-pulse flex space-x-4">
+              <div className="rounded-full bg-gray-200 h-10 w-10"></div>
+              <div className="flex-1 space-y-2 py-1">
+                <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                <div className="h-4 bg-gray-200 rounded w-5/6"></div>
+              </div>
+            </div>
+          </div>
+        ) : connections.length === 0 ? (
+          <div className="text-center py-4">
+            <p className="text-gray-500 mb-2">No connections found</p>
+            <div className="flex justify-center">
+              <button className="flex items-center gap-1 text-primary hover:underline">
+                <UserPlus className="h-4 w-4" />
+                Add new connection
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {connections.map((connection) => (
+              <div key={connection.id} className="flex items-center gap-4 p-2 hover:bg-gray-50 rounded-lg">
+                <Avatar>
+                  <AvatarImage src={`/avatars/user-${Math.floor(Math.random() * 5) + 1}.png`} />
+                  <AvatarFallback>
+                    {getInitials(connection.requester_id === userId 
+                      ? (connection.recipient?.first_name || 'U')
+                      : (connection.requester?.first_name || 'U'))}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1">
+                  <div className="flex justify-between">
+                    <div>
+                      <p className="font-medium">
+                        {connection.requester_id === userId 
+                          ? `${connection.recipient?.first_name || 'User'} ${connection.recipient?.last_name || ''}`
+                          : `${connection.requester?.first_name || 'User'} ${connection.requester?.last_name || ''}`}
+                      </p>
+                      <p className="text-sm text-gray-500 capitalize">
+                        {connection.connection_type}
+                      </p>
+                    </div>
+                    <Badge variant={
+                      connection.status === "active" ? "success" : 
+                      connection.status === "pending" ? "secondary" : "destructive"
+                    }>
+                      {connection.status}
+                    </Badge>
+                  </div>
+                  <div className="flex items-center gap-1 mt-1 text-xs text-gray-500">
+                    <Calendar className="h-3 w-3" />
+                    <span>
+                      Connected {new Date(connection.created_at).toLocaleDateString()}
                     </span>
                   </div>
-                  <Badge variant={connection.status === 'accepted' ? 'default' : 'secondary'}>
-                    {connection.status}
-                  </Badge>
                 </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {suggestedConnections.length > 0 && (
-          <div className="space-y-2">
-            <h4 className="text-sm font-medium">Suggested Connections</h4>
-            <div className="space-y-2">
-              {suggestedConnections.map((profile) => (
-                <div
-                  key={profile.id}
-                  className="flex items-center justify-between p-2 bg-gray-50 rounded-lg"
-                >
-                  <div>
-                    <p className="text-sm font-medium">
-                      {profile.first_name} {profile.last_name}
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      {profile.user_type === 'professional_caregiver' ? 'Caregiver' : 'Companion'}
-                    </p>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="text-primary-600"
-                      onClick={() => sendConnectionRequest(profile.id, 'carer')}
-                    >
-                      <UserPlus className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="text-primary-600"
-                      onClick={() => sendConnectionRequest(profile.id, 'pal')}
-                    >
-                      <UserRound className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {interactions.length > 0 && (
-          <div className="space-y-2">
-            <h4 className="text-sm font-medium">Today's Interactions</h4>
-            <div className="space-y-1">
-              {interactions.map((interaction, index) => (
-                <div
-                  key={index}
-                  className="text-sm text-gray-600 bg-gray-50 p-2 rounded-lg"
-                >
-                  {interaction}
-                </div>
-              ))}
-            </div>
+              </div>
+            ))}
           </div>
         )}
       </CardContent>

@@ -9,3 +9,27 @@ export const supabaseClient = createClient<ExtendedDatabase>(
   SUPABASE_URL,
   SUPABASE_PUBLISHABLE_KEY
 );
+
+// Export some helper functions for better error handling
+export const handleSupabaseError = (error: any) => {
+  if (error) {
+    console.error('Supabase error:', error);
+    return error.message || 'An error occurred with the database operation';
+  }
+  return null;
+};
+
+// Function to check if a table exists
+export const checkTableExists = async (tableName: string) => {
+  try {
+    const { data, error } = await supabaseClient
+      .from(tableName)
+      .select('id')
+      .limit(1);
+    
+    return !error;
+  } catch (error) {
+    console.error(`Error checking if table ${tableName} exists:`, error);
+    return false;
+  }
+};
