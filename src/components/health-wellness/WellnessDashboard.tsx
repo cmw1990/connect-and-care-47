@@ -1,303 +1,238 @@
-import React from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from '@/components/ui/card';
+
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { useToast } from '@/components/ui/use-toast';
-import { useUser } from '@supabase/auth-helpers-react';
-import { healthService } from '@/lib/supabase/health-service';
-import { useTranslation } from 'react-i18next';
+import { ChevronRight, Activity, Heart, Moon, Brain, TrendingUp, Calendar } from 'lucide-react';
+import { HealthPredictionService } from '@/services/mockServices';
+import { useUser } from '@/lib/hooks/use-user';
 import { SleepTracker } from './SleepTracker';
-import { ActivityTracker } from './ActivityTracker';
-import { MoodSupport } from '@/pages/MoodSupport';
-import { MedicationManager } from './MedicationManager';
-import { SymptomTracker } from './SymptomTracker';
-import { VitalSignsMonitor } from '../health/VitalSignsMonitor';
-import {
-  Heart,
-  Brain,
-  Activity,
-  Moon,
-  Pill,
-  Thermometer,
-  Smile,
-  BarChart4,
-  Calendar,
-  Clock,
-  AlertCircle,
-  TrendingUp,
-  Award,
-} from 'lucide-react';
 
-interface WellnessScore {
-  overall: number;
-  sleep: number;
-  activity: number;
-  mood: number;
-  medication: number;
-  vitals: number;
+export interface WellnessDashboardProps {
+  userId?: string;
 }
 
-interface WellnessTrend {
-  date: string;
-  score: number;
-}
+export const WellnessDashboard: React.FC<WellnessDashboardProps> = ({ userId }) => {
+  const { user } = useUser();
+  const [wellnessScore, setWellnessScore] = useState<number>(0);
+  const [wellnessTrends, setWellnessTrends] = useState<{date: string; score: number}[]>([]);
+  const [wellnessInsights, setWellnessInsights] = useState<string[]>([]);
+  const [wellnessGoals, setWellnessGoals] = useState<{id: string; title: string; progress: number}[]>([]);
+  const [loading, setLoading] = useState(true);
 
-export const WellnessDashboard = () => {
-  const { t } = useTranslation();
-  const { toast } = useToast();
-  const user = useUser();
-  const [activeTab, setActiveTab] = React.useState('overview');
-  const [wellnessScore, setWellnessScore] = React.useState<WellnessScore>({
-    overall: 0,
-    sleep: 0,
-    activity: 0,
-    mood: 0,
-    medication: 0,
-    vitals: 0,
-  });
-  const [trends, setTrends] = React.useState<WellnessTrend[]>([]);
-  const [insights, setInsights] = React.useState<string[]>([]);
-  const [goals, setGoals] = React.useState<any[]>([]);
-  const [loading, setLoading] = React.useState(true);
+  useEffect(() => {
+    const fetchWellnessData = async () => {
+      try {
+        const actualUserId = userId || user?.id;
+        if (!actualUserId) return;
 
-  React.useEffect(() => {
-    if (user) {
-      loadWellnessData();
-    }
-  }, [user]);
+        // In a real application, this would fetch from your database
+        // Using mock data here
+        
+        // Mock wellness score
+        setWellnessScore(85);
+        
+        // Mock wellness trends for the past week
+        setWellnessTrends([
+          { date: '2023-01-01', score: 80 },
+          { date: '2023-01-02', score: 82 },
+          { date: '2023-01-03', score: 85 },
+          { date: '2023-01-04', score: 83 },
+          { date: '2023-01-05', score: 84 },
+          { date: '2023-01-06', score: 86 },
+          { date: '2023-01-07', score: 88 },
+        ]);
+        
+        // Mock wellness insights
+        setWellnessInsights([
+          'Your sleep patterns have improved this week',
+          'Try to increase your physical activity',
+          'Your stress levels have decreased significantly',
+        ]);
+        
+        // Mock wellness goals
+        setWellnessGoals([
+          { id: '1', title: 'Improve sleep quality', progress: 70 },
+          { id: '2', title: 'Increase physical activity', progress: 40 },
+          { id: '3', title: 'Reduce stress levels', progress: 60 },
+        ]);
+        
+        setLoading(false);
+      } catch (error) {
+        console.error('Error fetching wellness data:', error);
+        setLoading(false);
+      }
+    };
 
-  const loadWellnessData = async () => {
-    try {
-      setLoading(true);
-      const [scoreData, trendsData, insightsData, goalsData] = await Promise.all([
-        healthService.getWellnessScore(user!.id),
-        healthService.getWellnessTrends(user!.id),
-        healthService.getWellnessInsights(user!.id),
-        healthService.getWellnessGoals(user!.id)
-      ]);
+    fetchWellnessData();
+  }, [userId, user]);
 
-      setWellnessScore(scoreData);
-      setTrends(trendsData);
-      setInsights(insightsData);
-      setGoals(goalsData);
-    } catch (error) {
-      console.error('Error loading wellness data:', error);
-      toast({
-        title: t('error.loadingWellnessData'),
-        description: t('error.tryAgainLater'),
-        variant: 'destructive',
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Format the data for the trends chart
+  const formattedTrends = wellnessTrends.map(trend => ({
+    date: new Date(trend.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+    score: trend.score,
+  }));
 
-  const getScoreColor = (score: number) => {
-    if (score >= 80) return 'text-green-500';
-    if (score >= 60) return 'text-yellow-500';
-    return 'text-red-500';
-  };
+  const vitalSignsData = [
+    { name: 'Resting', heart: 72, oxygen: 98 },
+    { name: 'Morning', heart: 75, oxygen: 97 },
+    { name: 'Afternoon', heart: 80, oxygen: 96 },
+    { name: 'Evening', heart: 78, oxygen: 97 },
+  ];
 
-  const renderOverview = () => (
-    <div className="space-y-4">
-      {/* Wellness Score */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center justify-between">
-            <span>Overall Wellness Score</span>
-            <span className={getScoreColor(wellnessScore.overall)}>
-              {wellnessScore.overall}%
-            </span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="flex items-center">
-                  <Moon className="h-4 w-4 mr-2" />
-                  Sleep
-                </span>
-                <span className={getScoreColor(wellnessScore.sleep)}>
-                  {wellnessScore.sleep}%
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="flex items-center">
-                  <Activity className="h-4 w-4 mr-2" />
-                  Activity
-                </span>
-                <span className={getScoreColor(wellnessScore.activity)}>
-                  {wellnessScore.activity}%
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="flex items-center">
-                  <Smile className="h-4 w-4 mr-2" />
-                  Mood
-                </span>
-                <span className={getScoreColor(wellnessScore.mood)}>
-                  {wellnessScore.mood}%
-                </span>
-              </div>
+  if (loading) {
+    return (
+      <div className="space-y-4">
+        <Card>
+          <CardHeader>
+            <CardTitle>Wellness Dashboard</CardTitle>
+            <CardDescription>Loading your wellness data...</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-center h-40">
+              <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
             </div>
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="flex items-center">
-                  <Pill className="h-4 w-4 mr-2" />
-                  Medication
-                </span>
-                <span className={getScoreColor(wellnessScore.medication)}>
-                  {wellnessScore.medication}%
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="flex items-center">
-                  <Heart className="h-4 w-4 mr-2" />
-                  Vitals
-                </span>
-                <span className={getScoreColor(wellnessScore.vitals)}>
-                  {wellnessScore.vitals}%
-                </span>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* AI Insights */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center">
-            <Brain className="h-5 w-5 mr-2" />
-            AI Wellness Insights
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ScrollArea className="h-[200px]">
-            <div className="space-y-3">
-              {insights.map((insight, index) => (
-                <motion.div
-                  key={index}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.1 }}
-                  className="flex items-start space-x-3 p-3 bg-muted rounded-lg"
-                >
-                  <TrendingUp className="h-5 w-5 text-primary" />
-                  <p className="text-sm">{insight}</p>
-                </motion.div>
-              ))}
-            </div>
-          </ScrollArea>
-        </CardContent>
-      </Card>
-
-      {/* Wellness Goals */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center">
-            <Award className="h-5 w-5 mr-2" />
-            Wellness Goals
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            {goals.map((goal, index) => (
-              <div
-                key={index}
-                className="flex items-center justify-between p-3 bg-muted rounded-lg"
-              >
-                <div className="flex items-center space-x-3">
-                  <div className={`p-2 rounded-full ${
-                    goal.completed ? 'bg-green-100' : 'bg-blue-100'
-                  }`}>
-                    {goal.icon}
-                  </div>
-                  <div>
-                    <p className="font-medium">{goal.title}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {goal.description}
-                    </p>
-                  </div>
-                </div>
-                <Button
-                  variant={goal.completed ? "ghost" : "default"}
-                  size="sm"
-                  disabled={goal.completed}
-                >
-                  {goal.completed ? 'Completed' : 'Start'}
-                </Button>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-4">
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid grid-cols-6 gap-4">
-          <TabsTrigger value="overview" className="flex flex-col items-center p-3">
-            <BarChart4 className="h-5 w-5" />
-            <span className="mt-1">Overview</span>
-          </TabsTrigger>
-          <TabsTrigger value="sleep" className="flex flex-col items-center p-3">
-            <Moon className="h-5 w-5" />
-            <span className="mt-1">Sleep</span>
-          </TabsTrigger>
-          <TabsTrigger value="activity" className="flex flex-col items-center p-3">
-            <Activity className="h-5 w-5" />
-            <span className="mt-1">Activity</span>
-          </TabsTrigger>
-          <TabsTrigger value="mood" className="flex flex-col items-center p-3">
-            <Smile className="h-5 w-5" />
-            <span className="mt-1">Mood</span>
-          </TabsTrigger>
-          <TabsTrigger value="medication" className="flex flex-col items-center p-3">
-            <Pill className="h-5 w-5" />
-            <span className="mt-1">Meds</span>
-          </TabsTrigger>
-          <TabsTrigger value="vitals" className="flex flex-col items-center p-3">
-            <Heart className="h-5 w-5" />
-            <span className="mt-1">Vitals</span>
-          </TabsTrigger>
-        </TabsList>
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Wellness Score Card */}
+        <Card className="col-span-1 md:col-span-2 lg:col-span-1">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Heart className="h-5 w-5 text-red-500" />
+              Wellness Score
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-5xl font-bold text-center">{wellnessScore}</div>
+            <div className="text-sm text-center text-muted-foreground mt-2">
+              {wellnessScore > 80 ? 'Excellent' : wellnessScore > 60 ? 'Good' : 'Needs improvement'}
+            </div>
+            <div className="mt-4">
+              <Button variant="outline" size="sm" className="w-full">
+                View Details <ChevronRight className="ml-2 h-4 w-4" />
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
 
-        <TabsContent value="overview" className="mt-4">
-          {renderOverview()}
-        </TabsContent>
+        {/* Vital Signs Card */}
+        <Card className="col-span-1 lg:col-span-3">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Activity className="h-5 w-5 text-blue-500" />
+              Vital Signs
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[120px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={vitalSignsData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" />
+                  <YAxis yAxisId="left" orientation="left" domain={[60, 100]} />
+                  <YAxis yAxisId="right" orientation="right" domain={[90, 100]} />
+                  <Tooltip />
+                  <Legend />
+                  <Bar yAxisId="left" dataKey="heart" name="Heart Rate" fill="#ef4444" />
+                  <Bar yAxisId="right" dataKey="oxygen" name="Oxygen %" fill="#3b82f6" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
-        <TabsContent value="sleep" className="mt-4">
-          <SleepTracker />
-        </TabsContent>
+      {/* Sleep Tracker Section */}
+      <SleepTracker />
 
-        <TabsContent value="activity" className="mt-4">
-          <ActivityTracker />
-        </TabsContent>
+      {/* Wellness Trends Chart */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base flex items-center gap-2">
+            <TrendingUp className="h-5 w-5 text-green-500" />
+            Wellness Trends
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="h-[250px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={formattedTrends}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="date" />
+                <YAxis domain={[0, 100]} />
+                <Tooltip />
+                <Line 
+                  type="monotone" 
+                  dataKey="score" 
+                  stroke="#2563eb" 
+                  strokeWidth={2}
+                  dot={{ r: 4 }}
+                  activeDot={{ r: 6 }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </CardContent>
+      </Card>
 
-        <TabsContent value="mood" className="mt-4">
-          <MoodSupport />
-        </TabsContent>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Wellness Insights */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Brain className="h-5 w-5 text-purple-500" />
+              Wellness Insights
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ul className="space-y-2">
+              {wellnessInsights.map((insight, index) => (
+                <li key={index} className="flex items-start gap-2 py-2 border-b last:border-0 text-sm">
+                  <div className="h-5 w-5 rounded-full bg-purple-100 dark:bg-purple-900 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <span className="text-purple-600 dark:text-purple-400 text-xs">{index + 1}</span>
+                  </div>
+                  <span>{insight}</span>
+                </li>
+              ))}
+            </ul>
+          </CardContent>
+        </Card>
 
-        <TabsContent value="medication" className="mt-4">
-          <MedicationManager />
-        </TabsContent>
-
-        <TabsContent value="vitals" className="mt-4">
-          <VitalSignsMonitor groupId={user?.id || ''} />
-        </TabsContent>
-      </Tabs>
+        {/* Wellness Goals */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Calendar className="h-5 w-5 text-amber-500" />
+              Wellness Goals
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ul className="space-y-4">
+              {wellnessGoals.map((goal) => (
+                <li key={goal.id} className="space-y-1">
+                  <div className="flex justify-between text-sm">
+                    <span>{goal.title}</span>
+                    <span className="font-medium">{goal.progress}%</span>
+                  </div>
+                  <div className="w-full h-2 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-amber-500 rounded-full"
+                      style={{ width: `${goal.progress}%` }}
+                    />
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 };

@@ -1,19 +1,19 @@
 
-import React, { useState, useEffect } from 'react';
-import { CheckCircle, Clock, Edit, Plus, Trash2 } from 'lucide-react';
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
-import { useToast } from "@/hooks/use-toast";
-import { castQueryResult } from "@/utils/supabaseHelpers";
+import { useState, useEffect } from 'react';
+import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { CalendarIcon, Plus, Check, AlertCircle, Clock } from 'lucide-react';
+import { toast } from '@/hooks/use-toast';
+import { useUser } from '@/lib/hooks/use-user';
 
-// Define types
-export interface CareTask {
+// Define task type
+interface CareTask {
   id: string;
   team_id: string;
   title: string;
@@ -22,210 +22,253 @@ export interface CareTask {
   priority: 'high' | 'medium' | 'low' | 'urgent';
   status: 'pending' | 'in_progress' | 'completed' | 'cancelled';
   assigned_to?: string;
-  due_date?: Date | null;
+  due_date: Date | string;
   completion_notes?: string;
-  completed_at?: Date | null;
+  completed_at?: Date | string;
   completed_by?: string;
+  recurring?: boolean;
+  recurrence_pattern?: Record<string, any>;
   created_by: string;
   created_at?: string;
   updated_at?: string;
 }
 
-// Mock data for development
-const mockTasks: CareTask[] = [
-  {
-    id: "1",
-    team_id: "team-1",
-    title: "Medication Check",
-    description: "Verify morning medications have been taken",
-    category: "medication",
-    priority: "high",
-    status: "pending",
-    assigned_to: "user-1",
-    due_date: new Date(),
-    created_by: "user-2",
-    created_at: new Date().toISOString(),
-  },
-  {
-    id: "2",
-    team_id: "team-1",
-    title: "Physical Therapy",
-    description: "Complete daily exercises",
-    category: "therapy",
-    priority: "medium",
-    status: "in_progress",
-    assigned_to: "user-3",
-    due_date: new Date(),
-    created_by: "user-2",
-    created_at: new Date().toISOString(),
-  },
-  {
-    id: "3",
-    team_id: "team-1",
-    title: "Doctor Appointment",
-    description: "Schedule follow-up visit with Dr. Smith",
-    category: "appointment",
-    priority: "low",
-    status: "completed",
-    completed_at: new Date(),
-    completed_by: "user-1",
-    due_date: new Date(),
-    created_by: "user-3",
-    created_at: new Date().toISOString(),
-  }
-];
+interface CareTaskBoardProps {
+  teamId: string;
+}
 
-const CareTaskBoard = () => {
-  const { toast } = useToast();
+export const CareTaskBoard: React.FC<CareTaskBoardProps> = ({ teamId }) => {
   const [tasks, setTasks] = useState<CareTask[]>([]);
   const [loading, setLoading] = useState(true);
+  const { user } = useUser();
   const [newTask, setNewTask] = useState<Partial<CareTask>>({
     title: '',
     description: '',
-    category: 'general',
     priority: 'medium',
+    category: 'general',
     status: 'pending',
+    due_date: new Date().toISOString().split('T')[0],
   });
+  
   const [editTask, setEditTask] = useState<CareTask | null>(null);
-  const [editMode, setEditMode] = useState(false);
+  const [openDialog, setOpenDialog] = useState(false);
+  const [dialogMode, setDialogMode] = useState<'add' | 'edit'>('add');
 
-  // Load tasks
+  // Fetch tasks on component mount
   useEffect(() => {
-    fetchTasks();
-  }, []);
-
-  const fetchTasks = async () => {
-    try {
-      // In a real implementation, this would be a database call
-      // Simulating API delay
-      setTimeout(() => {
+    const fetchTasks = async () => {
+      try {
+        // Mock data instead of real database call
+        const mockTasks: CareTask[] = [
+          {
+            id: '1',
+            team_id: teamId,
+            title: 'Morning medication check',
+            description: 'Ensure morning medications have been taken',
+            category: 'medication',
+            priority: 'high',
+            status: 'pending',
+            assigned_to: user?.id,
+            due_date: new Date(new Date().setHours(9, 0, 0)),
+            created_by: user?.id || 'user-1',
+          },
+          {
+            id: '2',
+            team_id: teamId,
+            title: 'Weekly doctor visit',
+            description: 'Accompany to regular doctor checkup',
+            category: 'appointment',
+            priority: 'medium',
+            status: 'in_progress',
+            assigned_to: user?.id,
+            due_date: new Date(new Date().setDate(new Date().getDate() + 2)),
+            created_by: user?.id || 'user-1',
+          },
+          {
+            id: '3',
+            team_id: teamId,
+            title: 'Daily walk',
+            description: 'Take a 15-minute walk outdoors',
+            category: 'exercise',
+            priority: 'low',
+            status: 'completed',
+            assigned_to: user?.id,
+            due_date: new Date(),
+            completed_at: new Date(),
+            completed_by: user?.id,
+            created_by: user?.id || 'user-1',
+          }
+        ];
+        
         setTasks(mockTasks);
         setLoading(false);
-      }, 800);
-    } catch (error) {
-      console.error('Error fetching tasks:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load tasks",
-        variant: "destructive",
+      } catch (error) {
+        console.error('Error loading tasks:', error);
+        toast({
+          title: 'Failed to load tasks',
+          description: 'Please try again later.',
+          variant: 'destructive',
+        });
+        setLoading(false);
+      }
+    };
+
+    fetchTasks();
+  }, [teamId, user]);
+
+  const handleCreateTask = async () => {
+    if (!user) return;
+
+    try {
+      const taskToCreate = {
+        ...newTask,
+        team_id: teamId,
+        created_by: user.id,
+        status: 'pending',
+      } as CareTask;
+
+      // Mock creating a task
+      const mockCreatedTask: CareTask = {
+        ...taskToCreate,
+        id: `new-${Date.now()}`,
+        created_at: new Date().toISOString(),
+        created_by: user.id,
+        status: 'pending',
+        due_date: new Date(taskToCreate.due_date),
+      };
+      
+      setTasks([...tasks, mockCreatedTask]);
+      setOpenDialog(false);
+      setNewTask({
+        title: '',
+        description: '',
+        priority: 'medium',
+        category: 'general',
+        status: 'pending',
+        due_date: new Date().toISOString().split('T')[0],
       });
-      setLoading(false);
+
+      toast({
+        title: 'Task created',
+        description: 'The task has been created successfully.',
+      });
+    } catch (error) {
+      console.error('Error creating task:', error);
+      toast({
+        title: 'Failed to create task',
+        description: 'Please try again later.',
+        variant: 'destructive',
+      });
     }
   };
 
-  const handleCreateTask = () => {
-    if (!newTask.title) {
+  const handleUpdateTask = async () => {
+    if (!editTask || !user) return;
+
+    try {
+      // Mock updating a task
+      const updatedTasks = tasks.map(task => 
+        task.id === editTask.id ? editTask : task
+      );
+      
+      setTasks(updatedTasks);
+      setOpenDialog(false);
+      setEditTask(null);
+
       toast({
-        title: "Error",
-        description: "Title is required",
-        variant: "destructive",
+        title: 'Task updated',
+        description: 'The task has been updated successfully.',
       });
+    } catch (error) {
+      console.error('Error updating task:', error);
+      toast({
+        title: 'Failed to update task',
+        description: 'Please try again later.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleCompleteTask = async (taskId: string) => {
+    try {
+      // Update task status to completed
+      const updatedTasks = tasks.map(task => {
+        if (task.id === taskId) {
+          return {
+            ...task,
+            status: 'completed',
+            completed_at: new Date(),
+            completed_by: user?.id,
+          };
+        }
+        return task;
+      });
+      
+      setTasks(updatedTasks);
+      toast({
+        title: 'Task completed',
+        description: 'The task has been marked as completed.',
+      });
+    } catch (error) {
+      console.error('Error completing task:', error);
+      toast({
+        title: 'Failed to complete task',
+        description: 'Please try again later.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const openAddTaskDialog = () => {
+    setDialogMode('add');
+    setOpenDialog(true);
+  };
+
+  const openEditTaskDialog = (task: CareTask) => {
+    setDialogMode('edit');
+    setEditTask(task);
+    setOpenDialog(true);
+  };
+
+  const onDragEnd = (result: any) => {
+    if (!result.destination) return;
+
+    const { source, destination } = result;
+    
+    if (source.droppableId === destination.droppableId) {
+      // Reordering within the same column
       return;
     }
 
-    const task: CareTask = {
-      id: `task-${Date.now()}`,
-      team_id: "team-1", // Hardcoded for this example
-      title: newTask.title,
-      description: newTask.description,
-      category: newTask.category || 'general',
-      priority: newTask.priority as CareTask['priority'] || 'medium',
-      status: 'pending',
-      created_by: "user-1", // Hardcoded for this example
-      created_at: new Date().toISOString(),
-      due_date: newTask.due_date ? new Date(newTask.due_date) : null,
-    };
-
-    setTasks([...tasks, task]);
-    setNewTask({
-      title: '',
-      description: '',
-      category: 'general',
-      priority: 'medium',
-      status: 'pending',
-    });
-
-    toast({
-      title: "Success",
-      description: "Task created successfully",
-    });
-  };
-
-  const handleUpdateTask = () => {
-    if (!editTask) return;
-
-    const updatedTasks = tasks.map(task => 
-      task.id === editTask.id ? editTask : task
-    );
-
-    setTasks(updatedTasks);
-    setEditTask(null);
-    setEditMode(false);
-
-    toast({
-      title: "Success",
-      description: "Task updated successfully",
-    });
-  };
-
-  const handleDeleteTask = (id: string) => {
-    const updatedTasks = tasks.filter(task => task.id !== id);
-    setTasks(updatedTasks);
-
-    toast({
-      title: "Success",
-      description: "Task deleted successfully",
-    });
-  };
-
-  const handleStatusChange = (id: string, status: CareTask['status']) => {
-    const updatedTasks = tasks.map(task => {
-      if (task.id === id) {
-        const updatedTask = { ...task, status };
-        if (status === 'completed') {
-          updatedTask.completed_at = new Date();
-          updatedTask.completed_by = 'user-1';
-        } else {
-          updatedTask.completed_at = undefined;
-          updatedTask.completed_by = undefined;
-        }
-        return updatedTask;
-      }
-      return task;
-    });
-
-    setTasks(updatedTasks);
+    // Moving between columns (changing status)
+    const tasksCopy = [...tasks];
+    const taskIndex = tasksCopy.findIndex(t => t.id === result.draggableId);
     
-    toast({
-      title: "Success",
-      description: `Task marked as ${status}`,
-    });
-  };
-
-  // Group tasks by status
-  const tasksByStatus: { [key: string]: CareTask[] } = {
-    pending: tasks.filter(t => t.status === 'pending'),
-    in_progress: tasks.filter(t => t.status === 'in_progress'),
-    completed: tasks.filter(t => t.status === 'completed'),
-    cancelled: tasks.filter(t => t.status === 'cancelled'),
-  };
-
-  // Get priority badge color
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case 'urgent': return 'bg-red-500 hover:bg-red-600';
-      case 'high': return 'bg-orange-500 hover:bg-orange-600';
-      case 'medium': return 'bg-blue-500 hover:bg-blue-600';
-      case 'low': return 'bg-green-500 hover:bg-green-600';
-      default: return 'bg-gray-500 hover:bg-gray-600';
+    if (taskIndex !== -1) {
+      tasksCopy[taskIndex].status = destination.droppableId as CareTask['status'];
+      setTasks(tasksCopy);
+      
+      // In a real app, you would update the task in the database here
     }
   };
 
-  // Render loading state
+  // Group tasks by status for the Kanban board
+  const tasksByStatus: Record<string, CareTask[]> = {
+    pending: [],
+    in_progress: [],
+    completed: [],
+  };
+
+  tasks.forEach(task => {
+    if (tasksByStatus[task.status]) {
+      tasksByStatus[task.status].push(task);
+    }
+  });
+
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
       </div>
     );
   }
@@ -233,273 +276,287 @@ const CareTaskBoard = () => {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-semibold">Care Tasks</h2>
-        
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button size="sm" className="flex items-center gap-1">
-              <Plus className="h-4 w-4" />
-              <span>Add Task</span>
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Add New Task</DialogTitle>
-              <DialogDescription>
-                Create a new task for the care team
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4 pt-4">
-              <div>
-                <label className="block text-sm font-medium mb-1">Title</label>
-                <Input 
-                  value={newTask.title} 
-                  onChange={(e) => setNewTask({...newTask, title: e.target.value})}
-                  placeholder="Task title" 
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Description</label>
-                <Textarea 
-                  value={newTask.description} 
-                  onChange={(e) => setNewTask({...newTask, description: e.target.value})}
-                  placeholder="Task description" 
-                  rows={3}
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium mb-1">Category</label>
-                  <Select
-                    value={newTask.category}
-                    onValueChange={(value) => setNewTask({...newTask, category: value})}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select category" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="general">General</SelectItem>
-                      <SelectItem value="medication">Medication</SelectItem>
-                      <SelectItem value="appointment">Appointment</SelectItem>
-                      <SelectItem value="therapy">Therapy</SelectItem>
-                      <SelectItem value="shopping">Shopping</SelectItem>
-                      <SelectItem value="housekeeping">Housekeeping</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">Priority</label>
-                  <Select
-                    value={newTask.priority}
-                    onValueChange={(value) => setNewTask({...newTask, priority: value as CareTask["priority"]})}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select priority" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="low">Low</SelectItem>
-                      <SelectItem value="medium">Medium</SelectItem>
-                      <SelectItem value="high">High</SelectItem>
-                      <SelectItem value="urgent">Urgent</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Due Date</label>
-                <Input 
-                  type="datetime-local" 
-                  value={newTask.due_date ? new Date(newTask.due_date).toISOString().slice(0, 16) : ''} 
-                  onChange={(e) => setNewTask({...newTask, due_date: e.target.value ? new Date(e.target.value) : undefined})}
-                />
-              </div>
-              <div className="flex justify-end">
-                <Button onClick={handleCreateTask}>
-                  Create Task
-                </Button>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
+        <h2 className="text-2xl font-bold">Care Tasks</h2>
+        <Button onClick={openAddTaskDialog} className="flex items-center">
+          <Plus className="mr-2 h-4 w-4" /> Add Task
+        </Button>
       </div>
 
-      {/* Task Board */}
-      <Tabs defaultValue="pending" className="w-full">
-        <TabsList className="grid grid-cols-4">
-          <TabsTrigger value="pending">Pending ({tasksByStatus.pending.length})</TabsTrigger>
-          <TabsTrigger value="in_progress">In Progress ({tasksByStatus.in_progress.length})</TabsTrigger>
-          <TabsTrigger value="completed">Completed ({tasksByStatus.completed.length})</TabsTrigger>
-          <TabsTrigger value="cancelled">Cancelled ({tasksByStatus.cancelled.length})</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="pending" className="mt-4">
-          {tasksByStatus.pending.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              No pending tasks
-            </div>
-          ) : (
-            <div className="grid gap-4">
-              {tasksByStatus.pending.map((task) => (
-                <Card key={task.id} className="overflow-hidden">
-                  <CardContent className="p-4">
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1">
-                        <h3 className="font-medium">{task.title}</h3>
-                        <p className="text-sm text-muted-foreground mt-1">{task.description}</p>
-                        <div className="flex gap-2 mt-2">
-                          <Badge variant="outline">{task.category}</Badge>
-                          <Badge className={getPriorityColor(task.priority)}>{task.priority}</Badge>
-                        </div>
-                        {task.due_date && (
-                          <div className="text-xs flex items-center gap-1 mt-2 text-muted-foreground">
-                            <Clock className="h-3 w-3" />
-                            <span>Due: {new Date(task.due_date).toLocaleString()}</span>
-                          </div>
-                        )}
-                      </div>
-                      <div className="flex gap-2">
-                        <Button 
-                          onClick={() => handleStatusChange(task.id, 'in_progress')}
-                          size="sm" 
-                          variant="outline"
+      <DragDropContext onDragEnd={onDragEnd}>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Pending Column */}
+          <div>
+            <h3 className="text-lg font-semibold mb-2">Pending</h3>
+            <Droppable droppableId="pending">
+              {(provided) => (
+                <div
+                  {...provided.droppableProps}
+                  ref={provided.innerRef}
+                  className="bg-gray-50 dark:bg-gray-800 rounded-lg min-h-[200px] p-3"
+                >
+                  {tasksByStatus.pending.map((task, index) => (
+                    <Draggable key={task.id} draggableId={task.id} index={index}>
+                      {(provided) => (
+                        <Card
+                          ref={provided.innerRef}
+                          {...provided.draggableProps}
+                          {...provided.dragHandleProps}
+                          className="mb-3 cursor-pointer"
+                          onClick={() => openEditTaskDialog(task)}
                         >
-                          Start
-                        </Button>
-                        <Dialog>
-                          <DialogTrigger asChild>
-                            <Button 
-                              size="sm" 
-                              variant="ghost"
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                          </DialogTrigger>
-                          <DialogContent>
-                            {/* Edit Task Dialog Content */}
-                          </DialogContent>
-                        </Dialog>
-                        <Button 
-                          onClick={() => handleDeleteTask(task.id)}
-                          size="sm" 
-                          variant="ghost"
+                          <CardContent className="p-3">
+                            <div className="flex justify-between items-start">
+                              <div>
+                                <h4 className="font-medium">{task.title}</h4>
+                                <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-2">{task.description}</p>
+                                <div className="flex items-center mt-2 text-xs text-gray-500 dark:text-gray-400">
+                                  <CalendarIcon className="h-3 w-3 mr-1" />
+                                  {new Date(task.due_date).toLocaleDateString()}
+                                </div>
+                              </div>
+                              <div className={`px-2 py-1 rounded text-xs ${
+                                task.priority === 'high' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' :
+                                task.priority === 'medium' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' :
+                                'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
+                              }`}>
+                                {task.priority.charAt(0).toUpperCase() + task.priority.slice(1)}
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      )}
+                    </Draggable>
+                  ))}
+                  {provided.placeholder}
+                </div>
+              )}
+            </Droppable>
+          </div>
+
+          {/* In Progress Column */}
+          <div>
+            <h3 className="text-lg font-semibold mb-2">In Progress</h3>
+            <Droppable droppableId="in_progress">
+              {(provided) => (
+                <div
+                  {...provided.droppableProps}
+                  ref={provided.innerRef}
+                  className="bg-gray-50 dark:bg-gray-800 rounded-lg min-h-[200px] p-3"
+                >
+                  {tasksByStatus.in_progress.map((task, index) => (
+                    <Draggable key={task.id} draggableId={task.id} index={index}>
+                      {(provided) => (
+                        <Card
+                          ref={provided.innerRef}
+                          {...provided.draggableProps}
+                          {...provided.dragHandleProps}
+                          className="mb-3 cursor-pointer"
+                          onClick={() => openEditTaskDialog(task)}
                         >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
-        </TabsContent>
+                          <CardContent className="p-3">
+                            <div className="flex justify-between items-start">
+                              <div>
+                                <h4 className="font-medium">{task.title}</h4>
+                                <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-2">{task.description}</p>
+                                <div className="flex items-center mt-2 text-xs text-gray-500 dark:text-gray-400">
+                                  <Clock className="h-3 w-3 mr-1" />
+                                  {new Date(task.due_date).toLocaleDateString()}
+                                </div>
+                              </div>
+                              <Button 
+                                size="sm" 
+                                variant="outline" 
+                                className="h-7 px-2"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleCompleteTask(task.id);
+                                }}
+                              >
+                                <Check className="h-3 w-3 mr-1" /> Done
+                              </Button>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      )}
+                    </Draggable>
+                  ))}
+                  {provided.placeholder}
+                </div>
+              )}
+            </Droppable>
+          </div>
 
-        <TabsContent value="in_progress" className="mt-4">
-          {tasksByStatus.in_progress.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              No tasks in progress
-            </div>
-          ) : (
-            <div className="grid gap-4">
-              {tasksByStatus.in_progress.map((task) => (
-                <Card key={task.id} className="overflow-hidden">
-                  <CardContent className="p-4">
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1">
-                        <h3 className="font-medium">{task.title}</h3>
-                        <p className="text-sm text-muted-foreground mt-1">{task.description}</p>
-                        <div className="flex gap-2 mt-2">
-                          <Badge variant="outline">{task.category}</Badge>
-                          <Badge className={getPriorityColor(task.priority)}>{task.priority}</Badge>
-                        </div>
-                        {task.due_date && (
-                          <div className="text-xs flex items-center gap-1 mt-2 text-muted-foreground">
-                            <Clock className="h-3 w-3" />
-                            <span>Due: {new Date(task.due_date).toLocaleString()}</span>
-                          </div>
-                        )}
-                      </div>
-                      <div className="flex gap-2">
-                        <Button 
-                          onClick={() => handleStatusChange(task.id, 'completed')}
-                          size="sm" 
-                          variant="outline"
-                          className="text-green-600"
+          {/* Completed Column */}
+          <div>
+            <h3 className="text-lg font-semibold mb-2">Completed</h3>
+            <Droppable droppableId="completed">
+              {(provided) => (
+                <div
+                  {...provided.droppableProps}
+                  ref={provided.innerRef}
+                  className="bg-gray-50 dark:bg-gray-800 rounded-lg min-h-[200px] p-3"
+                >
+                  {tasksByStatus.completed.map((task, index) => (
+                    <Draggable key={task.id} draggableId={task.id} index={index}>
+                      {(provided) => (
+                        <Card
+                          ref={provided.innerRef}
+                          {...provided.draggableProps}
+                          {...provided.dragHandleProps}
+                          className="mb-3 cursor-pointer opacity-80"
+                          onClick={() => openEditTaskDialog(task)}
                         >
-                          <CheckCircle className="h-4 w-4 mr-1" />
-                          Complete
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
-        </TabsContent>
+                          <CardContent className="p-3">
+                            <div>
+                              <h4 className="font-medium line-through">{task.title}</h4>
+                              <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-2">{task.description}</p>
+                              <div className="flex items-center mt-2 text-xs text-gray-500 dark:text-gray-400">
+                                <Check className="h-3 w-3 mr-1" />
+                                Completed on {task.completed_at ? new Date(task.completed_at).toLocaleDateString() : 'Unknown date'}
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      )}
+                    </Draggable>
+                  ))}
+                  {provided.placeholder}
+                </div>
+              )}
+            </Droppable>
+          </div>
+        </div>
+      </DragDropContext>
 
-        <TabsContent value="completed" className="mt-4">
-          {tasksByStatus.completed.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              No completed tasks
+      <Dialog open={openDialog} onOpenChange={setOpenDialog}>
+        <DialogContent className="sm:max-w-xl">
+          <DialogHeader>
+            <DialogTitle>{dialogMode === 'add' ? 'Create New Task' : 'Edit Task'}</DialogTitle>
+            <DialogDescription>
+              {dialogMode === 'add' ? 'Add details for the new care task.' : 'Update the details of this care task.'}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="title" className="text-right">
+                Title
+              </Label>
+              <Input
+                id="title"
+                value={dialogMode === 'add' ? newTask.title : editTask?.title || ''}
+                onChange={(e) => dialogMode === 'add' 
+                  ? setNewTask({...newTask, title: e.target.value})
+                  : setEditTask(editTask ? {...editTask, title: e.target.value} : null)
+                }
+                className="col-span-3"
+              />
             </div>
-          ) : (
-            <div className="grid gap-4">
-              {tasksByStatus.completed.map((task) => (
-                <Card key={task.id} className="overflow-hidden bg-muted/40">
-                  <CardContent className="p-4">
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1">
-                        <h3 className="font-medium line-through text-muted-foreground">{task.title}</h3>
-                        <p className="text-sm text-muted-foreground mt-1">{task.description}</p>
-                        <div className="flex gap-2 mt-2">
-                          <Badge variant="outline">{task.category}</Badge>
-                          <Badge className={getPriorityColor(task.priority)}>{task.priority}</Badge>
-                        </div>
-                        {task.completed_at && (
-                          <div className="text-xs flex items-center gap-1 mt-2 text-muted-foreground">
-                            <CheckCircle className="h-3 w-3 text-green-600" />
-                            <span>Completed: {new Date(task.completed_at).toLocaleString()}</span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+            
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="description" className="text-right">
+                Description
+              </Label>
+              <Textarea
+                id="description"
+                value={dialogMode === 'add' ? newTask.description : editTask?.description || ''}
+                onChange={(e) => dialogMode === 'add'
+                  ? setNewTask({...newTask, description: e.target.value})
+                  : setEditTask(editTask ? {...editTask, description: e.target.value} : null)
+                }
+                className="col-span-3"
+              />
             </div>
-          )}
-        </TabsContent>
-
-        <TabsContent value="cancelled" className="mt-4">
-          {tasksByStatus.cancelled.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              No cancelled tasks
+            
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="priority" className="text-right">
+                Priority
+              </Label>
+              <Select
+                value={dialogMode === 'add' ? newTask.priority : editTask?.priority}
+                onValueChange={(value) => dialogMode === 'add'
+                  ? setNewTask({...newTask, priority: value as 'high' | 'medium' | 'low'})
+                  : setEditTask(editTask ? {...editTask, priority: value as 'high' | 'medium' | 'low'} : null)
+                }
+              >
+                <SelectTrigger className="col-span-3">
+                  <SelectValue placeholder="Select priority" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="low">Low</SelectItem>
+                  <SelectItem value="medium">Medium</SelectItem>
+                  <SelectItem value="high">High</SelectItem>
+                  <SelectItem value="urgent">Urgent</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-          ) : (
-            <div className="grid gap-4">
-              {tasksByStatus.cancelled.map((task) => (
-                <Card key={task.id} className="overflow-hidden bg-muted/40">
-                  <CardContent className="p-4">
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1">
-                        <h3 className="font-medium line-through text-muted-foreground">{task.title}</h3>
-                        <p className="text-sm text-muted-foreground mt-1">{task.description}</p>
-                        <div className="flex gap-2 mt-2">
-                          <Badge variant="outline">{task.category}</Badge>
-                          <Badge className={getPriorityColor(task.priority)}>{task.priority}</Badge>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+            
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="category" className="text-right">
+                Category
+              </Label>
+              <Input
+                id="category"
+                value={dialogMode === 'add' ? newTask.category : editTask?.category || ''}
+                onChange={(e) => dialogMode === 'add'
+                  ? setNewTask({...newTask, category: e.target.value})
+                  : setEditTask(editTask ? {...editTask, category: e.target.value} : null)
+                }
+                className="col-span-3"
+              />
             </div>
-          )}
-        </TabsContent>
-      </Tabs>
+            
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="due_date" className="text-right">
+                Due Date
+              </Label>
+              <Input
+                id="due_date"
+                type="date"
+                value={dialogMode === 'add' 
+                  ? typeof newTask.due_date === 'string' ? newTask.due_date : new Date().toISOString().split('T')[0]
+                  : typeof editTask?.due_date === 'string'
+                    ? editTask.due_date 
+                    : editTask?.due_date instanceof Date
+                      ? editTask.due_date.toISOString().split('T')[0]
+                      : new Date().toISOString().split('T')[0]
+                }
+                onChange={(e) => dialogMode === 'add'
+                  ? setNewTask({...newTask, due_date: e.target.value})
+                  : setEditTask(editTask ? {...editTask, due_date: e.target.value} : null)
+                }
+                className="col-span-3"
+              />
+            </div>
+            
+            {dialogMode === 'edit' && editTask?.status === 'completed' && (
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="completion_notes" className="text-right">
+                  Completion Notes
+                </Label>
+                <Textarea
+                  id="completion_notes"
+                  value={editTask?.completion_notes || ''}
+                  onChange={(e) => setEditTask(editTask ? {...editTask, completion_notes: e.target.value} : null)}
+                  className="col-span-3"
+                />
+              </div>
+            )}
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setOpenDialog(false)}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={dialogMode === 'add' ? handleCreateTask : handleUpdateTask}
+              disabled={dialogMode === 'add' ? !newTask.title : !editTask?.title}
+            >
+              {dialogMode === 'add' ? 'Create Task' : 'Update Task'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
-
-export default CareTaskBoard;

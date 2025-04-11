@@ -1,175 +1,103 @@
 
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Info } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import { Disclaimer } from '@/types/comparison';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Skeleton } from '@/components/ui/skeleton';
+import { AlertTriangle } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 
-// Mock disclaimer data
-const mockDisclaimers: Disclaimer[] = [
-  {
-    id: '1',
-    type: 'legal',
-    title: 'Terms of Service',
-    content: `
-# Terms of Service
-
-Last Updated: January 1, 2023
-
-Please read these Terms of Service ("Terms") carefully before using our platform.
-
-## 1. Acceptance of Terms
-
-By accessing or using our platform, you agree to be bound by these Terms and our Privacy Policy. If you do not agree to these Terms, you may not access or use the platform.
-
-## 2. Description of Service
-
-Our platform provides tools for caregivers and families to coordinate care for loved ones. The platform includes features for communication, scheduling, task management, and health tracking.
-
-## 3. User Accounts
-
-You must create an account to use certain features of the platform. You are responsible for maintaining the confidentiality of your account credentials and for all activities that occur under your account.
-
-## 4. Medical Disclaimer
-
-The platform is not a substitute for professional medical advice, diagnosis, or treatment. Always seek the advice of your physician or other qualified health provider with any questions you may have regarding a medical condition.
-    `,
-    created_at: '2023-01-01T00:00:00Z',
-    updated_at: '2023-01-01T00:00:00Z'
-  },
-  {
-    id: '2',
-    type: 'privacy',
-    title: 'Privacy Policy',
-    content: `
-# Privacy Policy
-
-Last Updated: January 1, 2023
-
-This Privacy Policy describes how we collect, use, and disclose your personal information when you use our platform.
-
-## 1. Information We Collect
-
-We collect information that you provide directly to us, information we collect automatically when you use the platform, and information we obtain from third-party sources.
-
-## 2. How We Use Your Information
-
-We use your information to provide, maintain, and improve the platform, to communicate with you, and to personalize your experience.
-
-## 3. How We Share Your Information
-
-We may share your information with third-party service providers, with your consent, or as required by law.
-
-## 4. Your Choices
-
-You can access, update, or delete your account information at any time. You can also opt out of certain communications.
-    `,
-    created_at: '2023-01-01T00:00:00Z',
-    updated_at: '2023-01-01T00:00:00Z'
-  }
-];
-
-interface LegalDisclaimerProps {
-  type?: 'legal' | 'privacy' | 'all';
-  onAccept?: () => void;
+// Define interface for Disclaimer
+interface Disclaimer {
+  id: string;
+  type: string;
+  title: string;
+  content: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
-export const LegalDisclaimer = ({ type = 'all', onAccept }: LegalDisclaimerProps) => {
-  const [disclaimers, setDisclaimers] = useState<Disclaimer[]>([]);
-  const [loading, setLoading] = useState(true);
-  const { toast } = useToast();
+interface LegalDisclaimerProps {
+  type: 'legal' | 'privacy' | 'all';
+}
 
-  useEffect(() => {
-    fetchDisclaimers();
-  }, [type]);
-
-  const fetchDisclaimers = async () => {
-    try {
-      // Filter mock data based on type
-      const filteredDisclaimers = type === 'all'
-        ? mockDisclaimers
-        : mockDisclaimers.filter(d => d.type === type);
+export const LegalDisclaimer: React.FC<LegalDisclaimerProps> = ({ type = 'all' }) => {
+  // Instead of querying a database table, use mock data
+  const mockDisclaimers: Disclaimer[] = [
+    {
+      id: '1',
+      type: 'legal',
+      title: 'Legal Disclaimer',
+      content: 'This platform provides a way to connect with companions and caregivers, but we are not responsible for the quality of care provided. All caregivers are independent providers and not employees of our platform. We recommend conducting your own due diligence before engaging any caregiver or companion.',
+      created_at: new Date().toISOString(),
+    },
+    {
+      id: '2',
+      type: 'privacy',
+      title: 'Privacy Notice',
+      content: 'We take your privacy seriously. Information shared on this platform is used only for the purposes of connecting you with appropriate care resources. We do not sell your personal information to third parties. Please review our full privacy policy for more details.',
+      created_at: new Date().toISOString(),
+    },
+    {
+      id: '3',
+      type: 'platform_disclaimer',
+      title: 'Platform Limitations',
+      content: 'This platform is intended to provide informational resources and connections to care providers. It is not a substitute for professional medical advice, diagnosis, or treatment. Always seek the advice of qualified health providers with questions you may have regarding medical conditions.',
+      created_at: new Date().toISOString(),
+    }
+  ];
+  
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['disclaimers', type],
+    queryFn: async () => {
+      // Simulate API call delay
+      await new Promise(resolve => setTimeout(resolve, 500));
       
-      setDisclaimers(filteredDisclaimers);
-      setLoading(false);
-    } catch (error) {
-      console.error('Error fetching disclaimers:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load legal documents",
-        variant: "destructive",
-      });
-      setLoading(false);
+      if (type === 'all') {
+        return mockDisclaimers;
+      }
+      
+      return mockDisclaimers.filter(disclaimer => disclaimer.type === type);
     }
-  };
+  });
 
-  const handleAccept = () => {
-    // In a real app, this would save user consent
-    toast({
-      title: "Accepted",
-      description: "You have accepted the terms and conditions.",
-    });
-    
-    if (onAccept) {
-      onAccept();
-    }
-  };
-
-  if (loading) {
+  if (isLoading) {
     return (
       <Card>
-        <CardContent className="p-6">
-          <div className="flex justify-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-          </div>
+        <CardHeader className="pb-3">
+          <Skeleton className="h-6 w-40" />
+        </CardHeader>
+        <CardContent>
+          <Skeleton className="h-4 w-full mb-2" />
+          <Skeleton className="h-4 w-full mb-2" />
+          <Skeleton className="h-4 w-3/4" />
         </CardContent>
       </Card>
     );
   }
 
+  if (error) {
+    return (
+      <Alert variant="destructive">
+        <AlertTriangle className="h-4 w-4" />
+        <AlertTitle>Error</AlertTitle>
+        <AlertDescription>
+          Failed to load disclaimer information. Please try again later.
+        </AlertDescription>
+      </Alert>
+    );
+  }
+
   return (
-    <Card className="w-full">
-      <CardHeader>
-        <CardTitle className="flex items-center">
-          <Info className="h-5 w-5 mr-2" />
-          Legal Information
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        {disclaimers.length === 0 ? (
-          <div className="text-center py-6">
-            <p className="text-muted-foreground">No legal documents found.</p>
-          </div>
-        ) : (
-          <div className="space-y-6">
-            {disclaimers.map((disclaimer) => (
-              <div key={disclaimer.id} className="space-y-2">
-                <h2 className="text-lg font-semibold">{disclaimer.title}</h2>
-                <ScrollArea className="h-60 border rounded-md p-4">
-                  <div className="prose prose-sm">
-                    {disclaimer.content.split('\n').map((line, index) => (
-                      <React.Fragment key={index}>
-                        {line}
-                        <br />
-                      </React.Fragment>
-                    ))}
-                  </div>
-                </ScrollArea>
-              </div>
-            ))}
-            
-            <div className="flex justify-end pt-4">
-              <Button onClick={handleAccept}>
-                I Accept
-              </Button>
-            </div>
-          </div>
-        )}
-      </CardContent>
-    </Card>
+    <div className="space-y-4">
+      {(data || []).map((disclaimer) => (
+        <Alert key={disclaimer.id} className="bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-950/30 dark:text-amber-300 dark:border-amber-800/50">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>{disclaimer.title}</AlertTitle>
+          <AlertDescription className="text-sm">
+            {disclaimer.content}
+          </AlertDescription>
+        </Alert>
+      ))}
+    </div>
   );
 };
-
-export default LegalDisclaimer;

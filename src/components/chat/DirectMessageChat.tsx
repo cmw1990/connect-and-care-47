@@ -1,174 +1,140 @@
-import { useEffect, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
-import { Send, MessageSquare } from "lucide-react";
 
-interface Message {
-  id: string;
-  sender_id: string;
-  content: string;
-  created_at: string;
-  sender?: {
-    first_name: string | null;
-    last_name: string | null;
-  };
-}
+import React, { useState, useEffect, useRef } from 'react';
+import { useUser } from '@/lib/hooks/use-user';
+import { createMockMessages } from '@/utils/mockDataHelper';
+import { Message } from '@/types/chat';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Send } from 'lucide-react';
 
 interface DirectMessageChatProps {
   recipientId: string;
-  recipientName: string;
+  onSendMessage?: (message: string) => void;
 }
 
-export const DirectMessageChat = ({ recipientId, recipientName }: DirectMessageChatProps) => {
+export const DirectMessageChat: React.FC<DirectMessageChatProps> = ({ 
+  recipientId, 
+  onSendMessage 
+}) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
-  const { toast } = useToast();
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const { user } = useUser();
+  const [isLoading, setIsLoading] = useState(true);
+  const [recipientName, setRecipientName] = useState<string>("Care Recipient");
 
   useEffect(() => {
-    fetchMessages();
-    const channel = subscribeToMessages();
-    return () => {
-      supabase.removeChannel(channel);
+    const fetchMessages = async () => {
+      try {
+        // Use mock message data instead of supabase query
+        setMessages(createMockMessages(5));
+        
+        // Simulate loading recipient info
+        setTimeout(() => {
+          setRecipientName("Jane Smith");
+          setIsLoading(false);
+        }, 300);
+      } catch (error) {
+        console.error("Error fetching messages:", error);
+      }
     };
+
+    if (recipientId) {
+      fetchMessages();
+    }
   }, [recipientId]);
 
-  const fetchMessages = async () => {
-    try {
-      const userResponse = await supabase.auth.getUser();
-      const user = userResponse.data.user;
-      if (!user) return;
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
 
-      const { data, error } = await supabase
-        .from("private_messages")
-        .select(`
-          id,
-          content,
-          created_at,
-          sender_id,
-          sender:profiles!private_messages_sender_id_fkey (
-            first_name,
-            last_name
-          )
-        `)
-        .or(`sender_id.eq.${user.id},recipient_id.eq.${user.id}`)
-        .or(`sender_id.eq.${recipientId},recipient_id.eq.${recipientId}`)
-        .order("created_at", { ascending: true });
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
 
-      if (error) throw error;
-      setMessages(data || []);
-    } catch (error) {
-      console.error("Error fetching messages:", error);
-      toast({
-        title: "Error",
-        description: "Failed to load messages",
-        variant: "destructive",
-      });
+  const handleSendMessage = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newMessage.trim() || !user) return;
+
+    const messageContent = newMessage;
+    setNewMessage("");
+
+    // Call optional callback if provided
+    if (onSendMessage) {
+      onSendMessage(messageContent);
     }
-  };
 
-  const subscribeToMessages = () => {
-    const user = supabase.auth.getUser();
-    if (!user) return;
+    // Create a temporary message to show immediately
+    const tempMessage: Message = {
+      id: `temp-${Date.now()}`,
+      content: messageContent,
+      sender_id: user.id,
+      created_at: new Date().toISOString(),
+      sender: {
+        first_name: user.first_name,
+        last_name: user.last_name
+      },
+      role: "user"
+    };
 
-    return supabase
-      .channel("private_messages")
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "private_messages",
-          filter: `sender_id=eq.${recipientId}`,
-        },
-        (payload) => {
-          console.log("New message received:", payload);
-          fetchMessages();
-        }
-      )
-      .subscribe();
-  };
-
-  const sendMessage = async () => {
-    if (!newMessage.trim()) return;
+    setMessages(prev => [...prev, tempMessage]);
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      // In a real app, this would be sent to the database
+      console.log("Message sent:", messageContent);
 
-      const { error } = await supabase.from("private_messages").insert({
-        sender_id: user.id,
-        recipient_id: recipientId,
-        content: newMessage.trim(),
-      });
-
-      if (error) throw error;
-
-      setNewMessage("");
-      await fetchMessages();
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
     } catch (error) {
       console.error("Error sending message:", error);
-      toast({
-        title: "Error",
-        description: "Failed to send message",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      sendMessage();
     }
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <MessageSquare className="h-5 w-5" />
-          Chat with {recipientName}
-        </CardTitle>
+    <Card className="h-full flex flex-col">
+      <CardHeader className="pb-3">
+        <CardTitle>Chat with {recipientName}</CardTitle>
       </CardHeader>
-      <CardContent>
-        <div className="flex flex-col h-[400px]">
-          <ScrollArea className="flex-1 pr-4">
-            <div className="space-y-4">
-              {messages.map((message) => (
-                <div
-                  key={message.id}
-                  className="flex flex-col space-y-1"
-                >
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium">
-                      {message.sender?.first_name} {message.sender?.last_name}
-                    </span>
-                    <span className="text-xs text-muted-foreground">
-                      {new Date(message.created_at).toLocaleTimeString()}
-                    </span>
-                  </div>
-                  <p className="text-sm">{message.content}</p>
+      <CardContent className="flex-1 overflow-hidden flex flex-col">
+        <div className="flex-1 overflow-y-auto mb-4 space-y-4">
+          {messages.map(message => (
+            <div 
+              key={message.id}
+              className={`flex ${message.sender_id === user?.id ? 'justify-end' : 'justify-start'}`}
+            >
+              <div 
+                className={`max-w-[80%] p-3 rounded-lg ${
+                  message.sender_id === user?.id 
+                    ? 'bg-primary text-primary-foreground' 
+                    : 'bg-muted'
+                }`}
+              >
+                <div className="font-semibold text-xs">
+                  {message.sender?.first_name} {message.sender?.last_name}
                 </div>
-              ))}
+                <div>{message.content}</div>
+                <div className="text-xs opacity-70 mt-1">
+                  {new Date(message.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                </div>
+              </div>
             </div>
-          </ScrollArea>
-          <div className="flex gap-2 mt-4">
-            <Input
-              value={newMessage}
-              onChange={(e) => setNewMessage(e.target.value)}
-              onKeyPress={handleKeyPress}
-              placeholder="Type your message..."
-              className="flex-1"
-            />
-            <Button onClick={sendMessage}>
-              <Send className="h-4 w-4" />
-            </Button>
-          </div>
+          ))}
+          <div ref={messagesEndRef} />
         </div>
+        
+        <form onSubmit={handleSendMessage} className="flex space-x-2">
+          <Input
+            value={newMessage}
+            onChange={(e) => setNewMessage(e.target.value)}
+            placeholder="Type your message..."
+            className="flex-1"
+          />
+          <Button type="submit" size="icon">
+            <Send className="h-4 w-4" />
+          </Button>
+        </form>
       </CardContent>
     </Card>
   );
