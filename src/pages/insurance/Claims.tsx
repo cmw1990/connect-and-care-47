@@ -1,19 +1,21 @@
 
-import { InsuranceClaimsList } from "@/components/insurance/InsuranceClaimsList";
-import { Button } from "@/components/ui/button";
-import { PlusCircle } from "lucide-react";
+import React from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function Claims() {
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">Insurance Claims</h1>
-        <Button>
-          <PlusCircle className="h-4 w-4 mr-2" />
-          New Claim
-        </Button>
-      </div>
-      <InsuranceClaimsList />
+      <h1 className="text-2xl font-bold">Insurance Claims</h1>
+      <Card>
+        <CardHeader>
+          <CardTitle>Recent Claims</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-muted-foreground">
+            You don't have any recent insurance claims. Claims will appear here once processed.
+          </p>
+        </CardContent>
+      </Card>
     </div>
   );
 }

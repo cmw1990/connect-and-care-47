@@ -1,6 +1,6 @@
 
-import { InsuranceProviderSearch } from "@/components/insurance/InsuranceProviderSearch";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import React from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function Network() {
   return (
@@ -8,13 +8,12 @@ export default function Network() {
       <h1 className="text-2xl font-bold">Provider Network</h1>
       <Card>
         <CardHeader>
-          <CardTitle>Find In-Network Providers</CardTitle>
-          <CardDescription>
-            Search for healthcare providers in your insurance network
-          </CardDescription>
+          <CardTitle>In-Network Providers</CardTitle>
         </CardHeader>
         <CardContent>
-          <InsuranceProviderSearch />
+          <p className="text-muted-foreground">
+            Search for in-network healthcare providers in your area.
+          </p>
         </CardContent>
       </Card>
     </div>

@@ -4,9 +4,9 @@ import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import { Loader2, CheckCircle, XCircle } from 'lucide-react';
 import { supabaseClient } from '@/integrations/supabaseClient';
-import { MedicationLogBase } from "@/components/medications/components/MedicationLogBase";
+import { MedicationLogBase, createMockMedicationLog } from "./MedicationLogBase";
 
 interface SupervisorPanelProps {
   groupId: string;
@@ -31,7 +31,8 @@ export const SupervisorPanel: React.FC<SupervisorPanelProps> = ({
           
         if (error) throw error;
         
-        return data as MedicationLogBase[];
+        // Return data or empty array if null
+        return (data || []) as MedicationLogBase[];
       } catch (error) {
         console.error('Error fetching pending verification logs:', error);
         return [] as MedicationLogBase[];
@@ -41,7 +42,12 @@ export const SupervisorPanel: React.FC<SupervisorPanelProps> = ({
 
   useEffect(() => {
     if (logs) {
-      setPendingLogs(logs);
+      // Filter out any invalid data
+      const validLogs = Array.isArray(logs) ? 
+        logs.filter(log => log && typeof log === 'object' && 'id' in log) : 
+        [];
+        
+      setPendingLogs(validLogs);
     }
   }, [logs]);
 

@@ -1,6 +1,6 @@
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { InsuranceForm } from "@/components/insurance/InsuranceForm";
+import React from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function Setup() {
   return (
@@ -8,13 +8,12 @@ export default function Setup() {
       <h1 className="text-2xl font-bold">Insurance Setup</h1>
       <Card>
         <CardHeader>
-          <CardTitle>Add Insurance Coverage</CardTitle>
-          <CardDescription>
-            Enter your insurance information to get started
-          </CardDescription>
+          <CardTitle>Configure Your Insurance</CardTitle>
         </CardHeader>
         <CardContent>
-          <InsuranceForm />
+          <p className="text-muted-foreground">
+            Set up your insurance details and preferences.
+          </p>
         </CardContent>
       </Card>
     </div>

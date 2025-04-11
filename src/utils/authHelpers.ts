@@ -1,11 +1,22 @@
 
 import { supabaseClient, getCurrentUser } from '@/integrations/supabaseClient';
 
+export interface User {
+  id: string;
+  email: string;
+  role: string;
+  firstName: string;
+  lastName: string;
+  first_name: string;
+  last_name: string;
+  created_at: string;
+}
+
 /**
  * A function to get the current user with correct property names
  * This fixes the issues with accessing properties like .id, .first_name, etc.
  */
-export const getUser = async () => {
+export const getUser = async (): Promise<User | null> => {
   const user = await getCurrentUser();
   if (!user) return null;
   
@@ -25,7 +36,7 @@ export const getUser = async () => {
  * A wrapper function that returns a user object synchronously for component initialization
  * Should be used only where you need an immediate return and plan to update the state later
  */
-export const getUserSync = () => {
+export const getUserSync = (): User => {
   // Return the user object directly, not a function
   return {
     id: '',
@@ -43,7 +54,7 @@ export const getUserSync = () => {
  * Updates components that are using the old user object structure
  * This should be used in useEffect to update state once the real user data is fetched
  */
-export const updateUserState = async (setUser: (user: any) => void) => {
+export const updateUserState = async (setUser: (user: User) => void) => {
   try {
     const user = await getUser();
     if (user) {
