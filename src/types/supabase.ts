@@ -267,11 +267,16 @@ export type SelectQueryError<T> = {
   error: true;
 } & String;
 
-// DayContentProps interface for Calendar components
+// Custom DayContentProps interface for Calendar components
+// This needs to match the react-day-picker library's expected props
 export interface DayContentProps {
   date: Date;
+  // For react-day-picker compatibility
   monthStartDate?: Date;
   selected?: boolean;
-  displayMonth?: boolean;
+  displayMonth?: boolean | Date;
   day?: number;
 }
+
+// Define BadgeVariant type to support 'success' variant
+export type BadgeVariant = "default" | "destructive" | "secondary" | "outline" | "success";

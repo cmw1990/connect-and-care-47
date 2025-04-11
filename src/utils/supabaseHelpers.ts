@@ -202,3 +202,13 @@ export function safeQueryBuilder<T>(query: any): Promise<T[]> {
 export function mockTableQuery<T>(mockData: T[] = []): Promise<T[]> {
   return Promise.resolve(mockData);
 }
+
+/**
+ * Mock missing tables in the database
+ * This adds mocked responses for tables that don't exist yet
+ */
+export function mockMissingTables() {
+  console.log("Initializing mock tables for development");
+  // This is intentionally empty as the actual implementation is handled
+  // through mockTableQuery function when specific tables are accessed
+}

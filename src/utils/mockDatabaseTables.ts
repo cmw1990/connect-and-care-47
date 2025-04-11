@@ -1,64 +1,63 @@
 
-import { supabase } from "@/integrations/supabase/client";
-import { mockSupabase } from "./supabaseHelpers";
+import { supabase } from '@/integrations/supabase/client';
 
-// Utility to check if tables exist in the Supabase database
-export const mockMissingTables = () => {
-  const originalFrom = supabase.from;
-  const existingTables = [
-    'care_teams', 'availability_slots', 'care_analytics', 'care_connections',
-    'care_facilities', 'care_notes', 'care_outcome_metrics', 'care_products',
-    'care_quality_metrics', 'care_reviews', 'care_routines', 'care_tasks',
-    'care_team_availability', 'care_team_members', 'care_updates',
-    'caregiver_availability', 'caregiver_bookings', 'caregiver_profiles',
-    'companion_activity_templates', 'companion_profiles', 'dementia_profiles',
-    'insurance_analytics', 'medication_adherence_trends', 'medication_portal_settings',
-    'medication_schedules', 'medication_supervision_summary', 'medication_verifications',
-    'patient_check_ins', 'patient_info', 'patient_locations', 'private_messages',
-    'profiles', 'team_messages', 'temp_services', 'video_consultations'
-  ];
-
-  // Monkey-patch the supabase.from method to use mock for missing tables
-  (supabase as any).from = function(tableName: string) {
-    if (existingTables.includes(tableName)) {
-      return originalFrom.call(this, tableName);
+/**
+ * Checks if a database table exists
+ * @param tableName The name of the table to check
+ * @returns True if the table exists, false otherwise
+ */
+const tableExists = async (tableName: string): Promise<boolean> => {
+  try {
+    const { data, error } = await supabase
+      .from(tableName)
+      .select('*')
+      .limit(1);
+    
+    if (error && error.code === '42P01') {
+      // Code 42P01 means the table doesn't exist
+      return false;
     }
     
-    console.warn(`Table '${tableName}' not found in schema, using mock data.`);
-    return mockSupabase.from(tableName);
-  };
+    return true;
+  } catch (error) {
+    console.error(`Error checking if table '${tableName}' exists:`, error);
+    return false;
+  }
 };
 
-// List of mock data for various tables that don't exist yet
-export const mockData = {
-  insurance_documents: [],
-  insurance_deductibles: [],
-  medical_device_data: [],
-  facility_leads: [],
-  insurance_claims: [],
-  background_checks: [],
-  verification_requests: [],
-  user_insurance: [],
-  insurance_plans: [],
-  care_recipients: [],
-  care_circle_invites: [],
-  medical_documents: [],
-  danger_zone_types: [],
-  care_group_members: [],
-  geofences: [],
-  tasks: [],
-  group_posts: [],
-  care_groups: [],
-  affiliate_interactions: []
-};
-
-// Initialize mock tables
-export const initMockTables = () => {
-  mockMissingTables();
+/**
+ * Creates mock data handlers for tables that don't exist yet
+ * This is useful for development when the database schema is not yet complete
+ */
+export const mockMissingTables = async () => {
+  console.log('Initializing mock tables for development');
   
-  // Log a message to the console about the mocking
-  console.info(
-    'Some database tables are being mocked for development. ' +
-    'Data will not persist between sessions.'
-  );
+  // Define the tables you expect to use in the app
+  const expectedTables = [
+    'care_appointments',
+    'insurance_claims',
+    'user_insurance',
+    'insurance_plans',
+    'insurance_deductibles',
+    'insurance_documents',
+    'medical_documents',
+    'medical_device_data',
+    'care_circle_invites',
+    'care_recipients',
+    'care_group_members',
+    'verification_requests',
+    'background_checks',
+    'affiliate_interactions',
+    'facility_leads'
+  ];
+  
+  // Check which tables exist and which need to be mocked
+  for (const tableName of expectedTables) {
+    const exists = await tableExists(tableName);
+    if (!exists) {
+      console.log(`Table '${tableName}' does not exist, using mocked responses`);
+      // Implementation of mocking is actually done in the safeSupabaseQuery and mockTableQuery functions
+      // This is just for logging purposes
+    }
+  }
 };

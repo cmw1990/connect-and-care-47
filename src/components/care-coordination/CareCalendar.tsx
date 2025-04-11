@@ -199,7 +199,7 @@ export const CareCalendar = ({ groupId }: { groupId: string }) => {
               onSelect={setSelectedDate}
               className="rounded-md border"
               components={{
-                DayContent: getDayContent,
+                DayContent: getDayContent as any, // Cast to any to bridge the type gap between our type and the library's
               }}
             />
           </CardContent>
@@ -228,7 +228,7 @@ export const CareCalendar = ({ groupId }: { groupId: string }) => {
                     <div className="mt-1 text-sm text-muted-foreground">
                       {new Date(event.due_date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       {' · '}
-                      <Badge variant={event.status === 'completed' ? 'success' : 'outline'}>
+                      <Badge variant={event.status === 'completed' ? 'default' : 'outline'}>
                         {event.status}
                       </Badge>
                     </div>
