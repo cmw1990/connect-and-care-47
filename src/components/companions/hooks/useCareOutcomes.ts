@@ -1,6 +1,6 @@
 
 import { useQuery } from "@tanstack/react-query";
-import { supabaseClient } from "@/integrations/supabaseClient";
+import { supabaseClient, safeQueryWithFallback } from "@/integrations/supabaseClient";
 
 /**
  * Type for care outcome metrics response
@@ -25,22 +25,14 @@ export const useCareOutcomes = (meetingId: string) => {
     queryFn: async () => {
       if (!meetingId) return [] as CareOutcomeMetric[];
       
-      try {
-        const { data, error } = await supabaseClient
+      return await safeQueryWithFallback<CareOutcomeMetric>(
+        'care_outcome_metrics',
+        () => supabaseClient
           .from('care_outcome_metrics')
           .select('*')
-          .eq('companion_meeting_id', meetingId);
-            
-        if (error) {
-          console.error("Error fetching care outcomes:", error);
-          return [] as CareOutcomeMetric[];
-        }
-        
-        return (data || []) as CareOutcomeMetric[];
-      } catch (error) {
-        console.error("Exception fetching care outcomes:", error);
-        return [] as CareOutcomeMetric[];
-      }
+          .eq('companion_meeting_id', meetingId),
+        [] // fallback data
+      ).then(result => result.data || []);
     },
     enabled: !!meetingId
   });

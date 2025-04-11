@@ -26,19 +26,16 @@ export const getUser = async () => {
  * Should be used only where you need an immediate return and plan to update the state later
  */
 export const getUserSync = () => {
-  return () => {
-    // Return a placeholder object with the correct properties
-    // This will be replaced by the actual user data once fetched
-    return {
-      id: '',
-      email: '',
-      role: '',
-      firstName: '',
-      lastName: '',
-      first_name: '',
-      last_name: '',
-      created_at: new Date().toISOString()
-    };
+  // Return the user object directly, not a function
+  return {
+    id: '',
+    email: '',
+    role: '',
+    firstName: '',
+    lastName: '',
+    first_name: '',
+    last_name: '',
+    created_at: new Date().toISOString()
   };
 };
 
