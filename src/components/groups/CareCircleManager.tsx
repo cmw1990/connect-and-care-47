@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Users, Mail, UserPlus } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { supabaseClient } from "@/integrations/supabaseClient";
 
 interface CareCircleManagerProps {
   groupId: string;
@@ -30,7 +30,7 @@ export const CareCircleManager = ({ groupId }: CareCircleManagerProps) => {
 
     try {
       setIsLoading(true);
-      const { error } = await supabase
+      const { error } = await supabaseClient
         .from("care_circle_invites")
         .insert({
           group_id: groupId,

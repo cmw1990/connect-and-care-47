@@ -1,6 +1,6 @@
 
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { supabaseClient } from "@/integrations/supabaseClient";
 
 /**
  * Type for care outcome metrics response
@@ -25,7 +25,7 @@ export const useCareOutcomes = (meetingId: string) => {
     queryFn: async () => {
       if (!meetingId) return [];
       
-      const { data, error } = await supabase
+      const { data, error } = await supabaseClient
         .from('care_outcome_metrics')
         .select('*')
         .eq('companion_meeting_id', meetingId);

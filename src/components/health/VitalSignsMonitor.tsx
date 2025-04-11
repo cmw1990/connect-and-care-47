@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Heart, Activity, Thermometer, Wind } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import { supabaseClient } from "@/integrations/supabaseClient";
 
 interface VitalSigns {
   blood_pressure?: string;
@@ -19,7 +19,7 @@ export const VitalSignsMonitor = ({ groupId }: { groupId: string }) => {
   useEffect(() => {
     const fetchVitalSigns = async () => {
       try {
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
           .from('medical_device_data')
           .select('*')
           .eq('group_id', groupId)
@@ -45,7 +45,7 @@ export const VitalSignsMonitor = ({ groupId }: { groupId: string }) => {
     fetchVitalSigns();
 
     // Subscribe to real-time updates
-    const channel = supabase
+    const channel = supabaseClient
       .channel('medical-device-updates')
       .on(
         'postgres_changes',
@@ -65,7 +65,7 @@ export const VitalSignsMonitor = ({ groupId }: { groupId: string }) => {
       .subscribe();
 
     return () => {
-      supabase.removeChannel(channel);
+      supabaseClient.removeChannel(channel);
     };
   }, [groupId]);
 

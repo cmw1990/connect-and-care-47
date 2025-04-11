@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,7 +11,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle, Shield, AlertTriangle, Fingerprint } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import { supabaseClient } from "@/integrations/supabaseClient";
 
 interface ComparisonResultsProps {
   selectedProducts: any[];
@@ -23,7 +24,7 @@ export const ComparisonResults = ({ selectedProducts }: ComparisonResultsProps) 
   const handleRequestVerification = async (type: string) => {
     try {
       setIsSubmitting(true);
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { user } } = await supabaseClient.auth.getUser();
       
       if (!user) {
         toast({
@@ -35,7 +36,7 @@ export const ComparisonResults = ({ selectedProducts }: ComparisonResultsProps) 
       }
       
       // Create verification request in the database
-      const { error } = await supabase
+      const { error } = await supabaseClient
         .from('verification_requests')
         .insert({
           user_id: user.id,
@@ -65,7 +66,7 @@ export const ComparisonResults = ({ selectedProducts }: ComparisonResultsProps) 
   const initiateBackgroundCheck = async () => {
     try {
       setIsSubmitting(true);
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { user } } = await supabaseClient.auth.getUser();
       
       if (!user) {
         toast({
@@ -77,7 +78,7 @@ export const ComparisonResults = ({ selectedProducts }: ComparisonResultsProps) 
       }
       
       // Create background check in the database
-      const { error } = await supabase
+      const { error } = await supabaseClient
         .from('background_checks')
         .insert({
           user_id: user.id,

@@ -12,7 +12,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import { supabaseClient } from "@/integrations/supabaseClient";
 import { Plus, FileText, Download } from "lucide-react";
 
 interface Document {
@@ -42,7 +42,7 @@ export const DocumentSharing = ({ groupId }: { groupId: string }) => {
 
   const fetchDocuments = async () => {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await supabaseClient
         .from("medical_documents")
         .select("*")
         .eq("group_id", groupId)
@@ -71,17 +71,33 @@ export const DocumentSharing = ({ groupId }: { groupId: string }) => {
       const fileExt = file.name.split(".").pop();
       const filePath = `${groupId}/${Math.random()}.${fileExt}`;
 
-      const { error: uploadError } = await supabase.storage
+      // Check if storage bucket exists first
+      const { data: buckets } = await supabaseClient.storage.listBuckets();
+      let bucketExists = buckets?.some(bucket => bucket.name === 'medical_documents');
+      
+      if (!bucketExists) {
+        // Create bucket if it doesn't exist
+        const { error: createBucketError } = await supabaseClient.storage.createBucket('medical_documents', {
+          public: true
+        });
+        
+        if (createBucketError) {
+          console.warn('Error creating bucket:', createBucketError);
+          // Continue anyway
+        }
+      }
+
+      const { error: uploadError } = await supabaseClient.storage
         .from("medical_documents")
         .upload(filePath, file);
 
       if (uploadError) throw uploadError;
 
-      const { data: { publicUrl } } = supabase.storage
+      const { data: { publicUrl } } = supabaseClient.storage
         .from("medical_documents")
         .getPublicUrl(filePath);
 
-      const { error: dbError } = await supabase.from("medical_documents").insert({
+      const { error: dbError } = await supabaseClient.from("medical_documents").insert({
         group_id: groupId,
         title: newDocument.title,
         description: newDocument.description,

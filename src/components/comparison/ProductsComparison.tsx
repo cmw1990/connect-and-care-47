@@ -4,7 +4,7 @@ import { Brain, DollarSign, Shield, Star, Tags } from "lucide-react";
 import { CareProduct } from "./types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { supabase } from "@/integrations/supabase/client";
+import { supabaseClient } from "@/integrations/supabaseClient";
 import { useToast } from "@/hooks/use-toast";
 import { formatCurrency } from "@/utils/formatUtils";
 import { VerificationBadge } from "@/components/verification/VerificationBadge";
@@ -37,7 +37,7 @@ export const ProductsComparison = ({
     if (!product.affiliate_link) return;
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { user } } = await supabaseClient.auth.getUser();
       if (!user) {
         console.warn('User not authenticated, skipping affiliate tracking');
         onAffiliateClick(product.affiliate_link);
@@ -45,7 +45,7 @@ export const ProductsComparison = ({
       }
 
       // Record the affiliate interaction in the database
-      const { error } = await supabase
+      const { error } = await supabaseClient
         .from('affiliate_interactions')
         .insert({
           product_id: product.id,

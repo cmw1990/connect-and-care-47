@@ -5,7 +5,7 @@ import { Users, Phone, Video, PersonStanding, UserPlus, UserRound, Check, X } fr
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { supabaseClient } from "@/integrations/supabaseClient";
 import { mockConnection, mockSupabaseQuery } from "@/utils/supabaseHelpers";
 
 interface SocialInteractionsProps {
@@ -51,21 +51,33 @@ export const SocialInteractions = ({ interactions, onInteractionAdd }: SocialInt
 
   const fetchRecentConnections = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { user } } = await supabaseClient.auth.getUser();
       if (!user) return;
 
-      // Use mock data for development since the table doesn't exist yet
-      const { data, error } = await mockSupabaseQuery<Connection>(
-        'care_connections',
-        [
-          mockConnection({ status: 'accepted', connection_type: 'carer' }),
-          mockConnection({ status: 'pending', connection_type: 'pal' })
-        ]
-      );
-
-      if (error) throw error;
-      // Ensure data is properly typed as Connection[]
-      setRecentConnections(data as Connection[]);
+      // Try to use real data first
+      try {
+        const { data, error } = await supabaseClient
+          .from('care_connections')
+          .select('*')
+          .or(`recipient_id.eq.${user.id},requester_id.eq.${user.id}`)
+          .limit(3);
+          
+        if (error) throw error;
+        setRecentConnections(data);
+        return;
+      } catch (err) {
+        console.warn('Falling back to mock data for connections');
+        
+        // Use mock data for development since the real table might not be available yet
+        const { data } = await mockSupabaseQuery<Connection>(
+          'care_connections',
+          [
+            mockConnection({ status: 'accepted', connection_type: 'carer' }),
+            mockConnection({ status: 'pending', connection_type: 'pal' })
+          ]
+        );
+        setRecentConnections(data);
+      }
     } catch (error) {
       console.error('Error fetching recent connections:', error);
     }
@@ -73,7 +85,7 @@ export const SocialInteractions = ({ interactions, onInteractionAdd }: SocialInt
 
   const fetchSuggestedConnections = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { user } } = await supabaseClient.auth.getUser();
       if (!user) return;
 
       // Mock suggested connections
@@ -90,7 +102,7 @@ export const SocialInteractions = ({ interactions, onInteractionAdd }: SocialInt
   };
 
   const subscribeToConnectionUpdates = () => {
-    const channel = supabase
+    const channel = supabaseClient
       .channel('care_connections_changes')
       .on(
         'postgres_changes',
@@ -107,16 +119,16 @@ export const SocialInteractions = ({ interactions, onInteractionAdd }: SocialInt
       .subscribe();
 
     return () => {
-      supabase.removeChannel(channel);
+      supabaseClient.removeChannel(channel);
     };
   };
 
   const sendConnectionRequest = async (recipientId: string, type: 'carer' | 'pal') => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { user } } = await supabaseClient.auth.getUser();
       if (!user) return;
 
-      const { error } = await supabase
+      const { error } = await supabaseClient
         .from('care_connections')
         .insert({
           requester_id: user.id,

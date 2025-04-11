@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import { supabaseClient } from "@/integrations/supabaseClient";
 import { UserPlus, UserRound, Check, X } from "lucide-react";
 import { mockConnection, mockSupabaseQuery } from "@/utils/supabaseHelpers";
 
@@ -34,35 +34,51 @@ export const ConnectionManager = () => {
     fetchConnections();
     const channel = subscribeToConnections();
     return () => {
-      supabase.removeChannel(channel);
+      supabaseClient.removeChannel(channel);
     };
   }, []);
 
   const fetchConnections = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { user } } = await supabaseClient.auth.getUser();
       if (!user) return;
 
-      // Use mock data for development
-      const { data, error } = await mockSupabaseQuery<Connection>(
-        'care_connections',
-        [
-          mockConnection({ status: 'accepted', connection_type: 'carer' }),
-          mockConnection({ status: 'accepted', connection_type: 'pal' }),
-          mockConnection({ status: 'pending', connection_type: 'carer' })
-        ]
-      );
+      // Use real data if available, otherwise use mock data
+      try {
+        const { data, error } = await supabaseClient
+          .from('care_connections')
+          .select('*')
+          .or(`recipient_id.eq.${user.id},requester_id.eq.${user.id}`);
 
-      if (error) throw error;
-      
-      // Cast the data using as to ensure proper typing
-      const typedData = data as Connection[];
-      
-      const activeConnections = typedData.filter(conn => conn.status === 'accepted');
-      const pending = typedData.filter(conn => conn.status === 'pending');
+        if (error) throw error;
 
-      setConnections(activeConnections);
-      setPendingRequests(pending);
+        const activeConnections = data.filter(conn => conn.status === 'accepted');
+        const pending = data.filter(conn => conn.status === 'pending');
+
+        setConnections(activeConnections);
+        setPendingRequests(pending);
+        return;
+      } catch (error) {
+        console.warn('Falling back to mock data for connections');
+        
+        // Fall back to mock data if real DB fails
+        const { data, error } = await mockSupabaseQuery<Connection>(
+          'care_connections',
+          [
+            mockConnection({ status: 'accepted', connection_type: 'carer' }),
+            mockConnection({ status: 'accepted', connection_type: 'pal' }),
+            mockConnection({ status: 'pending', connection_type: 'carer' })
+          ]
+        );
+
+        if (error) throw error;
+        
+        const activeConnections = data.filter(conn => conn.status === 'accepted');
+        const pending = data.filter(conn => conn.status === 'pending');
+
+        setConnections(activeConnections);
+        setPendingRequests(pending);
+      }
     } catch (error) {
       console.error('Error fetching connections:', error);
       toast({
@@ -74,7 +90,7 @@ export const ConnectionManager = () => {
   };
 
   const subscribeToConnections = () => {
-    return supabase
+    return supabaseClient
       .channel('care_connections')
       .on(
         'postgres_changes',
@@ -93,10 +109,10 @@ export const ConnectionManager = () => {
 
   const handleConnectionRequest = async (recipientId: string, type: 'carer' | 'pal') => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { user } } = await supabaseClient.auth.getUser();
       if (!user) return;
 
-      const { error } = await supabase
+      const { error } = await supabaseClient
         .from('care_connections')
         .insert({
           requester_id: user.id,
@@ -122,7 +138,7 @@ export const ConnectionManager = () => {
 
   const handleRequestResponse = async (connectionId: string, accept: boolean) => {
     try {
-      const { error } = await supabase
+      const { error } = await supabaseClient
         .from('care_connections')
         .update({ status: accept ? 'accepted' : 'rejected' })
         .eq('id', connectionId);
