@@ -141,9 +141,15 @@ export interface CompanionMatch {
     creative_exercises?: string[];
   };
   interests: string[];
-  // Adding the missing properties
+  // Add the missing properties that are being referenced in the codebase
   background_check_date?: string;
   bio?: string;
+  // Additional properties
+  art_therapy_certified?: boolean;
+  music_therapy_certified?: boolean;
+  cultural_competencies?: string[];
+  availability?: Json;
+  child_engagement_activities?: Json;
 }
 
 export interface Disclaimer {
