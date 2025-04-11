@@ -891,6 +891,135 @@ export type Database = {
         }
         Relationships: []
       }
+      medication_adherence_trends: {
+        Row: {
+          adherence_rate: number | null
+          created_at: string | null
+          date: string
+          group_id: string
+          id: string
+          missed_doses: number | null
+          total_doses: number | null
+        }
+        Insert: {
+          adherence_rate?: number | null
+          created_at?: string | null
+          date: string
+          group_id: string
+          id?: string
+          missed_doses?: number | null
+          total_doses?: number | null
+        }
+        Update: {
+          adherence_rate?: number | null
+          created_at?: string | null
+          date?: string
+          group_id?: string
+          id?: string
+          missed_doses?: number | null
+          total_doses?: number | null
+        }
+        Relationships: []
+      }
+      medication_portal_settings: {
+        Row: {
+          accessibility_settings: Json | null
+          created_at: string | null
+          group_id: string
+          id: string
+          reminder_preferences: Json | null
+          updated_at: string | null
+        }
+        Insert: {
+          accessibility_settings?: Json | null
+          created_at?: string | null
+          group_id: string
+          id?: string
+          reminder_preferences?: Json | null
+          updated_at?: string | null
+        }
+        Update: {
+          accessibility_settings?: Json | null
+          created_at?: string | null
+          group_id?: string
+          id?: string
+          reminder_preferences?: Json | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      medication_schedules: {
+        Row: {
+          created_at: string | null
+          dosage: string | null
+          frequency: string
+          group_id: string
+          id: string
+          medication_name: string
+          time_of_day: string[]
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          dosage?: string | null
+          frequency: string
+          group_id: string
+          id?: string
+          medication_name: string
+          time_of_day: string[]
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          dosage?: string | null
+          frequency?: string
+          group_id?: string
+          id?: string
+          medication_name?: string
+          time_of_day?: string[]
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      medication_supervision_summary: {
+        Row: {
+          approved_medications: number | null
+          avg_verification_time_minutes: number | null
+          created_at: string | null
+          group_id: string
+          id: string
+          missed_medications: number | null
+          pending_verifications: number | null
+          supervisor_id: string | null
+          total_medications: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          approved_medications?: number | null
+          avg_verification_time_minutes?: number | null
+          created_at?: string | null
+          group_id: string
+          id?: string
+          missed_medications?: number | null
+          pending_verifications?: number | null
+          supervisor_id?: string | null
+          total_medications?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          approved_medications?: number | null
+          avg_verification_time_minutes?: number | null
+          created_at?: string | null
+          group_id?: string
+          id?: string
+          missed_medications?: number | null
+          pending_verifications?: number | null
+          supervisor_id?: string | null
+          total_medications?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       medication_verifications: {
         Row: {
           created_at: string | null

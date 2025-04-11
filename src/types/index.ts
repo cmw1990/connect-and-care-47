@@ -141,7 +141,7 @@ export interface CompanionMatch {
     creative_exercises?: string[];
   };
   interests: string[];
-  // Add the missing properties that are being referenced in the codebase
+  // The missing properties that components are referencing
   background_check_date?: string;
   bio?: string;
   // Additional properties
