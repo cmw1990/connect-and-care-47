@@ -2,48 +2,16 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Search, Heart } from "lucide-react"; // Added Heart import
+import { Search, Heart } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CompanionCard } from "./CompanionCard";
 import type { Json } from "@/integrations/supabase/types";
+import { CompanionMatch } from "@/types/supabase";
 import { InsuranceClaimProcessor } from "@/components/insurance/InsuranceClaimProcessor";
 import { DementiaSupport } from "@/components/caregivers/DementiaSupport";
-
-interface CompanionMatch {
-  id: string;
-  user: {
-    first_name: string;
-    last_name: string;
-  };
-  expertise_areas: string[];
-  dementia_experience: boolean;
-  communication_preferences: string[];
-  languages: string[];
-  virtual_meeting_preference: boolean;
-  in_person_meeting_preference: boolean;
-  rating: number;
-  hourly_rate: number;
-  identity_verified: boolean;
-  mental_health_specialties: string[];
-  support_tools_proficiency: Json;
-  virtual_meeting_tools: string[];
-  interests: string[] | null;
-  cognitive_engagement_activities: {
-    memory_games?: string[];
-    brain_teasers?: string[];
-    social_activities?: string[];
-    creative_exercises?: string[];
-  };
-  cultural_competencies?: string[];
-  music_therapy_certified?: boolean;
-  art_therapy_certified?: boolean;
-  availability?: Json;
-  background_check_date?: string;
-  bio?: string;
-  child_engagement_activities?: Json;
-}
+import { safeSupabaseCast, safeSupabaseQuery } from "@/utils/supabaseHelpers";
 
 interface CompanionFilters {
   expertiseArea: string;
@@ -75,62 +43,91 @@ const CompanionMatcher = () => {
 
   const fetchCompanions = async () => {
     try {
-      let query = supabase
-        .from('companion_profiles')
-        .select(`
-          *,
-          user:profiles(first_name, last_name)
-        `);
+      setIsLoading(true);
+      
+      const fetchData = async () => {
+        let query = supabase
+          .from('companion_profiles')
+          .select(`
+            *,
+            user:profiles(first_name, last_name)
+          `);
 
-      // Add dementia-specific filtering
-      if (filters.dementiaOnly) {
-        query = query
-          .eq('dementia_care_certified', true)
-          .order('dementia_experience_years', { ascending: false });
-      }
+        // Add dementia-specific filtering
+        if (filters.dementiaOnly) {
+          query = query
+            .eq('dementia_care_certified', true)
+            .order('dementia_experience_years', { ascending: false });
+        }
 
-      if (filters.expertiseArea) {
-        query = query.contains('expertise_areas', [filters.expertiseArea]);
-      }
+        if (filters.expertiseArea) {
+          query = query.contains('expertise_areas', [filters.expertiseArea]);
+        }
 
-      if (filters.dementiaExperience) {
-        query = query.eq('dementia_experience', true);
-      }
+        if (filters.dementiaExperience) {
+          query = query.eq('dementia_experience', true);
+        }
 
-      if (filters.mentalHealthSupport) {
-        query = query.eq('mental_health_support', true);
-      }
+        if (filters.mentalHealthSupport) {
+          query = query.eq('mental_health_support', true);
+        }
 
-      if (filters.communicationType === 'virtual') {
-        query = query.eq('virtual_meeting_preference', true);
-      } else if (filters.communicationType === 'in-person') {
-        query = query.eq('in_person_meeting_preference', true);
-      }
+        if (filters.communicationType === 'virtual') {
+          query = query.eq('virtual_meeting_preference', true);
+        } else if (filters.communicationType === 'in-person') {
+          query = query.eq('in_person_meeting_preference', true);
+        }
 
-      if (filters.supportTools.length > 0) {
-        query = query.contains('support_tools_proficiency', filters.supportTools);
-      }
+        if (filters.supportTools.length > 0) {
+          query = query.contains('support_tools_proficiency', filters.supportTools);
+        }
 
-      query = query.lte('hourly_rate', filters.maxRate);
+        query = query.lte('hourly_rate', filters.maxRate);
 
-      const { data, error } = await query;
+        return query;
+      };
 
-      if (error) throw error;
+      const data = await safeSupabaseQuery(
+        async () => await fetchData().then(q => q.get()),
+        []
+      );
 
-      const parsedData = (data || []).map(companion => ({
-        ...companion,
+      // Process and map the data to ensure it matches the CompanionMatch interface
+      const companions: CompanionMatch[] = safeSupabaseCast<CompanionMatch>(data, (companion) => ({
+        id: companion.id || '',
+        user: {
+          first_name: companion.user?.first_name || 'Unknown',
+          last_name: companion.user?.last_name || 'User'
+        },
+        expertise_areas: companion.expertise_areas || [],
+        dementia_experience: !!companion.dementia_experience,
+        communication_preferences: companion.communication_preferences || [],
+        languages: companion.languages || [],
+        virtual_meeting_preference: !!companion.virtual_meeting_preference,
+        in_person_meeting_preference: !!companion.in_person_meeting_preference,
+        rating: companion.rating || 0,
+        hourly_rate: companion.hourly_rate || 0,
+        identity_verified: !!companion.identity_verified,
+        mental_health_specialties: companion.mental_health_specialties || [],
+        support_tools_proficiency: companion.support_tools_proficiency || {},
+        virtual_meeting_tools: companion.virtual_meeting_tools || [],
         interests: companion.interests || [],
-        cognitive_engagement_activities: typeof companion.cognitive_engagement_activities === 'string' 
-          ? JSON.parse(companion.cognitive_engagement_activities)
-          : companion.cognitive_engagement_activities || {
-              memory_games: [],
-              brain_teasers: [],
-              social_activities: [],
-              creative_exercises: []
-            }
-      })) as CompanionMatch[];
+        cognitive_engagement_activities: companion.cognitive_engagement_activities || {
+          memory_games: [],
+          brain_teasers: [],
+          social_activities: [],
+          creative_exercises: []
+        },
+        cultural_competencies: companion.cultural_competencies || [],
+        music_therapy_certified: !!companion.music_therapy_certified,
+        art_therapy_certified: !!companion.art_therapy_certified,
+        availability: companion.availability,
+        background_check_date: companion.background_check_date,
+        bio: companion.bio,
+        child_engagement_activities: companion.child_engagement_activities
+      }));
 
-      setMatches(parsedData);
+      setMatches(companions);
     } catch (error) {
       console.error('Error fetching companions:', error);
       toast({
@@ -206,12 +203,14 @@ const CompanionMatcher = () => {
               onChange={(e) => {
                 const value = e.target.value.toLowerCase();
                 // Filter companions based on the search input
-                const filteredCompanions = matches.filter(companion => 
-                  companion.bio?.toLowerCase().includes(value) ||
-                  companion.user.first_name.toLowerCase().includes(value) ||
-                  companion.user.last_name.toLowerCase().includes(value)
-                );
-                setMatches(filteredCompanions);
+                fetchCompanions().then(() => {
+                  const filteredCompanions = matches.filter(companion => 
+                    companion.bio?.toLowerCase().includes(value) ||
+                    companion.user.first_name.toLowerCase().includes(value) ||
+                    companion.user.last_name.toLowerCase().includes(value)
+                  );
+                  setMatches(filteredCompanions);
+                });
               }}
             />
           </div>

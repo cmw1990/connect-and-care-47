@@ -1,218 +1,261 @@
-import React from 'react';
-import { Calendar } from '@/components/ui/calendar';
-import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { useToast } from '@/components/ui/use-toast';
-import { CalendarPlus, Users, Car, Utensils } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
 
-interface Task {
+import { useState, useEffect } from 'react';
+import { Calendar } from '@/components/ui/calendar';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+import { safeSupabaseQuery } from '@/utils/supabaseHelpers';
+
+interface CareTask {
   id: string;
   title: string;
-  date: Date;
-  type: 'appointment' | 'transportation' | 'meal' | 'general';
-  assignedTo: string[];
-  description: string;
+  due_date: string;
+  status: string;
+  priority: string;
 }
 
-export const CareCalendar = () => {
-  const { t } = useTranslation();
+interface CareEvent extends CareTask {
+  type: 'task' | 'appointment' | 'medication';
+  color: string;
+}
+
+export const CareCalendar = ({ groupId }: { groupId: string }) => {
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
+  const [events, setEvents] = useState<Record<string, CareEvent[]>>({});
+  const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
-  const [date, setDate] = React.useState<Date | undefined>(new Date());
-  const [tasks, setTasks] = React.useState<Task[]>([]);
-  const [isAddingTask, setIsAddingTask] = React.useState(false);
-  const [newTask, setNewTask] = React.useState<Partial<Task>>({
-    type: 'general',
-    date: new Date(),
-  });
 
-  const handleAddTask = () => {
-    if (!newTask.title || !newTask.date) {
-      toast({
-        title: t('error.invalidTask'),
-        description: t('error.pleaseCompleteAllFields'),
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    const task: Task = {
-      id: Math.random().toString(36).substr(2, 9),
-      title: newTask.title,
-      date: newTask.date,
-      type: newTask.type || 'general',
-      assignedTo: newTask.assignedTo || [],
-      description: newTask.description || '',
-    };
-
-    setTasks([...tasks, task]);
-    setIsAddingTask(false);
-    setNewTask({
-      type: 'general',
-      date: new Date(),
-    });
-
-    toast({
-      title: t('success.taskAdded'),
-      description: t('success.taskAddedDescription'),
-    });
+  // Function to format date as a key for our events object
+  const formatDateKey = (date: Date): string => {
+    return date.toISOString().split('T')[0];
   };
 
-  const getTaskIcon = (type: Task['type']) => {
-    switch (type) {
-      case 'appointment':
-        return <CalendarPlus className="h-4 w-4" />;
-      case 'transportation':
-        return <Car className="h-4 w-4" />;
-      case 'meal':
-        return <Utensils className="h-4 w-4" />;
-      default:
-        return <Users className="h-4 w-4" />;
+  useEffect(() => {
+    fetchEvents();
+  }, [groupId]);
+
+  const fetchEvents = async () => {
+    setIsLoading(true);
+    try {
+      // Using our safer query approach to avoid deep recursion
+      const careTasksPromise = safeSupabaseQuery(
+        async () => supabase
+          .from('care_tasks')
+          .select('*')
+          .eq('team_id', groupId),
+        [] as CareTask[]
+      );
+
+      const appointmentsPromise = safeSupabaseQuery(
+        async () => supabase
+          .from('care_appointments')
+          .select('*')
+          .eq('team_id', groupId),
+        [] as any[]
+      );
+
+      const medicationsPromise = safeSupabaseQuery(
+        async () => supabase
+          .from('medication_schedules')
+          .select('*')
+          .eq('group_id', groupId),
+        [] as any[]
+      );
+
+      const [careTasks, appointments, medications] = await Promise.all([
+        careTasksPromise,
+        appointmentsPromise,
+        medicationsPromise
+      ]);
+
+      // Process the results
+      const eventsByDate: Record<string, CareEvent[]> = {};
+      
+      // Process tasks
+      careTasks.forEach((task: any) => {
+        if (task.due_date) {
+          const dateKey = formatDateKey(new Date(task.due_date));
+          if (!eventsByDate[dateKey]) {
+            eventsByDate[dateKey] = [];
+          }
+          eventsByDate[dateKey].push({
+            ...task,
+            type: 'task',
+            color: getPriorityColor(task.priority || 'medium')
+          });
+        }
+      });
+      
+      // Process appointments
+      appointments.forEach((appointment: any) => {
+        if (appointment.appointment_date) {
+          const dateKey = formatDateKey(new Date(appointment.appointment_date));
+          if (!eventsByDate[dateKey]) {
+            eventsByDate[dateKey] = [];
+          }
+          eventsByDate[dateKey].push({
+            id: appointment.id,
+            title: appointment.title || 'Appointment',
+            due_date: appointment.appointment_date,
+            status: appointment.status || 'scheduled',
+            priority: 'high',
+            type: 'appointment',
+            color: '#2563eb' // blue
+          });
+        }
+      });
+      
+      // Process medications
+      medications.forEach((medication: any) => {
+        // For simplicity, we're adding medications for the next 7 days
+        // In a real app, you'd generate dates based on the prescription schedule
+        for (let i = 0; i < 7; i++) {
+          const date = new Date();
+          date.setDate(date.getDate() + i);
+          const dateKey = formatDateKey(date);
+          
+          if (!eventsByDate[dateKey]) {
+            eventsByDate[dateKey] = [];
+          }
+          
+          eventsByDate[dateKey].push({
+            id: `${medication.id}-${i}`,
+            title: `Take ${medication.medication_name}`,
+            due_date: date.toISOString(),
+            status: 'pending',
+            priority: 'high',
+            type: 'medication',
+            color: '#16a34a' // green
+          });
+        }
+      });
+      
+      setEvents(eventsByDate);
+
+    } catch (error) {
+      console.error('Error fetching calendar events:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load calendar events",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
     }
+  };
+
+  const getPriorityColor = (priority: string): string => {
+    switch (priority) {
+      case 'high':
+        return '#dc2626'; // red
+      case 'medium':
+        return '#ca8a04'; // yellow
+      case 'low':
+        return '#16a34a'; // green
+      default:
+        return '#6b7280'; // gray
+    }
+  };
+
+  const getDayContent = (day: Date) => {
+    const dateKey = formatDateKey(day);
+    const dayEvents = events[dateKey] || [];
+    
+    if (dayEvents.length === 0) return null;
+    
+    // Just show a colored dot for days with events
+    return (
+      <div className="absolute bottom-0 left-0 right-0 flex justify-center">
+        <div className="flex space-x-1 mb-1">
+          {dayEvents.length > 0 && (
+            <div className="h-1.5 w-1.5 rounded-full bg-primary" />
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  const getSelectedDateEvents = (): CareEvent[] => {
+    if (!selectedDate) return [];
+    const dateKey = formatDateKey(selectedDate);
+    return events[dateKey] || [];
   };
 
   return (
     <div className="space-y-4">
-      <Card>
-        <CardHeader>
-          <CardTitle>{t('careCalendar.title')}</CardTitle>
-          <CardDescription>{t('careCalendar.description')}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex space-x-4">
-            <div className="flex-1">
-              <Calendar
-                mode="single"
-                selected={date}
-                onSelect={setDate}
-                className="rounded-md border"
-              />
-            </div>
-            <div className="flex-1 space-y-4">
-              <div className="flex justify-between items-center">
-                <h3 className="text-lg font-semibold">
-                  {t('careCalendar.tasks')}
-                </h3>
-                <Dialog open={isAddingTask} onOpenChange={setIsAddingTask}>
-                  <DialogTrigger asChild>
-                    <Button>
-                      <CalendarPlus className="mr-2 h-4 w-4" />
-                      {t('careCalendar.addTask')}
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>{t('careCalendar.newTask')}</DialogTitle>
-                      <DialogDescription>
-                        {t('careCalendar.newTaskDescription')}
-                      </DialogDescription>
-                    </DialogHeader>
-                    <div className="space-y-4">
-                      <div>
-                        <Label htmlFor="title">{t('careCalendar.taskTitle')}</Label>
-                        <Input
-                          id="title"
-                          value={newTask.title || ''}
-                          onChange={(e) =>
-                            setNewTask({ ...newTask, title: e.target.value })
-                          }
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="type">{t('careCalendar.taskType')}</Label>
-                        <Select
-                          value={newTask.type}
-                          onValueChange={(value: Task['type']) =>
-                            setNewTask({ ...newTask, type: value })
-                          }
-                        >
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="appointment">
-                              {t('careCalendar.typeAppointment')}
-                            </SelectItem>
-                            <SelectItem value="transportation">
-                              {t('careCalendar.typeTransportation')}
-                            </SelectItem>
-                            <SelectItem value="meal">
-                              {t('careCalendar.typeMeal')}
-                            </SelectItem>
-                            <SelectItem value="general">
-                              {t('careCalendar.typeGeneral')}
-                            </SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div>
-                        <Label htmlFor="description">
-                          {t('careCalendar.description')}
-                        </Label>
-                        <Input
-                          id="description"
-                          value={newTask.description || ''}
-                          onChange={(e) =>
-                            setNewTask({ ...newTask, description: e.target.value })
-                          }
-                        />
-                      </div>
-                      <Button onClick={handleAddTask}>
-                        {t('careCalendar.addTask')}
-                      </Button>
-                    </div>
-                  </DialogContent>
-                </Dialog>
-              </div>
-              <div className="space-y-2">
-                {tasks
-                  .filter(
-                    (task) =>
-                      task.date.toDateString() === date?.toDateString()
-                  )
-                  .map((task) => (
-                    <Card key={task.id}>
-                      <CardContent className="p-4">
-                        <div className="flex items-center space-x-2">
-                          {getTaskIcon(task.type)}
-                          <div>
-                            <h4 className="font-medium">{task.title}</h4>
-                            <p className="text-sm text-gray-500">
-                              {task.description}
-                            </p>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card className="md:col-span-2">
+          <CardHeader>
+            <CardTitle>Care Calendar</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Calendar
+              mode="single"
+              selected={selectedDate}
+              onSelect={setSelectedDate}
+              className="rounded-md border"
+              components={{
+                DayContent: ({ day }) => getDayContent(day),
+              }}
+            />
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader>
+            <CardTitle>
+              {selectedDate ? selectedDate.toLocaleDateString('en-US', { 
+                weekday: 'long', 
+                month: 'long', 
+                day: 'numeric' 
+              }) : 'No Date Selected'}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {isLoading ? (
+              <div className="text-center p-4">Loading events...</div>
+            ) : (
+              <>
+                {getSelectedDateEvents().length === 0 ? (
+                  <div className="text-center text-muted-foreground p-4">
+                    No events scheduled for this day
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {getSelectedDateEvents().map((event) => (
+                      <div 
+                        key={event.id} 
+                        className="p-3 rounded-lg border flex items-start"
+                        style={{ borderLeftColor: event.color, borderLeftWidth: '4px' }}
+                      >
+                        <div>
+                          <div className="font-medium">{event.title}</div>
+                          <div className="flex items-center gap-2 mt-1">
+                            <Badge 
+                              variant={event.status === 'completed' ? 'secondary' : 'outline'}
+                              className="text-xs"
+                            >
+                              {event.status}
+                            </Badge>
+                            <span className="text-xs text-muted-foreground">
+                              {new Date(event.due_date).toLocaleTimeString('en-US', { 
+                                hour: 'numeric', 
+                                minute: '2-digit',
+                                hour12: true
+                              })}
+                            </span>
                           </div>
                         </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 };
