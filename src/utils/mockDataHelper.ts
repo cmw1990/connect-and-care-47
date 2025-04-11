@@ -157,4 +157,3 @@ export function createMockDisclaimers(count: number): Disclaimer[] {
 export function typeCastObject<T>(obj: any): T {
   return obj as T;
 }
-
