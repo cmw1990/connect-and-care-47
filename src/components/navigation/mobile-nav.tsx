@@ -7,6 +7,11 @@ import { cn } from '@/lib/utils';
 export const MobileNav = () => {
   const location = useLocation();
 
+  // Hide the mobile navigation on the landing page
+  if (location.pathname === '/') {
+    return null;
+  }
+
   const isActive = (path: string) => {
     return location.pathname.startsWith(path);
   };

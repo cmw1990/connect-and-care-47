@@ -11,7 +11,7 @@ function App() {
     <ThemeProvider attribute="class">
       <Router>
         <div className="min-h-screen bg-background text-foreground">
-          <main className="container px-4 py-6 pb-20">
+          <main className="min-h-screen">
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/dashboard" element={<div>Dashboard</div>} />
