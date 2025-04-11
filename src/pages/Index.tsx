@@ -1,4 +1,3 @@
-
 import React from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -9,7 +8,7 @@ export default function Index() {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-background/80">
+    <div className="min-h-screen bg-white">
       {/* Hero Section */}
       <motion.section
         initial={{ opacity: 0, y: 20 }}
@@ -45,7 +44,7 @@ export default function Index() {
               >
                 <Button 
                   onClick={() => navigate("/auth")}
-                  className="px-6 text-base"
+                  className="px-6 text-base bg-blue-500 hover:bg-blue-600 text-white"
                   size="lg"
                 >
                   Get Started <ArrowRight className="ml-2 h-4 w-4" />
@@ -68,7 +67,7 @@ export default function Index() {
             >
               <div className="relative rounded-xl overflow-hidden shadow-2xl">
                 <img 
-                  src="https://images.unsplash.com/photo-1576765608866-5b51046452be?q=80&w=1000" 
+                  src="/lovable-uploads/fa933769-8329-4a52-b4f8-522a2be1d132.png" 
                   alt="Elderly care" 
                   className="w-full object-cover h-[400px]"
                 />
@@ -82,7 +81,7 @@ export default function Index() {
       </motion.section>
 
       {/* Features Section */}
-      <section className="py-20 bg-muted/30">
+      <section className="py-20 bg-gray-50">
         <div className="container mx-auto px-6">
           <div className="text-center mb-16">
             <h2 className="text-3xl font-bold mb-4">Specialized Care Services</h2>
@@ -221,7 +220,7 @@ export default function Index() {
       </section>
 
       {/* Footer */}
-      <footer className="py-12 bg-muted/30 border-t">
+      <footer className="py-12 bg-gray-50 border-t">
         <div className="container mx-auto px-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div>

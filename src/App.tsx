@@ -20,10 +20,12 @@ function App() {
               <Route path="/dashboard" element={<div>Dashboard</div>} />
               <Route path="/care-network" element={<div>Care Network</div>} />
               <Route path="/care-management" element={<div>Care Management</div>} />
+              <Route path="/sleep" element={<SleepTracker />} />
               <Route path="/support" element={<div>Support</div>} />
               <Route path="/settings" element={<div>Settings</div>} />
-              <Route path="/sleep" element={<SleepTracker />} />
               <Route path="/profile" element={<div>Profile</div>} />
+              <Route path="/auth" element={<div>Authentication</div>} />
+              <Route path="/about" element={<div>About Us</div>} />
             </Routes>
           </main>
           <MobileNav />

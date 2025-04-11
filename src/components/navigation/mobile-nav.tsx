@@ -7,23 +7,18 @@ import { cn } from '@/lib/utils';
 export const MobileNav = () => {
   const location = useLocation();
 
-  // Hide the mobile navigation on the landing page
-  if (location.pathname === '/' && window.innerWidth > 768) {
-    return null;
-  }
-
   const isActive = (path: string) => {
-    return location.pathname.startsWith(path);
+    return location.pathname === path;
   };
 
   return (
-    <div className="md:hidden fixed inset-x-0 bottom-0 z-40 border-t bg-background/95 backdrop-blur">
+    <div className="md:hidden fixed inset-x-0 bottom-0 z-40 border-t bg-white shadow-lg">
       <div className="container flex h-16 items-center justify-between px-4">
         <Link
           to="/"
           className={cn(
             "flex flex-col items-center justify-center flex-1 pt-1",
-            isActive("/") && location.pathname === "/" ? "text-primary" : "text-muted-foreground"
+            isActive("/") ? "text-primary" : "text-muted-foreground"
           )}
         >
           <Home className="h-5 w-5" />
@@ -50,6 +45,16 @@ export const MobileNav = () => {
           <span className="text-xs mt-1">Care</span>
         </Link>
         <Link
+          to="/sleep"
+          className={cn(
+            "flex flex-col items-center justify-center flex-1 pt-1",
+            isActive("/sleep") ? "text-primary" : "text-muted-foreground"
+          )}
+        >
+          <Activity className="h-5 w-5" />
+          <span className="text-xs mt-1">Health</span>
+        </Link>
+        <Link
           to="/support"
           className={cn(
             "flex flex-col items-center justify-center flex-1 pt-1",
@@ -58,16 +63,6 @@ export const MobileNav = () => {
         >
           <LifeBuoy className="h-5 w-5" />
           <span className="text-xs mt-1">Support</span>
-        </Link>
-        <Link
-          to="/settings"
-          className={cn(
-            "flex flex-col items-center justify-center flex-1 pt-1",
-            isActive("/settings") ? "text-primary" : "text-muted-foreground"
-          )}
-        >
-          <Settings className="h-5 w-5" />
-          <span className="text-xs mt-1">Settings</span>
         </Link>
       </div>
     </div>

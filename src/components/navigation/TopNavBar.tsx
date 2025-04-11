@@ -51,13 +51,13 @@ export const TopNavBar = () => {
             className="ml-2"
             asChild
           >
-            <Link to="/profile">
+            <Link to="/auth">
               <User className="w-4 h-4 mr-2" />
-              Profile
+              Sign In
             </Link>
           </Button>
         </div>
       </div>
     </div>
   );
-};
+}
