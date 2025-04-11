@@ -1,16 +1,22 @@
 
-import { mockMissingTables } from "./mockDatabaseTables";
+import { supabase } from "@/integrations/supabase/client";
 
-/**
- * Initialize the application
- * This should be called at app startup
- */
-export const initializeApp = () => {
-  // Initialize mocks for tables that don't exist yet
-  if (process.env.NODE_ENV === 'development') {
-    mockMissingTables();
+// Initialize the application
+export function initializeApp() {
+  // For development, verify connection to Supabase
+  verifySupabaseConnection();
+}
+
+// Test the Supabase connection
+async function verifySupabaseConnection() {
+  try {
+    const { data, error } = await supabase.from('profiles').select('id').limit(1);
+    if (error) {
+      console.warn('Supabase connection error:', error.message);
+    } else {
+      console.info('Supabase connection successful');
+    }
+  } catch (error) {
+    console.error('Failed to check Supabase connection:', error);
   }
-  
-  // Add any other initialization code here
-  console.log("Application initialized");
-};
+}

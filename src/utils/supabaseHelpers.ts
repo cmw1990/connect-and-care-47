@@ -200,9 +200,10 @@ export function safeQueryBuilder<T>(query: any): Promise<T[]> {
 /**
  * Mock implementation for queries with missing tables
  * This function returns properly typed mock data for components
+ * @param mockData The mock data to return
+ * @returns A Promise that resolves to the mock data
  */
-export function mockTableQuery<T>(tableName: string, mockData: T[] = []): Promise<T[]> {
-  console.log(`Using mock data for table: ${tableName}`);
+export function mockTableQuery<T>(mockData: T[]): Promise<T[]> {
   return Promise.resolve(mockData);
 }
 

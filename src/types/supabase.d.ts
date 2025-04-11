@@ -1,4 +1,3 @@
-
 export interface Database {
   public: {
     Tables: {
@@ -206,4 +205,130 @@ export interface Database {
       [_ in never]: never;
     };
   };
+}
+
+export interface DayContentProps {
+  date: Date;
+  // Add other properties as needed
+}
+
+export interface CompanionMatch {
+  id: string;
+  user: { first_name: string; last_name: string };
+  expertise_areas: string[];
+  dementia_experience: boolean;
+  communication_preferences: string[];
+  languages: string[];
+  virtual_meeting_preference: boolean;
+  in_person_meeting_preference: boolean;
+  rating: number;
+  hourly_rate: number;
+  identity_verified: boolean;
+  mental_health_specialties: string[];
+  support_tools_proficiency: any;
+  virtual_meeting_tools: string[];
+  interests: string[];
+  cognitive_engagement_activities: {
+    memory_games: string[];
+    brain_teasers: string[];
+    social_activities: string[];
+    creative_exercises: string[];
+  };
+}
+
+export interface Connection {
+  id: string;
+  requester_id: string;
+  recipient_id: string;
+  connection_type: 'carer' | 'pal';
+  status: string;
+  created_at: string;
+  updated_at: string;
+  requester: {
+    first_name: string;
+    last_name: string;
+  };
+  recipient: {
+    first_name: string;
+    last_name: string;
+  };
+}
+
+export interface CareUpdate {
+  id: string;
+  content: string;
+  update_type: string;
+  created_at: string;
+  profiles: {
+    first_name: string;
+    last_name: string;
+  };
+}
+
+export interface Task {
+  id: string;
+  title: string;
+  due_date: string;
+  status: string;
+  priority: string;
+  assigned_to: string;
+}
+
+export interface Post {
+  id: string;
+  content: string;
+  created_at: string;
+  created_by: string;
+}
+
+export interface CareRecipient {
+  id: string;
+  first_name: string;
+  last_name: string;
+  date_of_birth: string;
+  care_needs: string[];
+  medical_conditions: string[];
+  allergies: string[];
+  medications: string[];
+  preferences: Record<string, any>;
+}
+
+export interface Document {
+  id: string;
+  title: string;
+  description: string | null;
+  file_url: string | null;
+  document_type: string | null;
+  created_by: string | null;
+  created_at: string;
+}
+
+export interface InsuranceBenefitRow {
+  id: string;
+  benefit_name: string;
+  // Add other fields as needed
+}
+
+export interface InsuranceDeductible {
+  id: string;
+  insurance_id: string;
+  type: string;
+  amount: number;
+  remaining: number;
+  year: number;
+  updated_at: string;
+}
+
+export interface InsuranceDocument {
+  id: string;
+  user_id: string;
+  insurance_id: string;
+  file_url: string;
+  document_type: string;
+  metadata: Record<string, any>;
+  created_at: string;
+}
+
+export interface InsuranceDocumentResponse extends InsuranceDocument {
+  // Any additional fields needed for responses
 }

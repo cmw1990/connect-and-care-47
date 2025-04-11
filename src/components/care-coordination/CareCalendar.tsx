@@ -16,6 +16,19 @@ interface CareTask {
   priority: string;
 }
 
+interface Appointment {
+  id: string;
+  title: string;
+  appointment_date: string;
+  status: string;
+}
+
+interface Medication {
+  id: string;
+  medication_name: string;
+  group_id: string;
+}
+
 interface CareEvent extends CareTask {
   type: 'task' | 'appointment' | 'medication';
   color: string;
@@ -48,28 +61,29 @@ export const CareCalendar = ({ groupId }: { groupId: string }) => {
         [] as CareTask[]
       );
 
-      // For other tables that might not exist yet, use mock data until tables are created
-      const appointmentsPromise = mockTableQuery<any>([
+      // Mock appointment data
+      const mockAppointments: Appointment[] = [
         {
           id: 'mock-apt-1',
           title: 'Doctor Appointment',
           appointment_date: new Date().toISOString(),
           status: 'scheduled'
         }
-      ]);
+      ];
 
-      const medicationsPromise = mockTableQuery<any>([
+      // Mock medication data
+      const mockMedications: Medication[] = [
         {
           id: 'mock-med-1',
           medication_name: 'Daily Medication',
           group_id: groupId
         }
-      ]);
+      ];
 
       const [careTasks, appointments, medications] = await Promise.all([
         careTasksPromise,
-        appointmentsPromise,
-        medicationsPromise
+        mockTableQuery<Appointment>(mockAppointments),
+        mockTableQuery<Medication>(mockMedications)
       ]);
 
       // Process the results

@@ -35,7 +35,7 @@ export const useCareOutcomes = (meetingId: string) => {
         // If table doesn't exist or there's an error, use mock data
         if (tableExists.error) {
           console.info("Using mock data for care outcomes");
-          return mockTableQuery<CareOutcomeMetric>([
+          const mockData: CareOutcomeMetric[] = [
             {
               id: "mock-1",
               metric_type: "engagement",
@@ -46,7 +46,8 @@ export const useCareOutcomes = (meetingId: string) => {
               updated_at: new Date().toISOString(),
               companion_meeting_id: meetingId
             }
-          ]);
+          ];
+          return mockTableQuery<CareOutcomeMetric>(mockData);
         }
         
         // If table exists, fetch the actual data
